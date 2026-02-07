@@ -1,26 +1,4 @@
 {
   "name": "portfolio-visualizer",
-  "version": "1.0.0",
-  "type": "module"
+  "version": "1.0.0"
 }
-```
-
-5. Click **"Commit new file"**
-6. Wait 1 minute for Vercel to redeploy
-
----
-
-## 🎯 This Should Fix It Because:
-
-Without `package.json`, Vercel might be treating your project as purely static HTML and ignoring the `api` folder. Adding `package.json` tells Vercel:
-- This is a Node.js project
-- Use serverless functions in the `/api` folder
-- Support ES modules (`type: "module"` for the `export default` syntax)
-
----
-
-## 🧪 After It Deploys:
-
-Test again:
-```
-https://porfolio-visualizer-taca.vercel.app/api/search?q=AAPL
