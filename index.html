@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,31 +9,89 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
+        :root {
+            --bg-gradient-start: #667eea;
+            --bg-gradient-end: #764ba2;
+            --container-bg: #ffffff;
+            --header-gradient-start: #2E86AB;
+            --header-gradient-end: #1a5276;
+            --text-primary: #2c3e50;
+            --text-secondary: #7f8c8d;
+            --input-bg: #f8f9fa;
+            --input-border: #ddd;
+            --border-color: #e0e0e0;
+            --chart-bg: #ffffff;
+            --table-header: #34495e;
+            --table-hover: #f8f9fa;
+        }
+        
+        body.dark-mode {
+            --bg-gradient-start: #1a1a2e;
+            --bg-gradient-end: #16213e;
+            --container-bg: #0f3460;
+            --header-gradient-start: #1a5276;
+            --header-gradient-end: #0e3b5c;
+            --text-primary: #e8e8e8;
+            --text-secondary: #b0b0b0;
+            --input-bg: #1a2332;
+            --input-border: #2a3f5f;
+            --border-color: #2a3f5f;
+            --chart-bg: #1a2332;
+            --table-header: #1a2332;
+            --table-hover: #223044;
+        }
+        
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
             min-height: 100vh;
             padding: 20px;
+            transition: background 0.3s ease;
         }
         
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            background: white;
+            background: var(--container-bg);
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             overflow: hidden;
+            transition: background 0.3s ease;
         }
         
         .header {
-            background: linear-gradient(135deg, #2E86AB 0%, #1a5276 100%);
+            background: linear-gradient(135deg, var(--header-gradient-start) 0%, var(--header-gradient-end) 100%);
             color: white;
             padding: 30px;
             text-align: center;
+            position: relative;
         }
         
         .header h1 { font-size: 2.5em; margin-bottom: 10px; }
         .header p { opacity: 0.9; font-size: 1.1em; }
+        
+        .dark-mode-toggle {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .dark-mode-toggle:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
         
         .content {
             display: grid;
@@ -41,14 +100,19 @@
         }
         
         .input-section {
-            background: #f8f9fa;
+            background: var(--input-bg);
             padding: 30px;
-            border-right: 1px solid #e0e0e0;
+            border-right: 1px solid var(--border-color);
             max-height: 800px;
             overflow-y: auto;
+            transition: background 0.3s ease;
         }
         
-        .visualization-section { padding: 30px; }
+        .visualization-section { 
+            padding: 30px;
+            background: var(--container-bg);
+            transition: background 0.3s ease;
+        }
         
         .holding-input {
             display: grid;
@@ -63,19 +127,25 @@
         
         .holding-input input[type="text"] {
             padding: 10px;
-            border: 2px solid #ddd;
+            border: 2px solid var(--input-border);
             border-radius: 8px;
             font-size: 14px;
             text-transform: uppercase;
             font-weight: 600;
             width: 100%;
+            background: var(--chart-bg);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
         }
         
         .holding-input input[type="number"] {
             padding: 10px;
-            border: 2px solid #ddd;
+            border: 2px solid var(--input-border);
             border-radius: 8px;
             font-size: 14px;
+            background: var(--chart-bg);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
         }
         
         .holding-input input:focus {
@@ -88,7 +158,7 @@
             top: 100%;
             left: 0;
             right: 0;
-            background: white;
+            background: var(--chart-bg);
             border: 2px solid #2E86AB;
             border-top: none;
             border-radius: 0 0 8px 8px;
@@ -97,6 +167,7 @@
             z-index: 1000;
             display: none;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: background 0.3s ease;
         }
         
         .autocomplete-dropdown.active { display: block; }
@@ -104,11 +175,14 @@
         .autocomplete-item {
             padding: 12px;
             cursor: pointer;
-            border-bottom: 1px solid #ecf0f1;
+            border-bottom: 1px solid var(--border-color);
             transition: background 0.2s;
         }
         
-        .autocomplete-item:hover { background: #f0f8ff; }
+        .autocomplete-item:hover { 
+            background: var(--table-hover);
+        }
+        
         .autocomplete-item.selected { background: #e3f2fd; }
         .autocomplete-item:last-child { border-bottom: none; }
         
@@ -120,13 +194,13 @@
         
         .autocomplete-name {
             font-size: 12px;
-            color: #7f8c8d;
+            color: var(--text-secondary);
             margin-top: 3px;
         }
         
         .autocomplete-type {
             font-size: 11px;
-            color: #95a5a6;
+            color: var(--text-secondary);
             font-style: italic;
             margin-top: 2px;
         }
@@ -134,7 +208,7 @@
         .loading-spinner {
             padding: 12px;
             text-align: center;
-            color: #7f8c8d;
+            color: var(--text-secondary);
             font-size: 12px;
         }
         
@@ -191,18 +265,20 @@
         .clear-btn:hover { background: #7f8c8d; }
         
         .chart-wrapper {
-            background: white;
+            background: var(--chart-bg);
             padding: 20px;
             border-radius: 12px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             margin-bottom: 20px;
+            transition: background 0.3s ease;
         }
         
         .chart-title {
             font-size: 1.3em;
             font-weight: 600;
             margin-bottom: 15px;
-            color: #2c3e50;
+            color: var(--text-primary);
+            transition: color 0.3s ease;
         }
         
         .summary-box {
@@ -228,10 +304,11 @@
         
         .holdings-table {
             width: 100%;
-            background: white;
+            background: var(--chart-bg);
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: background 0.3s ease;
         }
         
         .holdings-table table {
@@ -240,7 +317,7 @@
         }
         
         .holdings-table th {
-            background: #34495e;
+            background: var(--table-header);
             color: white;
             padding: 15px;
             text-align: left;
@@ -249,10 +326,15 @@
         
         .holdings-table td {
             padding: 12px 15px;
-            border-bottom: 1px solid #ecf0f1;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
         }
         
-        .holdings-table tr:hover { background: #f8f9fa; }
+        .holdings-table tr:hover { 
+            background: var(--table-hover);
+        }
+        
         .holdings-table tr:last-child td { border-bottom: none; }
         
         .ticker-cell {
@@ -263,12 +345,12 @@
         
         .name-cell {
             font-size: 0.85em;
-            color: #7f8c8d;
+            color: var(--text-secondary);
         }
         
         .percentage-bar {
             height: 8px;
-            background: #ecf0f1;
+            background: var(--input-border);
             border-radius: 4px;
             overflow: hidden;
             margin-top: 5px;
@@ -284,17 +366,23 @@
             font-size: 1.1em;
             font-weight: 600;
             margin-bottom: 15px;
-            color: #2c3e50;
+            color: var(--text-primary);
             padding-bottom: 10px;
             border-bottom: 2px solid #2E86AB;
+            transition: color 0.3s ease;
         }
 
         @media (max-width: 1024px) {
             .content { grid-template-columns: 1fr; }
             .input-section {
                 border-right: none;
-                border-bottom: 1px solid #e0e0e0;
+                border-bottom: 1px solid var(--border-color);
                 max-height: none;
+            }
+            .dark-mode-toggle {
+                position: static;
+                margin-top: 15px;
+                display: inline-flex;
             }
         }
     </style>
@@ -302,6 +390,10 @@
 <body>
     <div class="container">
         <div class="header">
+            <button class="dark-mode-toggle" onclick="toggleDarkMode()">
+                <span id="mode-icon">🌙</span>
+                <span id="mode-text">Dark Mode</span>
+            </button>
             <h1>📊 Portfolio Visualizer</h1>
             <p>Track and visualize your investment portfolio with real-time global securities search</p>
         </div>
@@ -339,6 +431,47 @@
         let selectedIndex = -1;
 
         const colors = ['#2E86AB', '#A23B72', '#F18F01', '#C73E1D', '#6A994E', '#BC4B51', '#4C956C', '#D4A373', '#5E548E', '#9B59B6', '#E67E22', '#16A085', '#3498DB', '#E91E63', '#FF9800', '#009688', '#673AB7', '#FF5722'];
+
+        // Dark Mode Functions
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+            
+            document.getElementById('mode-icon').textContent = isDark ? '☀️' : '🌙';
+            document.getElementById('mode-text').textContent = isDark ? 'Light Mode' : 'Dark Mode';
+            
+            // Update charts if they exist
+            if (pieChart) updateChartColors();
+            if (barChart) updateChartColors();
+        }
+
+        function loadDarkModePreference() {
+            const darkMode = localStorage.getItem('darkMode') === 'true';
+            if (darkMode) {
+                document.body.classList.add('dark-mode');
+                document.getElementById('mode-icon').textContent = '☀️';
+                document.getElementById('mode-text').textContent = 'Light Mode';
+            }
+        }
+
+        function updateChartColors() {
+            const isDark = document.body.classList.contains('dark-mode');
+            const textColor = isDark ? '#e8e8e8' : '#2c3e50';
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+            
+            if (pieChart) {
+                pieChart.options.plugins.legend.labels.color = textColor;
+                pieChart.update();
+            }
+            
+            if (barChart) {
+                barChart.options.scales.x.ticks.color = textColor;
+                barChart.options.scales.y.ticks.color = textColor;
+                barChart.options.scales.x.grid.color = gridColor;
+                barChart.update();
+            }
+        }
 
         async function searchTicker(query, dropdownId) {
             if (query.length < 1) {
@@ -497,20 +630,64 @@
         }
 
         function createPieChart(data, total) {
+            const isDark = document.body.classList.contains('dark-mode');
+            const textColor = isDark ? '#e8e8e8' : '#2c3e50';
+            
             if (pieChart) pieChart.destroy();
             pieChart = new Chart(document.getElementById('pieChart'), {
                 type: 'pie',
-                data: { labels: data.map(h => h.ticker), datasets: [{ data: data.map(h => h.value), backgroundColor: colors.slice(0, data.length), borderWidth: 2, borderColor: '#fff' }] },
-                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'right', labels: { font: { size: 13, weight: '600' }, padding: 15, generateLabels: (chart) => chart.data.labels.map((label, i) => ({ text: `${label}: ${((chart.data.datasets[0].data[i]/total)*100).toFixed(1)}%`, fillStyle: chart.data.datasets[0].backgroundColor[i], hidden: false, index: i })) } }, tooltip: { callbacks: { label: (context) => `$${context.parsed.toLocaleString('en-US', {minimumFractionDigits: 2})} (${((context.parsed/total)*100).toFixed(1)}%)` } } } }
+                data: { labels: data.map(h => h.ticker), datasets: [{ data: data.map(h => h.value), backgroundColor: colors.slice(0, data.length), borderWidth: 2, borderColor: isDark ? '#0f3460' : '#fff' }] },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: true, 
+                    plugins: { 
+                        legend: { 
+                            position: 'right', 
+                            labels: { 
+                                font: { size: 13, weight: '600' }, 
+                                padding: 15,
+                                color: textColor,
+                                generateLabels: (chart) => chart.data.labels.map((label, i) => ({ text: `${label}: ${((chart.data.datasets[0].data[i]/total)*100).toFixed(1)}%`, fillStyle: chart.data.datasets[0].backgroundColor[i], hidden: false, index: i })) 
+                            } 
+                        }, 
+                        tooltip: { callbacks: { label: (context) => `$${context.parsed.toLocaleString('en-US', {minimumFractionDigits: 2})} (${((context.parsed/total)*100).toFixed(1)}%)` } } 
+                    } 
+                }
             });
         }
 
         function createBarChart(data) {
+            const isDark = document.body.classList.contains('dark-mode');
+            const textColor = isDark ? '#e8e8e8' : '#2c3e50';
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+            
             if (barChart) barChart.destroy();
             barChart = new Chart(document.getElementById('barChart'), {
                 type: 'bar',
                 data: { labels: data.map(h => h.ticker), datasets: [{ label: 'Value ($)', data: data.map(h => h.value), backgroundColor: colors.slice(0, data.length), borderRadius: 8 }] },
-                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (context) => `$${context.parsed.x.toLocaleString('en-US', {minimumFractionDigits: 2})}` } } }, scales: { x: { beginAtZero: true, ticks: { callback: (value) => '$' + value.toLocaleString() }, grid: { color: 'rgba(0, 0, 0, 0.05)' } }, y: { grid: { display: false } } } }
+                options: { 
+                    indexAxis: 'y', 
+                    responsive: true, 
+                    maintainAspectRatio: true, 
+                    plugins: { 
+                        legend: { display: false }, 
+                        tooltip: { callbacks: { label: (context) => `$${context.parsed.x.toLocaleString('en-US', {minimumFractionDigits: 2})}` } } 
+                    }, 
+                    scales: { 
+                        x: { 
+                            beginAtZero: true, 
+                            ticks: { 
+                                callback: (value) => '$' + value.toLocaleString(),
+                                color: textColor
+                            }, 
+                            grid: { color: gridColor }
+                        }, 
+                        y: { 
+                            grid: { display: false },
+                            ticks: { color: textColor }
+                        } 
+                    } 
+                }
             });
         }
 
@@ -539,6 +716,7 @@
         }
 
         window.onload = function() {
+            loadDarkModePreference();
             const saved = localStorage.getItem('portfolioHoldings');
             if (saved) {
                 JSON.parse(saved).forEach(h => addHolding(h.ticker, h.value, h.name));
