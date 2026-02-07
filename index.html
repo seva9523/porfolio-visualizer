@@ -651,7 +651,7 @@
         // Price fetching functions
         async function fetchCurrentPrice(ticker) {
             try {
-                const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${process.env.FINNHUB_API_KEY || 'd63jiu9r01ql6dj0bmugd63jiu9r01ql6dj0bmv0'}`);
+                const response = await fetch(`/api/quote?symbol=${ticker}`);
                 const data = await response.json();
                 return data.c || 0; // current price
             } catch (error) {
