@@ -529,10 +529,12 @@
 
         function selectTicker(symbol, name, dropdownId) {
             console.log('selectTicker called:', symbol, name, dropdownId);
-            const inputId = dropdownId.replace('-dropdown', '');
+            // dropdownId is like "dropdown-0", we want "ticker-0"
+            const inputId = dropdownId.replace('dropdown-', 'ticker-');
             const input = document.getElementById(inputId);
             const dropdown = document.getElementById(dropdownId);
             
+            console.log('Looking for input ID:', inputId);
             console.log('Found input:', input);
             console.log('Found dropdown:', dropdown);
             
