@@ -528,11 +528,23 @@
         }
 
         function selectTicker(symbol, name, dropdownId) {
+            console.log('selectTicker called:', symbol, name, dropdownId);
             const inputId = dropdownId.replace('-dropdown', '');
             const input = document.getElementById(inputId);
-            input.value = symbol;
-            input.dataset.name = name;
-            document.getElementById(dropdownId).classList.remove('active');
+            const dropdown = document.getElementById(dropdownId);
+            
+            console.log('Found input:', input);
+            console.log('Found dropdown:', dropdown);
+            
+            if (input) {
+                input.value = symbol;
+                input.dataset.name = name;
+            }
+            
+            if (dropdown) {
+                dropdown.classList.remove('active');
+            }
+            
             selectedIndex = -1;
         }
 
@@ -581,24 +593,14 @@
                 }
             });
             
-            let isMouseOverDropdown = false;
+            // Removed blur event - letting dropdown stay open
+            // Will close when item is selected or when clicking outside
             
-            tickerInput.addEventListener('blur', () => {
-                setTimeout(() => {
-                    if (!isMouseOverDropdown) {
-                        document.getElementById(dropdownId).classList.remove('active');
-                        selectedIndex = -1;
-                    }
-                }, 150);
-            });
-            
-            // Track mouse over dropdown
-            const dropdown = document.getElementById(dropdownId);
-            dropdown.addEventListener('mouseenter', () => {
-                isMouseOverDropdown = true;
-            });
-            dropdown.addEventListener('mouseleave', () => {
-                isMouseOverDropdown = false;
+            document.addEventListener('click', function closeOnClickOutside(e) {
+                const dropdown = document.getElementById(dropdownId);
+                if (!dropdown.contains(e.target) && e.target !== tickerInput) {
+                    dropdown.classList.remove('active');
+                }
             });
             
             tickerInput.addEventListener('focus', () => {
