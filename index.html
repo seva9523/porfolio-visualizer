@@ -494,25 +494,19 @@
                         const div = document.createElement('div');
                         div.className = 'autocomplete-item';
                         if (index === selectedIndex) div.classList.add('selected');
-                        div.dataset.symbol = item.symbol;
-                        div.dataset.name = item.description || '';
+                        
+                        const safeSymbol = item.symbol.replace(/'/g, "\\'");
+                        const safeName = (item.description || '').replace(/'/g, "\\'");
                         
                         div.innerHTML = `
                             <div class="autocomplete-ticker">${item.symbol}</div>
                             <div class="autocomplete-name">${item.description || 'N/A'}</div>
                             <div class="autocomplete-type">${item.type || ''}</div>
                         `;
+                        
+                        div.setAttribute('onclick', `selectTicker('${safeSymbol}', '${safeName}', '${dropdownId}')`);
                         dropdown.appendChild(div);
                     });
-                    
-                    // Use event delegation on dropdown
-                    dropdown.onmousedown = (e) => {
-                        e.preventDefault();
-                        const item = e.target.closest('.autocomplete-item');
-                        if (item && item.dataset.symbol) {
-                            selectTicker(item.dataset.symbol, item.dataset.name, dropdownId);
-                        }
-                    };
                 } else {
                     dropdown.innerHTML = '<div class="loading-spinner">No results found</div>';
                 }
@@ -575,11 +569,24 @@
                 }
             });
             
+            let isMouseOverDropdown = false;
+            
             tickerInput.addEventListener('blur', () => {
                 setTimeout(() => {
-                    document.getElementById(dropdownId).classList.remove('active');
-                    selectedIndex = -1;
-                }, 300);
+                    if (!isMouseOverDropdown) {
+                        document.getElementById(dropdownId).classList.remove('active');
+                        selectedIndex = -1;
+                    }
+                }, 150);
+            });
+            
+            // Track mouse over dropdown
+            const dropdown = document.getElementById(dropdownId);
+            dropdown.addEventListener('mouseenter', () => {
+                isMouseOverDropdown = true;
+            });
+            dropdown.addEventListener('mouseleave', () => {
+                isMouseOverDropdown = false;
             });
             
             tickerInput.addEventListener('focus', () => {
