@@ -597,14 +597,14 @@
                 }
             });
             
-            // Removed blur event - letting dropdown stay open
-            // Will close when item is selected or when clicking outside
-            
-            document.addEventListener('click', function closeOnClickOutside(e) {
-                const dropdown = document.getElementById(dropdownId);
-                if (!dropdown.contains(e.target) && e.target !== tickerInput) {
-                    dropdown.classList.remove('active');
-                }
+            tickerInput.addEventListener('blur', () => {
+                // Use setTimeout to allow click to register first
+                setTimeout(() => {
+                    const dropdown = document.getElementById(dropdownId);
+                    if (dropdown) {
+                        dropdown.classList.remove('active');
+                    }
+                }, 200);
             });
             
             tickerInput.addEventListener('focus', () => {
@@ -672,10 +672,17 @@
             refreshBtn.disabled = true;
             refreshBtn.textContent = '🔄 Fetching Prices...';
 
+            console.log('Fetching prices for:', holdings);
+
             for (let holding of holdings) {
+                console.log(`Fetching price for ${holding.ticker}...`);
                 holding.currentPrice = await fetchCurrentPrice(holding.ticker);
+                console.log(`Price for ${holding.ticker}: $${holding.currentPrice}`);
                 holding.value = holding.shares * holding.currentPrice;
+                console.log(`Value: ${holding.shares} × $${holding.currentPrice} = $${holding.value}`);
             }
+
+            console.log('All holdings updated:', holdings);
 
             refreshBtn.disabled = false;
             refreshBtn.textContent = '🔄 Refresh Prices';
