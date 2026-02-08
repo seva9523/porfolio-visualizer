@@ -400,6 +400,20 @@
         
         <div class="content">
             <div class="input-section">
+                <div class="section-title">Portfolio Manager</div>
+                
+                <div style="margin-bottom: 20px;">
+                    <select id="portfolio-selector" style="width: 100%; padding: 10px; border: 2px solid var(--input-border); border-radius: 8px; background: var(--chart-bg); color: var(--text-primary); font-size: 14px; font-weight: 600; margin-bottom: 10px;">
+                        <option value="default">Default Portfolio</option>
+                    </select>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+                        <button onclick="createNewPortfolio()" style="padding: 8px; background: #27ae60; color: white; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 600;">➕ New</button>
+                        <button onclick="renamePortfolio()" style="padding: 8px; background: #3498db; color: white; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 600;">✏️ Rename</button>
+                        <button onclick="deletePortfolio()" style="padding: 8px; background: #e74c3c; color: white; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 600;">🗑️ Delete</button>
+                    </div>
+                </div>
+                
                 <div class="section-title">Portfolio Holdings</div>
                 <div id="holdings-container"></div>
                 <button class="add-btn" onclick="addHolding()">+ Add Holding</button>
@@ -431,6 +445,123 @@
         let holdingCounter = 0;
         let searchTimeouts = {};
         let selectedIndex = -1;
+        
+        // Portfolio management
+        let currentPortfolio = 'default';
+        let portfolios = {
+            'default': {
+                name: 'Default Portfolio',
+                holdings: []
+            }
+        };
+
+        const colors = ['#2E86AB', '#A23B72', '#F18F01', '#C73E1D', '#6A994E', '#BC4B51', '#4C956C', '#D4A373', '#5E548E', '#9B59B6', '#E67E22', '#16A085', '#3498DB', '#E91E63', '#FF9800', '#009688', '#673AB7', '#FF5722'];
+
+        // Portfolio Management Functions
+        function saveAllPortfolios() {
+            localStorage.setItem('portfolios', JSON.stringify(portfolios));
+            localStorage.setItem('currentPortfolio', currentPortfolio);
+        }
+
+        function loadAllPortfolios() {
+            const saved = localStorage.getItem('portfolios');
+            if (saved) {
+                portfolios = JSON.parse(saved);
+            }
+            const savedCurrent = localStorage.getItem('currentPortfolio');
+            if (savedCurrent && portfolios[savedCurrent]) {
+                currentPortfolio = savedCurrent;
+            }
+            updatePortfolioSelector();
+        }
+
+        function updatePortfolioSelector() {
+            const selector = document.getElementById('portfolio-selector');
+            selector.innerHTML = '';
+            
+            for (let key in portfolios) {
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = portfolios[key].name;
+                if (key === currentPortfolio) option.selected = true;
+                selector.appendChild(option);
+            }
+            
+            selector.onchange = () => switchPortfolio(selector.value);
+        }
+
+        function switchPortfolio(portfolioId) {
+            // Save current portfolio holdings first
+            updateHoldingsArray();
+            portfolios[currentPortfolio].holdings = holdings;
+            saveAllPortfolios();
+            
+            // Switch to new portfolio
+            currentPortfolio = portfolioId;
+            holdings = portfolios[currentPortfolio].holdings || [];
+            
+            // Clear and reload UI
+            document.getElementById('holdings-container').innerHTML = '';
+            holdingCounter = 0;
+            
+            if (holdings.length > 0) {
+                holdings.forEach(h => addHolding(h.ticker, h.shares, h.name));
+            } else {
+                addHolding(); addHolding(); addHolding();
+            }
+            
+            // Clear visualizations
+            document.getElementById('summary-section').innerHTML = '';
+            document.getElementById('table-section').innerHTML = '';
+            if (pieChart) pieChart.destroy();
+            if (barChart) barChart.destroy();
+            
+            saveAllPortfolios();
+        }
+
+        function createNewPortfolio() {
+            const name = prompt('Enter portfolio name:');
+            if (!name || name.trim() === '') return;
+            
+            const id = 'portfolio_' + Date.now();
+            portfolios[id] = {
+                name: name.trim(),
+                holdings: []
+            };
+            
+            updatePortfolioSelector();
+            switchPortfolio(id);
+        }
+
+        function renamePortfolio() {
+            if (currentPortfolio === 'default' && Object.keys(portfolios).length === 1) {
+                alert('Create a new portfolio first before renaming!');
+                return;
+            }
+            
+            const newName = prompt('Enter new name:', portfolios[currentPortfolio].name);
+            if (!newName || newName.trim() === '') return;
+            
+            portfolios[currentPortfolio].name = newName.trim();
+            updatePortfolioSelector();
+            saveAllPortfolios();
+        }
+
+        function deletePortfolio() {
+            if (Object.keys(portfolios).length === 1) {
+                alert('Cannot delete the last portfolio!');
+                return;
+            }
+            
+            if (!confirm(`Delete "${portfolios[currentPortfolio].name}"?`)) return;
+            
+            delete portfolios[currentPortfolio];
+            
+            // Switch to first available portfolio
+            currentPortfolio = Object.keys(portfolios)[0];
+            updatePortfolioSelector();
+            switchPortfolio(currentPortfolio);
+        }
 
         const colors = ['#2E86AB', '#A23B72', '#F18F01', '#C73E1D', '#6A994E', '#BC4B51', '#4C956C', '#D4A373', '#5E548E', '#9B59B6', '#E67E22', '#16A085', '#3498DB', '#E91E63', '#FF9800', '#009688', '#673AB7', '#FF5722'];
 
@@ -707,7 +838,10 @@
             createPieChart(holdings, total);
             createBarChart(holdings);
             createTable(holdings, total);
-            localStorage.setItem('portfolioHoldings', JSON.stringify(holdings));
+            
+            // Save to current portfolio
+            portfolios[currentPortfolio].holdings = holdings;
+            saveAllPortfolios();
         }
 
         function createSummary(total) {
@@ -796,7 +930,7 @@
         }
 
         function clearAll() {
-            if (confirm('Are you sure you want to clear all holdings?')) {
+            if (confirm('Are you sure you want to clear all holdings in this portfolio?')) {
                 document.getElementById('holdings-container').innerHTML = '';
                 holdings = [];
                 holdingCounter = 0;
@@ -804,17 +938,21 @@
                 document.getElementById('table-section').innerHTML = '';
                 if (pieChart) pieChart.destroy();
                 if (barChart) barChart.destroy();
-                localStorage.removeItem('portfolioHoldings');
+                
+                portfolios[currentPortfolio].holdings = [];
+                saveAllPortfolios();
+                
                 addHolding(); addHolding(); addHolding();
             }
         }
 
         window.onload = function() {
             loadDarkModePreference();
-            const saved = localStorage.getItem('portfolioHoldings');
-            if (saved) {
-                JSON.parse(saved).forEach(h => addHolding(h.ticker, h.shares || h.value || '', h.name));
-                // Don't auto-visualize, let user refresh prices first
+            loadAllPortfolios();
+            
+            // Load current portfolio holdings
+            if (holdings.length > 0) {
+                holdings.forEach(h => addHolding(h.ticker, h.shares || '', h.name));
             } else {
                 addHolding(); addHolding(); addHolding();
             }
