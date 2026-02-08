@@ -644,6 +644,97 @@
             }
         }
 
+        function createEstimatedPerformanceChart(holdings, fromDate) {
+            console.log('Creating estimated performance chart (linear interpolation)');
+            
+            const isDark = document.body.classList.contains('dark-mode');
+            const textColor = isDark ? '#e8e8e8' : '#2c3e50';
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+            
+            if (performanceChart) performanceChart.destroy();
+            
+            document.getElementById('performanceChart').style.display = 'block';
+            
+            // Create simple 2-point chart: purchase date → today
+            const today = new Date().toISOString().split('T')[0];
+            
+            // Calculate portfolio value at purchase (using purchase prices)
+            let purchaseValue = 0;
+            holdings.forEach(h => {
+                if (h.purchasePrice > 0 && h.purchaseDate) {
+                    purchaseValue += h.shares * h.purchasePrice;
+                }
+            });
+            
+            // Current value
+            const currentValue = holdings.reduce((sum, h) => sum + h.value, 0);
+            
+            // Create data points (purchase and today)
+            const labels = [
+                new Date(fromDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' }),
+                new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })
+            ];
+            
+            const values = [purchaseValue, currentValue];
+            
+            performanceChart = new Chart(document.getElementById('performanceChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Portfolio Value (Estimated)',
+                        data: values,
+                        borderColor: '#F18F01',
+                        backgroundColor: 'rgba(241, 143, 1, 0.1)',
+                        borderWidth: 3,
+                        borderDash: [5, 5],
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 6,
+                        pointHoverRadius: 8,
+                        pointBackgroundColor: '#F18F01'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { 
+                            display: true,
+                            labels: { color: textColor }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `$${context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2})}`
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Estimated Growth (Actual historical data unavailable)',
+                            color: '#F18F01',
+                            font: { size: 11 }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        },
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                color: textColor,
+                                callback: (value) => '$' + value.toLocaleString()
+                            },
+                            grid: { color: gridColor }
+                        }
+                    }
+                }
+            });
+            
+            console.log('Estimated chart created:', { from: fromDate, purchaseValue, currentValue });
+        }
+
         function createHistoricalPerformanceChart(holdings, fromDate) {
             console.log('Creating historical performance chart from:', fromDate);
             console.log('Holdings with historical data:', holdings.map(h => ({
@@ -1482,28 +1573,9 @@
                 if (hasHistoricalData) {
                     createHistoricalPerformanceChart(holdings, earliestDate);
                 } else {
-                    // No historical data available - show message
-                    console.warn('No historical data available for performance chart');
-                    document.getElementById('performanceChart').style.display = 'none';
-                    
-                    // Show a message to the user
-                    const chartWrapper = document.querySelector('.chart-wrapper');
-                    if (chartWrapper && chartWrapper.querySelector('canvas#performanceChart')) {
-                        const messageDiv = document.createElement('div');
-                        messageDiv.style.cssText = 'padding: 40px; text-align: center; background: rgba(231, 76, 60, 0.1); border-radius: 12px; border: 2px dashed #e74c3c;';
-                        messageDiv.innerHTML = `
-                            <div style="font-size: 18px; font-weight: 600; color: #e74c3c; margin-bottom: 10px;">
-                                ⚠️ Historical Data Unavailable
-                            </div>
-                            <div style="font-size: 14px; color: var(--text-primary);">
-                                Performance chart requires historical price data.<br>
-                                API is currently rate limited. Please try again later.<br>
-                                <small style="color: #999;">Data will be cached once fetched successfully.</small>
-                            </div>
-                        `;
-                        chartWrapper.querySelector('canvas#performanceChart').parentElement.appendChild(messageDiv);
-                        document.getElementById('performanceChart').style.display = 'none';
-                    }
+                    // No historical data available - create estimated chart based on purchase vs current
+                    console.warn('No historical data available - creating estimated performance chart');
+                    createEstimatedPerformanceChart(holdings, earliestDate);
                 }
             } else {
                 // Fall back to snapshot-based chart
