@@ -718,9 +718,14 @@
                     e.preventDefault();
                     selectedIndex = Math.max(selectedIndex - 1, -1);
                     updateSelection(dropdownId);
-                } else if (e.key === 'Enter' && selectedIndex >= 0 && items[selectedIndex]) {
+                } else if (e.key === 'Enter') {
                     e.preventDefault();
-                    items[selectedIndex].click();
+                    // If something is selected, click it. Otherwise, select first item
+                    if (selectedIndex >= 0 && items[selectedIndex]) {
+                        items[selectedIndex].click();
+                    } else if (items.length > 0 && dropdown.classList.contains('active')) {
+                        items[0].click();
+                    }
                 } else if (e.key === 'Escape') {
                     dropdown.classList.remove('active');
                     selectedIndex = -1;
