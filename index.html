@@ -1083,7 +1083,7 @@
                     <div class="autocomplete-dropdown" id="${dropdownId}"></div>
                 </div>
                 <input type="number" placeholder="Shares" id="shares-${holdingCounter}" value="${value}" step="0.01" min="0" style="font-size: 12px;">
-                <input type="number" placeholder="Price" id="purchase-${holdingCounter}" value="${purchasePrice}" step="0.01" min="0" style="font-size: 11px;">
+                <input type="number" placeholder="💰 Buy Price" id="purchase-${holdingCounter}" value="${purchasePrice}" step="0.01" min="0" style="font-size: 11px; font-weight: 600;" title="Enter purchase price">
                 <input type="text" placeholder="dd/mm/yyyy" id="date-${holdingCounter}" value="${purchaseDate ? formatDateForDisplay(purchaseDate) : ''}" pattern="\\d{2}/\\d{2}/\\d{4}" title="Date: dd/mm/yyyy" style="font-size: 10px; width: 95px;" data-date-value="${purchaseDate}">
                 <button class="remove-btn" onclick="removeHolding(this)">×</button>
             `;
@@ -1181,7 +1181,9 @@
                             if (historicalData && historicalData[validation.date]) {
                                 const closePrice = historicalData[validation.date].close;
                                 priceInput.value = closePrice.toFixed(2);
-                                priceInput.placeholder = 'Price';
+                                priceInput.placeholder = '💰 Buy Price';
+                                priceInput.style.borderColor = '';
+                                priceInput.style.fontWeight = '600';
                                 console.log(`✓ Price for ${ticker} on ${validation.date}: $${closePrice}`);
                             } else if (historicalData && Object.keys(historicalData).length > 0) {
                                 // Find nearest date
@@ -1200,7 +1202,9 @@
                                 if (nearestDate) {
                                     const closePrice = historicalData[nearestDate].close;
                                     priceInput.value = closePrice.toFixed(2);
-                                    priceInput.placeholder = 'Price';
+                                    priceInput.placeholder = '💰 Buy Price';
+                                    priceInput.style.borderColor = '';
+                                    priceInput.style.fontWeight = '600';
                                     const nearestDisplayDate = formatDateForDisplay(nearestDate);
                                     console.log(`Using nearest date ${nearestDate} (${nearestDisplayDate}): $${closePrice}`);
                                     
@@ -1210,16 +1214,22 @@
                                         alert(`No data for exact date ${displayDate}. Using nearest trading day: ${nearestDisplayDate} at $${closePrice.toFixed(2)}`);
                                     }
                                 } else {
-                                    priceInput.placeholder = 'Enter manually';
+                                    priceInput.placeholder = '💰 Enter Price!';
+                                    priceInput.style.borderColor = '#F18F01';
+                                    priceInput.style.fontWeight = '600';
                                     console.warn('No suitable date found in historical data');
                                 }
                             } else {
-                                priceInput.placeholder = 'Enter manually';
+                                priceInput.placeholder = '💰 Enter Price!';
+                                priceInput.style.borderColor = '#F18F01';
+                                priceInput.style.fontWeight = '600';
                                 console.log('No historical data available - user can enter manually');
                             }
                         } catch (error) {
                             console.error('Error fetching historical price:', error);
-                            priceInput.placeholder = 'Enter manually';
+                            priceInput.placeholder = '💰 Enter Price!';
+                            priceInput.style.borderColor = '#F18F01';
+                            priceInput.style.fontWeight = '600';
                         }
                     }
                 }, 800); // Wait 800ms after user stops typing
