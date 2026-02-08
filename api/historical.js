@@ -23,11 +23,12 @@ module.exports = (req, res) => {
     return res.status(500).json({ error: 'Alpha Vantage API key not configured' });
   }
   
-  // Use compact size for single date requests, full for ranges
-  const outputSize = (!from && !to) || (from === to) ? 'compact' : 'full';
+  // Always use full outputsize when date parameters are provided
+  // Compact only gives ~100 recent days, full gives 20+ years
+  const outputSize = (from || to) ? 'full' : 'compact';
   const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${encodeURIComponent(symbol)}&outputsize=${outputSize}&apikey=${apiKey}`;
   
-  console.log('Fetching from Alpha Vantage with outputsize:', outputSize);
+  console.log('Fetching from Alpha Vantage with outputsize:', outputSize, 'for date range:', from, 'to', to);
   
   https.get(url, (response) => {
     let data = '';
