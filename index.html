@@ -581,6 +581,13 @@
         }
 
         function createHistoricalPerformanceChart(holdings, fromDate) {
+            console.log('Creating historical performance chart from:', fromDate);
+            console.log('Holdings with historical data:', holdings.map(h => ({
+                ticker: h.ticker,
+                hasData: !!h.historicalData,
+                dataPoints: h.historicalData ? Object.keys(h.historicalData).length : 0
+            })));
+            
             const isDark = document.body.classList.contains('dark-mode');
             const textColor = isDark ? '#e8e8e8' : '#2c3e50';
             const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
@@ -588,12 +595,15 @@
             // Aggregate all dates from all holdings
             const allDates = new Set();
             holdings.forEach(h => {
-                if (h.historicalData) {
+                if (h.historicalData && typeof h.historicalData === 'object') {
                     Object.keys(h.historicalData).forEach(date => allDates.add(date));
                 }
             });
             
+            console.log('Total unique dates found:', allDates.size);
+            
             if (allDates.size === 0) {
+                console.log('No historical data available, hiding performance chart');
                 document.getElementById('performanceChart').style.display = 'none';
                 return;
             }
@@ -624,7 +634,10 @@
             const filteredDates = sortedDates.slice(firstNonZeroIndex);
             const filteredValues = portfolioValues.slice(firstNonZeroIndex);
             
+            console.log('Filtered to', filteredValues.length, 'data points');
+            
             if (filteredValues.length === 0) {
+                console.log('No valid data points, hiding performance chart');
                 document.getElementById('performanceChart').style.display = 'none';
                 return;
             }
@@ -637,6 +650,8 @@
                 const d = new Date(date);
                 return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
             });
+            
+            console.log('Creating chart with', labels.length, 'labels');
             
             performanceChart = new Chart(document.getElementById('performanceChart'), {
                 type: 'line',
@@ -687,6 +702,8 @@
                     }
                 }
             });
+            
+            console.log('Performance chart created successfully');
         }
 
         function createPerformanceChart(snapshots) {
@@ -1003,7 +1020,7 @@
                 </div>
                 <input type="number" placeholder="Shares" id="shares-${holdingCounter}" value="${value}" step="0.01" min="0" style="font-size: 12px;">
                 <input type="number" placeholder="Price" id="purchase-${holdingCounter}" value="${purchasePrice}" step="0.01" min="0" style="font-size: 11px;">
-                <input type="date" placeholder="Date" id="date-${holdingCounter}" value="${purchaseDate}" style="font-size: 10px;">
+                <input type="date" id="date-${holdingCounter}" value="${purchaseDate}" title="Purchase Date" style="font-size: 10px; cursor: pointer;">
                 <button class="remove-btn" onclick="removeHolding(this)">×</button>
             `;
             container.appendChild(div);
@@ -1055,6 +1072,41 @@
                 if (tickerInput.value.length > 0) searchTicker(tickerInput.value, dropdownId);
             });
             
+            // Add event listener for date changes to auto-fetch price
+            const dateInput = document.getElementById(`date-${holdingCounter}`);
+            const priceInput = document.getElementById(`purchase-${holdingCounter}`);
+            
+            dateInput.addEventListener('change', async () => {
+                const ticker = tickerInput.value.toUpperCase();
+                const selectedDate = dateInput.value;
+                
+                if (ticker && selectedDate) {
+                    console.log(`Fetching price for ${ticker} on ${selectedDate}...`);
+                    priceInput.value = 'Loading...';
+                    priceInput.disabled = true;
+                    
+                    try {
+                        // Fetch historical data for that specific date
+                        const historicalData = await fetchHistoricalPrices(ticker, selectedDate, selectedDate);
+                        
+                        if (historicalData && historicalData[selectedDate]) {
+                            const closePrice = historicalData[selectedDate].close;
+                            priceInput.value = closePrice.toFixed(2);
+                            console.log(`Price for ${ticker} on ${selectedDate}: $${closePrice}`);
+                        } else {
+                            priceInput.value = '';
+                            alert(`No price data available for ${ticker} on ${selectedDate}. Please enter manually.`);
+                        }
+                    } catch (error) {
+                        console.error('Error fetching historical price:', error);
+                        priceInput.value = '';
+                        alert('Failed to fetch price. Please enter manually.');
+                    } finally {
+                        priceInput.disabled = false;
+                    }
+                }
+            });
+            
             holdingCounter++;
         }
 
@@ -1086,6 +1138,8 @@
                 const purchasePrice = parseFloat(purchaseInput.value) || 0;
                 const purchaseDate = dateInput.value || '';
                 
+                console.log(`Reading holding ${index}:`, {ticker, shares, purchasePrice, purchaseDate});
+                
                 if (ticker && shares > 0) {
                     holdings.push({
                         ticker, 
@@ -1102,6 +1156,7 @@
                     });
                 }
             });
+            console.log('Holdings array updated:', holdings);
         }
 
         // Price fetching functions
