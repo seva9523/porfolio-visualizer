@@ -418,7 +418,7 @@
                 <div id="holdings-container"></div>
                 <button class="add-btn" onclick="addHolding()">+ Add Holding</button>
                 <button class="visualize-btn" onclick="visualizePortfolio()">📈 Visualize Portfolio</button>
-                <button class="add-btn" onclick="refreshPrices()" style="background: #3498db;">🔄 Refresh Prices</button>
+                <button class="add-btn" onclick="refreshPrices()" style="background: #3498db;">🔄 Refresh Prices Only</button>
                 <button class="clear-btn" onclick="clearAll()">🗑️ Clear All</button>
                 <div id="last-updated" style="text-align: center; margin-top: 10px; font-size: 0.85em; color: var(--text-secondary);"></div>
             </div>
@@ -822,14 +822,41 @@
             visualizePortfolio();
         }
 
-        function visualizePortfolio() {
-            // Don't call updateHoldingsArray() here if called from refreshPrices
-            // Only update if holdings is empty (direct visualize without refresh)
-            if (holdings.length === 0 || holdings[0].currentPrice === undefined) {
-                updateHoldingsArray();
+        async function visualizePortfolio() {
+            updateHoldingsArray();
+            
+            if (holdings.length === 0) { 
+                alert('Please add at least one holding!'); 
+                return; 
             }
             
-            if (holdings.length === 0) { alert('Please add at least one holding!'); return; }
+            // Check if we need to fetch prices (if any holding has no price or price is 0)
+            const needsPrices = holdings.some(h => !h.currentPrice || h.currentPrice === 0);
+            
+            if (needsPrices) {
+                // Fetch prices first
+                const visualizeBtn = document.querySelector('.visualize-btn');
+                const originalText = visualizeBtn.textContent;
+                visualizeBtn.disabled = true;
+                visualizeBtn.textContent = '🔄 Fetching Prices...';
+                
+                for (let holding of holdings) {
+                    console.log(`Fetching price for ${holding.ticker}...`);
+                    holding.currentPrice = await fetchCurrentPrice(holding.ticker);
+                    console.log(`Price for ${holding.ticker}: $${holding.currentPrice}`);
+                    holding.value = holding.shares * holding.currentPrice;
+                    console.log(`Value: ${holding.shares} × $${holding.currentPrice} = $${holding.value}`);
+                }
+                
+                const now = new Date().toLocaleString();
+                document.getElementById('last-updated').textContent = `Last updated: ${now}`;
+                
+                visualizeBtn.disabled = false;
+                visualizeBtn.textContent = originalText;
+                
+                console.log('All holdings updated:', holdings);
+            }
+            
             const total = holdings.reduce((sum, h) => sum + h.value, 0);
             holdings.sort((a, b) => b.value - a.value);
             createSummary(total);
