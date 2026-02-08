@@ -371,6 +371,28 @@
             border-bottom: 2px solid #2E86AB;
             transition: color 0.3s ease;
         }
+        
+        .time-range-btn {
+            padding: 6px 12px;
+            background: var(--input-bg);
+            color: var(--text-primary);
+            border: 2px solid var(--input-border);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .time-range-btn:hover {
+            background: var(--input-border);
+        }
+        
+        .time-range-btn.active {
+            background: #2E86AB;
+            color: white;
+            border-color: #2E86AB;
+        }
 
         @media (max-width: 1024px) {
             .content { grid-template-columns: 1fr; }
@@ -425,6 +447,21 @@
             
             <div class="visualization-section">
                 <div id="summary-section"></div>
+                
+                <div class="chart-wrapper">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <div class="chart-title">Performance Over Time</div>
+                        <div style="display: flex; gap: 8px;">
+                            <button onclick="changeTimeRange('7D')" id="range-7D" class="time-range-btn active">7D</button>
+                            <button onclick="changeTimeRange('30D')" id="range-30D" class="time-range-btn">30D</button>
+                            <button onclick="changeTimeRange('90D')" id="range-90D" class="time-range-btn">90D</button>
+                            <button onclick="changeTimeRange('1Y')" id="range-1Y" class="time-range-btn">1Y</button>
+                            <button onclick="changeTimeRange('ALL')" id="range-ALL" class="time-range-btn">All</button>
+                        </div>
+                    </div>
+                    <canvas id="performanceChart" style="max-height: 300px;"></canvas>
+                </div>
+                
                 <div class="chart-wrapper">
                     <div class="chart-title">Portfolio Allocation</div>
                     <canvas id="pieChart"></canvas>
@@ -442,20 +479,173 @@
         let holdings = [];
         let pieChart = null;
         let barChart = null;
+        let performanceChart = null;
         let holdingCounter = 0;
         let searchTimeouts = {};
         let selectedIndex = -1;
+        let currentTimeRange = '7D';
         
         // Portfolio management
         let currentPortfolio = 'default';
         let portfolios = {
             'default': {
                 name: 'Default Portfolio',
-                holdings: []
+                holdings: [],
+                snapshots: [] // Array of {date, value, holdings}
             }
         };
 
         const colors = ['#2E86AB', '#A23B72', '#F18F01', '#C73E1D', '#6A994E', '#BC4B51', '#4C956C', '#D4A373', '#5E548E', '#9B59B6', '#E67E22', '#16A085', '#3498DB', '#E91E63', '#FF9800', '#009688', '#673AB7', '#FF5722'];
+
+        // Performance tracking functions
+        function saveSnapshot(totalValue) {
+            const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+            
+            if (!portfolios[currentPortfolio].snapshots) {
+                portfolios[currentPortfolio].snapshots = [];
+            }
+            
+            const snapshots = portfolios[currentPortfolio].snapshots;
+            
+            // Check if we already have a snapshot for today
+            const existingIndex = snapshots.findIndex(s => s.date === today);
+            
+            if (existingIndex >= 0) {
+                // Update existing snapshot
+                snapshots[existingIndex] = {
+                    date: today,
+                    value: totalValue,
+                    holdings: holdings.length
+                };
+            } else {
+                // Add new snapshot
+                snapshots.push({
+                    date: today,
+                    value: totalValue,
+                    holdings: holdings.length
+                });
+                
+                // Keep only last 365 days
+                if (snapshots.length > 365) {
+                    snapshots.shift();
+                }
+            }
+            
+            saveAllPortfolios();
+        }
+
+        function getFilteredSnapshots(range) {
+            if (!portfolios[currentPortfolio].snapshots) return [];
+            
+            const snapshots = portfolios[currentPortfolio].snapshots;
+            if (snapshots.length === 0) return [];
+            
+            const now = new Date();
+            let cutoffDate;
+            
+            switch(range) {
+                case '7D':
+                    cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                    break;
+                case '30D':
+                    cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                    break;
+                case '90D':
+                    cutoffDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+                    break;
+                case '1Y':
+                    cutoffDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+                    break;
+                case 'ALL':
+                default:
+                    return snapshots;
+            }
+            
+            return snapshots.filter(s => new Date(s.date) >= cutoffDate);
+        }
+
+        function changeTimeRange(range) {
+            currentTimeRange = range;
+            
+            // Update button active state
+            document.querySelectorAll('.time-range-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`range-${range}`).classList.add('active');
+            
+            // Redraw performance chart
+            const filteredSnapshots = getFilteredSnapshots(range);
+            if (filteredSnapshots.length > 0) {
+                createPerformanceChart(filteredSnapshots);
+            }
+        }
+
+        function createPerformanceChart(snapshots) {
+            const isDark = document.body.classList.contains('dark-mode');
+            const textColor = isDark ? '#e8e8e8' : '#2c3e50';
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+            
+            if (performanceChart) performanceChart.destroy();
+            
+            if (snapshots.length === 0) {
+                document.getElementById('performanceChart').style.display = 'none';
+                return;
+            }
+            
+            document.getElementById('performanceChart').style.display = 'block';
+            
+            const labels = snapshots.map(s => {
+                const date = new Date(s.date);
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            });
+            
+            const values = snapshots.map(s => s.value);
+            
+            performanceChart = new Chart(document.getElementById('performanceChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Portfolio Value',
+                        data: values,
+                        borderColor: '#2E86AB',
+                        backgroundColor: 'rgba(46, 134, 171, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#2E86AB'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `$${context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2})}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: textColor, maxRotation: 45, minRotation: 45 },
+                            grid: { color: gridColor }
+                        },
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                color: textColor,
+                                callback: (value) => '$' + value.toLocaleString()
+                            },
+                            grid: { color: gridColor }
+                        }
+                    }
+                }
+            });
+        }
 
         // Portfolio Management Functions
         function saveAllPortfolios() {
@@ -526,7 +716,8 @@
             const id = 'portfolio_' + Date.now();
             portfolios[id] = {
                 name: name.trim(),
-                holdings: []
+                holdings: [],
+                snapshots: []
             };
             
             updatePortfolioSelector();
@@ -601,6 +792,14 @@
                 barChart.options.scales.y.ticks.color = textColor;
                 barChart.options.scales.x.grid.color = gridColor;
                 barChart.update();
+            }
+            
+            if (performanceChart) {
+                performanceChart.options.scales.x.ticks.color = textColor;
+                performanceChart.options.scales.y.ticks.color = textColor;
+                performanceChart.options.scales.x.grid.color = gridColor;
+                performanceChart.options.scales.y.grid.color = gridColor;
+                performanceChart.update();
             }
         }
 
@@ -884,8 +1083,16 @@
             const totalGainLoss = total - totalCostBasis;
             const totalGainLossPercent = totalCostBasis > 0 ? (totalGainLoss / totalCostBasis) * 100 : 0;
             
+            // Save snapshot for performance tracking
+            saveSnapshot(total);
+            
             holdings.sort((a, b) => b.value - a.value);
             createSummary(total, totalCostBasis, totalGainLoss, totalGainLossPercent);
+            
+            // Create performance chart
+            const filteredSnapshots = getFilteredSnapshots(currentTimeRange);
+            createPerformanceChart(filteredSnapshots);
+            
             createPieChart(holdings, total);
             createBarChart(holdings);
             createTable(holdings, total);
