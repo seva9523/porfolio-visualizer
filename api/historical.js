@@ -10,25 +10,20 @@ module.exports = (req, res) => {
   
   const { symbol, from, to } = req.query;
   
-  console.log('Historical API called:', { symbol, from, to });
+  console.log('Yahoo Finance API called:', { symbol, from, to });
   
   if (!symbol) {
     return res.status(400).json({ error: 'Missing symbol parameter' });
   }
   
-  const apiKey = process.env.ALPHA_VANTAGE_API_KEY;
+  // Convert dates to Unix timestamps
+  const fromDate = from ? new Date(from).getTime() / 1000 : Math.floor(Date.now() / 1000) - (365 * 24 * 60 * 60);
+  const toDate = to ? new Date(to).getTime() / 1000 : Math.floor(Date.now() / 1000);
   
-  if (!apiKey) {
-    console.error('Alpha Vantage API key not configured');
-    return res.status(500).json({ error: 'Alpha Vantage API key not configured' });
-  }
+  // Yahoo Finance API endpoint
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?period1=${Math.floor(fromDate)}&period2=${Math.floor(toDate)}&interval=1d`;
   
-  // Always use full outputsize when date parameters are provided
-  // Compact only gives ~100 recent days, full gives 20+ years
-  const outputSize = (from || to) ? 'full' : 'compact';
-  const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${encodeURIComponent(symbol)}&outputsize=${outputSize}&apikey=${apiKey}`;
-  
-  console.log('Fetching from Alpha Vantage with outputsize:', outputSize, 'for date range:', from, 'to', to);
+  console.log('Fetching from Yahoo Finance:', url);
   
   https.get(url, (response) => {
     let data = '';
@@ -41,79 +36,76 @@ module.exports = (req, res) => {
       try {
         const jsonData = JSON.parse(data);
         
-        // Log the response structure (without full data)
-        console.log('Response keys:', Object.keys(jsonData));
+        console.log('Yahoo Finance response received');
         
         // Check for errors
-        if (jsonData['Error Message']) {
-          console.error('Alpha Vantage error:', jsonData['Error Message']);
-          return res.status(404).json({ error: 'Symbol not found', details: jsonData['Error Message'] });
-        }
-        
-        if (jsonData['Note']) {
-          console.error('Alpha Vantage rate limit:', jsonData['Note']);
-          return res.status(429).json({ error: 'API rate limit reached. Please try again in 1 minute.', details: jsonData['Note'] });
-        }
-        
-        if (jsonData['Information']) {
-          console.error('Alpha Vantage info message:', jsonData['Information']);
-          return res.status(429).json({ error: 'API call frequency limit', details: jsonData['Information'] });
-        }
-        
-        const timeSeries = jsonData['Time Series (Daily)'];
-        
-        if (!timeSeries) {
-          console.error('No time series data in response. Keys:', Object.keys(jsonData));
-          return res.status(500).json({ 
-            error: 'No data returned', 
-            details: 'Time Series (Daily) not found in response',
-            availableKeys: Object.keys(jsonData)
+        if (jsonData.chart && jsonData.chart.error) {
+          console.error('Yahoo Finance error:', jsonData.chart.error);
+          return res.status(404).json({ 
+            error: 'Symbol not found or invalid', 
+            details: jsonData.chart.error.description 
           });
         }
         
-        console.log('Time series data found with', Object.keys(timeSeries).length, 'dates');
+        if (!jsonData.chart || !jsonData.chart.result || jsonData.chart.result.length === 0) {
+          console.error('No chart data in response');
+          return res.status(500).json({ 
+            error: 'No data returned',
+            details: 'Chart data not found in response'
+          });
+        }
         
-        // Filter by date range if provided
-        let filteredData = {};
-        let count = 0;
+        const result = jsonData.chart.result[0];
+        const timestamps = result.timestamp || [];
+        const quotes = result.indicators.quote[0];
         
-        for (let date in timeSeries) {
-          const inRange = (!from || date >= from) && (!to || date <= to);
-          if (inRange) {
-            filteredData[date] = {
+        if (!quotes) {
+          console.error('No quote data found');
+          return res.status(500).json({ error: 'No quote data available' });
+        }
+        
+        // Convert to our expected format
+        const formattedData = {};
+        
+        timestamps.forEach((timestamp, index) => {
+          const date = new Date(timestamp * 1000).toISOString().split('T')[0];
+          
+          // Only include if we have valid close price
+          if (quotes.close[index] !== null) {
+            formattedData[date] = {
               date: date,
-              open: parseFloat(timeSeries[date]['1. open']),
-              high: parseFloat(timeSeries[date]['2. high']),
-              low: parseFloat(timeSeries[date]['3. low']),
-              close: parseFloat(timeSeries[date]['4. close']),
-              volume: parseInt(timeSeries[date]['5. volume'])
+              open: quotes.open[index] || 0,
+              high: quotes.high[index] || 0,
+              low: quotes.low[index] || 0,
+              close: quotes.close[index],
+              volume: quotes.volume[index] || 0
             };
-            count++;
           }
-        }
+        });
         
-        console.log(`Returning ${count} data points for ${symbol} (filtered from ${Object.keys(timeSeries).length})`);
-        
-        if (count === 0) {
-          console.warn('No data points match the date range', { from, to });
-        }
+        console.log(`Returning ${Object.keys(formattedData).length} data points for ${symbol}`);
         
         res.status(200).json({
           symbol: symbol,
-          data: filteredData,
-          totalDates: Object.keys(timeSeries).length,
-          filteredDates: count
+          data: formattedData,
+          totalDates: timestamps.length,
+          filteredDates: Object.keys(formattedData).length
         });
         
       } catch (error) {
         console.error('Parse error:', error.message);
-        console.error('Stack:', error.stack);
         console.error('Raw data sample:', data.substring(0, 500));
-        res.status(500).json({ error: 'Failed to parse data', details: error.message });
+        res.status(500).json({ 
+          error: 'Failed to parse data', 
+          details: error.message 
+        });
       }
     });
   }).on('error', (error) => {
     console.error('Request error:', error.message);
-    res.status(500).json({ error: 'Request failed', details: error.message });
+    res.status(500).json({ 
+      error: 'Request failed', 
+      details: error.message 
+    });
   });
 };
