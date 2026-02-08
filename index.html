@@ -471,6 +471,7 @@
                     <canvas id="barChart"></canvas>
                 </div>
                 <div id="table-section"></div>
+                <div id="correlation-section" style="margin-top: 30px;"></div>
             </div>
         </div>
     </div>
@@ -496,6 +497,70 @@
         };
 
         const colors = ['#2E86AB', '#A23B72', '#F18F01', '#C73E1D', '#6A994E', '#BC4B51', '#4C956C', '#D4A373', '#5E548E', '#9B59B6', '#E67E22', '#16A085', '#3498DB', '#E91E63', '#FF9800', '#009688', '#673AB7', '#FF5722'];
+
+        // Performance metrics calculations
+        function calculateCAGR(startValue, endValue, years) {
+            if (startValue <= 0 || years <= 0) return 0;
+            return (Math.pow(endValue / startValue, 1 / years) - 1) * 100;
+        }
+
+        function calculateVolatility(returns) {
+            if (returns.length < 2) return 0;
+            const mean = returns.reduce((sum, r) => sum + r, 0) / returns.length;
+            const variance = returns.reduce((sum, r) => sum + Math.pow(r - mean, 2), 0) / returns.length;
+            return Math.sqrt(variance) * Math.sqrt(252) * 100; // Annualized
+        }
+
+        function calculateSharpeRatio(returns, riskFreeRate = 0.02) {
+            if (returns.length < 2) return 0;
+            const avgReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
+            const volatility = calculateVolatility(returns) / 100;
+            if (volatility === 0) return 0;
+            return ((avgReturn * 252 - riskFreeRate) / volatility);
+        }
+
+        function calculateMaxDrawdown(values) {
+            if (values.length < 2) return 0;
+            let maxDrawdown = 0;
+            let peak = values[0];
+            
+            for (let i = 1; i < values.length; i++) {
+                if (values[i] > peak) {
+                    peak = values[i];
+                }
+                const drawdown = (peak - values[i]) / peak;
+                if (drawdown > maxDrawdown) {
+                    maxDrawdown = drawdown;
+                }
+            }
+            
+            return maxDrawdown * 100;
+        }
+
+        function calculateCorrelation(returns1, returns2) {
+            if (returns1.length !== returns2.length || returns1.length < 2) return 0;
+            
+            const n = returns1.length;
+            const mean1 = returns1.reduce((sum, r) => sum + r, 0) / n;
+            const mean2 = returns2.reduce((sum, r) => sum + r, 0) / n;
+            
+            let numerator = 0;
+            let sum1Sq = 0;
+            let sum2Sq = 0;
+            
+            for (let i = 0; i < n; i++) {
+                const diff1 = returns1[i] - mean1;
+                const diff2 = returns2[i] - mean2;
+                numerator += diff1 * diff2;
+                sum1Sq += diff1 * diff1;
+                sum2Sq += diff2 * diff2;
+            }
+            
+            const denominator = Math.sqrt(sum1Sq * sum2Sq);
+            if (denominator === 0) return 0;
+            
+            return numerator / denominator;
+        }
 
         // Cache management
         function clearHistoricalCache() {
@@ -1604,6 +1669,7 @@
             createPieChart(holdings, total);
             createBarChart(holdings);
             createTable(holdings, total);
+            createCorrelationMatrix(holdings);
             
             // Save to current portfolio
             portfolios[currentPortfolio].holdings = holdings;
@@ -1627,6 +1693,83 @@
                 </div>
             ` : '';
             
+            // Calculate years from earliest purchase date
+            const earliestDate = holdings
+                .filter(h => h.purchaseDate)
+                .map(h => h.purchaseDate)
+                .sort()[0];
+            
+            const years = earliestDate ? 
+                (new Date() - new Date(earliestDate)) / (365.25 * 24 * 60 * 60 * 1000) : 0;
+            
+            // Calculate CAGR
+            const cagr = calculateCAGR(totalCostBasis, total, years);
+            
+            // Calculate daily returns for metrics (if we have historical data)
+            const allReturns = [];
+            const allValues = [];
+            
+            holdings.forEach(h => {
+                if (h.historicalData && Object.keys(h.historicalData).length > 1) {
+                    const dates = Object.keys(h.historicalData).sort();
+                    for (let i = 1; i < dates.length; i++) {
+                        const prevPrice = h.historicalData[dates[i-1]].close;
+                        const currPrice = h.historicalData[dates[i]].close;
+                        const dailyReturn = (currPrice - prevPrice) / prevPrice;
+                        allReturns.push(dailyReturn);
+                        allValues.push(currPrice * h.shares);
+                    }
+                }
+            });
+            
+            const volatility = allReturns.length > 0 ? calculateVolatility(allReturns) : 0;
+            const sharpe = allReturns.length > 0 ? calculateSharpeRatio(allReturns) : 0;
+            const maxDrawdown = allValues.length > 0 ? calculateMaxDrawdown(allValues) : 0;
+            
+            const metricsHTML = (years > 0 || allReturns.length > 0) ? `
+                <div class="summary-box" style="margin-top: 20px;">
+                    <h2>Performance Metrics</h2>
+                    <div class="metrics-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-top: 15px;">
+                        ${years > 0 && totalCostBasis > 0 ? `
+                        <div class="metric-card" style="padding: 15px; background: var(--card-bg); border-radius: 8px; text-align: center;">
+                            <div style="font-size: 11px; color: #999; text-transform: uppercase; margin-bottom: 5px;">CAGR</div>
+                            <div style="font-size: 24px; font-weight: 700; color: ${cagr >= 0 ? '#27ae60' : '#e74c3c'};">
+                                ${cagr.toFixed(2)}%
+                            </div>
+                            <div style="font-size: 10px; color: #999; margin-top: 3px;">${years.toFixed(1)} years</div>
+                        </div>
+                        ` : ''}
+                        ${sharpe !== 0 ? `
+                        <div class="metric-card" style="padding: 15px; background: var(--card-bg); border-radius: 8px; text-align: center;">
+                            <div style="font-size: 11px; color: #999; text-transform: uppercase; margin-bottom: 5px;">Sharpe Ratio</div>
+                            <div style="font-size: 24px; font-weight: 700; color: var(--text-primary);">
+                                ${sharpe.toFixed(2)}
+                            </div>
+                            <div style="font-size: 10px; color: #999; margin-top: 3px;">Risk-adjusted</div>
+                        </div>
+                        ` : ''}
+                        ${maxDrawdown !== 0 ? `
+                        <div class="metric-card" style="padding: 15px; background: var(--card-bg); border-radius: 8px; text-align: center;">
+                            <div style="font-size: 11px; color: #999; text-transform: uppercase; margin-bottom: 5px;">Max Drawdown</div>
+                            <div style="font-size: 24px; font-weight: 700; color: #e74c3c;">
+                                ${maxDrawdown.toFixed(2)}%
+                            </div>
+                            <div style="font-size: 10px; color: #999; margin-top: 3px;">Peak to trough</div>
+                        </div>
+                        ` : ''}
+                        ${volatility !== 0 ? `
+                        <div class="metric-card" style="padding: 15px; background: var(--card-bg); border-radius: 8px; text-align: center;">
+                            <div style="font-size: 11px; color: #999; text-transform: uppercase; margin-bottom: 5px;">Volatility</div>
+                            <div style="font-size: 24px; font-weight: 700; color: var(--text-primary);">
+                                ${volatility.toFixed(2)}%
+                            </div>
+                            <div style="font-size: 10px; color: #999; margin-top: 3px;">Annualized</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            ` : '';
+            
             document.getElementById('summary-section').innerHTML = `
                 <div class="summary-box">
                     <h2>Portfolio Summary</h2>
@@ -1636,6 +1779,7 @@
                     <div class="summary-stat"><span class="stat-label">Largest Position:</span><span class="stat-value">${holdings[0].ticker} (${((holdings[0].value/total)*100).toFixed(1)}%)</span></div>
                     <div class="summary-stat"><span class="stat-label">Average Position Size:</span><span class="stat-value">$${(total/holdings.length).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span></div>
                 </div>
+                ${metricsHTML}
             `;
         }
 
@@ -1699,6 +1843,80 @@
                     } 
                 }
             });
+        }
+
+        function createCorrelationMatrix(holdings) {
+            // Only show if we have 2+ holdings with historical data
+            const holdingsWithData = holdings.filter(h => 
+                h.historicalData && Object.keys(h.historicalData).length > 1
+            );
+            
+            if (holdingsWithData.length < 2) {
+                document.getElementById('correlation-section').innerHTML = '';
+                return;
+            }
+            
+            // Calculate returns for each holding
+            const returnsData = {};
+            holdingsWithData.forEach(h => {
+                const dates = Object.keys(h.historicalData).sort();
+                const returns = [];
+                for (let i = 1; i < dates.length; i++) {
+                    const prevPrice = h.historicalData[dates[i-1]].close;
+                    const currPrice = h.historicalData[dates[i]].close;
+                    returns.push((currPrice - prevPrice) / prevPrice);
+                }
+                returnsData[h.ticker] = returns;
+            });
+            
+            // Build correlation matrix
+            const tickers = Object.keys(returnsData);
+            let html = `
+                <div class="summary-box">
+                    <h2>Correlation Matrix</h2>
+                    <div style="overflow-x: auto; margin-top: 15px;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                            <thead>
+                                <tr style="background: var(--input-bg);">
+                                    <th style="padding: 12px; text-align: left; border: 1px solid var(--input-border);"></th>
+                                    ${tickers.map(t => `<th style="padding: 12px; text-align: center; border: 1px solid var(--input-border); font-weight: 600;">${t}</th>`).join('')}
+                                </tr>
+                            </thead>
+                            <tbody>
+            `;
+            
+            tickers.forEach((ticker1, i) => {
+                html += `<tr><td style="padding: 12px; font-weight: 600; border: 1px solid var(--input-border);">${ticker1}</td>`;
+                tickers.forEach((ticker2, j) => {
+                    const corr = i === j ? 1.0 : calculateCorrelation(returnsData[ticker1], returnsData[ticker2]);
+                    const intensity = Math.abs(corr);
+                    const color = corr >= 0 ? 
+                        `rgba(39, 174, 96, ${intensity * 0.3})` : 
+                        `rgba(231, 76, 60, ${intensity * 0.3})`;
+                    
+                    html += `<td style="padding: 12px; text-align: center; border: 1px solid var(--input-border); background: ${color};">${corr.toFixed(2)}</td>`;
+                });
+                html += '</tr>';
+            });
+            
+            html += `
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="margin-top: 15px; padding: 15px; background: rgba(241, 143, 1, 0.1); border-left: 3px solid #F18F01; border-radius: 4px; font-size: 13px; color: var(--text-primary);">
+                        <strong>Correlation Insight:</strong> 
+                        ${tickers.length === 2 ? `
+                            With a correlation of ${calculateCorrelation(returnsData[tickers[0]], returnsData[tickers[1]]).toFixed(2)} between ${tickers[0]} and ${tickers[1]}, 
+                            the portfolio exhibits ${Math.abs(calculateCorrelation(returnsData[tickers[0]], returnsData[tickers[1]])) > 0.7 ? 'high' : Math.abs(calculateCorrelation(returnsData[tickers[0]], returnsData[tickers[1]])) > 0.4 ? 'moderate' : 'low'} correlation, 
+                            meaning the stocks tend to move ${Math.abs(calculateCorrelation(returnsData[tickers[0]], returnsData[tickers[1]])) > 0.7 ? 'together' : Math.abs(calculateCorrelation(returnsData[tickers[0]], returnsData[tickers[1]])) > 0.4 ? 'somewhat together' : 'independently'}.
+                        ` : `
+                            The portfolio shows varying correlations between holdings. Lower correlations indicate better diversification.
+                        `}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('correlation-section').innerHTML = html;
         }
 
         function createTable(data, total) {
