@@ -1020,7 +1020,7 @@
                 </div>
                 <input type="number" placeholder="Shares" id="shares-${holdingCounter}" value="${value}" step="0.01" min="0" style="font-size: 12px;">
                 <input type="number" placeholder="Price" id="purchase-${holdingCounter}" value="${purchasePrice}" step="0.01" min="0" style="font-size: 11px;">
-                <input type="date" id="date-${holdingCounter}" value="${purchaseDate}" title="Purchase Date" style="font-size: 10px; cursor: pointer;">
+                <input type="date" id="date-${holdingCounter}" value="${purchaseDate}" max="${new Date().toISOString().split('T')[0]}" title="Purchase Date (YYYY-MM-DD)" style="font-size: 10px; cursor: pointer;">
                 <button class="remove-btn" onclick="removeHolding(this)">×</button>
             `;
             container.appendChild(div);
@@ -1078,7 +1078,32 @@
             
             dateInput.addEventListener('change', async () => {
                 const ticker = tickerInput.value.toUpperCase();
-                const selectedDate = dateInput.value;
+                let selectedDate = dateInput.value;
+                
+                console.log('Date input value (raw):', selectedDate);
+                
+                // Validate date format (should be YYYY-MM-DD from HTML5 date input)
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(selectedDate)) {
+                    console.error('Invalid date format:', selectedDate);
+                    alert('Invalid date format. Please select a date from the calendar.');
+                    return;
+                }
+                
+                // Validate it's not in the future
+                const selectedDateObj = new Date(selectedDate);
+                const today = new Date();
+                if (selectedDateObj > today) {
+                    alert('Cannot select a future date!');
+                    dateInput.value = '';
+                    return;
+                }
+                
+                // Validate it's not too old (stock markets didn't exist before 1900)
+                if (selectedDateObj.getFullYear() < 1900) {
+                    alert('Date too old. Please select a date after 1900.');
+                    dateInput.value = '';
+                    return;
+                }
                 
                 if (ticker && selectedDate) {
                     console.log(`Fetching price for ${ticker} on ${selectedDate}...`);
@@ -1089,13 +1114,16 @@
                         // Fetch historical data for that specific date
                         const historicalData = await fetchHistoricalPrices(ticker, selectedDate, selectedDate);
                         
+                        console.log('Historical data received:', historicalData);
+                        
                         if (historicalData && historicalData[selectedDate]) {
                             const closePrice = historicalData[selectedDate].close;
                             priceInput.value = closePrice.toFixed(2);
                             console.log(`Price for ${ticker} on ${selectedDate}: $${closePrice}`);
                         } else {
                             priceInput.value = '';
-                            alert(`No price data available for ${ticker} on ${selectedDate}. Please enter manually.`);
+                            console.error('No data for selected date. Available dates:', Object.keys(historicalData || {}).slice(0, 5));
+                            alert(`No price data available for ${ticker} on ${selectedDate}. The market may have been closed. Please enter price manually or try a different date.`);
                         }
                     } catch (error) {
                         console.error('Error fetching historical price:', error);
