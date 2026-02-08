@@ -472,6 +472,8 @@
                 </div>
                 <div id="table-section"></div>
                 <div id="correlation-section" style="margin-top: 30px;"></div>
+                <div id="benchmark-section" style="margin-top: 30px;"></div>
+                <div id="optimization-section" style="margin-top: 30px;"></div>
             </div>
         </div>
     </div>
@@ -1476,6 +1478,275 @@
             }
         }
         
+        async function fetchSP500Data(fromDate, toDate) {
+            try {
+                const cacheKey = `SP500_${fromDate}_${toDate}`;
+                const cachedData = localStorage.getItem(cacheKey);
+                const cacheTime = localStorage.getItem(`${cacheKey}_time`);
+                
+                if (cachedData && cacheTime) {
+                    const age = Date.now() - parseInt(cacheTime);
+                    if (age < 24 * 60 * 60 * 1000) {
+                        console.log('Using cached S&P 500 data');
+                        return JSON.parse(cachedData);
+                    }
+                }
+                
+                console.log('Fetching S&P 500 data from', fromDate, 'to', toDate);
+                const response = await fetch(`/api/historical?symbol=^GSPC&from=${fromDate}&to=${toDate}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    console.error('Error fetching S&P 500 data:', data.error);
+                    return null;
+                }
+                
+                const sp500Data = data.data || {};
+                
+                // Cache the data
+                if (Object.keys(sp500Data).length > 0) {
+                    localStorage.setItem(cacheKey, JSON.stringify(sp500Data));
+                    localStorage.setItem(`${cacheKey}_time`, Date.now().toString());
+                }
+                
+                return sp500Data;
+            } catch (error) {
+                console.error('Error fetching S&P 500 data:', error);
+                return null;
+            }
+        }
+
+        function createBenchmarkChart(holdings, totalCostBasis, currentValue) {
+            // Find earliest purchase date
+            const earliestDate = holdings
+                .filter(h => h.purchaseDate)
+                .map(h => h.purchaseDate)
+                .sort()[0];
+            
+            if (!earliestDate || totalCostBasis <= 0) {
+                document.getElementById('benchmark-section').innerHTML = '';
+                return;
+            }
+            
+            // Check if we have historical data
+            const hasHistoricalData = holdings.some(h => 
+                h.historicalData && Object.keys(h.historicalData).length > 10
+            );
+            
+            if (!hasHistoricalData) {
+                document.getElementById('benchmark-section').innerHTML = `
+                    <div class="summary-box" style="margin-top: 30px;">
+                        <h2>Historical Backtest vs S&P 500</h2>
+                        <div style="padding: 40px; text-align: center; background: rgba(241, 143, 1, 0.1); border-radius: 12px; margin-top: 15px;">
+                            <div style="font-size: 16px; font-weight: 600; color: #F18F01; margin-bottom: 10px;">
+                                📊 Backtest Unavailable
+                            </div>
+                            <div style="font-size: 14px; color: var(--text-primary);">
+                                Historical backtest requires daily price data.<br>
+                                Data will appear once historical prices are fetched successfully.
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Aggregate portfolio values over time
+            const allDates = new Set();
+            holdings.forEach(h => {
+                if (h.historicalData) {
+                    Object.keys(h.historicalData).forEach(date => {
+                        if (date >= earliestDate) {
+                            allDates.add(date);
+                        }
+                    });
+                }
+            });
+            
+            const sortedDates = Array.from(allDates).sort();
+            
+            if (sortedDates.length < 2) {
+                document.getElementById('benchmark-section').innerHTML = '';
+                return;
+            }
+            
+            // Calculate portfolio value for each date
+            const portfolioValues = [];
+            const labels = [];
+            
+            sortedDates.forEach(date => {
+                let totalValue = 0;
+                holdings.forEach(h => {
+                    if (h.purchaseDate && date >= h.purchaseDate && h.historicalData && h.historicalData[date]) {
+                        totalValue += h.shares * h.historicalData[date].close;
+                    }
+                });
+                
+                if (totalValue > 0) {
+                    portfolioValues.push(totalValue);
+                    labels.push(date);
+                }
+            });
+            
+            // Fetch and calculate S&P 500 performance
+            fetchSP500Data(earliestDate, sortedDates[sortedDates.length - 1]).then(sp500Data => {
+                if (!sp500Data || Object.keys(sp500Data).length === 0) {
+                    console.warn('No S&P 500 data available');
+                    return;
+                }
+                
+                // Calculate S&P 500 normalized to same initial investment
+                const sp500Values = [];
+                const firstDate = labels[0];
+                const sp500FirstPrice = sp500Data[firstDate]?.close;
+                
+                if (!sp500FirstPrice) {
+                    console.warn('No S&P 500 price for start date');
+                    return;
+                }
+                
+                labels.forEach(date => {
+                    if (sp500Data[date]) {
+                        // Normalize to initial cost basis
+                        const sp500Value = (sp500Data[date].close / sp500FirstPrice) * totalCostBasis;
+                        sp500Values.push(sp500Value);
+                    } else {
+                        sp500Values.push(null);
+                    }
+                });
+                
+                // Calculate performance stats
+                const portfolioReturn = ((currentValue - totalCostBasis) / totalCostBasis) * 100;
+                const sp500FinalValue = sp500Values[sp500Values.length - 1];
+                const sp500Return = sp500FinalValue ? ((sp500FinalValue - totalCostBasis) / totalCostBasis) * 100 : 0;
+                const outperformance = portfolioReturn - sp500Return;
+                
+                // Create chart
+                const isDark = document.body.classList.contains('dark-mode');
+                const textColor = isDark ? '#e8e8e8' : '#2c3e50';
+                const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+                
+                const chartLabels = labels.map(date => {
+                    const d = new Date(date);
+                    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
+                });
+                
+                const benchmarkChartHTML = `
+                    <div class="summary-box" style="margin-top: 30px;">
+                        <h2>Historical Backtest (Growth of $${totalCostBasis.toLocaleString('en-US', {maximumFractionDigits: 0})})</h2>
+                        <canvas id="benchmarkChart" style="max-height: 300px; margin-top: 15px;"></canvas>
+                        <div style="margin-top: 20px; padding: 15px; background: var(--card-bg); border-radius: 8px;">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; text-align: center;">
+                                <div>
+                                    <div style="font-size: 11px; color: #999; margin-bottom: 5px;">Your Portfolio</div>
+                                    <div style="font-size: 20px; font-weight: 700; color: #e91e63;">
+                                        $${currentValue.toLocaleString('en-US', {maximumFractionDigits: 0})}
+                                    </div>
+                                    <div style="font-size: 12px; color: ${portfolioReturn >= 0 ? '#27ae60' : '#e74c3c'};">
+                                        ${portfolioReturn >= 0 ? '+' : ''}${portfolioReturn.toFixed(2)}%
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 11px; color: #999; margin-bottom: 5px;">S&P 500</div>
+                                    <div style="font-size: 20px; font-weight: 700; color: #666;">
+                                        $${sp500FinalValue.toLocaleString('en-US', {maximumFractionDigits: 0})}
+                                    </div>
+                                    <div style="font-size: 12px; color: ${sp500Return >= 0 ? '#27ae60' : '#e74c3c'};">
+                                        ${sp500Return >= 0 ? '+' : ''}${sp500Return.toFixed(2)}%
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 11px; color: #999; margin-bottom: 5px;">Outperformance</div>
+                                    <div style="font-size: 20px; font-weight: 700; color: ${outperformance >= 0 ? '#27ae60' : '#e74c3c'};">
+                                        ${outperformance >= 0 ? '+' : ''}${outperformance.toFixed(2)}%
+                                    </div>
+                                    <div style="font-size: 12px; color: #999;">
+                                        vs benchmark
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 15px; padding: 15px; background: rgba(46, 134, 171, 0.1); border-left: 3px solid #2E86AB; border-radius: 4px; font-size: 13px; color: var(--text-primary);">
+                            ${outperformance > 5 ? 
+                                `<strong>Strong Performance:</strong> Your portfolio has outperformed the S&P 500 by ${outperformance.toFixed(1)}%, demonstrating excellent stock selection and timing.` :
+                            outperformance > 0 ?
+                                `<strong>Positive Performance:</strong> Your portfolio has slightly outperformed the S&P 500 by ${outperformance.toFixed(1)}%.` :
+                            outperformance > -5 ?
+                                `<strong>Market Performance:</strong> Your portfolio is tracking closely with the S&P 500 (${outperformance.toFixed(1)}% difference).` :
+                                `<strong>Underperformance:</strong> Your portfolio has underperformed the S&P 500 by ${Math.abs(outperformance).toFixed(1)}%. Consider reviewing your allocation.`
+                            }
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('benchmark-section').innerHTML = benchmarkChartHTML;
+                
+                // Create the chart
+                const benchmarkChart = new Chart(document.getElementById('benchmarkChart'), {
+                    type: 'line',
+                    data: {
+                        labels: chartLabels,
+                        datasets: [
+                            {
+                                label: 'Your Portfolio',
+                                data: portfolioValues,
+                                borderColor: '#e91e63',
+                                backgroundColor: 'rgba(233, 30, 99, 0.1)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.4,
+                                pointRadius: 0
+                            },
+                            {
+                                label: 'S&P 500',
+                                data: sp500Values,
+                                borderColor: '#666',
+                                backgroundColor: 'transparent',
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                fill: false,
+                                tension: 0.4,
+                                pointRadius: 0
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: { color: textColor }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => `${context.dataset.label}: $${context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2})}`
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: { 
+                                    color: textColor,
+                                    maxTicksLimit: 10
+                                },
+                                grid: { color: gridColor }
+                            },
+                            y: {
+                                beginAtZero: false,
+                                ticks: {
+                                    color: textColor,
+                                    callback: (value) => '$' + value.toLocaleString()
+                                },
+                                grid: { color: gridColor }
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
         async function fetchHistoricalPrices(ticker, fromDate, toDate) {
             try {
                 const today = new Date().toISOString().split('T')[0];
@@ -1670,6 +1941,8 @@
             createBarChart(holdings);
             createTable(holdings, total);
             createCorrelationMatrix(holdings);
+            createBenchmarkChart(holdings, totalCostBasis, total);
+            analyzePortfolioOptimization(holdings, total);
             
             // Save to current portfolio
             portfolios[currentPortfolio].holdings = holdings;
@@ -1843,6 +2116,147 @@
                     } 
                 }
             });
+        }
+
+        function analyzePortfolioOptimization(holdings, total) {
+            if (holdings.length === 0) {
+                document.getElementById('optimization-section').innerHTML = '';
+                return;
+            }
+            
+            // Calculate allocations
+            const allocations = holdings.map(h => ({
+                ticker: h.ticker,
+                percentage: (h.value / total) * 100,
+                value: h.value
+            })).sort((a, b) => b.percentage - a.percentage);
+            
+            // Analyze concentration
+            const maxPosition = allocations[0].percentage;
+            const top3Concentration = allocations.slice(0, 3).reduce((sum, a) => sum + a.percentage, 0);
+            
+            // Determine risk level
+            let riskLevel = '';
+            let riskColor = '';
+            if (maxPosition > 50 || holdings.length < 3) {
+                riskLevel = 'Aggressive';
+                riskColor = '#e74c3c';
+            } else if (maxPosition > 30 || holdings.length < 5) {
+                riskLevel = 'Moderate';
+                riskColor = '#F18F01';
+            } else {
+                riskLevel = 'Conservative';
+                riskColor = '#27ae60';
+            }
+            
+            // Diversification score (out of 10)
+            let diversificationScore = 10;
+            if (maxPosition > 50) diversificationScore -= 4;
+            else if (maxPosition > 40) diversificationScore -= 3;
+            else if (maxPosition > 30) diversificationScore -= 2;
+            else if (maxPosition > 25) diversificationScore -= 1;
+            
+            if (holdings.length < 3) diversificationScore -= 3;
+            else if (holdings.length < 5) diversificationScore -= 2;
+            else if (holdings.length < 8) diversificationScore -= 1;
+            
+            if (top3Concentration > 80) diversificationScore -= 2;
+            else if (top3Concentration > 70) diversificationScore -= 1;
+            
+            diversificationScore = Math.max(0, diversificationScore);
+            
+            // Generate suggestions
+            const suggestions = [];
+            
+            if (maxPosition > 50) {
+                suggestions.push(`🎯 <strong>High Concentration:</strong> ${allocations[0].ticker} represents ${maxPosition.toFixed(1)}% of your portfolio. Consider reducing to max 40-50% to lower risk.`);
+            } else if (maxPosition > 40) {
+                suggestions.push(`⚠️ <strong>Concentration Alert:</strong> ${allocations[0].ticker} at ${maxPosition.toFixed(1)}% is a large position. Target max 30-40% for better diversification.`);
+            }
+            
+            if (holdings.length < 5) {
+                suggestions.push(`📊 <strong>Limited Diversification:</strong> With only ${holdings.length} holding${holdings.length === 1 ? '' : 's'}, consider adding 3-5 more positions across different sectors.`);
+            }
+            
+            if (top3Concentration > 80 && holdings.length > 3) {
+                suggestions.push(`⚖️ <strong>Top-Heavy Portfolio:</strong> Your top 3 holdings make up ${top3Concentration.toFixed(1)}% of the portfolio. Consider rebalancing to spread risk.`);
+            }
+            
+            // Sector analysis (simplified - assume tech if common tech stocks)
+            const techStocks = ['AAPL', 'GOOGL', 'MSFT', 'META', 'NVDA', 'TSLA', 'AMZN', 'NFLX'];
+            const techHoldings = holdings.filter(h => techStocks.includes(h.ticker));
+            const techPercentage = techHoldings.reduce((sum, h) => sum + (h.value / total) * 100, 0);
+            
+            if (techPercentage > 70) {
+                suggestions.push(`💻 <strong>Sector Concentration:</strong> ${techPercentage.toFixed(1)}% in technology stocks. Consider adding exposure to other sectors (healthcare, financials, consumer goods).`);
+            }
+            
+            if (suggestions.length === 0) {
+                suggestions.push(`✅ <strong>Well Diversified:</strong> Your portfolio shows good diversification with balanced allocations across ${holdings.length} holdings.`);
+            }
+            
+            // Create allocation bars
+            const allocationBars = allocations.map((a, i) => `
+                <div style="margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px;">
+                        <span style="font-weight: 600;">${a.ticker}</span>
+                        <span style="color: #999;">${a.percentage.toFixed(1)}%</span>
+                    </div>
+                    <div style="width: 100%; height: 8px; background: var(--input-bg); border-radius: 4px; overflow: hidden;">
+                        <div style="width: ${a.percentage}%; height: 100%; background: ${colors[i % colors.length]}; border-radius: 4px;"></div>
+                    </div>
+                </div>
+            `).join('');
+            
+            const html = `
+                <div class="summary-box">
+                    <h2>Portfolio Optimization Analysis</h2>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 20px;">
+                        <div style="padding: 20px; background: var(--card-bg); border-radius: 8px; text-align: center;">
+                            <div style="font-size: 12px; color: #999; text-transform: uppercase; margin-bottom: 8px;">Risk Level</div>
+                            <div style="font-size: 24px; font-weight: 700; color: ${riskColor};">
+                                ${riskLevel}
+                            </div>
+                        </div>
+                        <div style="padding: 20px; background: var(--card-bg); border-radius: 8px; text-align: center;">
+                            <div style="font-size: 12px; color: #999; text-transform: uppercase; margin-bottom: 8px;">Diversification Score</div>
+                            <div style="font-size: 24px; font-weight: 700; color: ${diversificationScore >= 7 ? '#27ae60' : diversificationScore >= 4 ? '#F18F01' : '#e74c3c'};">
+                                ${diversificationScore}/10
+                            </div>
+                        </div>
+                        <div style="padding: 20px; background: var(--card-bg); border-radius: 8px; text-align: center;">
+                            <div style="font-size: 12px; color: #999; text-transform: uppercase; margin-bottom: 8px;">Largest Position</div>
+                            <div style="font-size: 24px; font-weight: 700; color: var(--text-primary);">
+                                ${maxPosition.toFixed(1)}%
+                            </div>
+                            <div style="font-size: 11px; color: #999; margin-top: 3px;">${allocations[0].ticker}</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 25px;">
+                        <h3 style="font-size: 16px; margin-bottom: 15px; color: var(--text-primary);">Current Allocation</h3>
+                        ${allocationBars}
+                    </div>
+                    
+                    <div style="margin-top: 25px;">
+                        <h3 style="font-size: 16px; margin-bottom: 15px; color: var(--text-primary);">Optimization Suggestions</h3>
+                        ${suggestions.map(s => `
+                            <div style="margin-bottom: 12px; padding: 12px; background: rgba(46, 134, 171, 0.05); border-left: 3px solid #2E86AB; border-radius: 4px; font-size: 13px; line-height: 1.6; color: var(--text-primary);">
+                                ${s}
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    ${holdings.length < 10 ? `
+                    <div style="margin-top: 20px; padding: 15px; background: rgba(39, 174, 96, 0.1); border-left: 3px solid #27ae60; border-radius: 4px; font-size: 13px; color: var(--text-primary);">
+                        <strong>💡 Pro Tip:</strong> A well-balanced portfolio typically includes 8-15 holdings across multiple sectors, with no single position exceeding 20-25% of total value.
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            document.getElementById('optimization-section').innerHTML = html;
         }
 
         function createCorrelationMatrix(holdings) {
