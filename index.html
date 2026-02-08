@@ -116,8 +116,8 @@
         
         .holding-input {
             display: grid;
-            grid-template-columns: 120px 80px 90px 60px;
-            gap: 10px;
+            grid-template-columns: 120px 70px 80px 95px 60px;
+            gap: 8px;
             margin-bottom: 12px;
             align-items: start;
             position: relative;
@@ -580,6 +580,115 @@
             }
         }
 
+        function createHistoricalPerformanceChart(holdings, fromDate) {
+            const isDark = document.body.classList.contains('dark-mode');
+            const textColor = isDark ? '#e8e8e8' : '#2c3e50';
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+            
+            // Aggregate all dates from all holdings
+            const allDates = new Set();
+            holdings.forEach(h => {
+                if (h.historicalData) {
+                    Object.keys(h.historicalData).forEach(date => allDates.add(date));
+                }
+            });
+            
+            if (allDates.size === 0) {
+                document.getElementById('performanceChart').style.display = 'none';
+                return;
+            }
+            
+            // Sort dates
+            const sortedDates = Array.from(allDates).sort();
+            
+            // Calculate portfolio value for each date
+            const portfolioValues = sortedDates.map(date => {
+                let totalValue = 0;
+                
+                holdings.forEach(h => {
+                    // Check if this holding existed on this date
+                    if (h.purchaseDate && date >= h.purchaseDate) {
+                        // Use historical price if available, otherwise skip
+                        if (h.historicalData && h.historicalData[date]) {
+                            const closePrice = h.historicalData[date].close;
+                            totalValue += h.shares * closePrice;
+                        }
+                    }
+                });
+                
+                return totalValue;
+            });
+            
+            // Filter out zero values from before any holdings started
+            const firstNonZeroIndex = portfolioValues.findIndex(v => v > 0);
+            const filteredDates = sortedDates.slice(firstNonZeroIndex);
+            const filteredValues = portfolioValues.slice(firstNonZeroIndex);
+            
+            if (filteredValues.length === 0) {
+                document.getElementById('performanceChart').style.display = 'none';
+                return;
+            }
+            
+            document.getElementById('performanceChart').style.display = 'block';
+            
+            if (performanceChart) performanceChart.destroy();
+            
+            const labels = filteredDates.map(date => {
+                const d = new Date(date);
+                return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
+            });
+            
+            performanceChart = new Chart(document.getElementById('performanceChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Portfolio Value',
+                        data: filteredValues,
+                        borderColor: '#2E86AB',
+                        backgroundColor: 'rgba(46, 134, 171, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 2,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#2E86AB'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `$${context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2})}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { 
+                                color: textColor, 
+                                maxRotation: 45, 
+                                minRotation: 45,
+                                maxTicksLimit: 15
+                            },
+                            grid: { color: gridColor }
+                        },
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                color: textColor,
+                                callback: (value) => '$' + value.toLocaleString()
+                            },
+                            grid: { color: gridColor }
+                        }
+                    }
+                }
+            });
+        }
+
         function createPerformanceChart(snapshots) {
             const isDark = document.body.classList.contains('dark-mode');
             const textColor = isDark ? '#e8e8e8' : '#2c3e50';
@@ -695,7 +804,7 @@
             holdingCounter = 0;
             
             if (holdings.length > 0) {
-                holdings.forEach(h => addHolding(h.ticker, h.shares, h.name, h.purchasePrice || ''));
+                holdings.forEach(h => addHolding(h.ticker, h.shares, h.name, h.purchasePrice || '', h.purchaseDate || ''));
             } else {
                 addHolding(); addHolding(); addHolding();
             }
@@ -880,7 +989,7 @@
             selectedIndex = -1;
         }
 
-        function addHolding(ticker = '', value = '', name = '', purchasePrice = '') {
+        function addHolding(ticker = '', value = '', name = '', purchasePrice = '', purchaseDate = '') {
             const container = document.getElementById('holdings-container');
             const id = `ticker-${holdingCounter}`;
             const dropdownId = `dropdown-${holdingCounter}`;
@@ -892,8 +1001,9 @@
                     <input type="text" placeholder="Ticker" id="${id}" value="${ticker}" data-name="${name}" autocomplete="off">
                     <div class="autocomplete-dropdown" id="${dropdownId}"></div>
                 </div>
-                <input type="number" placeholder="Shares" id="shares-${holdingCounter}" value="${value}" step="0.01" min="0">
-                <input type="number" placeholder="Purchase Price" id="purchase-${holdingCounter}" value="${purchasePrice}" step="0.01" min="0" style="font-size: 11px;">
+                <input type="number" placeholder="Shares" id="shares-${holdingCounter}" value="${value}" step="0.01" min="0" style="font-size: 12px;">
+                <input type="number" placeholder="Price" id="purchase-${holdingCounter}" value="${purchasePrice}" step="0.01" min="0" style="font-size: 11px;">
+                <input type="date" placeholder="Date" id="date-${holdingCounter}" value="${purchaseDate}" style="font-size: 10px;">
                 <button class="remove-btn" onclick="removeHolding(this)">×</button>
             `;
             container.appendChild(div);
@@ -971,20 +1081,24 @@
                 const name = tickerInput.dataset.name || '';
                 const sharesInput = input.querySelectorAll('input[type="number"]')[0];
                 const purchaseInput = input.querySelectorAll('input[type="number"]')[1];
+                const dateInput = input.querySelector('input[type="date"]');
                 const shares = parseFloat(sharesInput.value) || 0;
                 const purchasePrice = parseFloat(purchaseInput.value) || 0;
+                const purchaseDate = dateInput.value || '';
                 
                 if (ticker && shares > 0) {
                     holdings.push({
                         ticker, 
                         shares, 
                         purchasePrice,
+                        purchaseDate,
                         name,
                         currentPrice: 0,
                         value: 0,
                         costBasis: shares * purchasePrice,
                         gainLoss: 0,
-                        gainLossPercent: 0
+                        gainLossPercent: 0,
+                        historicalData: []
                     });
                 }
             });
@@ -999,6 +1113,25 @@
             } catch (error) {
                 console.error(`Error fetching price for ${ticker}:`, error);
                 return 0;
+            }
+        }
+        
+        async function fetchHistoricalPrices(ticker, fromDate, toDate) {
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const to = toDate || today;
+                const response = await fetch(`/api/historical?symbol=${ticker}&from=${fromDate}&to=${to}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    console.error(`Error fetching historical data for ${ticker}:`, data.error);
+                    return {};
+                }
+                
+                return data.data || {};
+            } catch (error) {
+                console.error(`Error fetching historical data for ${ticker}:`, error);
+                return {};
             }
         }
 
@@ -1043,40 +1176,52 @@
                 return; 
             }
             
-            // Check if we need to fetch prices (if any holding has no price or price is 0)
-            const needsPrices = holdings.some(h => !h.currentPrice || h.currentPrice === 0);
+            const visualizeBtn = document.querySelector('.visualize-btn');
+            const originalText = visualizeBtn.textContent;
+            visualizeBtn.disabled = true;
+            visualizeBtn.textContent = '🔄 Fetching Data...';
             
-            if (needsPrices) {
-                // Fetch prices first
-                const visualizeBtn = document.querySelector('.visualize-btn');
-                const originalText = visualizeBtn.textContent;
-                visualizeBtn.disabled = true;
-                visualizeBtn.textContent = '🔄 Fetching Prices...';
+            // Find earliest purchase date
+            const earliestDate = holdings
+                .filter(h => h.purchaseDate)
+                .map(h => h.purchaseDate)
+                .sort()[0];
+            
+            // Fetch historical data for holdings with purchase dates
+            for (let holding of holdings) {
+                console.log(`Fetching data for ${holding.ticker}...`);
                 
-                for (let holding of holdings) {
-                    console.log(`Fetching price for ${holding.ticker}...`);
-                    holding.currentPrice = await fetchCurrentPrice(holding.ticker);
-                    console.log(`Price for ${holding.ticker}: $${holding.currentPrice}`);
-                    holding.value = holding.shares * holding.currentPrice;
-                    
-                    // Calculate gain/loss
-                    if (holding.purchasePrice > 0) {
-                        holding.costBasis = holding.shares * holding.purchasePrice;
-                        holding.gainLoss = holding.value - holding.costBasis;
-                        holding.gainLossPercent = (holding.gainLoss / holding.costBasis) * 100;
-                    }
-                    
-                    console.log(`Value: ${holding.shares} × $${holding.currentPrice} = $${holding.value}`);
+                // Fetch current price
+                holding.currentPrice = await fetchCurrentPrice(holding.ticker);
+                holding.value = holding.shares * holding.currentPrice;
+                
+                // Fetch historical data if purchase date provided
+                if (holding.purchaseDate) {
+                    console.log(`Fetching historical data from ${holding.purchaseDate}...`);
+                    holding.historicalData = await fetchHistoricalPrices(
+                        holding.ticker, 
+                        holding.purchaseDate,
+                        null
+                    );
                 }
                 
-                const now = new Date().toLocaleString();
-                document.getElementById('last-updated').textContent = `Last updated: ${now}`;
+                // Calculate gain/loss
+                if (holding.purchasePrice > 0) {
+                    holding.costBasis = holding.shares * holding.purchasePrice;
+                    holding.gainLoss = holding.value - holding.costBasis;
+                    holding.gainLossPercent = (holding.gainLoss / holding.costBasis) * 100;
+                }
                 
-                visualizeBtn.disabled = false;
-                visualizeBtn.textContent = originalText;
-                
-                console.log('All holdings updated:', holdings);
+                console.log(`${holding.ticker}: Price=$${holding.currentPrice}, Value=$${holding.value}`);
             }
+            
+            const now = new Date().toLocaleString();
+            document.getElementById('last-updated').textContent = `Last updated: ${now}`;
+            
+            visualizeBtn.disabled = false;
+            visualizeBtn.textContent = originalText;
+            
+            console.log('All holdings updated:', holdings);
             
             const total = holdings.reduce((sum, h) => sum + h.value, 0);
             const totalCostBasis = holdings.reduce((sum, h) => sum + (h.costBasis || 0), 0);
@@ -1089,9 +1234,14 @@
             holdings.sort((a, b) => b.value - a.value);
             createSummary(total, totalCostBasis, totalGainLoss, totalGainLossPercent);
             
-            // Create performance chart
-            const filteredSnapshots = getFilteredSnapshots(currentTimeRange);
-            createPerformanceChart(filteredSnapshots);
+            // Create historical performance chart if we have purchase dates
+            if (earliestDate) {
+                createHistoricalPerformanceChart(holdings, earliestDate);
+            } else {
+                // Fall back to snapshot-based chart
+                const filteredSnapshots = getFilteredSnapshots(currentTimeRange);
+                createPerformanceChart(filteredSnapshots);
+            }
             
             createPieChart(holdings, total);
             createBarChart(holdings);
@@ -1253,7 +1403,7 @@
             
             // Load current portfolio holdings
             if (holdings.length > 0) {
-                holdings.forEach(h => addHolding(h.ticker, h.shares || '', h.name, h.purchasePrice || ''));
+                holdings.forEach(h => addHolding(h.ticker, h.shares || '', h.name, h.purchasePrice || '', h.purchaseDate || ''));
             } else {
                 addHolding(); addHolding(); addHolding();
             }
