@@ -34,6 +34,24 @@ module.exports = (req, res) => {
     
     response.on('end', () => {
       try {
+        // Check if response is actually JSON
+        if (!data.startsWith('{') && !data.startsWith('[')) {
+          console.error('Non-JSON response received:', data.substring(0, 200));
+          
+          // Check for rate limiting messages
+          if (data.includes('Too Many Requests') || data.includes('429')) {
+            return res.status(429).json({ 
+              error: 'Too many requests', 
+              details: 'Rate limited by Yahoo Finance. Please wait a minute and try again.' 
+            });
+          }
+          
+          return res.status(500).json({ 
+            error: 'Invalid response from Yahoo Finance', 
+            details: data.substring(0, 200) 
+          });
+        }
+        
         const jsonData = JSON.parse(data);
         
         console.log('Yahoo Finance response received');
