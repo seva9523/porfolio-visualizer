@@ -497,6 +497,56 @@
 
         const colors = ['#2E86AB', '#A23B72', '#F18F01', '#C73E1D', '#6A994E', '#BC4B51', '#4C956C', '#D4A373', '#5E548E', '#9B59B6', '#E67E22', '#16A085', '#3498DB', '#E91E63', '#FF9800', '#009688', '#673AB7', '#FF5722'];
 
+        // Date formatting helpers
+        function formatDateForDisplay(isoDate) {
+            // Convert YYYY-MM-DD to DD/MM/YYYY
+            if (!isoDate) return '';
+            const parts = isoDate.split('-');
+            if (parts.length !== 3) return isoDate;
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+
+        function parseDateFromDisplay(displayDate) {
+            // Convert DD/MM/YYYY to YYYY-MM-DD
+            if (!displayDate) return '';
+            const parts = displayDate.split('/');
+            if (parts.length !== 3) return '';
+            const day = parts[0].padStart(2, '0');
+            const month = parts[1].padStart(2, '0');
+            const year = parts[2];
+            return `${year}-${month}-${day}`;
+        }
+
+        function validateDate(displayDate) {
+            // Validate DD/MM/YYYY format
+            const regex = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
+            const match = displayDate.match(regex);
+            if (!match) return { valid: false, error: 'Invalid format. Use dd/mm/yyyy' };
+            
+            const day = parseInt(match[1]);
+            const month = parseInt(match[2]);
+            const year = parseInt(match[3]);
+            
+            if (year < 1900 || year > 2100) return { valid: false, error: 'Year must be between 1900 and 2100' };
+            if (month < 1 || month > 12) return { valid: false, error: 'Month must be between 1 and 12' };
+            if (day < 1 || day > 31) return { valid: false, error: 'Day must be between 1 and 31' };
+            
+            // Check if date is valid (e.g., not 31/02/2021)
+            const dateObj = new Date(year, month - 1, day);
+            if (dateObj.getDate() !== day || dateObj.getMonth() !== month - 1 || dateObj.getFullYear() !== year) {
+                return { valid: false, error: 'Invalid date' };
+            }
+            
+            // Check if date is in the future
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (dateObj > today) {
+                return { valid: false, error: 'Cannot select a future date' };
+            }
+            
+            return { valid: true, date: `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}` };
+        }
+
         // Performance tracking functions
         function saveSnapshot(totalValue) {
             const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
@@ -1020,7 +1070,7 @@
                 </div>
                 <input type="number" placeholder="Shares" id="shares-${holdingCounter}" value="${value}" step="0.01" min="0" style="font-size: 12px;">
                 <input type="number" placeholder="Price" id="purchase-${holdingCounter}" value="${purchasePrice}" step="0.01" min="0" style="font-size: 11px;">
-                <input type="date" id="date-${holdingCounter}" value="${purchaseDate}" max="${new Date().toISOString().split('T')[0]}" title="Purchase Date (YYYY-MM-DD)" style="font-size: 10px; cursor: pointer;">
+                <input type="text" placeholder="dd/mm/yyyy" id="date-${holdingCounter}" value="${purchaseDate ? formatDateForDisplay(purchaseDate) : ''}" pattern="\\d{2}/\\d{2}/\\d{4}" title="Date: dd/mm/yyyy" style="font-size: 10px; width: 95px;" data-date-value="${purchaseDate}">
                 <button class="remove-btn" onclick="removeHolding(this)">×</button>
             `;
             container.appendChild(div);
@@ -1076,63 +1126,58 @@
             const dateInput = document.getElementById(`date-${holdingCounter}`);
             const priceInput = document.getElementById(`purchase-${holdingCounter}`);
             
-            dateInput.addEventListener('change', async () => {
-                const ticker = tickerInput.value.toUpperCase();
-                let selectedDate = dateInput.value;
+            let dateTimeout;
+            
+            dateInput.addEventListener('input', (e) => {
+                clearTimeout(dateTimeout);
+                const displayDate = e.target.value;
                 
-                console.log('Date input value (raw):', selectedDate);
-                
-                // Validate date format (should be YYYY-MM-DD from HTML5 date input)
-                if (!/^\d{4}-\d{2}-\d{2}$/.test(selectedDate)) {
-                    console.error('Invalid date format:', selectedDate);
-                    alert('Invalid date format. Please select a date from the calendar.');
-                    return;
-                }
-                
-                // Validate it's not in the future
-                const selectedDateObj = new Date(selectedDate);
-                const today = new Date();
-                if (selectedDateObj > today) {
-                    alert('Cannot select a future date!');
-                    dateInput.value = '';
-                    return;
-                }
-                
-                // Validate it's not too old (stock markets didn't exist before 1900)
-                if (selectedDateObj.getFullYear() < 1900) {
-                    alert('Date too old. Please select a date after 1900.');
-                    dateInput.value = '';
-                    return;
-                }
-                
-                if (ticker && selectedDate) {
-                    console.log(`Fetching price for ${ticker} on ${selectedDate}...`);
-                    priceInput.value = 'Loading...';
-                    priceInput.disabled = true;
+                // Wait for user to finish typing
+                dateTimeout = setTimeout(async () => {
+                    const validation = validateDate(displayDate);
                     
-                    try {
-                        // Fetch historical data for that specific date
-                        const historicalData = await fetchHistoricalPrices(ticker, selectedDate, selectedDate);
-                        
-                        console.log('Historical data received:', historicalData);
-                        
-                        if (historicalData && historicalData[selectedDate]) {
-                            const closePrice = historicalData[selectedDate].close;
-                            priceInput.value = closePrice.toFixed(2);
-                            console.log(`Price for ${ticker} on ${selectedDate}: $${closePrice}`);
-                        } else {
-                            priceInput.value = '';
-                            console.error('No data for selected date. Available dates:', Object.keys(historicalData || {}).slice(0, 5));
-                            alert(`No price data available for ${ticker} on ${selectedDate}. The market may have been closed. Please enter price manually or try a different date.`);
-                        }
-                    } catch (error) {
-                        console.error('Error fetching historical price:', error);
-                        priceInput.value = '';
-                        alert('Failed to fetch price. Please enter manually.');
-                    } finally {
-                        priceInput.disabled = false;
+                    if (!validation.valid) {
+                        dateInput.style.borderColor = '#e74c3c';
+                        dateInput.title = validation.error;
+                        dateInput.dataset.dateValue = '';
+                        return;
                     }
-                }
+                    
+                    // Valid date
+                    dateInput.style.borderColor = '';
+                    dateInput.title = 'Purchase Date';
+                    dateInput.dataset.dateValue = validation.date;
+                    
+                    const ticker = tickerInput.value.toUpperCase();
+                    
+                    if (ticker && validation.date) {
+                        console.log(`Fetching price for ${ticker} on ${validation.date}...`);
+                        priceInput.value = 'Loading...';
+                        priceInput.disabled = true;
+                        
+                        try {
+                            const historicalData = await fetchHistoricalPrices(ticker, validation.date, validation.date);
+                            
+                            console.log('Historical data received:', historicalData);
+                            
+                            if (historicalData && historicalData[validation.date]) {
+                                const closePrice = historicalData[validation.date].close;
+                                priceInput.value = closePrice.toFixed(2);
+                                console.log(`Price for ${ticker} on ${validation.date}: $${closePrice}`);
+                            } else {
+                                priceInput.value = '';
+                                console.error('No data for selected date. Available dates:', Object.keys(historicalData || {}).slice(0, 5));
+                                alert(`No price data available for ${ticker} on ${displayDate}. The market may have been closed. Please enter price manually or try a different date.`);
+                            }
+                        } catch (error) {
+                            console.error('Error fetching historical price:', error);
+                            priceInput.value = '';
+                            alert('Failed to fetch price. Please enter manually.');
+                        } finally {
+                            priceInput.disabled = false;
+                        }
+                    }
+                }, 800); // Wait 800ms after user stops typing
             });
             
             holdingCounter++;
@@ -1161,10 +1206,10 @@
                 const name = tickerInput.dataset.name || '';
                 const sharesInput = input.querySelectorAll('input[type="number"]')[0];
                 const purchaseInput = input.querySelectorAll('input[type="number"]')[1];
-                const dateInput = input.querySelector('input[type="date"]');
+                const dateInput = input.querySelectorAll('input[type="text"]')[2]; // Now it's a text input
                 const shares = parseFloat(sharesInput.value) || 0;
                 const purchasePrice = parseFloat(purchaseInput.value) || 0;
-                const purchaseDate = dateInput.value || '';
+                const purchaseDate = dateInput.dataset.dateValue || ''; // Get ISO date from data attribute
                 
                 console.log(`Reading holding ${index}:`, {ticker, shares, purchasePrice, purchaseDate});
                 
