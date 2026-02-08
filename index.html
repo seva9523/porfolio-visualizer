@@ -1158,15 +1158,39 @@
                         try {
                             const historicalData = await fetchHistoricalPrices(ticker, validation.date, validation.date);
                             
-                            console.log('Historical data received:', historicalData);
+                            console.log('Historical data received:', Object.keys(historicalData || {}).length, 'dates');
                             
                             if (historicalData && historicalData[validation.date]) {
                                 const closePrice = historicalData[validation.date].close;
                                 priceInput.value = closePrice.toFixed(2);
                                 console.log(`Price for ${ticker} on ${validation.date}: $${closePrice}`);
+                            } else if (historicalData && Object.keys(historicalData).length > 0) {
+                                // Find nearest date
+                                const availableDates = Object.keys(historicalData).sort();
+                                console.log('Available dates sample:', availableDates.slice(0, 10));
+                                
+                                // Find closest date before or on the requested date
+                                let nearestDate = null;
+                                for (let i = availableDates.length - 1; i >= 0; i--) {
+                                    if (availableDates[i] <= validation.date) {
+                                        nearestDate = availableDates[i];
+                                        break;
+                                    }
+                                }
+                                
+                                if (nearestDate) {
+                                    const closePrice = historicalData[nearestDate].close;
+                                    priceInput.value = closePrice.toFixed(2);
+                                    const nearestDisplayDate = formatDateForDisplay(nearestDate);
+                                    console.log(`Using nearest date ${nearestDate} (${nearestDisplayDate}): $${closePrice}`);
+                                    alert(`No data for ${displayDate}. Using nearest trading day: ${nearestDisplayDate} at $${closePrice.toFixed(2)}`);
+                                } else {
+                                    priceInput.value = '';
+                                    alert(`No price data available for ${ticker} on or before ${displayDate}. Please enter price manually.`);
+                                }
                             } else {
                                 priceInput.value = '';
-                                console.error('No data for selected date. Available dates:', Object.keys(historicalData || {}).slice(0, 5));
+                                console.error('No historical data returned');
                                 alert(`No price data available for ${ticker} on ${displayDate}. The market may have been closed. Please enter price manually or try a different date.`);
                             }
                         } catch (error) {
@@ -1250,6 +1274,12 @@
                 const to = toDate || today;
                 const response = await fetch(`/api/historical?symbol=${ticker}&from=${fromDate}&to=${to}`);
                 const data = await response.json();
+                
+                console.log('Raw API response:', data);
+                console.log('Response keys:', Object.keys(data));
+                console.log('data.data exists?', !!data.data);
+                console.log('data.data type:', typeof data.data);
+                console.log('data.data keys:', data.data ? Object.keys(data.data) : 'N/A');
                 
                 if (data.error) {
                     console.error(`Error fetching historical data for ${ticker}:`, data.error);
