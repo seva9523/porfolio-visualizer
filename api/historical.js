@@ -1,4 +1,72 @@
 const https = require('https');
+const fs = require('fs');
+const path = require('path');
+
+// In-memory cache (persists during function warm starts)
+const cache = new Map();
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
+// Pre-loaded stocks list
+const PRELOADED_STOCKS = ['AAPL', 'GOOGL', 'MSFT', 'AMZN', 'TSLA', 'META', 'NVDA', 'NFLX', 'BRK_B', 'JPM', 'V', 'JNJ', 'WMT', 'PG', 'MA', 'DIS', 'PYPL', 'ADBE', 'CRM', 'INTC'];
+
+function getCacheKey(symbol, from, to) {
+  return `${symbol}_${from}_${to}`;
+}
+
+function getFromCache(key) {
+  const cached = cache.get(key);
+  if (!cached) return null;
+  
+  const age = Date.now() - cached.timestamp;
+  if (age > CACHE_DURATION) {
+    cache.delete(key);
+    return null;
+  }
+  
+  return cached.data;
+}
+
+function saveToCache(key, data) {
+  cache.set(key, {
+    data,
+    timestamp: Date.now()
+  });
+}
+
+function loadPreloadedData(symbol, from, to) {
+  try {
+    const filename = symbol.replace('.', '_');
+    const filepath = path.join(__dirname, 'data', `${filename}.json`);
+    
+    if (!fs.existsSync(filepath)) {
+      return null;
+    }
+    
+    const fileData = fs.readFileSync(filepath, 'utf8');
+    const stockData = JSON.parse(fileData);
+    
+    // Filter by date range
+    const filteredData = {};
+    for (let date in stockData.data) {
+      const inRange = (!from || date >= from) && (!to || date <= to);
+      if (inRange) {
+        filteredData[date] = stockData.data[date];
+      }
+    }
+    
+    return {
+      symbol: symbol,
+      data: filteredData,
+      totalDates: Object.keys(stockData.data).length,
+      filteredDates: Object.keys(filteredData).length,
+      cached: true,
+      source: 'preloaded'
+    };
+  } catch (error) {
+    console.error(`Error loading preloaded data for ${symbol}:`, error.message);
+    return null;
+  }
+}
 
 module.exports = (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -10,11 +78,29 @@ module.exports = (req, res) => {
   
   const { symbol, from, to } = req.query;
   
-  console.log('Yahoo Finance API called:', { symbol, from, to });
+  console.log('Historical API called:', { symbol, from, to });
   
   if (!symbol) {
     return res.status(400).json({ error: 'Missing symbol parameter' });
   }
+  
+  // 1. Check preloaded data first (fastest)
+  const preloadedData = loadPreloadedData(symbol, from, to);
+  if (preloadedData) {
+    console.log(`✓ PRELOADED data for ${symbol} (${preloadedData.filteredDates} dates)`);
+    return res.status(200).json(preloadedData);
+  }
+  
+  // 2. Check in-memory cache
+  const cacheKey = getCacheKey(symbol, from || '', to || '');
+  const cachedData = getFromCache(cacheKey);
+  
+  if (cachedData) {
+    console.log(`Cache HIT for ${symbol} (serving from memory)`);
+    return res.status(200).json(cachedData);
+  }
+  
+  console.log(`Cache MISS for ${symbol} (fetching from Yahoo Finance)`);
   
   // Convert dates to Unix timestamps
   const fromDate = from ? new Date(from).getTime() / 1000 : Math.floor(Date.now() / 1000) - (365 * 24 * 60 * 60);
@@ -23,7 +109,7 @@ module.exports = (req, res) => {
   // Yahoo Finance API endpoint
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?period1=${Math.floor(fromDate)}&period2=${Math.floor(toDate)}&interval=1d`;
   
-  console.log('Fetching from Yahoo Finance:', url);
+  console.log('Fetching from Yahoo Finance');
   
   https.get(url, (response) => {
     let data = '';
@@ -42,7 +128,7 @@ module.exports = (req, res) => {
           if (data.includes('Too Many Requests') || data.includes('429')) {
             return res.status(429).json({ 
               error: 'Too many requests', 
-              details: 'Rate limited by Yahoo Finance. Please wait a minute and try again.' 
+              details: 'Rate limited by Yahoo Finance. Using cached data if available.' 
             });
           }
           
@@ -103,12 +189,19 @@ module.exports = (req, res) => {
         
         console.log(`Returning ${Object.keys(formattedData).length} data points for ${symbol}`);
         
-        res.status(200).json({
+        const responseData = {
           symbol: symbol,
           data: formattedData,
           totalDates: timestamps.length,
-          filteredDates: Object.keys(formattedData).length
-        });
+          filteredDates: Object.keys(formattedData).length,
+          cached: false
+        };
+        
+        // Save to cache
+        saveToCache(cacheKey, responseData);
+        console.log(`Saved ${symbol} to cache`);
+        
+        res.status(200).json(responseData);
         
       } catch (error) {
         console.error('Parse error:', error.message);
