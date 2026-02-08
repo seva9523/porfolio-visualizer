@@ -1246,17 +1246,20 @@
         function updateHoldingsArray() {
             holdings = [];
             document.querySelectorAll('.holding-input').forEach((input, index) => {
-                const tickerInput = input.querySelector('input[type="text"]');
-                const ticker = tickerInput.value.toUpperCase();
-                const name = tickerInput.dataset.name || '';
+                const tickerInput = input.querySelector('input[type="text"]:first-child') || input.querySelector('input[type="text"]');
+                const ticker = tickerInput ? tickerInput.value.toUpperCase() : '';
+                const name = tickerInput ? (tickerInput.dataset.name || '') : '';
                 const sharesInput = input.querySelectorAll('input[type="number"]')[0];
                 const purchaseInput = input.querySelectorAll('input[type="number"]')[1];
-                const dateInput = input.querySelectorAll('input[type="text"]')[2]; // Now it's a text input
-                const shares = parseFloat(sharesInput.value) || 0;
-                const purchasePrice = parseFloat(purchaseInput.value) || 0;
-                const purchaseDate = dateInput.dataset.dateValue || ''; // Get ISO date from data attribute
+                // Get all text inputs and take the second one (first is ticker, second is date)
+                const allTextInputs = input.querySelectorAll('input[type="text"]');
+                const dateInput = allTextInputs[allTextInputs.length - 1]; // Last text input is the date
                 
-                console.log(`Reading holding ${index}:`, {ticker, shares, purchasePrice, purchaseDate});
+                const shares = parseFloat(sharesInput?.value) || 0;
+                const purchasePrice = parseFloat(purchaseInput?.value) || 0;
+                const purchaseDate = dateInput?.dataset?.dateValue || '';
+                
+                console.log(`Reading holding ${index}:`, {ticker, shares, purchasePrice, purchaseDate, dateInputFound: !!dateInput});
                 
                 if (ticker && shares > 0) {
                     holdings.push({
