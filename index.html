@@ -694,7 +694,12 @@
         }
 
         function visualizePortfolio() {
-            updateHoldingsArray();
+            // Don't call updateHoldingsArray() here if called from refreshPrices
+            // Only update if holdings is empty (direct visualize without refresh)
+            if (holdings.length === 0 || holdings[0].currentPrice === undefined) {
+                updateHoldingsArray();
+            }
+            
             if (holdings.length === 0) { alert('Please add at least one holding!'); return; }
             const total = holdings.reduce((sum, h) => sum + h.value, 0);
             holdings.sort((a, b) => b.value - a.value);
