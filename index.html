@@ -116,7 +116,7 @@
         
         .holding-input {
             display: grid;
-            grid-template-columns: 120px 1fr 60px;
+            grid-template-columns: 120px 80px 90px 60px;
             gap: 10px;
             margin-bottom: 12px;
             align-items: start;
@@ -505,7 +505,7 @@
             holdingCounter = 0;
             
             if (holdings.length > 0) {
-                holdings.forEach(h => addHolding(h.ticker, h.shares, h.name));
+                holdings.forEach(h => addHolding(h.ticker, h.shares, h.name, h.purchasePrice || ''));
             } else {
                 addHolding(); addHolding(); addHolding();
             }
@@ -681,7 +681,7 @@
             selectedIndex = -1;
         }
 
-        function addHolding(ticker = '', value = '', name = '') {
+        function addHolding(ticker = '', value = '', name = '', purchasePrice = '') {
             const container = document.getElementById('holdings-container');
             const id = `ticker-${holdingCounter}`;
             const dropdownId = `dropdown-${holdingCounter}`;
@@ -694,6 +694,7 @@
                     <div class="autocomplete-dropdown" id="${dropdownId}"></div>
                 </div>
                 <input type="number" placeholder="Shares" id="shares-${holdingCounter}" value="${value}" step="0.01" min="0">
+                <input type="number" placeholder="Purchase Price" id="purchase-${holdingCounter}" value="${purchasePrice}" step="0.01" min="0" style="font-size: 11px;">
                 <button class="remove-btn" onclick="removeHolding(this)">×</button>
             `;
             container.appendChild(div);
@@ -760,18 +761,26 @@
 
         function updateHoldingsArray() {
             holdings = [];
-            document.querySelectorAll('.holding-input').forEach((input) => {
+            document.querySelectorAll('.holding-input').forEach((input, index) => {
                 const tickerInput = input.querySelector('input[type="text"]');
                 const ticker = tickerInput.value.toUpperCase();
                 const name = tickerInput.dataset.name || '';
-                const shares = parseFloat(input.querySelector('input[type="number"]').value) || 0;
+                const sharesInput = input.querySelectorAll('input[type="number"]')[0];
+                const purchaseInput = input.querySelectorAll('input[type="number"]')[1];
+                const shares = parseFloat(sharesInput.value) || 0;
+                const purchasePrice = parseFloat(purchaseInput.value) || 0;
+                
                 if (ticker && shares > 0) {
                     holdings.push({
                         ticker, 
                         shares, 
+                        purchasePrice,
                         name,
                         currentPrice: 0,
-                        value: 0
+                        value: 0,
+                        costBasis: shares * purchasePrice,
+                        gainLoss: 0,
+                        gainLossPercent: 0
                     });
                 }
             });
@@ -845,6 +854,14 @@
                     holding.currentPrice = await fetchCurrentPrice(holding.ticker);
                     console.log(`Price for ${holding.ticker}: $${holding.currentPrice}`);
                     holding.value = holding.shares * holding.currentPrice;
+                    
+                    // Calculate gain/loss
+                    if (holding.purchasePrice > 0) {
+                        holding.costBasis = holding.shares * holding.purchasePrice;
+                        holding.gainLoss = holding.value - holding.costBasis;
+                        holding.gainLossPercent = (holding.gainLoss / holding.costBasis) * 100;
+                    }
+                    
                     console.log(`Value: ${holding.shares} × $${holding.currentPrice} = $${holding.value}`);
                 }
                 
@@ -858,8 +875,12 @@
             }
             
             const total = holdings.reduce((sum, h) => sum + h.value, 0);
+            const totalCostBasis = holdings.reduce((sum, h) => sum + (h.costBasis || 0), 0);
+            const totalGainLoss = total - totalCostBasis;
+            const totalGainLossPercent = totalCostBasis > 0 ? (totalGainLoss / totalCostBasis) * 100 : 0;
+            
             holdings.sort((a, b) => b.value - a.value);
-            createSummary(total);
+            createSummary(total, totalCostBasis, totalGainLoss, totalGainLossPercent);
             createPieChart(holdings, total);
             createBarChart(holdings);
             createTable(holdings, total);
@@ -869,11 +890,28 @@
             saveAllPortfolios();
         }
 
-        function createSummary(total) {
+        function createSummary(total, totalCostBasis, totalGainLoss, totalGainLossPercent) {
+            const gainLossColor = totalGainLoss >= 0 ? '#27ae60' : '#e74c3c';
+            const gainLossIcon = totalGainLoss >= 0 ? '↑' : '↓';
+            const gainLossDisplay = totalCostBasis > 0 ? `
+                <div class="summary-stat">
+                    <span class="stat-label">Total Cost Basis:</span>
+                    <span class="stat-value">$${totalCostBasis.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                </div>
+                <div class="summary-stat">
+                    <span class="stat-label">Total Gain/Loss:</span>
+                    <span class="stat-value" style="color: ${gainLossColor};">
+                        ${gainLossIcon} $${Math.abs(totalGainLoss).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        (${totalGainLoss >= 0 ? '+' : ''}${totalGainLossPercent.toFixed(2)}%)
+                    </span>
+                </div>
+            ` : '';
+            
             document.getElementById('summary-section').innerHTML = `
                 <div class="summary-box">
                     <h2>Portfolio Summary</h2>
                     <div class="summary-stat"><span class="stat-label">Total Value:</span><span class="stat-value">$${total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span></div>
+                    ${gainLossDisplay}
                     <div class="summary-stat"><span class="stat-label">Number of Holdings:</span><span class="stat-value">${holdings.length}</span></div>
                     <div class="summary-stat"><span class="stat-label">Largest Position:</span><span class="stat-value">${holdings[0].ticker} (${((holdings[0].value/total)*100).toFixed(1)}%)</span></div>
                     <div class="summary-stat"><span class="stat-label">Average Position Size:</span><span class="stat-value">$${(total/holdings.length).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span></div>
@@ -944,11 +982,37 @@
         }
 
         function createTable(data, total) {
-            let html = '<div class="holdings-table"><table><thead><tr><th>Ticker</th><th>Name</th><th>Shares</th><th>Price</th><th>Value</th><th>Percentage</th><th>Allocation</th></tr></thead><tbody>';
+            let html = '<div class="holdings-table"><table><thead><tr><th>Ticker</th><th>Name</th><th>Shares</th><th>Purchase Price</th><th>Current Price</th><th>Cost Basis</th><th>Value</th><th>Gain/Loss</th><th>%</th><th>Allocation</th></tr></thead><tbody>';
             data.forEach(h => {
                 const pct = ((h.value/total)*100);
                 const priceDisplay = h.currentPrice > 0 ? `$${h.currentPrice.toFixed(2)}` : '-';
-                html += `<tr><td class="ticker-cell">${h.ticker}</td><td class="name-cell">${h.name || 'N/A'}</td><td>${h.shares.toLocaleString('en-US', {minimumFractionDigits: 2})}</td><td>${priceDisplay}</td><td>$${h.value.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td><td>${pct.toFixed(1)}%</td><td><div class="percentage-bar"><div class="percentage-fill" style="width: ${pct}%"></div></div></td></tr>`;
+                const purchasePriceDisplay = h.purchasePrice > 0 ? `$${h.purchasePrice.toFixed(2)}` : '-';
+                const costBasisDisplay = h.costBasis > 0 ? `$${h.costBasis.toLocaleString('en-US', {minimumFractionDigits: 2})}` : '-';
+                
+                const gainLossColor = h.gainLoss >= 0 ? '#27ae60' : '#e74c3c';
+                const gainLossIcon = h.gainLoss >= 0 ? '↑' : '↓';
+                const gainLossDisplay = h.purchasePrice > 0 ? 
+                    `<span style="color: ${gainLossColor}; font-weight: 600;">${gainLossIcon} $${Math.abs(h.gainLoss).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>` : 
+                    '-';
+                const gainLossPercentDisplay = h.purchasePrice > 0 ? 
+                    `<span style="color: ${gainLossColor}; font-weight: 600;">${h.gainLoss >= 0 ? '+' : ''}${h.gainLossPercent.toFixed(2)}%</span>` : 
+                    '-';
+                
+                html += `<tr>
+                    <td class="ticker-cell">${h.ticker}</td>
+                    <td class="name-cell">${h.name || 'N/A'}</td>
+                    <td>${h.shares.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                    <td>${purchasePriceDisplay}</td>
+                    <td>${priceDisplay}</td>
+                    <td>${costBasisDisplay}</td>
+                    <td>$${h.value.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td>${gainLossDisplay}</td>
+                    <td>${gainLossPercentDisplay}</td>
+                    <td>
+                        <div>${pct.toFixed(1)}%</div>
+                        <div class="percentage-bar"><div class="percentage-fill" style="width: ${pct}%"></div></div>
+                    </td>
+                </tr>`;
             });
             html += '</tbody></table></div>';
             document.getElementById('table-section').innerHTML = html;
@@ -977,7 +1041,7 @@
             
             // Load current portfolio holdings
             if (holdings.length > 0) {
-                holdings.forEach(h => addHolding(h.ticker, h.shares || '', h.name));
+                holdings.forEach(h => addHolding(h.ticker, h.shares || '', h.name, h.purchasePrice || ''));
             } else {
                 addHolding(); addHolding(); addHolding();
             }
