@@ -56,8 +56,7 @@ module.exports = (req, res) => {
   console.log(`Cache MISS for ${symbol} - fetching from Twelve Data`);
   
   // Twelve Data API - free tier: 800 requests/day
-  // Using time_series endpoint with daily interval
-  const apiKey = 'f15e001ae049463384e462fa2906d8ff'; // You can use 'demo' for testing, or get free key at twelvedata.com
+  const apiKey = 'f15e001ae049463384e462fa2906d8ff';
   
   // Calculate date range
   const today = new Date().toISOString().split('T')[0];
