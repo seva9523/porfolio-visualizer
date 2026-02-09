@@ -477,6 +477,7 @@
                 <div id="table-section"></div>
                 <div id="correlation-section" style="margin-top: 30px;"></div>
                 <div id="benchmark-section" style="margin-top: 30px;"></div>
+                <div id="montecarlo-section" style="margin-top: 30px;"></div>
                 <div id="optimization-section" style="margin-top: 30px;"></div>
             </div>
         </div>
@@ -503,6 +504,54 @@
         };
 
         const colors = ['#2E86AB', '#A23B72', '#F18F01', '#C73E1D', '#6A994E', '#BC4B51', '#4C956C', '#D4A373', '#5E548E', '#9B59B6', '#E67E22', '#16A085', '#3498DB', '#E91E63', '#FF9800', '#009688', '#673AB7', '#FF5722'];
+
+        // Monte Carlo Simulation functions
+        function generateRandomReturn(meanReturn, volatility) {
+            // Box-Muller transform for normal distribution
+            const u1 = Math.random();
+            const u2 = Math.random();
+            const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+            return meanReturn + volatility * z;
+        }
+
+        function runMonteCarloSimulation(initialValue, meanAnnualReturn, annualVolatility, years, numSimulations = 1000) {
+            const tradingDaysPerYear = 252;
+            const totalDays = years * tradingDaysPerYear;
+            const dailyReturn = meanAnnualReturn / tradingDaysPerYear;
+            const dailyVolatility = annualVolatility / Math.sqrt(tradingDaysPerYear);
+            
+            const simulations = [];
+            
+            for (let sim = 0; sim < numSimulations; sim++) {
+                const path = [initialValue];
+                let currentValue = initialValue;
+                
+                for (let day = 1; day <= totalDays; day++) {
+                    const randomReturn = generateRandomReturn(dailyReturn, dailyVolatility);
+                    currentValue = currentValue * (1 + randomReturn);
+                    
+                    // Store value at year boundaries
+                    if (day % tradingDaysPerYear === 0) {
+                        path.push(currentValue);
+                    }
+                }
+                
+                simulations.push(path);
+            }
+            
+            return simulations;
+        }
+
+        function calculatePercentiles(simulations, yearIndex) {
+            const values = simulations.map(sim => sim[yearIndex]).sort((a, b) => a - b);
+            
+            return {
+                p10: values[Math.floor(values.length * 0.10)],
+                p50: values[Math.floor(values.length * 0.50)],
+                p90: values[Math.floor(values.length * 0.90)],
+                mean: values.reduce((sum, v) => sum + v, 0) / values.length
+            };
+        }
 
         // Performance metrics calculations
         function calculateCAGR(startValue, endValue, years) {
@@ -1946,6 +1995,7 @@
             createTable(holdings, total);
             createCorrelationMatrix(holdings);
             createBenchmarkChart(holdings, totalCostBasis, total);
+            createMonteCarloSimulation(holdings, total);
             analyzePortfolioOptimization(holdings, total);
             
             // Save to current portfolio
@@ -2122,6 +2172,220 @@
                             ticks: { color: textColor }
                         } 
                     } 
+                }
+            });
+        }
+
+        function createMonteCarloSimulation(holdings, currentValue) {
+            if (holdings.length === 0 || currentValue <= 0) {
+                document.getElementById('montecarlo-section').innerHTML = '';
+                return;
+            }
+            
+            const isDark = document.body.classList.contains('dark-mode');
+            const cardBg = isDark ? 'rgba(255, 255, 255, 0.08)' : '#ffffff';
+            const textColor = isDark ? '#fff' : '#2c3e50';
+            const labelColor = isDark ? '#b0b0b0' : '#999';
+            
+            // Calculate portfolio returns if we have historical data
+            let hasHistoricalData = false;
+            const allReturns = [];
+            
+            holdings.forEach(h => {
+                if (h.historicalData && Object.keys(h.historicalData).length > 10) {
+                    hasHistoricalData = true;
+                    const dates = Object.keys(h.historicalData).sort();
+                    for (let i = 1; i < dates.length; i++) {
+                        const prevPrice = h.historicalData[dates[i-1]].close;
+                        const currPrice = h.historicalData[dates[i]].close;
+                        const dailyReturn = (currPrice - prevPrice) / prevPrice;
+                        allReturns.push(dailyReturn);
+                    }
+                }
+            });
+            
+            if (!hasHistoricalData || allReturns.length < 50) {
+                document.getElementById('montecarlo-section').innerHTML = `
+                    <div class="summary-box">
+                        <h2>Monte Carlo Simulation (10-Year Projection)</h2>
+                        <div style="padding: 40px; text-align: center; background: ${isDark ? 'rgba(241, 143, 1, 0.15)' : 'rgba(241, 143, 1, 0.1)'}; border-radius: 12px; margin-top: 15px;">
+                            <div style="font-size: 16px; font-weight: 600; color: #F18F01; margin-bottom: 10px;">
+                                📊 Simulation Unavailable
+                            </div>
+                            <div style="font-size: 14px; color: ${textColor};">
+                                Monte Carlo simulation requires historical price data to calculate returns and volatility.<br>
+                                Data will appear once historical prices are fetched successfully.
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Calculate mean return and volatility from historical data
+            const meanReturn = allReturns.reduce((sum, r) => sum + r, 0) / allReturns.length;
+            const variance = allReturns.reduce((sum, r) => sum + Math.pow(r - meanReturn, 2), 0) / allReturns.length;
+            const dailyVolatility = Math.sqrt(variance);
+            
+            // Annualize
+            const annualReturn = meanReturn * 252;
+            const annualVolatility = dailyVolatility * Math.sqrt(252);
+            
+            console.log('Monte Carlo params:', { annualReturn: annualReturn * 100, annualVolatility: annualVolatility * 100 });
+            
+            // Run simulation for 10 years
+            const years = 10;
+            const numSimulations = 1000;
+            const simulations = runMonteCarloSimulation(currentValue, annualReturn, annualVolatility, years, numSimulations);
+            
+            // Calculate percentiles for each year
+            const yearLabels = [];
+            const p10Values = [];
+            const p50Values = [];
+            const p90Values = [];
+            const meanValues = [];
+            
+            for (let year = 0; year <= years; year++) {
+                yearLabels.push(`Year ${year}`);
+                const percentiles = calculatePercentiles(simulations, year);
+                p10Values.push(percentiles.p10);
+                p50Values.push(percentiles.p50);
+                p90Values.push(percentiles.p90);
+                meanValues.push(percentiles.mean);
+            }
+            
+            // Final year stats
+            const finalP10 = p10Values[years];
+            const finalP50 = p50Values[years];
+            const finalP90 = p90Values[years];
+            const finalMean = meanValues[years];
+            
+            const html = `
+                <div class="summary-box">
+                    <h2>Monte Carlo Simulation (10-Year Projection of $${currentValue.toLocaleString('en-US', {maximumFractionDigits: 0})})</h2>
+                    <canvas id="montecarloChart" style="max-height: 350px; margin-top: 15px;"></canvas>
+                    
+                    <div style="margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                        <div style="padding: 15px; background: ${cardBg}; border-radius: 8px; text-align: center; border: 1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#eee'};">
+                            <div style="font-size: 11px; color: ${labelColor}; margin-bottom: 5px; font-weight: 600;">AVERAGE</div>
+                            <div style="font-size: 22px; font-weight: 700; color: ${textColor};">
+                                $${finalMean.toLocaleString('en-US', {maximumFractionDigits: 0})}
+                            </div>
+                            <div style="font-size: 10px; color: ${labelColor}; margin-top: 3px;">Expected outcome</div>
+                        </div>
+                        <div style="padding: 15px; background: ${cardBg}; border-radius: 8px; text-align: center; border: 1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#eee'};">
+                            <div style="font-size: 11px; color: ${labelColor}; margin-bottom: 5px; font-weight: 600;">MEDIAN (50th)</div>
+                            <div style="font-size: 22px; font-weight: 700; color: ${isDark ? '#6dd5ed' : '#2E86AB'};">
+                                $${finalP50.toLocaleString('en-US', {maximumFractionDigits: 0})}
+                            </div>
+                            <div style="font-size: 10px; color: ${labelColor}; margin-top: 3px;">50% probability</div>
+                        </div>
+                        <div style="padding: 15px; background: ${cardBg}; border-radius: 8px; text-align: center; border: 1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#eee'};">
+                            <div style="font-size: 11px; color: ${labelColor}; margin-bottom: 5px; font-weight: 600;">BEST CASE (90th)</div>
+                            <div style="font-size: 22px; font-weight: 700; color: ${isDark ? '#2ecc71' : '#27ae60'};">
+                                $${finalP90.toLocaleString('en-US', {maximumFractionDigits: 0})}
+                            </div>
+                            <div style="font-size: 10px; color: ${labelColor}; margin-top: 3px;">Top 10% outcome</div>
+                        </div>
+                        <div style="padding: 15px; background: ${cardBg}; border-radius: 8px; text-align: center; border: 1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#eee'};">
+                            <div style="font-size: 11px; color: ${labelColor}; margin-bottom: 5px; font-weight: 600;">WORST CASE (10th)</div>
+                            <div style="font-size: 22px; font-weight: 700; color: ${isDark ? '#ff6b6b' : '#e74c3c'};">
+                                $${finalP10.toLocaleString('en-US', {maximumFractionDigits: 0})}
+                            </div>
+                            <div style="font-size: 10px; color: ${labelColor}; margin-top: 3px;">Bottom 10% outcome</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px; padding: 15px; background: ${isDark ? 'rgba(46, 134, 171, 0.15)' : 'rgba(46, 134, 171, 0.1)'}; border-left: 3px solid #2E86AB; border-radius: 4px; font-size: 13px; color: ${textColor}; line-height: 1.6;">
+                        <strong>Monte Carlo Analysis:</strong> Based on ${numSimulations.toLocaleString()} simulations using your portfolio's historical volatility (${(annualVolatility * 100).toFixed(1)}% annual) and returns (${(annualReturn * 100).toFixed(1)}% annual), 
+                        there is a 50% chance your $${currentValue.toLocaleString('en-US', {maximumFractionDigits: 0})} investment could grow to $${finalP50.toLocaleString('en-US', {maximumFractionDigits: 0})} 
+                        after 10 years. However, outcomes range from $${finalP10.toLocaleString('en-US', {maximumFractionDigits: 0})} (worst 10%) to $${finalP90.toLocaleString('en-US', {maximumFractionDigits: 0})} (best 10%).
+                    </div>
+                    
+                    <div style="margin-top: 15px; padding: 15px; background: ${isDark ? 'rgba(241, 143, 1, 0.15)' : 'rgba(241, 143, 1, 0.1)'}; border-left: 3px solid #F18F01; border-radius: 4px; font-size: 12px; color: ${textColor};">
+                        <strong>⚠️ Disclaimer:</strong> This is a probabilistic forecast based on historical data. Past performance does not guarantee future results. 
+                        Actual outcomes may vary significantly due to market conditions, economic changes, and other unpredictable factors.
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('montecarlo-section').innerHTML = html;
+            
+            // Create the chart
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+            
+            new Chart(document.getElementById('montecarloChart'), {
+                type: 'line',
+                data: {
+                    labels: yearLabels,
+                    datasets: [
+                        {
+                            label: 'Average',
+                            data: meanValues,
+                            borderColor: isDark ? '#fff' : '#2c3e50',
+                            backgroundColor: 'transparent',
+                            borderWidth: 3,
+                            pointRadius: 3,
+                            borderDash: [0]
+                        },
+                        {
+                            label: 'Median (50th)',
+                            data: p50Values,
+                            borderColor: isDark ? '#6dd5ed' : '#2E86AB',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Best Case (90th)',
+                            data: p90Values,
+                            borderColor: isDark ? '#2ecc71' : '#27ae60',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            borderDash: [2, 2],
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Worst Case (10th)',
+                            data: p10Values,
+                            borderColor: isDark ? '#ff6b6b' : '#e74c3c',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            borderDash: [2, 2],
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: { color: textColor, font: { size: 11 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `${context.dataset.label}: $${context.parsed.y.toLocaleString('en-US', {maximumFractionDigits: 0})}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        },
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                color: textColor,
+                                callback: (value) => '$' + (value / 1000).toFixed(0) + 'k'
+                            },
+                            grid: { color: gridColor }
+                        }
+                    }
                 }
             });
         }
