@@ -1,7 +1,7 @@
-// FINNHUB API v2.0
-   const https = require('https');
+// Alpha Vantage API - Will work after rate limit reset
+const https = require('https');
 
-// In-memory cache
+// In-memory cache (persists during function warm starts)
 const cache = new Map();
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
@@ -48,21 +48,18 @@ module.exports = (req, res) => {
   const cachedData = getFromCache(cacheKey);
   
   if (cachedData) {
-    console.log(`Cache HIT for ${symbol}`);
+    console.log(`✅ Cache HIT for ${symbol}`);
     return res.status(200).json(cachedData);
   }
   
-  const apiKey = process.env.FINNHUB_API_KEY || 'cteder1r01qr14rsde8gcteder1r01qr14rsde90';
+  console.log(`⏳ Cache MISS for ${symbol} - fetching from Alpha Vantage`);
   
-  // Finnhub uses Unix timestamps
-  const today = Math.floor(Date.now() / 1000);
-  const fromTimestamp = from ? Math.floor(new Date(from).getTime() / 1000) : today - (5 * 365 * 24 * 60 * 60);
-  const toTimestamp = to ? Math.floor(new Date(to).getTime() / 1000) : today;
+  const apiKey = process.env.ALPHA_VANTAGE_API_KEY || 'YHDG7S07STQI9RPC';
   
-  // Finnhub stock candles endpoint
-  const url = `https://finnhub.io/api/v1/stock/candle?symbol=${encodeURIComponent(symbol)}&resolution=D&from=${fromTimestamp}&to=${toTimestamp}&token=${apiKey}`;
+  // ALWAYS use full outputsize to get all historical data (20+ years)
+  const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${encodeURIComponent(symbol)}&outputsize=full&apikey=${apiKey}`;
   
-  console.log(`Fetching ${symbol} from Finnhub (${from || '5y ago'} to ${to || 'today'})`);
+  console.log(`📊 Fetching ${symbol} from Alpha Vantage...`);
   
   https.get(url, (response) => {
     let data = '';
@@ -75,66 +72,73 @@ module.exports = (req, res) => {
       try {
         const jsonData = JSON.parse(data);
         
-        // Check for errors
-        if (jsonData.s === 'no_data') {
-          console.error('Finnhub: No data available');
+        // Check for rate limit
+        if (jsonData['Information']) {
+          console.error('⚠️ Alpha Vantage rate limit');
+          return res.status(429).json({ 
+            error: 'Rate limit reached',
+            details: 'API call frequency limit reached. Please try again later. Data will be cached once fetched successfully.'
+          });
+        }
+        
+        // Check for error
+        if (jsonData['Error Message']) {
+          console.error('❌ Alpha Vantage error:', jsonData['Error Message']);
+          return res.status(404).json({ 
+            error: 'Invalid symbol',
+            details: jsonData['Error Message']
+          });
+        }
+        
+        const timeSeries = jsonData['Time Series (Daily)'];
+        
+        if (!timeSeries) {
+          console.error('❌ No time series data');
           return res.status(404).json({ 
             error: 'No data available',
-            details: 'No historical data found for this symbol and date range'
+            details: 'No historical data found for this symbol'
           });
         }
         
-        if (jsonData.s !== 'ok') {
-          console.error('Finnhub error:', jsonData);
-          return res.status(400).json({ 
-            error: 'API error',
-            details: 'Failed to fetch data from Finnhub'
-          });
-        }
-        
-        if (!jsonData.t || jsonData.t.length === 0) {
-          console.error('Finnhub: Empty response');
-          return res.status(404).json({ 
-            error: 'No data available',
-            details: 'Empty data returned'
-          });
-        }
-        
-        // Convert Finnhub format to our format
+        // Convert to our format and filter by date range
         const formattedData = {};
+        const allDates = Object.keys(timeSeries);
         
-        for (let i = 0; i < jsonData.t.length; i++) {
-          const date = new Date(jsonData.t[i] * 1000).toISOString().split('T')[0];
+        allDates.forEach(date => {
+          // Apply date filter if provided
+          if (from && date < from) return;
+          if (to && date > to) return;
           
+          const dayData = timeSeries[date];
           formattedData[date] = {
             date: date,
-            open: jsonData.o[i] || 0,
-            high: jsonData.h[i] || 0,
-            low: jsonData.l[i] || 0,
-            close: jsonData.c[i] || 0,
-            volume: jsonData.v[i] || 0
+            open: parseFloat(dayData['1. open']),
+            high: parseFloat(dayData['2. high']),
+            low: parseFloat(dayData['3. low']),
+            close: parseFloat(dayData['4. close']),
+            volume: parseInt(dayData['5. volume'])
           };
-        }
+        });
         
-        console.log(`Returning ${Object.keys(formattedData).length} dates for ${symbol}`);
+        console.log(`✅ Returning ${Object.keys(formattedData).length} dates for ${symbol} (from ${allDates.length} total)`);
         
         const responseData = {
           symbol: symbol,
           data: formattedData,
-          totalDates: jsonData.t.length,
+          totalDates: allDates.length,
           filteredDates: Object.keys(formattedData).length,
           cached: false,
-          source: 'finnhub'
+          source: 'alphavantage'
         };
         
-        // Save to cache
+        // Save to cache - IMPORTANT: This persists data!
         saveToCache(cacheKey, responseData);
-        console.log(`Cached ${symbol}`);
+        console.log(`💾 Cached ${symbol} - will be instant next time!`);
         
         res.status(200).json(responseData);
         
       } catch (error) {
-        console.error('Parse error:', error.message);
+        console.error('❌ Parse error:', error.message);
         res.status(500).json({ 
           error: 'Failed to parse data', 
           details: error.message 
@@ -142,7 +146,7 @@ module.exports = (req, res) => {
       }
     });
   }).on('error', (error) => {
-    console.error('Request error:', error.message);
+    console.error('❌ Request error:', error.message);
     res.status(500).json({ 
       error: 'Request failed', 
       details: error.message 
