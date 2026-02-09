@@ -1,4 +1,3 @@
-// Finnhub API - updated
 const https = require('https');
 
 // In-memory cache
