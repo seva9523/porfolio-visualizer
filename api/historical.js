@@ -1,6 +1,6 @@
 const https = require('https');
 
-// In-memory cache (persists during function warm starts)
+// In-memory cache
 const cache = new Map();
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
@@ -38,8 +38,6 @@ module.exports = (req, res) => {
   
   const { symbol, from, to } = req.query;
   
-  console.log('Twelve Data API called:', { symbol, from, to });
-  
   if (!symbol) {
     return res.status(400).json({ error: 'Missing symbol parameter' });
   }
@@ -53,19 +51,12 @@ module.exports = (req, res) => {
     return res.status(200).json(cachedData);
   }
   
-  console.log(`Cache MISS for ${symbol} - fetching from Twelve Data`);
+  const apiKey = process.env.ALPHA_VANTAGE_API_KEY || 'YHDG7S07STQI9RPC';
   
-  // Twelve Data API - free tier: 800 requests/day
-  const apiKey = 'f15e001ae049463384e462fa2906d8ff';
+  // ALWAYS use full outputsize to get all historical data
+  const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${encodeURIComponent(symbol)}&outputsize=full&apikey=${apiKey}`;
   
-  // Calculate date range
-  const today = new Date().toISOString().split('T')[0];
-  const fromDate = from || new Date(Date.now() - 5 * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-  const toDate = to || today;
-  
-  const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=1day&start_date=${fromDate}&end_date=${toDate}&apikey=${apiKey}&format=JSON`;
-  
-  console.log('Fetching from Twelve Data');
+  console.log(`Fetching ${symbol} from Alpha Vantage (full history)`);
   
   https.get(url, (response) => {
     let data = '';
@@ -78,61 +69,73 @@ module.exports = (req, res) => {
       try {
         const jsonData = JSON.parse(data);
         
-        console.log('Twelve Data response received');
-        
-        // Check for errors
-        if (jsonData.status === 'error') {
-          console.error('Twelve Data error:', jsonData.message);
-          return res.status(400).json({ 
-            error: jsonData.message,
-            details: 'API returned an error'
+        // Check for rate limit
+        if (jsonData['Information']) {
+          console.error('Alpha Vantage rate limit');
+          return res.status(429).json({ 
+            error: 'Rate limit reached',
+            details: 'API call frequency limit reached. Data will be cached once fetched.'
           });
         }
         
-        if (!jsonData.values || jsonData.values.length === 0) {
-          console.error('No data returned from Twelve Data');
+        // Check for error
+        if (jsonData['Error Message']) {
+          console.error('Alpha Vantage error:', jsonData['Error Message']);
+          return res.status(404).json({ 
+            error: 'Invalid symbol',
+            details: jsonData['Error Message']
+          });
+        }
+        
+        const timeSeries = jsonData['Time Series (Daily)'];
+        
+        if (!timeSeries) {
+          console.error('No time series data');
           return res.status(404).json({ 
             error: 'No data available',
-            details: 'No historical data found for this symbol and date range'
+            details: 'No historical data found'
           });
         }
         
-        // Convert Twelve Data format to our format
+        // Convert to our format and filter by date range
         const formattedData = {};
+        const allDates = Object.keys(timeSeries);
         
-        jsonData.values.forEach(item => {
-          const date = item.datetime.split(' ')[0]; // Extract date part
+        allDates.forEach(date => {
+          // Apply date filter if provided
+          if (from && date < from) return;
+          if (to && date > to) return;
           
+          const dayData = timeSeries[date];
           formattedData[date] = {
             date: date,
-            open: parseFloat(item.open) || 0,
-            high: parseFloat(item.high) || 0,
-            low: parseFloat(item.low) || 0,
-            close: parseFloat(item.close) || 0,
-            volume: parseInt(item.volume) || 0
+            open: parseFloat(dayData['1. open']),
+            high: parseFloat(dayData['2. high']),
+            low: parseFloat(dayData['3. low']),
+            close: parseFloat(dayData['4. close']),
+            volume: parseInt(dayData['5. volume'])
           };
         });
         
-        console.log(`Returning ${Object.keys(formattedData).length} data points for ${symbol}`);
+        console.log(`Returning ${Object.keys(formattedData).length} dates for ${symbol}`);
         
         const responseData = {
           symbol: symbol,
           data: formattedData,
-          totalDates: jsonData.values.length,
+          totalDates: allDates.length,
           filteredDates: Object.keys(formattedData).length,
           cached: false,
-          source: 'twelvedata'
+          source: 'alphavantage'
         };
         
         // Save to cache
         saveToCache(cacheKey, responseData);
-        console.log(`Saved ${symbol} to cache`);
+        console.log(`Cached ${symbol}`);
         
         res.status(200).json(responseData);
         
       } catch (error) {
         console.error('Parse error:', error.message);
-        console.error('Raw data sample:', data.substring(0, 500));
         res.status(500).json({ 
           error: 'Failed to parse data', 
           details: error.message 
