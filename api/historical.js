@@ -1,13 +1,8 @@
 const https = require('https');
-const fs = require('fs');
-const path = require('path');
 
 // In-memory cache (persists during function warm starts)
 const cache = new Map();
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
-
-// Pre-loaded stocks list
-const PRELOADED_STOCKS = ['AAPL', 'GOOGL', 'MSFT', 'AMZN', 'TSLA', 'META', 'NVDA', 'NFLX', 'BRK_B', 'JPM', 'V', 'JNJ', 'WMT', 'PG', 'MA', 'DIS', 'PYPL', 'ADBE', 'CRM', 'INTC'];
 
 function getCacheKey(symbol, from, to) {
   return `${symbol}_${from}_${to}`;
@@ -33,41 +28,6 @@ function saveToCache(key, data) {
   });
 }
 
-function loadPreloadedData(symbol, from, to) {
-  try {
-    const filename = symbol.replace('.', '_');
-    const filepath = path.join(__dirname, 'data', `${filename}.json`);
-    
-    if (!fs.existsSync(filepath)) {
-      return null;
-    }
-    
-    const fileData = fs.readFileSync(filepath, 'utf8');
-    const stockData = JSON.parse(fileData);
-    
-    // Filter by date range
-    const filteredData = {};
-    for (let date in stockData.data) {
-      const inRange = (!from || date >= from) && (!to || date <= to);
-      if (inRange) {
-        filteredData[date] = stockData.data[date];
-      }
-    }
-    
-    return {
-      symbol: symbol,
-      data: filteredData,
-      totalDates: Object.keys(stockData.data).length,
-      filteredDates: Object.keys(filteredData).length,
-      cached: true,
-      source: 'preloaded'
-    };
-  } catch (error) {
-    console.error(`Error loading preloaded data for ${symbol}:`, error.message);
-    return null;
-  }
-}
-
 module.exports = (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
@@ -78,38 +38,35 @@ module.exports = (req, res) => {
   
   const { symbol, from, to } = req.query;
   
-  console.log('Historical API called:', { symbol, from, to });
+  console.log('Twelve Data API called:', { symbol, from, to });
   
   if (!symbol) {
     return res.status(400).json({ error: 'Missing symbol parameter' });
   }
   
-  // 1. Check preloaded data first (fastest)
-  const preloadedData = loadPreloadedData(symbol, from, to);
-  if (preloadedData) {
-    console.log(`✓ PRELOADED data for ${symbol} (${preloadedData.filteredDates} dates)`);
-    return res.status(200).json(preloadedData);
-  }
-  
-  // 2. Check in-memory cache
+  // Check cache first
   const cacheKey = getCacheKey(symbol, from || '', to || '');
   const cachedData = getFromCache(cacheKey);
   
   if (cachedData) {
-    console.log(`Cache HIT for ${symbol} (serving from memory)`);
+    console.log(`Cache HIT for ${symbol}`);
     return res.status(200).json(cachedData);
   }
   
-  console.log(`Cache MISS for ${symbol} (fetching from Yahoo Finance)`);
+  console.log(`Cache MISS for ${symbol} - fetching from Twelve Data`);
   
-  // Convert dates to Unix timestamps
-  const fromDate = from ? new Date(from).getTime() / 1000 : Math.floor(Date.now() / 1000) - (365 * 24 * 60 * 60);
-  const toDate = to ? new Date(to).getTime() / 1000 : Math.floor(Date.now() / 1000);
+  // Twelve Data API - free tier: 800 requests/day
+  // Using time_series endpoint with daily interval
+  const apiKey = 'demo'; // You can use 'demo' for testing, or get free key at twelvedata.com
   
-  // Yahoo Finance API endpoint
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?period1=${Math.floor(fromDate)}&period2=${Math.floor(toDate)}&interval=1d`;
+  // Calculate date range
+  const today = new Date().toISOString().split('T')[0];
+  const fromDate = from || new Date(Date.now() - 5 * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const toDate = to || today;
   
-  console.log('Fetching from Yahoo Finance');
+  const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=1day&start_date=${fromDate}&end_date=${toDate}&apikey=${apiKey}&format=JSON`;
+  
+  console.log('Fetching from Twelve Data');
   
   https.get(url, (response) => {
     let data = '';
@@ -120,71 +77,41 @@ module.exports = (req, res) => {
     
     response.on('end', () => {
       try {
-        // Check if response is actually JSON
-        if (!data.startsWith('{') && !data.startsWith('[')) {
-          console.error('Non-JSON response received:', data.substring(0, 200));
-          
-          // Check for rate limiting messages
-          if (data.includes('Too Many Requests') || data.includes('429')) {
-            return res.status(429).json({ 
-              error: 'Too many requests', 
-              details: 'Rate limited by Yahoo Finance. Using cached data if available.' 
-            });
-          }
-          
-          return res.status(500).json({ 
-            error: 'Invalid response from Yahoo Finance', 
-            details: data.substring(0, 200) 
-          });
-        }
-        
         const jsonData = JSON.parse(data);
         
-        console.log('Yahoo Finance response received');
+        console.log('Twelve Data response received');
         
         // Check for errors
-        if (jsonData.chart && jsonData.chart.error) {
-          console.error('Yahoo Finance error:', jsonData.chart.error);
+        if (jsonData.status === 'error') {
+          console.error('Twelve Data error:', jsonData.message);
+          return res.status(400).json({ 
+            error: jsonData.message,
+            details: 'API returned an error'
+          });
+        }
+        
+        if (!jsonData.values || jsonData.values.length === 0) {
+          console.error('No data returned from Twelve Data');
           return res.status(404).json({ 
-            error: 'Symbol not found or invalid', 
-            details: jsonData.chart.error.description 
+            error: 'No data available',
+            details: 'No historical data found for this symbol and date range'
           });
         }
         
-        if (!jsonData.chart || !jsonData.chart.result || jsonData.chart.result.length === 0) {
-          console.error('No chart data in response');
-          return res.status(500).json({ 
-            error: 'No data returned',
-            details: 'Chart data not found in response'
-          });
-        }
-        
-        const result = jsonData.chart.result[0];
-        const timestamps = result.timestamp || [];
-        const quotes = result.indicators.quote[0];
-        
-        if (!quotes) {
-          console.error('No quote data found');
-          return res.status(500).json({ error: 'No quote data available' });
-        }
-        
-        // Convert to our expected format
+        // Convert Twelve Data format to our format
         const formattedData = {};
         
-        timestamps.forEach((timestamp, index) => {
-          const date = new Date(timestamp * 1000).toISOString().split('T')[0];
+        jsonData.values.forEach(item => {
+          const date = item.datetime.split(' ')[0]; // Extract date part
           
-          // Only include if we have valid close price
-          if (quotes.close[index] !== null) {
-            formattedData[date] = {
-              date: date,
-              open: quotes.open[index] || 0,
-              high: quotes.high[index] || 0,
-              low: quotes.low[index] || 0,
-              close: quotes.close[index],
-              volume: quotes.volume[index] || 0
-            };
-          }
+          formattedData[date] = {
+            date: date,
+            open: parseFloat(item.open) || 0,
+            high: parseFloat(item.high) || 0,
+            low: parseFloat(item.low) || 0,
+            close: parseFloat(item.close) || 0,
+            volume: parseInt(item.volume) || 0
+          };
         });
         
         console.log(`Returning ${Object.keys(formattedData).length} data points for ${symbol}`);
@@ -192,9 +119,10 @@ module.exports = (req, res) => {
         const responseData = {
           symbol: symbol,
           data: formattedData,
-          totalDates: timestamps.length,
+          totalDates: jsonData.values.length,
           filteredDates: Object.keys(formattedData).length,
-          cached: false
+          cached: false,
+          source: 'twelvedata'
         };
         
         // Save to cache
