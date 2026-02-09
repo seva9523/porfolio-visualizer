@@ -57,7 +57,7 @@ module.exports = (req, res) => {
   
   // Twelve Data API - free tier: 800 requests/day
   // Using time_series endpoint with daily interval
-  const apiKey = 'demo'; // You can use 'demo' for testing, or get free key at twelvedata.com
+  const apiKey = 'f15e001ae049463384e462fa2906d8ff'; // You can use 'demo' for testing, or get free key at twelvedata.com
   
   // Calculate date range
   const today = new Date().toISOString().split('T')[0];
