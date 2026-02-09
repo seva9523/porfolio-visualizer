@@ -1,4 +1,5 @@
-const https = require('https');
+// FINNHUB API v2.0
+   const https = require('https');
 
 // In-memory cache
 const cache = new Map();
