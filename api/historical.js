@@ -51,12 +51,17 @@ module.exports = (req, res) => {
     return res.status(200).json(cachedData);
   }
   
-  const apiKey = process.env.ALPHA_VANTAGE_API_KEY || 'YHDG7S07STQI9RPC';
+  const apiKey = process.env.FINNHUB_API_KEY || 'cteder1r01qr14rsde8gcteder1r01qr14rsde90';
   
-  // ALWAYS use full outputsize to get all historical data
-  const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${encodeURIComponent(symbol)}&outputsize=full&apikey=${apiKey}`;
+  // Finnhub uses Unix timestamps
+  const today = Math.floor(Date.now() / 1000);
+  const fromTimestamp = from ? Math.floor(new Date(from).getTime() / 1000) : today - (5 * 365 * 24 * 60 * 60);
+  const toTimestamp = to ? Math.floor(new Date(to).getTime() / 1000) : today;
   
-  console.log(`Fetching ${symbol} from Alpha Vantage (full history)`);
+  // Finnhub stock candles endpoint
+  const url = `https://finnhub.io/api/v1/stock/candle?symbol=${encodeURIComponent(symbol)}&resolution=D&from=${fromTimestamp}&to=${toTimestamp}&token=${apiKey}`;
+  
+  console.log(`Fetching ${symbol} from Finnhub (${from || '5y ago'} to ${to || 'today'})`);
   
   https.get(url, (response) => {
     let data = '';
@@ -69,63 +74,56 @@ module.exports = (req, res) => {
       try {
         const jsonData = JSON.parse(data);
         
-        // Check for rate limit
-        if (jsonData['Information']) {
-          console.error('Alpha Vantage rate limit');
-          return res.status(429).json({ 
-            error: 'Rate limit reached',
-            details: 'API call frequency limit reached. Data will be cached once fetched.'
-          });
-        }
-        
-        // Check for error
-        if (jsonData['Error Message']) {
-          console.error('Alpha Vantage error:', jsonData['Error Message']);
-          return res.status(404).json({ 
-            error: 'Invalid symbol',
-            details: jsonData['Error Message']
-          });
-        }
-        
-        const timeSeries = jsonData['Time Series (Daily)'];
-        
-        if (!timeSeries) {
-          console.error('No time series data');
+        // Check for errors
+        if (jsonData.s === 'no_data') {
+          console.error('Finnhub: No data available');
           return res.status(404).json({ 
             error: 'No data available',
-            details: 'No historical data found'
+            details: 'No historical data found for this symbol and date range'
           });
         }
         
-        // Convert to our format and filter by date range
-        const formattedData = {};
-        const allDates = Object.keys(timeSeries);
+        if (jsonData.s !== 'ok') {
+          console.error('Finnhub error:', jsonData);
+          return res.status(400).json({ 
+            error: 'API error',
+            details: 'Failed to fetch data from Finnhub'
+          });
+        }
         
-        allDates.forEach(date => {
-          // Apply date filter if provided
-          if (from && date < from) return;
-          if (to && date > to) return;
+        if (!jsonData.t || jsonData.t.length === 0) {
+          console.error('Finnhub: Empty response');
+          return res.status(404).json({ 
+            error: 'No data available',
+            details: 'Empty data returned'
+          });
+        }
+        
+        // Convert Finnhub format to our format
+        const formattedData = {};
+        
+        for (let i = 0; i < jsonData.t.length; i++) {
+          const date = new Date(jsonData.t[i] * 1000).toISOString().split('T')[0];
           
-          const dayData = timeSeries[date];
           formattedData[date] = {
             date: date,
-            open: parseFloat(dayData['1. open']),
-            high: parseFloat(dayData['2. high']),
-            low: parseFloat(dayData['3. low']),
-            close: parseFloat(dayData['4. close']),
-            volume: parseInt(dayData['5. volume'])
+            open: jsonData.o[i] || 0,
+            high: jsonData.h[i] || 0,
+            low: jsonData.l[i] || 0,
+            close: jsonData.c[i] || 0,
+            volume: jsonData.v[i] || 0
           };
-        });
+        }
         
         console.log(`Returning ${Object.keys(formattedData).length} dates for ${symbol}`);
         
         const responseData = {
           symbol: symbol,
           data: formattedData,
-          totalDates: allDates.length,
+          totalDates: jsonData.t.length,
           filteredDates: Object.keys(formattedData).length,
           cached: false,
-          source: 'alphavantage'
+          source: 'finnhub'
         };
         
         // Save to cache
