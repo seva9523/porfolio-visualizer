@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1800,10 +1801,26 @@
         }
 
         async function fetchHistoricalPrices(ticker, fromDate, toDate) {
-            // Manual entry mode - users enter prices directly
-            // No API calls needed
-            console.log(`Manual entry mode for ${ticker}`);
-            return {};
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const to = toDate || today;
+                
+                console.log(`📊 Fetching ${ticker} from yfinance API...`);
+                const response = await fetch(`/api/historical-yfinance?symbol=${ticker}&from=${fromDate}&to=${to}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    console.error(`❌ Error fetching data for ${ticker}:`, data.error);
+                    return {};
+                }
+                
+                console.log(`✅ Got ${Object.keys(data.data || {}).length} dates for ${ticker} from yfinance`);
+                return data.data || {};
+                
+            } catch (error) {
+                console.error(`❌ Error fetching ${ticker}:`, error);
+                return {};
+            }
         }
 
         async function refreshPrices() {
