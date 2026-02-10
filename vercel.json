@@ -1,8 +1,8 @@
 {
-  "functions": {
-    "api/historical-yfinance.py": {
-      "runtime": "python3.9",
-      "maxDuration": 10
+  "builds": [
+    {
+      "src": "api/historical-yfinance.py",
+      "use": "@vercel/python"
     }
-  }
+  ]
 }
