@@ -1,0 +1,8 @@
+{
+  "functions": {
+    "api/historical-yfinance.py": {
+      "runtime": "python3.9",
+      "maxDuration": 10
+    }
+  }
+}
