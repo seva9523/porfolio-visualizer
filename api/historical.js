@@ -1,4 +1,4 @@
-// Polygon.io API - Free tier with 2 years of historical data
+// Polygon.io API v2.0 - Free tier with 2 years of historical data
 const https = require('https');
 
 // In-memory cache
@@ -54,14 +54,9 @@ module.exports = (req, res) => {
   
   console.log(`⏳ Cache MISS for ${symbol} - fetching from Polygon.io`);
   
-  const apiKey = process.env.POLYGON_API_KEY;
-  
-  if (!apiKey) {
-    return res.status(500).json({ 
-      error: 'API key not configured',
-      details: 'Please add POLYGON_API_KEY to Vercel environment variables'
-    });
-  }
+  // TEMPORARY: Hardcode your Polygon API key here for testing
+  // Replace YOUR_POLYGON_KEY with your actual key from polygon.io
+  const apiKey = process.env.POLYGON_API_KEY || 'uw2CD11Ybqs2hjGvP9B_yRai40Up9e_R';
   
   // Calculate date range (default to 2 years if not specified)
   const today = new Date().toISOString().split('T')[0];
@@ -70,7 +65,6 @@ module.exports = (req, res) => {
   const toDate = to || today;
   
   // Polygon.io aggregates endpoint (bars)
-  // Format: /v2/aggs/ticker/{symbol}/range/1/day/{from}/{to}
   const url = `https://api.polygon.io/v2/aggs/ticker/${encodeURIComponent(symbol)}/range/1/day/${fromDate}/${toDate}?adjusted=true&sort=asc&apiKey=${apiKey}`;
   
   console.log(`📊 Fetching ${symbol} from Polygon.io (${fromDate} to ${toDate})`);
