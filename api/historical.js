@@ -1,7 +1,7 @@
-// Alpha Vantage API - Will work after rate limit reset
+// Polygon.io API - Free tier with 2 years of historical data
 const https = require('https');
 
-// In-memory cache (persists during function warm starts)
+// In-memory cache
 const cache = new Map();
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
@@ -52,14 +52,28 @@ module.exports = (req, res) => {
     return res.status(200).json(cachedData);
   }
   
-  console.log(`⏳ Cache MISS for ${symbol} - fetching from Alpha Vantage`);
+  console.log(`⏳ Cache MISS for ${symbol} - fetching from Polygon.io`);
   
-  const apiKey = process.env.ALPHA_VANTAGE_API_KEY || 'YHDG7S07STQI9RPC';
+  const apiKey = process.env.POLYGON_API_KEY;
   
-  // ALWAYS use full outputsize to get all historical data (20+ years)
-  const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${encodeURIComponent(symbol)}&outputsize=full&apikey=${apiKey}`;
+  if (!apiKey) {
+    return res.status(500).json({ 
+      error: 'API key not configured',
+      details: 'Please add POLYGON_API_KEY to Vercel environment variables'
+    });
+  }
   
-  console.log(`📊 Fetching ${symbol} from Alpha Vantage...`);
+  // Calculate date range (default to 2 years if not specified)
+  const today = new Date().toISOString().split('T')[0];
+  const twoYearsAgo = new Date(Date.now() - 730 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const fromDate = from || twoYearsAgo;
+  const toDate = to || today;
+  
+  // Polygon.io aggregates endpoint (bars)
+  // Format: /v2/aggs/ticker/{symbol}/range/1/day/{from}/{to}
+  const url = `https://api.polygon.io/v2/aggs/ticker/${encodeURIComponent(symbol)}/range/1/day/${fromDate}/${toDate}?adjusted=true&sort=asc&apiKey=${apiKey}`;
+  
+  console.log(`📊 Fetching ${symbol} from Polygon.io (${fromDate} to ${toDate})`);
   
   https.get(url, (response) => {
     let data = '';
@@ -72,66 +86,62 @@ module.exports = (req, res) => {
       try {
         const jsonData = JSON.parse(data);
         
-        // Check for rate limit
-        if (jsonData['Information']) {
-          console.error('⚠️ Alpha Vantage rate limit');
-          return res.status(429).json({ 
-            error: 'Rate limit reached',
-            details: 'API call frequency limit reached. Please try again later. Data will be cached once fetched successfully.'
+        console.log('Polygon.io response status:', jsonData.status);
+        
+        // Check for errors
+        if (jsonData.status === 'ERROR') {
+          console.error('❌ Polygon.io error:', jsonData.error);
+          return res.status(400).json({ 
+            error: 'API error',
+            details: jsonData.error || 'Failed to fetch data from Polygon.io'
           });
         }
         
-        // Check for error
-        if (jsonData['Error Message']) {
-          console.error('❌ Alpha Vantage error:', jsonData['Error Message']);
-          return res.status(404).json({ 
-            error: 'Invalid symbol',
-            details: jsonData['Error Message']
+        if (jsonData.status === 'NOT_AUTHORIZED') {
+          console.error('❌ Polygon.io: Not authorized');
+          return res.status(401).json({ 
+            error: 'Not authorized',
+            details: 'Invalid API key or not authorized for this endpoint'
           });
         }
         
-        const timeSeries = jsonData['Time Series (Daily)'];
-        
-        if (!timeSeries) {
-          console.error('❌ No time series data');
+        if (!jsonData.results || jsonData.results.length === 0) {
+          console.error('❌ No data returned from Polygon.io');
           return res.status(404).json({ 
             error: 'No data available',
-            details: 'No historical data found for this symbol'
+            details: 'No historical data found for this symbol and date range'
           });
         }
         
-        // Convert to our format and filter by date range
+        // Convert Polygon.io format to our format
         const formattedData = {};
-        const allDates = Object.keys(timeSeries);
         
-        allDates.forEach(date => {
-          // Apply date filter if provided
-          if (from && date < from) return;
-          if (to && date > to) return;
+        jsonData.results.forEach(bar => {
+          // Polygon returns timestamp in milliseconds
+          const date = new Date(bar.t).toISOString().split('T')[0];
           
-          const dayData = timeSeries[date];
           formattedData[date] = {
             date: date,
-            open: parseFloat(dayData['1. open']),
-            high: parseFloat(dayData['2. high']),
-            low: parseFloat(dayData['3. low']),
-            close: parseFloat(dayData['4. close']),
-            volume: parseInt(dayData['5. volume'])
+            open: bar.o || 0,
+            high: bar.h || 0,
+            low: bar.l || 0,
+            close: bar.c || 0,
+            volume: bar.v || 0
           };
         });
         
-        console.log(`✅ Returning ${Object.keys(formattedData).length} dates for ${symbol} (from ${allDates.length} total)`);
+        console.log(`✅ Returning ${Object.keys(formattedData).length} dates for ${symbol}`);
         
         const responseData = {
           symbol: symbol,
           data: formattedData,
-          totalDates: allDates.length,
+          totalDates: jsonData.results.length,
           filteredDates: Object.keys(formattedData).length,
           cached: false,
-          source: 'alphavantage'
+          source: 'polygon'
         };
         
-        // Save to cache - IMPORTANT: This persists data!
+        // Save to cache
         saveToCache(cacheKey, responseData);
         console.log(`💾 Cached ${symbol} - will be instant next time!`);
         
