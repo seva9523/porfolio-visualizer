@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1452,7 +1451,7 @@
                                 priceInput.placeholder = 'ENTER PRICE!';
                                 priceInput.style.borderColor = '#e74c3c';
                                 priceInput.style.borderWidth = '3px';
-                                console.log('No historical data available - user can enter manually');
+                                console.log('Using manual price entry');
                             }
                         } catch (error) {
                             console.error('Error fetching historical price:', error);
@@ -1801,77 +1800,10 @@
         }
 
         async function fetchHistoricalPrices(ticker, fromDate, toDate) {
-            try {
-                const today = new Date().toISOString().split('T')[0];
-                const to = toDate || today;
-                
-                // Create cache key
-                const cacheKey = `historical_${ticker}_${fromDate}_${to}`;
-                const cacheTimeKey = `${cacheKey}_time`;
-                
-                // Check if we have cached data (less than 24 hours old)
-                const cachedData = localStorage.getItem(cacheKey);
-                const cacheTime = localStorage.getItem(cacheTimeKey);
-                
-                if (cachedData && cacheTime) {
-                    const age = Date.now() - parseInt(cacheTime);
-                    const oneDay = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-                    
-                    if (age < oneDay) {
-                        console.log(`Using cached data for ${ticker} (${Math.round(age / 1000 / 60)} minutes old)`);
-                        return JSON.parse(cachedData);
-                    } else {
-                        console.log(`Cache expired for ${ticker} (${Math.round(age / 1000 / 60 / 60)} hours old)`);
-                    }
-                }
-                
-                // No cache or expired - fetch from API
-                console.log(`Fetching fresh data from API for ${ticker}...`);
-                const response = await fetch(`/api/historical?symbol=${ticker}&from=${fromDate}&to=${to}`);
-                const data = await response.json();
-                
-                console.log('Raw API response:', data);
-                console.log('Response keys:', Object.keys(data));
-                console.log('data.data exists?', !!data.data);
-                console.log('data.data type:', typeof data.data);
-                console.log('data.data keys:', data.data ? Object.keys(data.data).length : 'N/A');
-                
-                if (data.error) {
-                    console.error(`Error fetching historical data for ${ticker}:`, data.error);
-                    
-                    // If rate limited, try to use expired cache as fallback
-                    if (cachedData && (data.error.includes('rate limit') || data.error.includes('frequency limit'))) {
-                        console.warn('Rate limited! Using expired cache as fallback');
-                        alert('API rate limit reached. Using cached data (may be slightly outdated).');
-                        return JSON.parse(cachedData);
-                    }
-                    
-                    return {};
-                }
-                
-                const historicalData = data.data || {};
-                
-                // Save to cache
-                if (Object.keys(historicalData).length > 0) {
-                    console.log(`Caching ${Object.keys(historicalData).length} dates for ${ticker}`);
-                    localStorage.setItem(cacheKey, JSON.stringify(historicalData));
-                    localStorage.setItem(cacheTimeKey, Date.now().toString());
-                }
-                
-                return historicalData;
-            } catch (error) {
-                console.error(`Error fetching historical data for ${ticker}:`, error);
-                
-                // Try to use cache as fallback on error
-                const cacheKey = `historical_${ticker}_${fromDate}_${toDate || today}`;
-                const cachedData = localStorage.getItem(cacheKey);
-                if (cachedData) {
-                    console.warn('Error fetching data, using cache as fallback');
-                    return JSON.parse(cachedData);
-                }
-                
-                return {};
-            }
+            // Manual entry mode - users enter prices directly
+            // No API calls needed
+            console.log(`Manual entry mode for ${ticker}`);
+            return {};
         }
 
         async function refreshPrices() {
@@ -1980,8 +1912,8 @@
                 if (hasHistoricalData) {
                     createHistoricalPerformanceChart(holdings, earliestDate);
                 } else {
-                    // No historical data available - create estimated chart based on purchase vs current
-                    console.warn('No historical data available - creating estimated performance chart');
+                    // Create estimated chart based on purchase vs current
+                    console.log('Creating estimated performance chart (linear interpolation)');
                     createEstimatedPerformanceChart(holdings, earliestDate);
                 }
             } else {
