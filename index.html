@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1822,13 +1821,13 @@
                 return JSON.parse(csvData);
             }
             
-            // If no CSV data, try API (will likely fail but kept as fallback)
+            // If no CSV data, try API
             try {
                 const today = new Date().toISOString().split('T')[0];
                 const to = toDate || today;
                 
-                console.log(`📊 Fetching ${ticker} from Yahoo scraper...`);
-                const response = await fetch(`/api/historical-yahoo-scraper?symbol=${ticker}&from=${fromDate}&to=${to}`);
+                console.log(`📊 Fetching ${ticker} from Yahoo Chart API...`);
+                const response = await fetch(`/api/historical?symbol=${ticker}&from=${fromDate}&to=${to}`);
                 const data = await response.json();
                 
                 if (data.error) {
@@ -1836,7 +1835,7 @@
                     return {};
                 }
                 
-                console.log(`✅ Got ${Object.keys(data.data || {}).length} dates for ${ticker} from Yahoo scraper`);
+                console.log(`✅ Got ${Object.keys(data.data || {}).length} dates for ${ticker} from Yahoo Chart API`);
                 return data.data || {};
                 
             } catch (error) {
