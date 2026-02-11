@@ -22,7 +22,8 @@ class handler(BaseHTTPRequestHandler):
         self.end_headers()
         
         if not symbol:
-            self.wfile.write(json.dumps({'error': 'Missing symbol', 'data': {}}).encode())
+            error_response = json.dumps({'error': 'Missing symbol', 'data': {}})
+            self.wfile.write(error_response.encode())
             return
         
         try:
@@ -39,25 +40,53 @@ class handler(BaseHTTPRequestHandler):
             else:
                 period2 = 9999999999  # Far future
             
-            # Use EXACT Yahoo Finance chart API from the repo
+            # Use EXACT Yahoo Finance chart API from stock-market-scraper repo
             query_url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?symbol={symbol}&period1={period1}&period2={period2}&interval=1d&includePrePost=true&events=div%2Csplit"
             
-            print(f"[Yahoo] Fetching {symbol} from chart API...", file=sys.stderr)
+            print(f"[Yahoo Chart API] Fetching {symbol}", file=sys.stderr)
+            print(f"[Yahoo Chart API] URL: {query_url}", file=sys.stderr)
             
             # Make request
             req = Request(query_url, headers={'User-Agent': 'Mozilla/5.0'})
             response = urlopen(req, timeout=10)
-            parsed = json.loads(response.read().decode())
+            response_text = response.read().decode()
+            
+            print(f"[Yahoo Chart API] Response length: {len(response_text)} bytes", file=sys.stderr)
+            
+            parsed = json.loads(response_text)
+            
+            # Check if we have valid data
+            if 'chart' not in parsed or 'result' not in parsed['chart']:
+                print(f"[Yahoo Chart API] Invalid response structure", file=sys.stderr)
+                error_response = json.dumps({'error': 'Invalid response from Yahoo', 'data': {}})
+                self.wfile.write(error_response.encode())
+                return
+            
+            if not parsed['chart']['result'] or len(parsed['chart']['result']) == 0:
+                print(f"[Yahoo Chart API] No results in response", file=sys.stderr)
+                error_response = json.dumps({'error': 'No data available', 'data': {}})
+                self.wfile.write(error_response.encode())
+                return
             
             # Parse the response using the EXACT structure from the repo
-            timestamps = parsed['chart']['result'][0]['timestamp']
-            quote = parsed['chart']['result'][0]['indicators']['quote'][0]
+            result = parsed['chart']['result'][0]
             
-            Low = quote['low']
-            Open = quote['open']
-            Volume = quote['volume']
-            High = quote['high']
-            Close = quote['close']
+            if 'timestamp' not in result:
+                print(f"[Yahoo Chart API] No timestamps in result", file=sys.stderr)
+                error_response = json.dumps({'error': 'No timestamp data', 'data': {}})
+                self.wfile.write(error_response.encode())
+                return
+            
+            timestamps = result['timestamp']
+            quote = result['indicators']['quote'][0]
+            
+            Low = quote.get('low', [])
+            Open = quote.get('open', [])
+            Volume = quote.get('volume', [])
+            High = quote.get('high', [])
+            Close = quote.get('close', [])
+            
+            print(f"[Yahoo Chart API] Found {len(timestamps)} timestamps", file=sys.stderr)
             
             # Convert to our format
             formatted_data = {}
@@ -65,34 +94,35 @@ class handler(BaseHTTPRequestHandler):
                 date = datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d')
                 
                 # Skip null values
-                if Close[i] is None:
+                if i >= len(Close) or Close[i] is None:
                     continue
                 
                 formatted_data[date] = {
                     'date': date,
-                    'open': Open[i] if Open[i] is not None else 0,
-                    'high': High[i] if High[i] is not None else 0,
-                    'low': Low[i] if Low[i] is not None else 0,
+                    'open': Open[i] if i < len(Open) and Open[i] is not None else 0,
+                    'high': High[i] if i < len(High) and High[i] is not None else 0,
+                    'low': Low[i] if i < len(Low) and Low[i] is not None else 0,
                     'close': Close[i],
-                    'volume': Volume[i] if Volume[i] is not None else 0
+                    'volume': int(Volume[i]) if i < len(Volume) and Volume[i] is not None else 0
                 }
             
             print(f"✅ Scraped {len(formatted_data)} dates for {symbol}", file=sys.stderr)
             
-            response_data = {
+            response_data = json.dumps({
                 'symbol': symbol,
                 'data': formatted_data,
                 'totalDates': len(formatted_data),
                 'source': 'yahoo_chart_api'
-            }
+            })
             
-            self.wfile.write(json.dumps(response_data).encode())
+            self.wfile.write(response_data.encode())
             
         except Exception as e:
             print(f"❌ Error for {symbol}: {str(e)}", file=sys.stderr)
             import traceback
             traceback.print_exc(file=sys.stderr)
-            self.wfile.write(json.dumps({'error': str(e), 'data': {}}).encode())
+            error_response = json.dumps({'error': str(e), 'data': {}, 'details': repr(e)})
+            self.wfile.write(error_response.encode())
     
     def do_OPTIONS(self):
         self.send_response(200)
