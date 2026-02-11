@@ -1,17 +1,7 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "index.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "goals.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "api/**/*.py",
-      "use": "@vercel/python"
+  "functions": {
+    "api/**/*.py": {
+      "runtime": "python3.9"
     }
-  ]
+  }
 }
