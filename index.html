@@ -1236,7 +1236,7 @@
             dropdown.classList.add('active');
 
             try {
-                const response = await fetch(`/api/historical-yahoo-scraper?symbol=${ticker}&from=${fromDate}&to=${to}`);
+                const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
                 const data = await response.json();
                 
                 dropdown.innerHTML = '';
@@ -1818,8 +1818,8 @@
                 const today = new Date().toISOString().split('T')[0];
                 const to = toDate || today;
                 
-                console.log(`📊 Fetching ${ticker} from yfinance API...`);
-                const response = await fetch(`/api/historical-yfinance?symbol=${ticker}&from=${fromDate}&to=${to}`);
+                console.log(`📊 Fetching ${ticker} from Yahoo scraper...`);
+                const response = await fetch(`/api/historical-yahoo-scraper?symbol=${ticker}&from=${fromDate}&to=${to}`);
                 const data = await response.json();
                 
                 if (data.error) {
@@ -1827,7 +1827,7 @@
                     return {};
                 }
                 
-                console.log(`✅ Got ${Object.keys(data.data || {}).length} dates for ${ticker} from yfinance`);
+                console.log(`✅ Got ${Object.keys(data.data || {}).length} dates for ${ticker} from Yahoo scraper`);
                 return data.data || {};
                 
             } catch (error) {
