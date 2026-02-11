@@ -1236,7 +1236,7 @@
             dropdown.classList.add('active');
 
             try {
-                const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+                const response = await fetch(`/api/historical-yahoo-scraper?symbol=${ticker}&from=${fromDate}&to=${to}`);
                 const data = await response.json();
                 
                 dropdown.innerHTML = '';
