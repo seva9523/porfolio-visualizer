@@ -1414,7 +1414,18 @@
                         priceInput.placeholder = 'Fetching...';
                         
                         try {
-                            const historicalData = await fetchHistoricalPrices(ticker, validation.date, validation.date);
+                            // Fetch a range around the date to ensure we get data (±30 days)
+                            const targetDate = new Date(validation.date);
+                            const fromDate = new Date(targetDate);
+                            fromDate.setDate(fromDate.getDate() - 30);
+                            const toDate = new Date(targetDate);
+                            toDate.setDate(toDate.getDate() + 30);
+                            
+                            const historicalData = await fetchHistoricalPrices(
+                                ticker, 
+                                fromDate.toISOString().split('T')[0], 
+                                toDate.toISOString().split('T')[0]
+                            );
                             
                             console.log('Historical data received:', Object.keys(historicalData).length, 'dates');
                             
