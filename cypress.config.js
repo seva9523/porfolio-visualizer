@@ -1,8 +1,6 @@
-const { defineConfig } = require("cypress");
-
-module.exports = defineConfig({
+module.exports = {
   e2e: {
     specPattern: "cypress/e2e/**/*.cy.js",
     baseUrl: "https://porfolio-visualizer-taca.vercel.app",
   },
-});
+};
