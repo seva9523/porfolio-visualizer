@@ -101,23 +101,106 @@
             color: var(--text-primary);
         }
         
-        .probability-gauge {
-            text-align: center;
-            padding: 30px;
-            background: linear-gradient(135deg, rgba(46, 134, 171, 0.1), rgba(46, 134, 171, 0.05));
-            border-radius: 12px;
-            margin: 20px 0;
+        /* REDESIGNED: Compact probability badge */
+        .probability-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, rgba(46, 134, 171, 0.15), rgba(46, 134, 171, 0.05));
+            border-radius: 30px;
+            border: 3px solid;
+            margin: 15px 0;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
-        .probability-value {
-            font-size: 4em;
+        .probability-badge.prob-high { border-color: #27ae60; }
+        .probability-badge.prob-medium { border-color: #F18F01; }
+        .probability-badge.prob-low { border-color: #e74c3c; }
+        
+        .probability-badge-label {
+            font-size: 11px;
+            text-transform: uppercase;
             font-weight: 700;
-            margin: 10px 0;
+            letter-spacing: 0.5px;
+            color: #666;
         }
         
-        .prob-high { color: #27ae60; }
-        .prob-medium { color: #F18F01; }
-        .prob-low { color: #e74c3c; }
+        .probability-badge-value {
+            font-size: 32px;
+            font-weight: 800;
+            transition: all 0.5s;
+        }
+        
+        .prob-high .probability-badge-value { color: #27ae60; }
+        .prob-medium .probability-badge-value { color: #F18F01; }
+        .prob-low .probability-badge-value { color: #e74c3c; }
+        
+        /* Forecast chart */
+        .forecast-chart-container {
+            margin: 20px 0;
+            padding: 25px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .chart-title-text {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .chart-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .active-strategy {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: rgba(46, 134, 171, 0.15);
+            border: 2px solid #2E86AB;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #2E86AB;
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        .reset-btn {
+            padding: 8px 16px;
+            background: #95a5a6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .reset-btn:hover {
+            background: #7f8c8d;
+            transform: translateY(-2px);
+        }
         
         .outcome-stats {
             display: grid;
@@ -146,8 +229,126 @@
             font-size: 22px;
             font-weight: 700;
             color: var(--text-primary);
+            transition: all 0.5s;
         }
         
+        /* Interactive action plans */
+        .plan-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border: 2px solid #2E86AB;
+        }
+        
+        .plan-header {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2E86AB;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .plan-options {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .plan-card {
+            background: white;
+            padding: 18px;
+            border-radius: 10px;
+            border-left: 5px solid #27ae60;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+        
+        .plan-card:hover {
+            transform: translateX(8px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+        
+        .plan-card.active {
+            background: linear-gradient(135deg, rgba(46, 134, 171, 0.12), rgba(46, 134, 171, 0.05));
+            border-left-color: #2E86AB;
+            border-left-width: 7px;
+            box-shadow: 0 4px 16px rgba(46, 134, 171, 0.2);
+        }
+        
+        .plan-card.active::after {
+            content: "✓ ACTIVE";
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            padding: 5px 10px;
+            background: #2E86AB;
+            color: white;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            border-radius: 5px;
+            animation: fadeIn 0.3s;
+        }
+        
+        .plan-card.medium {
+            border-left-color: #F18F01;
+        }
+        
+        .plan-card.hard {
+            border-left-color: #e74c3c;
+        }
+        
+        .plan-title {
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .plan-detail {
+            font-size: 14px;
+            color: #666;
+            margin: 5px 0;
+            line-height: 1.5;
+        }
+        
+        .plan-detail strong {
+            color: #2c3e50;
+        }
+        
+        .plan-result {
+            margin-top: 12px;
+            padding: 12px;
+            background: rgba(46, 134, 171, 0.1);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #2E86AB;
+        }
+        
+        .show-plans-btn {
+            width: 100%;
+            padding: 14px;
+            background: #2E86AB;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.3s;
+        }
+        
+        .show-plans-btn:hover {
+            background: #1a5276;
+            transform: translateY(-2px);
+        }
+        
+        /* Modal styles */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -248,91 +449,6 @@
             padding: 60px;
             color: #999;
         }
-        
-        .plan-section {
-            margin-top: 20px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 12px;
-            border: 2px solid #2E86AB;
-        }
-        
-        .plan-header {
-            font-size: 18px;
-            font-weight: 700;
-            color: #2E86AB;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .plan-options {
-            display: grid;
-            gap: 15px;
-        }
-        
-        .plan-card {
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 4px solid #27ae60;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .plan-card:hover {
-            transform: translateX(5px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        
-        .plan-card.medium {
-            border-left-color: #F18F01;
-        }
-        
-        .plan-card.hard {
-            border-left-color: #e74c3c;
-        }
-        
-        .plan-title {
-            font-weight: 700;
-            font-size: 16px;
-            margin-bottom: 8px;
-            color: #2c3e50;
-        }
-        
-        .plan-detail {
-            font-size: 14px;
-            color: #666;
-            margin: 4px 0;
-        }
-        
-        .plan-result {
-            margin-top: 10px;
-            padding: 10px;
-            background: rgba(46, 134, 171, 0.1);
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 600;
-            color: #2E86AB;
-        }
-        
-        .show-plans-btn {
-            width: 100%;
-            padding: 12px;
-            background: #2E86AB;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 15px;
-        }
-        
-        .show-plans-btn:hover {
-            background: #1a5276;
-        }
     </style>
 </head>
 <body>
@@ -422,6 +538,7 @@
     <script>
         // Goals data
         let goals = [];
+        let forecastCharts = {}; // Store chart instances
         
         // Load goals from localStorage
         function loadGoals() {
@@ -473,6 +590,334 @@
             };
         }
         
+        // Generate forecast timeline data
+        function generateForecastPath(currentSavings, monthlyContribution, annualReturn, annualVolatility, years) {
+            const monthlyReturn = annualReturn / 12 / 100;
+            const monthlyVolatility = annualVolatility / 100 / Math.sqrt(12);
+            const totalMonths = years * 12;
+            
+            const medianPath = [];
+            const p10Path = [];
+            const p90Path = [];
+            const labels = [];
+            
+            // Run simulations and collect year-end values
+            const numSims = 1000;
+            const yearlyValues = Array(years + 1).fill(0).map(() => []);
+            
+            for (let sim = 0; sim < numSims; sim++) {
+                let balance = currentSavings;
+                yearlyValues[0].push(balance);
+                
+                for (let month = 1; month <= totalMonths; month++) {
+                    const u1 = Math.random();
+                    const u2 = Math.random();
+                    const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+                    const randomReturn = monthlyReturn + monthlyVolatility * z;
+                    
+                    balance = balance * (1 + randomReturn) + monthlyContribution;
+                    
+                    // Store year-end values
+                    if (month % 12 === 0) {
+                        const year = month / 12;
+                        yearlyValues[year].push(balance);
+                    }
+                }
+            }
+            
+            // Calculate percentiles for each year
+            for (let year = 0; year <= years; year++) {
+                labels.push(`Year ${year}`);
+                const values = yearlyValues[year].sort((a, b) => a - b);
+                medianPath.push(values[Math.floor(values.length * 0.50)]);
+                p10Path.push(values[Math.floor(values.length * 0.10)]);
+                p90Path.push(values[Math.floor(values.length * 0.90)]);
+            }
+            
+            return { labels, medianPath, p10Path, p90Path };
+        }
+        
+        // Create forecast chart
+        function createForecastChart(goalId, currentSavings, monthlyContribution, annualReturn, annualVolatility, years, targetAmount) {
+            const canvasId = `forecast-chart-${goalId}`;
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            
+            // Destroy existing chart if any
+            if (forecastCharts[goalId]) {
+                forecastCharts[goalId].destroy();
+            }
+            
+            const { labels, medianPath, p10Path, p90Path } = generateForecastPath(
+                currentSavings, monthlyContribution, annualReturn, annualVolatility, years
+            );
+            
+            const ctx = canvas.getContext('2d');
+            forecastCharts[goalId] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Target',
+                            data: Array(labels.length).fill(targetAmount),
+                            borderColor: '#e74c3c',
+                            borderWidth: 3,
+                            borderDash: [10, 5],
+                            fill: false,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Median Outcome',
+                            data: medianPath,
+                            borderColor: '#2E86AB',
+                            backgroundColor: 'rgba(46, 134, 171, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 3,
+                            pointHoverRadius: 6
+                        },
+                        {
+                            label: 'Best Case (90th)',
+                            data: p90Path,
+                            borderColor: '#27ae60',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            fill: false,
+                            tension: 0.4,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Worst Case (10th)',
+                            data: p10Path,
+                            borderColor: '#95a5a6',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            fill: false,
+                            tension: 0.4,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: { font: { size: 11 }, padding: 10 }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `${context.dataset.label}: $${context.parsed.y.toLocaleString('en-US', {maximumFractionDigits: 0})}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { font: { size: 11 } },
+                            grid: { display: false }
+                        },
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: (value) => '$' + (value / 1000).toFixed(0) + 'k',
+                                font: { size: 11 }
+                            },
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Generate action plans to reach goal
+        function generateActionPlans(goal) {
+            const plans = [];
+            
+            // Plan 1: Increase monthly contribution
+            const monthlyGap = goal.targetAmount - goal.simulation.median;
+            const monthsRemaining = goal.timeHorizonYears * 12;
+            const additionalMonthly = Math.max(0, monthlyGap / monthsRemaining / 1.5);
+            
+            if (additionalMonthly > 0) {
+                const newMonthly = goal.monthlyContribution + additionalMonthly;
+                const plan1Sim = runSimulation(
+                    goal.currentSavings,
+                    newMonthly,
+                    goal.annualReturn,
+                    goal.annualVolatility,
+                    goal.timeHorizonYears,
+                    goal.targetAmount
+                );
+                
+                plans.push({
+                    id: 'increase_monthly',
+                    type: 'easy',
+                    title: '📈 Increase Monthly Contribution',
+                    changes: `Increase from $${goal.monthlyContribution.toLocaleString()} to $${newMonthly.toFixed(0).toLocaleString()}/month`,
+                    additional: `Additional $${additionalMonthly.toFixed(0).toLocaleString()}/month`,
+                    newProbability: plan1Sim.probability,
+                    newSimulation: plan1Sim,
+                    params: {
+                        currentSavings: goal.currentSavings,
+                        monthlyContribution: newMonthly,
+                        annualReturn: goal.annualReturn,
+                        annualVolatility: goal.annualVolatility,
+                        timeHorizonYears: goal.timeHorizonYears
+                    },
+                    icon: '💰'
+                });
+            }
+            
+            // Plan 2: Extend timeline
+            const extendedYears = goal.timeHorizonYears + 5;
+            const plan2Sim = runSimulation(
+                goal.currentSavings,
+                goal.monthlyContribution,
+                goal.annualReturn,
+                goal.annualVolatility,
+                extendedYears,
+                goal.targetAmount
+            );
+            
+            plans.push({
+                id: 'extend_timeline',
+                type: 'medium',
+                title: '⏱️ Extend Timeline',
+                changes: `Extend from ${goal.timeHorizonYears} to ${extendedYears} years`,
+                additional: `Additional ${5} years of growth`,
+                newProbability: plan2Sim.probability,
+                newSimulation: plan2Sim,
+                params: {
+                    currentSavings: goal.currentSavings,
+                    monthlyContribution: goal.monthlyContribution,
+                    annualReturn: goal.annualReturn,
+                    annualVolatility: goal.annualVolatility,
+                    timeHorizonYears: extendedYears
+                },
+                icon: '📅'
+            });
+            
+            // Plan 3: Combination approach
+            const moderateIncrease = additionalMonthly * 0.6;
+            const moderateExtension = goal.timeHorizonYears + 3;
+            const plan3Sim = runSimulation(
+                goal.currentSavings,
+                goal.monthlyContribution + moderateIncrease,
+                goal.annualReturn,
+                goal.annualVolatility,
+                moderateExtension,
+                goal.targetAmount
+            );
+            
+            plans.push({
+                id: 'balanced',
+                type: 'easy',
+                title: '🎯 Balanced Approach',
+                changes: `Increase contribution by $${moderateIncrease.toFixed(0).toLocaleString()}/month AND extend timeline by 3 years`,
+                additional: `Less aggressive on both fronts`,
+                newProbability: plan3Sim.probability,
+                newSimulation: plan3Sim,
+                params: {
+                    currentSavings: goal.currentSavings,
+                    monthlyContribution: goal.monthlyContribution + moderateIncrease,
+                    annualReturn: goal.annualReturn,
+                    annualVolatility: goal.annualVolatility,
+                    timeHorizonYears: moderateExtension
+                },
+                icon: '⚖️'
+            });
+            
+            // Plan 4: One-time lump sum
+            const lumpSum = monthlyGap * 0.5;
+            if (lumpSum > 1000) {
+                const plan4Sim = runSimulation(
+                    goal.currentSavings + lumpSum,
+                    goal.monthlyContribution,
+                    goal.annualReturn,
+                    goal.annualVolatility,
+                    goal.timeHorizonYears,
+                    goal.targetAmount
+                );
+                
+                plans.push({
+                    id: 'lump_sum',
+                    type: 'hard',
+                    title: '💎 One-Time Contribution',
+                    changes: `Add $${lumpSum.toFixed(0).toLocaleString()} lump sum now`,
+                    additional: `Requires significant upfront capital`,
+                    newProbability: plan4Sim.probability,
+                    newSimulation: plan4Sim,
+                    params: {
+                        currentSavings: goal.currentSavings + lumpSum,
+                        monthlyContribution: goal.monthlyContribution,
+                        annualReturn: goal.annualReturn,
+                        annualVolatility: goal.annualVolatility,
+                        timeHorizonYears: goal.timeHorizonYears
+                    },
+                    icon: '🎁'
+                });
+            }
+            
+            // Sort plans by new probability (best first)
+            plans.sort((a, b) => b.newProbability - a.newProbability);
+            
+            return plans;
+        }
+        
+        // Apply action plan
+        function applyPlan(goalId, planId) {
+            const goal = goals.find(g => g.id === goalId);
+            if (!goal) return;
+            
+            const plans = generateActionPlans(goal);
+            const selectedPlan = plans.find(p => p.id === planId);
+            if (!selectedPlan) return;
+            
+            // Update goal with new simulation
+            goal.activeStrategy = planId;
+            goal.activeStrategyName = selectedPlan.title;
+            goal.currentSimulation = selectedPlan.newSimulation;
+            goal.currentParams = selectedPlan.params;
+            
+            // Save and re-render
+            saveGoals();
+            renderGoals();
+        }
+        
+        // Reset to original
+        function resetPlan(goalId) {
+            const goal = goals.find(g => g.id === goalId);
+            if (!goal) return;
+            
+            goal.activeStrategy = null;
+            goal.activeStrategyName = null;
+            goal.currentSimulation = goal.simulation;
+            goal.currentParams = {
+                currentSavings: goal.currentSavings,
+                monthlyContribution: goal.monthlyContribution,
+                annualReturn: goal.annualReturn,
+                annualVolatility: goal.annualVolatility,
+                timeHorizonYears: goal.timeHorizonYears
+            };
+            
+            saveGoals();
+            renderGoals();
+        }
+        
+        // Toggle action plans display
+        function togglePlans(goalId) {
+            const planSection = document.getElementById(`plans-${goalId}`);
+            if (planSection.style.display === 'none' || !planSection.style.display) {
+                planSection.style.display = 'block';
+            } else {
+                planSection.style.display = 'none';
+            }
+        }
+        
         // Open modal
         function openGoalModal() {
             document.getElementById('goal-modal').classList.add('active');
@@ -498,7 +943,9 @@
                 monthlyContribution: parseFloat(document.getElementById('goal-monthly').value) || 0,
                 annualReturn: parseFloat(document.getElementById('goal-return').value),
                 annualVolatility: parseFloat(document.getElementById('goal-volatility').value),
-                created: new Date().toISOString()
+                created: new Date().toISOString(),
+                activeStrategy: null,
+                activeStrategyName: null
             };
             
             // Run simulation
@@ -511,6 +958,16 @@
                 goal.targetAmount
             );
             
+            // Set current simulation to original
+            goal.currentSimulation = goal.simulation;
+            goal.currentParams = {
+                currentSavings: goal.currentSavings,
+                monthlyContribution: goal.monthlyContribution,
+                annualReturn: goal.annualReturn,
+                annualVolatility: goal.annualVolatility,
+                timeHorizonYears: goal.timeHorizonYears
+            };
+            
             goals.push(goal);
             saveGoals();
             closeGoalModal();
@@ -521,6 +978,10 @@
         function deleteGoal(goalId) {
             if (confirm('Are you sure you want to delete this goal?')) {
                 goals = goals.filter(g => g.id !== goalId);
+                if (forecastCharts[goalId]) {
+                    forecastCharts[goalId].destroy();
+                    delete forecastCharts[goalId];
+                }
                 saveGoals();
                 renderGoals();
             }
@@ -540,16 +1001,26 @@
             noGoals.style.display = 'none';
             
             container.innerHTML = goals.map(goal => {
-                const probClass = goal.simulation.probability >= 70 ? 'prob-high' : 
-                                 goal.simulation.probability >= 40 ? 'prob-medium' : 'prob-low';
+                const currentSim = goal.currentSimulation || goal.simulation;
+                const currentParams = goal.currentParams || {
+                    currentSavings: goal.currentSavings,
+                    monthlyContribution: goal.monthlyContribution,
+                    annualReturn: goal.annualReturn,
+                    annualVolatility: goal.annualVolatility,
+                    timeHorizonYears: goal.timeHorizonYears
+                };
+                
+                const probClass = currentSim.probability >= 70 ? 'prob-high' : 
+                                 currentSim.probability >= 40 ? 'prob-medium' : 'prob-low';
                 
                 const plans = generateActionPlans(goal);
                 const plansHTML = plans.map(plan => {
                     const planClass = plan.type === 'easy' ? '' : plan.type === 'medium' ? 'medium' : 'hard';
                     const probColor = plan.newProbability >= 70 ? '#27ae60' : plan.newProbability >= 40 ? '#F18F01' : '#e74c3c';
+                    const isActive = goal.activeStrategy === plan.id;
                     
                     return `
-                        <div class="plan-card ${planClass}">
+                        <div class="plan-card ${planClass} ${isActive ? 'active' : ''}" onclick="applyPlan('${goal.id}', '${plan.id}')">
                             <div class="plan-title">${plan.icon} ${plan.title}</div>
                             <div class="plan-detail"><strong>Action:</strong> ${plan.changes}</div>
                             <div class="plan-detail">${plan.additional}</div>
@@ -568,41 +1039,55 @@
                         </div>
                         
                         <div style="font-size: 13px; color: #666; margin-bottom: 15px;">
-                            Target: $${goal.targetAmount.toLocaleString()} in ${goal.timeHorizonYears} years
+                            Target: $${goal.targetAmount.toLocaleString()} in ${currentParams.timeHorizonYears} years
                         </div>
                         
-                        <div class="probability-gauge">
-                            <div style="font-size: 14px; color: #666; margin-bottom: 10px;">
-                                PROBABILITY OF REACHING GOAL
+                        <div class="probability-badge ${probClass}">
+                            <span class="probability-badge-label">Success Probability</span>
+                            <span class="probability-badge-value">${currentSim.probability.toFixed(0)}%</span>
+                        </div>
+                        
+                        <!-- Forecast Chart -->
+                        <div class="forecast-chart-container">
+                            <div class="chart-header">
+                                <div class="chart-title-text">📊 Growth Forecast</div>
+                                <div class="chart-controls">
+                                    ${goal.activeStrategy ? `
+                                        <div class="active-strategy">
+                                            ✓ ${goal.activeStrategyName}
+                                        </div>
+                                        <button class="reset-btn" onclick="event.stopPropagation(); resetPlan('${goal.id}')">
+                                            ↺ Reset
+                                        </button>
+                                    ` : ''}
+                                </div>
                             </div>
-                            <div class="probability-value ${probClass}">
-                                ${goal.simulation.probability.toFixed(0)}%
-                            </div>
-                            <div style="font-size: 13px; color: #666; margin-top: 10px;">
-                                Based on ${goal.annualReturn}% return, ${goal.annualVolatility}% volatility
+                            <canvas id="forecast-chart-${goal.id}" style="max-height: 250px;"></canvas>
+                            <div style="font-size: 11px; color: #999; margin-top: 10px; text-align: center;">
+                                Based on ${currentParams.annualReturn}% return, ${currentParams.annualVolatility}% volatility
                             </div>
                         </div>
                         
                         <div class="outcome-stats">
                             <div class="outcome-stat-card">
                                 <div class="stat-label">Worst 10%</div>
-                                <div class="stat-value">$${(goal.simulation.percentile10 / 1000).toFixed(0)}k</div>
+                                <div class="stat-value">$${(currentSim.percentile10 / 1000).toFixed(0)}k</div>
                             </div>
                             <div class="outcome-stat-card">
                                 <div class="stat-label">Median</div>
-                                <div class="stat-value">$${(goal.simulation.median / 1000).toFixed(0)}k</div>
+                                <div class="stat-value">$${(currentSim.median / 1000).toFixed(0)}k</div>
                             </div>
                             <div class="outcome-stat-card">
                                 <div class="stat-label">Best 10%</div>
-                                <div class="stat-value">$${(goal.simulation.percentile90 / 1000).toFixed(0)}k</div>
+                                <div class="stat-value">$${(currentSim.percentile90 / 1000).toFixed(0)}k</div>
                             </div>
                         </div>
                         
                         <div style="margin-top: 15px; padding: 12px; background: rgba(46, 134, 171, 0.1); border-radius: 8px; font-size: 13px; line-height: 1.6;">
-                            ${getInsight(goal)}
+                            ${getInsight(goal, currentSim)}
                         </div>
                         
-                        ${goal.simulation.probability < 70 ? `
+                        ${currentSim.probability < 70 ? `
                         <button class="show-plans-btn" onclick="togglePlans('${goal.id}')">
                             💡 Show Action Plans to Improve
                         </button>
@@ -615,150 +1100,58 @@
                             <div class="plan-options">
                                 ${plansHTML}
                             </div>
+                            <div style="margin-top: 15px; padding: 12px; background: rgba(241, 143, 1, 0.1); border-radius: 6px; font-size: 12px; color: #666;">
+                                <strong>💡 Tip:</strong> Click any strategy above to see how it affects your forecast and probability!
+                            </div>
                         </div>
                         ` : ''}
                     </div>
                 `;
             }).join('');
+            
+            // Create forecast charts after rendering
+            setTimeout(() => {
+                goals.forEach(goal => {
+                    const currentParams = goal.currentParams || {
+                        currentSavings: goal.currentSavings,
+                        monthlyContribution: goal.monthlyContribution,
+                        annualReturn: goal.annualReturn,
+                        annualVolatility: goal.annualVolatility,
+                        timeHorizonYears: goal.timeHorizonYears
+                    };
+                    
+                    createForecastChart(
+                        goal.id,
+                        currentParams.currentSavings,
+                        currentParams.monthlyContribution,
+                        currentParams.annualReturn,
+                        currentParams.annualVolatility,
+                        currentParams.timeHorizonYears,
+                        goal.targetAmount
+                    );
+                });
+            }, 100);
         }
         
         // Get insight text
-        function getInsight(goal) {
-            const shortfall = goal.targetAmount - goal.simulation.median;
+        function getInsight(goal, simulation) {
+            const shortfall = goal.targetAmount - simulation.median;
             
-            if (goal.simulation.probability >= 80) {
+            if (simulation.probability >= 80) {
                 return `<strong>Strong outlook:</strong> Based on your assumptions, this goal appears highly achievable.`;
-            } else if (goal.simulation.probability >= 60) {
+            } else if (simulation.probability >= 60) {
                 return `<strong>Moderate outlook:</strong> This goal is achievable with the current plan.`;
-            } else if (goal.simulation.probability >= 40) {
+            } else if (simulation.probability >= 40) {
                 return `<strong>Challenging outlook:</strong> Median outcome falls $${(shortfall/1000).toFixed(0)}k short. Consider adjusting contributions or timeline.`;
             } else {
                 return `<strong>Significant gap:</strong> This target may require adjustments to contributions, timeline, or expected returns.`;
             }
         }
         
-        // Generate action plans to reach goal
-        function generateActionPlans(goal) {
-            const plans = [];
-            
-            // Plan 1: Increase monthly contribution
-            const monthlyGap = goal.targetAmount - goal.simulation.median;
-            const monthsRemaining = goal.timeHorizonYears * 12;
-            const additionalMonthly = Math.max(0, monthlyGap / monthsRemaining / 1.5); // Conservative estimate
-            
-            if (additionalMonthly > 0) {
-                const newMonthly = goal.monthlyContribution + additionalMonthly;
-                const plan1Sim = runSimulation(
-                    goal.currentSavings,
-                    newMonthly,
-                    goal.annualReturn,
-                    goal.annualVolatility,
-                    goal.timeHorizonYears,
-                    goal.targetAmount
-                );
-                
-                plans.push({
-                    type: 'easy',
-                    title: '📈 Increase Monthly Contribution',
-                    changes: `Increase from $${goal.monthlyContribution.toLocaleString()} to $${newMonthly.toFixed(0).toLocaleString()}/month`,
-                    additional: `Additional $${additionalMonthly.toFixed(0).toLocaleString()}/month`,
-                    newProbability: plan1Sim.probability,
-                    icon: '💰'
-                });
-            }
-            
-            // Plan 2: Extend timeline
-            const extendedYears = goal.timeHorizonYears + 5;
-            const plan2Sim = runSimulation(
-                goal.currentSavings,
-                goal.monthlyContribution,
-                goal.annualReturn,
-                goal.annualVolatility,
-                extendedYears,
-                goal.targetAmount
-            );
-            
-            plans.push({
-                type: 'medium',
-                title: '⏱️ Extend Timeline',
-                changes: `Extend from ${goal.timeHorizonYears} to ${extendedYears} years`,
-                additional: `Additional ${5} years of growth`,
-                newProbability: plan2Sim.probability,
-                icon: '📅'
-            });
-            
-            // Plan 3: Combination approach
-            const moderateIncrease = additionalMonthly * 0.6;
-            const moderateExtension = goal.timeHorizonYears + 3;
-            const plan3Sim = runSimulation(
-                goal.currentSavings,
-                goal.monthlyContribution + moderateIncrease,
-                goal.annualReturn,
-                goal.annualVolatility,
-                moderateExtension,
-                goal.targetAmount
-            );
-            
-            plans.push({
-                type: 'easy',
-                title: '🎯 Balanced Approach',
-                changes: `Increase contribution by $${moderateIncrease.toFixed(0).toLocaleString()}/month AND extend timeline by 3 years`,
-                additional: `Less aggressive on both fronts`,
-                newProbability: plan3Sim.probability,
-                icon: '⚖️'
-            });
-            
-            // Plan 4: One-time lump sum
-            const lumpSum = monthlyGap * 0.5;
-            if (lumpSum > 1000) {
-                const plan4Sim = runSimulation(
-                    goal.currentSavings + lumpSum,
-                    goal.monthlyContribution,
-                    goal.annualReturn,
-                    goal.annualVolatility,
-                    goal.timeHorizonYears,
-                    goal.targetAmount
-                );
-                
-                plans.push({
-                    type: 'hard',
-                    title: '💎 One-Time Contribution',
-                    changes: `Add $${lumpSum.toFixed(0).toLocaleString()} lump sum now`,
-                    additional: `Requires significant upfront capital`,
-                    newProbability: plan4Sim.probability,
-                    icon: '🎁'
-                });
-            }
-            
-            // Sort plans by new probability (best first)
-            plans.sort((a, b) => b.newProbability - a.newProbability);
-            
-            return plans;
-        }
-        
-        // Toggle action plans display
-        function togglePlans(goalId) {
-            const planSection = document.getElementById(`plans-${goalId}`);
-            if (planSection.style.display === 'none' || !planSection.style.display) {
-                planSection.style.display = 'block';
-            } else {
-                planSection.style.display = 'none';
-            }
-        }
-        
         // Initialize on load
         window.onload = function() {
             loadGoals();
-            console.log('✅ Goals Engine Loaded!');
-            console.log('📊 Test data:', {
-                GOAL_TYPES: {
-                    RETIREMENT: 'retirement',
-                    HOME: 'home',
-                    EDUCATION: 'education',
-                    SHORT_TERM: 'short_term',
-                    FIRE: 'fire'
-                }
-            });
+            console.log('✅ Financial Goals Simulator Loaded!');
         };
     </script>
 </body>
