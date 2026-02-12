@@ -2553,8 +2553,11 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
             analyzePortfolioOptimization(holdings, total);
             
             // Save to current portfolio
-            portfolios[currentPortfolio].holdings = holdings;
-            saveAllPortfolios();
+portfolios[currentPortfolio].holdings = holdings;
+saveAllPortfolios();
+
+// Initialize rebalancing simulator
+initRebalancingSimulator();
         }
 
         function createSummary(total, totalCostBasis, totalGainLoss, totalGainLossPercent) {
