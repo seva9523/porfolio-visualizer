@@ -1,44 +1,765 @@
-# Integration Instructions for Goals Button
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Goals - Portfolio Visualizer</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg-gradient-start: #f8f9fa;
+            --bg-gradient-end: #e9ecef;
+            --container-bg: #ffffff;
+            --header-gradient-start: #2E86AB;
+            --header-gradient-end: #1a8cbc;
+            --text-primary: #2c3e50;
+            --text-secondary: #7f8c8d;
+            --input-bg: #f8f9fa;
+            --input-border: #ddd;
+            --border-color: #e0e0e0;
+            --chart-bg: #ffffff;
+            --card-bg: #ffffff;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--container-bg);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--header-gradient-start) 0%, var(--header-gradient-end) 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .header p { opacity: 0.9; font-size: 1.1em; }
+        
+        .content { padding: 30px; }
+        
+        .add-goal-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+        
+        .add-goal-btn:hover {
+            background: #229954;
+            transform: translateY(-2px);
+        }
+        
+        .disclaimer-box {
+            background: rgba(241, 143, 1, 0.1);
+            border-left: 4px solid #F18F01;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        
+        .goal-card {
+            background: var(--container-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .goal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .goal-title {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .probability-gauge {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, rgba(46, 134, 171, 0.1), rgba(46, 134, 171, 0.05));
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+        
+        .probability-value {
+            font-size: 4em;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+        
+        .prob-high { color: #27ae60; }
+        .prob-medium { color: #F18F01; }
+        .prob-low { color: #e74c3c; }
+        
+        .outcome-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .outcome-stat-card {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+        
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 1.8em;
+            font-weight: 700;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 30px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 13px;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid var(--input-border);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background: #2E86AB;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        .btn-primary:hover {
+            background: #1a5276;
+        }
+        
+        .btn-danger {
+            padding: 8px 16px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .no-goals {
+            text-align: center;
+            padding: 60px;
+            color: #999;
+        }
+        
+        .plan-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border: 2px solid #2E86AB;
+        }
+        
+        .plan-header {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2E86AB;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .plan-options {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .plan-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #27ae60;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .plan-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .plan-card.medium {
+            border-left-color: #F18F01;
+        }
+        
+        .plan-card.hard {
+            border-left-color: #e74c3c;
+        }
+        
+        .plan-title {
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+        
+        .plan-detail {
+            font-size: 14px;
+            color: #666;
+            margin: 4px 0;
+        }
+        
+        .plan-result {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(46, 134, 171, 0.1);
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #2E86AB;
+        }
+        
+        .show-plans-btn {
+            width: 100%;
+            padding: 12px;
+            background: #2E86AB;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        
+        .show-plans-btn:hover {
+            background: #1a5276;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💰 Financial Goals</h1>
+            <p>Plan your future with probabilistic simulations</p>
+        </div>
+        
+        <div class="content">
+            <button class="add-goal-btn" onclick="openGoalModal()">➕ Add Financial Goal</button>
+            
+            <div class="disclaimer-box">
+                <strong>⚠️ Important:</strong> This tool illustrates possible outcomes based on historical data and simulations.
+                It is <strong>NOT financial advice</strong> and does not recommend investments. Past performance does not guarantee future results.
+            </div>
+            
+            <div id="goals-container"></div>
+            
+            <div id="no-goals" class="no-goals">
+                <div style="font-size: 48px; margin-bottom: 10px;">🎯</div>
+                <div style="font-size: 16px;">No financial goals yet. Click "Add Goal" to get started!</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Goal Creation Modal -->
+    <div id="goal-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Add Financial Goal</h2>
+                <button class="modal-close" onclick="closeGoalModal()">×</button>
+            </div>
+            
+            <form id="goal-form" onsubmit="saveGoal(event)">
+                <div class="form-group">
+                    <label>Goal Name *</label>
+                    <input type="text" id="goal-name" placeholder="e.g., Retirement Fund" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Goal Type *</label>
+                    <select id="goal-type" required>
+                        <option value="retirement">Retirement</option>
+                        <option value="home">Buy a Home</option>
+                        <option value="education">Education</option>
+                        <option value="short_term">Short-Term Goal</option>
+                        <option value="fire">FIRE / Early Retirement</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Target Amount ($) *</label>
+                    <input type="number" id="goal-target" min="0" step="1" placeholder="1000000" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Time Horizon (years) *</label>
+                    <input type="number" id="goal-years" min="1" max="50" placeholder="30" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Current Savings ($)</label>
+                    <input type="number" id="goal-current" min="0" step="1" placeholder="100000" value="0">
+                </div>
+                
+                <div class="form-group">
+                    <label>Monthly Contribution ($)</label>
+                    <input type="number" id="goal-monthly" min="0" step="1" placeholder="1500" value="0">
+                </div>
+                
+                <div class="form-group">
+                    <label>Expected Annual Return (%) *</label>
+                    <input type="number" id="goal-return" min="0" max="30" step="0.1" placeholder="7" value="7" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Expected Volatility (%) *</label>
+                    <input type="number" id="goal-volatility" min="0" max="100" step="0.1" placeholder="15" value="15" required>
+                </div>
+                
+                <button type="submit" class="btn-primary">Run Simulation</button>
+            </form>
+        </div>
+    </div>
 
-## Add to index.html
-
-Find the section in your index.html where you have the buttons like:
-- "Visualize Portfolio"
-- "Refresh Prices Only"
-- "Upload CSV Data"
-- etc.
-
-Add this new button RIGHT AFTER the "Visualize Portfolio" button:
-
-```html
-<!-- Financial Goals Button -->
-<button class="action-button" onclick="window.location.href='goals.html'" style="background: linear-gradient(135deg, #F18F01 0%, #e67e00 100%);">
-    🎯 Financial Goals
-</button>
-```
-
-## Styling
-
-If the button doesn't match your theme, add this CSS to your <style> section:
-
-```css
-.action-button {
-    width: 100%;
-    padding: 15px;
-    margin: 10px 0;
-    border: none;
-    border-radius: 10px;
-    color: white;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-.action-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
-```
-
-This will add a prominent orange "🎯 Financial Goals" button that takes users to the goals page.
+    <script>
+        // Goals data
+        let goals = [];
+        
+        // Load goals from localStorage
+        function loadGoals() {
+            const saved = localStorage.getItem('financialGoals');
+            if (saved) {
+                goals = JSON.parse(saved);
+                renderGoals();
+            } else {
+                document.getElementById('no-goals').style.display = 'block';
+            }
+        }
+        
+        // Save goals to localStorage
+        function saveGoals() {
+            localStorage.setItem('financialGoals', JSON.stringify(goals));
+        }
+        
+        // Monte Carlo simulation
+        function runSimulation(currentSavings, monthlyContribution, annualReturn, annualVolatility, years, targetAmount) {
+            const numSimulations = 10000;
+            const monthlyReturn = annualReturn / 12 / 100;
+            const monthlyVolatility = annualVolatility / 100 / Math.sqrt(12);
+            const totalMonths = years * 12;
+            
+            const allFinalValues = [];
+            
+            for (let sim = 0; sim < numSimulations; sim++) {
+                let balance = currentSavings;
+                
+                for (let month = 1; month <= totalMonths; month++) {
+                    const u1 = Math.random();
+                    const u2 = Math.random();
+                    const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+                    const randomReturn = monthlyReturn + monthlyVolatility * z;
+                    
+                    balance = balance * (1 + randomReturn) + monthlyContribution;
+                }
+                
+                allFinalValues.push(balance);
+            }
+            
+            allFinalValues.sort((a, b) => a - b);
+            
+            return {
+                percentile10: allFinalValues[Math.floor(numSimulations * 0.10)],
+                median: allFinalValues[Math.floor(numSimulations * 0.50)],
+                percentile90: allFinalValues[Math.floor(numSimulations * 0.90)],
+                probability: (allFinalValues.filter(v => v >= targetAmount).length / numSimulations) * 100
+            };
+        }
+        
+        // Open modal
+        function openGoalModal() {
+            document.getElementById('goal-modal').classList.add('active');
+        }
+        
+        // Close modal
+        function closeGoalModal() {
+            document.getElementById('goal-modal').classList.remove('active');
+            document.getElementById('goal-form').reset();
+        }
+        
+        // Save goal
+        function saveGoal(event) {
+            event.preventDefault();
+            
+            const goal = {
+                id: 'goal_' + Date.now(),
+                name: document.getElementById('goal-name').value,
+                type: document.getElementById('goal-type').value,
+                targetAmount: parseFloat(document.getElementById('goal-target').value),
+                timeHorizonYears: parseInt(document.getElementById('goal-years').value),
+                currentSavings: parseFloat(document.getElementById('goal-current').value) || 0,
+                monthlyContribution: parseFloat(document.getElementById('goal-monthly').value) || 0,
+                annualReturn: parseFloat(document.getElementById('goal-return').value),
+                annualVolatility: parseFloat(document.getElementById('goal-volatility').value),
+                created: new Date().toISOString()
+            };
+            
+            // Run simulation
+            goal.simulation = runSimulation(
+                goal.currentSavings,
+                goal.monthlyContribution,
+                goal.annualReturn,
+                goal.annualVolatility,
+                goal.timeHorizonYears,
+                goal.targetAmount
+            );
+            
+            goals.push(goal);
+            saveGoals();
+            closeGoalModal();
+            renderGoals();
+        }
+        
+        // Delete goal
+        function deleteGoal(goalId) {
+            if (confirm('Are you sure you want to delete this goal?')) {
+                goals = goals.filter(g => g.id !== goalId);
+                saveGoals();
+                renderGoals();
+            }
+        }
+        
+        // Render goals
+        function renderGoals() {
+            const container = document.getElementById('goals-container');
+            const noGoals = document.getElementById('no-goals');
+            
+            if (goals.length === 0) {
+                container.innerHTML = '';
+                noGoals.style.display = 'block';
+                return;
+            }
+            
+            noGoals.style.display = 'none';
+            
+            container.innerHTML = goals.map(goal => {
+                const probClass = goal.simulation.probability >= 70 ? 'prob-high' : 
+                                 goal.simulation.probability >= 40 ? 'prob-medium' : 'prob-low';
+                
+                const plans = generateActionPlans(goal);
+                const plansHTML = plans.map(plan => {
+                    const planClass = plan.type === 'easy' ? '' : plan.type === 'medium' ? 'medium' : 'hard';
+                    const probColor = plan.newProbability >= 70 ? '#27ae60' : plan.newProbability >= 40 ? '#F18F01' : '#e74c3c';
+                    
+                    return `
+                        <div class="plan-card ${planClass}">
+                            <div class="plan-title">${plan.icon} ${plan.title}</div>
+                            <div class="plan-detail"><strong>Action:</strong> ${plan.changes}</div>
+                            <div class="plan-detail">${plan.additional}</div>
+                            <div class="plan-result" style="color: ${probColor}">
+                                ➜ New success probability: <strong>${plan.newProbability.toFixed(0)}%</strong>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                return `
+                    <div class="goal-card">
+                        <div class="goal-header">
+                            <div class="goal-title">${goal.name}</div>
+                            <button class="btn-danger" onclick="deleteGoal('${goal.id}')">Delete</button>
+                        </div>
+                        
+                        <div style="font-size: 13px; color: #666; margin-bottom: 15px;">
+                            Target: $${goal.targetAmount.toLocaleString()} in ${goal.timeHorizonYears} years
+                        </div>
+                        
+                        <div class="probability-gauge">
+                            <div style="font-size: 14px; color: #666; margin-bottom: 10px;">
+                                PROBABILITY OF REACHING GOAL
+                            </div>
+                            <div class="probability-value ${probClass}">
+                                ${goal.simulation.probability.toFixed(0)}%
+                            </div>
+                            <div style="font-size: 13px; color: #666; margin-top: 10px;">
+                                Based on ${goal.annualReturn}% return, ${goal.annualVolatility}% volatility
+                            </div>
+                        </div>
+                        
+                        <div class="outcome-stats">
+                            <div class="outcome-stat-card">
+                                <div class="stat-label">Worst 10%</div>
+                                <div class="stat-value">$${(goal.simulation.percentile10 / 1000).toFixed(0)}k</div>
+                            </div>
+                            <div class="outcome-stat-card">
+                                <div class="stat-label">Median</div>
+                                <div class="stat-value">$${(goal.simulation.median / 1000).toFixed(0)}k</div>
+                            </div>
+                            <div class="outcome-stat-card">
+                                <div class="stat-label">Best 10%</div>
+                                <div class="stat-value">$${(goal.simulation.percentile90 / 1000).toFixed(0)}k</div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 15px; padding: 12px; background: rgba(46, 134, 171, 0.1); border-radius: 8px; font-size: 13px; line-height: 1.6;">
+                            ${getInsight(goal)}
+                        </div>
+                        
+                        ${goal.simulation.probability < 70 ? `
+                        <button class="show-plans-btn" onclick="togglePlans('${goal.id}')">
+                            💡 Show Action Plans to Improve
+                        </button>
+                        
+                        <div id="plans-${goal.id}" class="plan-section" style="display: none;">
+                            <div class="plan-header">
+                                <span>🎯</span>
+                                <span>Strategies to Reach Your Goal</span>
+                            </div>
+                            <div class="plan-options">
+                                ${plansHTML}
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Get insight text
+        function getInsight(goal) {
+            const shortfall = goal.targetAmount - goal.simulation.median;
+            
+            if (goal.simulation.probability >= 80) {
+                return `<strong>Strong outlook:</strong> Based on your assumptions, this goal appears highly achievable.`;
+            } else if (goal.simulation.probability >= 60) {
+                return `<strong>Moderate outlook:</strong> This goal is achievable with the current plan.`;
+            } else if (goal.simulation.probability >= 40) {
+                return `<strong>Challenging outlook:</strong> Median outcome falls $${(shortfall/1000).toFixed(0)}k short. Consider adjusting contributions or timeline.`;
+            } else {
+                return `<strong>Significant gap:</strong> This target may require adjustments to contributions, timeline, or expected returns.`;
+            }
+        }
+        
+        // Generate action plans to reach goal
+        function generateActionPlans(goal) {
+            const plans = [];
+            
+            // Plan 1: Increase monthly contribution
+            const monthlyGap = goal.targetAmount - goal.simulation.median;
+            const monthsRemaining = goal.timeHorizonYears * 12;
+            const additionalMonthly = Math.max(0, monthlyGap / monthsRemaining / 1.5); // Conservative estimate
+            
+            if (additionalMonthly > 0) {
+                const newMonthly = goal.monthlyContribution + additionalMonthly;
+                const plan1Sim = runSimulation(
+                    goal.currentSavings,
+                    newMonthly,
+                    goal.annualReturn,
+                    goal.annualVolatility,
+                    goal.timeHorizonYears,
+                    goal.targetAmount
+                );
+                
+                plans.push({
+                    type: 'easy',
+                    title: '📈 Increase Monthly Contribution',
+                    changes: `Increase from $${goal.monthlyContribution.toLocaleString()} to $${newMonthly.toFixed(0).toLocaleString()}/month`,
+                    additional: `Additional $${additionalMonthly.toFixed(0).toLocaleString()}/month`,
+                    newProbability: plan1Sim.probability,
+                    icon: '💰'
+                });
+            }
+            
+            // Plan 2: Extend timeline
+            const extendedYears = goal.timeHorizonYears + 5;
+            const plan2Sim = runSimulation(
+                goal.currentSavings,
+                goal.monthlyContribution,
+                goal.annualReturn,
+                goal.annualVolatility,
+                extendedYears,
+                goal.targetAmount
+            );
+            
+            plans.push({
+                type: 'medium',
+                title: '⏱️ Extend Timeline',
+                changes: `Extend from ${goal.timeHorizonYears} to ${extendedYears} years`,
+                additional: `Additional ${5} years of growth`,
+                newProbability: plan2Sim.probability,
+                icon: '📅'
+            });
+            
+            // Plan 3: Combination approach
+            const moderateIncrease = additionalMonthly * 0.6;
+            const moderateExtension = goal.timeHorizonYears + 3;
+            const plan3Sim = runSimulation(
+                goal.currentSavings,
+                goal.monthlyContribution + moderateIncrease,
+                goal.annualReturn,
+                goal.annualVolatility,
+                moderateExtension,
+                goal.targetAmount
+            );
+            
+            plans.push({
+                type: 'easy',
+                title: '🎯 Balanced Approach',
+                changes: `Increase contribution by $${moderateIncrease.toFixed(0).toLocaleString()}/month AND extend timeline by 3 years`,
+                additional: `Less aggressive on both fronts`,
+                newProbability: plan3Sim.probability,
+                icon: '⚖️'
+            });
+            
+            // Plan 4: One-time lump sum
+            const lumpSum = monthlyGap * 0.5;
+            if (lumpSum > 1000) {
+                const plan4Sim = runSimulation(
+                    goal.currentSavings + lumpSum,
+                    goal.monthlyContribution,
+                    goal.annualReturn,
+                    goal.annualVolatility,
+                    goal.timeHorizonYears,
+                    goal.targetAmount
+                );
+                
+                plans.push({
+                    type: 'hard',
+                    title: '💎 One-Time Contribution',
+                    changes: `Add $${lumpSum.toFixed(0).toLocaleString()} lump sum now`,
+                    additional: `Requires significant upfront capital`,
+                    newProbability: plan4Sim.probability,
+                    icon: '🎁'
+                });
+            }
+            
+            // Sort plans by new probability (best first)
+            plans.sort((a, b) => b.newProbability - a.newProbability);
+            
+            return plans;
+        }
+        
+        // Toggle action plans display
+        function togglePlans(goalId) {
+            const planSection = document.getElementById(`plans-${goalId}`);
+            if (planSection.style.display === 'none' || !planSection.style.display) {
+                planSection.style.display = 'block';
+            } else {
+                planSection.style.display = 'none';
+            }
+        }
+        
+        // Initialize on load
+        window.onload = function() {
+            loadGoals();
+            console.log('✅ Goals Engine Loaded!');
+            console.log('📊 Test data:', {
+                GOAL_TYPES: {
+                    RETIREMENT: 'retirement',
+                    HOME: 'home',
+                    EDUCATION: 'education',
+                    SHORT_TERM: 'short_term',
+                    FIRE: 'fire'
+                }
+            });
+        };
+    </script>
+</body>
+</html>
