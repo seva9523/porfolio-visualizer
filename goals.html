@@ -601,6 +601,9 @@
             const p90Path = [];
             const labels = [];
             
+            // Get current year
+            const currentYear = new Date().getFullYear();
+            
             // Run simulations and collect year-end values
             const numSims = 1000;
             const yearlyValues = Array(years + 1).fill(0).map(() => []);
@@ -627,7 +630,7 @@
             
             // Calculate percentiles for each year
             for (let year = 0; year <= years; year++) {
-                labels.push(`Year ${year}`);
+                labels.push(`${currentYear + year}`); // Show actual calendar year
                 const values = yearlyValues[year].sort((a, b) => a - b);
                 medianPath.push(values[Math.floor(values.length * 0.50)]);
                 p10Path.push(values[Math.floor(values.length * 0.10)]);
@@ -659,7 +662,7 @@
                     labels: labels,
                     datasets: [
                         {
-                            label: 'Target',
+                            label: 'Your Goal',
                             data: Array(labels.length).fill(targetAmount),
                             borderColor: '#e74c3c',
                             borderWidth: 3,
@@ -668,7 +671,7 @@
                             pointRadius: 0
                         },
                         {
-                            label: 'Median Outcome',
+                            label: 'Most Likely Amount',
                             data: medianPath,
                             borderColor: '#2E86AB',
                             backgroundColor: 'rgba(46, 134, 171, 0.1)',
@@ -679,7 +682,7 @@
                             pointHoverRadius: 6
                         },
                         {
-                            label: 'Best Case (90th)',
+                            label: 'If Lucky (Top 10%)',
                             data: p90Path,
                             borderColor: '#27ae60',
                             borderWidth: 2,
@@ -689,7 +692,7 @@
                             pointRadius: 0
                         },
                         {
-                            label: 'Worst Case (10th)',
+                            label: 'If Unlucky (Bottom 10%)',
                             data: p10Path,
                             borderColor: '#95a5a6',
                             borderWidth: 2,
@@ -1043,8 +1046,11 @@
                         </div>
                         
                         <div class="probability-badge ${probClass}">
-                            <span class="probability-badge-label">Success Probability</span>
+                            <span class="probability-badge-label">Chance of Success</span>
                             <span class="probability-badge-value">${currentSim.probability.toFixed(0)}%</span>
+                        </div>
+                        <div style="font-size: 12px; color: #666; margin: -10px 0 15px 0; padding: 8px; background: rgba(46, 134, 171, 0.05); border-radius: 6px;">
+                            📊 Out of 100 possible futures, you reach your goal in <strong>${currentSim.probability.toFixed(0)}</strong> of them
                         </div>
                         
                         <!-- Forecast Chart -->
@@ -1070,16 +1076,19 @@
                         
                         <div class="outcome-stats">
                             <div class="outcome-stat-card">
-                                <div class="stat-label">Worst 10%</div>
+                                <div class="stat-label">If Unlucky</div>
                                 <div class="stat-value">$${(currentSim.percentile10 / 1000).toFixed(0)}k</div>
+                                <div style="font-size: 10px; color: #999; margin-top: 4px;">Only 10% chance you get less</div>
                             </div>
                             <div class="outcome-stat-card">
-                                <div class="stat-label">Median</div>
+                                <div class="stat-label">Most Likely</div>
                                 <div class="stat-value">$${(currentSim.median / 1000).toFixed(0)}k</div>
+                                <div style="font-size: 10px; color: #999; margin-top: 4px;">50-50 chance you get this</div>
                             </div>
                             <div class="outcome-stat-card">
-                                <div class="stat-label">Best 10%</div>
+                                <div class="stat-label">If Lucky</div>
                                 <div class="stat-value">$${(currentSim.percentile90 / 1000).toFixed(0)}k</div>
+                                <div style="font-size: 10px; color: #999; margin-top: 4px;">Only 10% chance you get more</div>
                             </div>
                         </div>
                         
