@@ -484,6 +484,470 @@
                 <div id="benchmark-section" style="margin-top: 30px;"></div>
                 <div id="montecarlo-section" style="margin-top: 30px;"></div>
                 <div id="optimization-section" style="margin-top: 30px;"></div>
+                <!-- ============================================================================ -->
+<!-- REBALANCING SIMULATOR UI COMPONENT -->
+<!-- Insert this into your portfolio visualizer page -->
+<!-- ============================================================================ -->
+
+<div id="rebalancing-section" style="margin-top: 30px; display: none;">
+    <div class="summary-box">
+        <h2>📊 Rebalancing Simulator</h2>
+        <p style="font-size: 14px; color: var(--text-secondary); margin-top: 10px;">
+            Simulate how different rebalancing approaches would have affected this portfolio historically.
+            <strong>This is NOT financial advice</strong> — purely educational visualization.
+        </p>
+        
+        <!-- Configuration Panel -->
+        <div style="margin-top: 20px; padding: 20px; background: var(--card-bg); border-radius: 12px; border: 2px solid var(--border-color);">
+            <h3 style="font-size: 16px; margin-bottom: 15px;">Simulation Settings</h3>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <!-- Strategy Selection -->
+                <div>
+                    <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">
+                        Rebalancing Strategy
+                    </label>
+                    <select id="rebalance-strategy" style="width: 100%; padding: 10px; border: 2px solid var(--input-border); border-radius: 8px; background: var(--chart-bg); color: var(--text-primary);">
+                        <option value="none">No Rebalancing</option>
+                        <option value="annual" selected>Annual Rebalancing</option>
+                        <option value="quarterly">Quarterly Rebalancing</option>
+                        <option value="threshold">Threshold-Based (±5%)</option>
+                    </select>
+                    <div style="font-size: 11px; color: #999; margin-top: 3px;">
+                        Compare historical outcomes
+                    </div>
+                </div>
+                
+                <!-- Time Period -->
+                <div>
+                    <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">
+                        Time Period
+                    </label>
+                    <select id="rebalance-period" style="width: 100%; padding: 10px; border: 2px solid var(--input-border); border-radius: 8px; background: var(--chart-bg); color: var(--text-primary);">
+                        <option value="all" selected>All Available Data</option>
+                        <option value="5y">Last 5 Years</option>
+                        <option value="10y">Last 10 Years</option>
+                    </select>
+                </div>
+                
+                <!-- Run Button -->
+                <div style="display: flex; align-items: flex-end;">
+                    <button id="run-rebalancing-sim" style="width: 100%; padding: 12px; background: #2E86AB; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.3s;">
+                        ▶ Run Simulation
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Results Container -->
+        <div id="rebalancing-results" style="display: none; margin-top: 25px;">
+            
+            <!-- Performance Comparison Chart -->
+            <div class="chart-wrapper" style="margin-bottom: 25px;">
+                <div class="chart-title">Portfolio Value: Rebalancing Comparison</div>
+                <canvas id="rebalancing-performance-chart" style="max-height: 350px;"></canvas>
+                <div style="margin-top: 10px; padding: 12px; background: rgba(241, 143, 1, 0.1); border-left: 3px solid #F18F01; border-radius: 4px; font-size: 13px;">
+                    <strong>What this shows:</strong> Historical simulation showing how your portfolio value would have grown with different rebalancing strategies. This illustrates past performance only and does not predict future results.
+                </div>
+            </div>
+            
+            <!-- Metrics Comparison Table -->
+            <div style="margin-bottom: 25px;">
+                <div class="chart-title" style="margin-bottom: 15px;">Risk & Return Comparison</div>
+                <div style="overflow-x: auto;">
+                    <table id="rebalancing-metrics-table" style="width: 100%; border-collapse: collapse; background: var(--chart-bg); border-radius: 8px; overflow: hidden;">
+                        <thead>
+                            <tr style="background: var(--table-header); color: white;">
+                                <th style="padding: 12px; text-align: left; font-weight: 600;">Strategy</th>
+                                <th style="padding: 12px; text-align: center; font-weight: 600;">Total Return</th>
+                                <th style="padding: 12px; text-align: center; font-weight: 600;">CAGR</th>
+                                <th style="padding: 12px; text-align: center; font-weight: 600;">Volatility</th>
+                                <th style="padding: 12px; text-align: center; font-weight: 600;">Max Drawdown</th>
+                                <th style="padding: 12px; text-align: center; font-weight: 600;">Rebalances</th>
+                            </tr>
+                        </thead>
+                        <tbody id="metrics-table-body">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                <div style="margin-top: 10px; padding: 12px; background: rgba(46, 134, 171, 0.1); border-left: 3px solid #2E86AB; border-radius: 4px; font-size: 13px;">
+                    <strong>How to read this:</strong> 
+                    <ul style="margin: 8px 0 0 20px; padding: 0;">
+                        <li><strong>Total Return:</strong> How much your money grew over the period</li>
+                        <li><strong>CAGR:</strong> Average growth per year</li>
+                        <li><strong>Volatility:</strong> How bumpy the ride was (lower = smoother)</li>
+                        <li><strong>Max Drawdown:</strong> Biggest drop from peak (smaller = less scary)</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Allocation Drift Chart -->
+            <div class="chart-wrapper">
+                <div class="chart-title">Portfolio Allocation Over Time</div>
+                <canvas id="allocation-drift-chart" style="max-height: 350px;"></canvas>
+                <div style="margin-top: 10px; padding: 12px; background: rgba(46, 134, 171, 0.1); border-left: 3px solid #2E86AB; border-radius: 4px; font-size: 13px;">
+                    <strong>What this shows:</strong> How your portfolio's mix of investments changed over time. Without rebalancing, winning investments grow to dominate your portfolio (allocation drift). Rebalancing keeps your original strategy intact.
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<style>
+#rebalancing-metrics-table tbody tr {
+    border-bottom: 1px solid var(--border-color);
+    transition: background 0.2s;
+}
+
+#rebalancing-metrics-table tbody tr:hover {
+    background: var(--table-hover);
+}
+
+#rebalancing-metrics-table td {
+    padding: 12px;
+    text-align: center;
+    color: var(--text-primary);
+}
+
+#rebalancing-metrics-table td:first-child {
+    text-align: left;
+    font-weight: 700;
+    color: #2E86AB;
+}
+
+#run-rebalancing-sim:hover {
+    background: #1a5276;
+    transform: translateY(-2px);
+}
+
+#run-rebalancing-sim:disabled {
+    background: #95a5a6;
+    cursor: not-allowed;
+    transform: none;
+}
+</style>
+
+<script>
+// ============================================================================
+// REBALANCING SIMULATOR - UI CONTROLLER
+// ============================================================================
+
+let rebalancingCharts = {
+    performance: null,
+    allocation: null
+};
+
+/**
+ * Initialize rebalancing simulator
+ * Called after portfolio is visualized
+ */
+function initRebalancingSimulator() {
+    // Show the section
+    document.getElementById('rebalancing-section').style.display = 'block';
+    
+    // Attach event listeners
+    document.getElementById('run-rebalancing-sim').addEventListener('click', runRebalancingSimulation);
+}
+
+/**
+ * Run the rebalancing simulation
+ */
+async function runRebalancingSimulation() {
+    const button = document.getElementById('run-rebalancing-sim');
+    button.disabled = true;
+    button.textContent = '⏳ Simulating...';
+    
+    try {
+        // Get user selections
+        const strategy = document.getElementById('rebalance-strategy').value;
+        const period = document.getElementById('rebalance-period').value;
+        
+        // Calculate target weights from current holdings
+        const totalValue = holdings.reduce((sum, h) => sum + h.value, 0);
+        const targetWeights = {};
+        holdings.forEach(h => {
+            targetWeights[h.ticker] = (h.value / totalValue) * 100;
+        });
+        
+        // Determine date range
+        const allDates = [];
+        holdings.forEach(h => {
+            if (h.historicalData) {
+                allDates.push(...Object.keys(h.historicalData));
+            }
+        });
+        
+        const sortedDates = Array.from(new Set(allDates)).sort();
+        let startDate = sortedDates[0];
+        const endDate = sortedDates[sortedDates.length - 1];
+        
+        // Adjust for period selection
+        if (period === '5y') {
+            const fiveYearsAgo = new Date();
+            fiveYearsAgo.setFullYear(fiveYearsAgo.getFullYear() - 5);
+            startDate = fiveYearsAgo.toISOString().split('T')[0];
+        } else if (period === '10y') {
+            const tenYearsAgo = new Date();
+            tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
+            startDate = tenYearsAgo.toISOString().split('T')[0];
+        }
+        
+        // Run comparison: selected strategy vs no rebalancing
+        const strategies = ['none', strategy];
+        if (strategy !== 'none') {
+            // Always compare against no rebalancing
+        } else {
+            // If user selected "none", just show that
+            strategies = ['none'];
+        }
+        
+        const results = window.RebalancingEngine.compareStrategies({
+            holdings: holdings,
+            targetWeights: targetWeights,
+            threshold: 5,
+            startDate: startDate,
+            endDate: endDate
+        }, strategies);
+        
+        // Display results
+        displayRebalancingResults(results, targetWeights);
+        
+        // Show results section
+        document.getElementById('rebalancing-results').style.display = 'block';
+        
+        // Scroll to results
+        document.getElementById('rebalancing-results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        
+    } catch (error) {
+        console.error('Rebalancing simulation error:', error);
+        alert('Error running simulation. Make sure your portfolio has historical data.');
+    } finally {
+        button.disabled = false;
+        button.textContent = '▶ Run Simulation';
+    }
+}
+
+/**
+ * Display rebalancing results
+ */
+function displayRebalancingResults(results, targetWeights) {
+    const isDark = document.body.classList.contains('dark-mode');
+    const textColor = isDark ? '#e8e8e8' : '#2c3e50';
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+    
+    // 1. Performance Comparison Chart
+    createPerformanceComparisonChart(results, textColor, gridColor);
+    
+    // 2. Metrics Table
+    createMetricsTable(results);
+    
+    // 3. Allocation Drift Chart (use first strategy that's not 'none')
+    const driftStrategy = Object.keys(results).find(s => s !== 'none') || 'none';
+    createAllocationDriftChart(results[driftStrategy], targetWeights, textColor, gridColor);
+}
+
+/**
+ * Create performance comparison chart
+ */
+function createPerformanceComparisonChart(results, textColor, gridColor) {
+    if (rebalancingCharts.performance) {
+        rebalancingCharts.performance.destroy();
+    }
+    
+    const datasets = [];
+    const colors = {
+        'none': '#95a5a6',
+        'annual': '#2E86AB',
+        'quarterly': '#27ae60',
+        'threshold': '#F18F01'
+    };
+    
+    const labels = {
+        'none': 'No Rebalancing',
+        'annual': 'Annual Rebalancing',
+        'quarterly': 'Quarterly Rebalancing',
+        'threshold': 'Threshold-Based (±5%)'
+    };
+    
+    for (let strategy in results) {
+        const result = results[strategy];
+        const data = result.portfolioHistory.map(p => p.value);
+        const chartLabels = result.portfolioHistory.map(p => {
+            const d = new Date(p.date);
+            return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+        });
+        
+        datasets.push({
+            label: labels[strategy],
+            data: data,
+            borderColor: colors[strategy],
+            backgroundColor: strategy === 'none' ? 'transparent' : colors[strategy] + '15',
+            borderWidth: strategy === 'none' ? 2 : 3,
+            borderDash: strategy === 'none' ? [5, 5] : [],
+            fill: strategy !== 'none',
+            tension: 0.4,
+            pointRadius: 0
+        });
+    }
+    
+    const ctx = document.getElementById('rebalancing-performance-chart').getContext('2d');
+    rebalancingCharts.performance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: results[Object.keys(results)[0]].portfolioHistory.map(p => {
+                const d = new Date(p.date);
+                return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+            }),
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: { color: textColor, font: { size: 12 } }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: (context) => `${context.dataset.label}: $${context.parsed.y.toLocaleString('en-US', {maximumFractionDigits: 0})}`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: textColor,
+                        maxTicksLimit: 12
+                    },
+                    grid: { color: gridColor }
+                },
+                y: {
+                    beginAtZero: false,
+                    ticks: {
+                        color: textColor,
+                        callback: (value) => '$' + (value / 1000).toFixed(0) + 'k'
+                    },
+                    grid: { color: gridColor }
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Create metrics comparison table
+ */
+function createMetricsTable(results) {
+    const tbody = document.getElementById('metrics-table-body');
+    tbody.innerHTML = '';
+    
+    const labels = {
+        'none': 'No Rebalancing',
+        'annual': 'Annual',
+        'quarterly': 'Quarterly',
+        'threshold': 'Threshold (±5%)'
+    };
+    
+    for (let strategy in results) {
+        const result = results[strategy];
+        const metrics = result.metrics;
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${labels[strategy]}</td>
+            <td style="font-weight: 700; color: ${metrics.totalReturn >= 0 ? '#27ae60' : '#e74c3c'};">
+                ${metrics.totalReturn >= 0 ? '+' : ''}${metrics.totalReturn.toFixed(1)}%
+            </td>
+            <td>${metrics.cagr.toFixed(2)}%</td>
+            <td>${metrics.volatility.toFixed(2)}%</td>
+            <td style="color: #e74c3c;">−${metrics.maxDrawdown.toFixed(1)}%</td>
+            <td>${result.rebalanceCount}</td>
+        `;
+        tbody.appendChild(row);
+    }
+}
+
+/**
+ * Create allocation drift chart (stacked area)
+ */
+function createAllocationDriftChart(result, targetWeights, textColor, gridColor) {
+    if (rebalancingCharts.allocation) {
+        rebalancingCharts.allocation.destroy();
+    }
+    
+    const tickers = Object.keys(targetWeights);
+    const colors = ['#2E86AB', '#A23B72', '#F18F01', '#C73E1D', '#6A994E', '#BC4B51', '#4C956C', '#D4A373'];
+    
+    const datasets = tickers.map((ticker, index) => {
+        return {
+            label: ticker,
+            data: result.allocationHistory.map(point => point[ticker] || 0),
+            backgroundColor: colors[index % colors.length],
+            borderColor: colors[index % colors.length],
+            borderWidth: 1,
+            fill: true
+        };
+    });
+    
+    const labels = result.allocationHistory.map(point => {
+        const d = new Date(point.date);
+        return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+    });
+    
+    const ctx = document.getElementById('allocation-drift-chart').getContext('2d');
+    rebalancingCharts.allocation = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: { color: textColor, font: { size: 11 } }
+                },
+                tooltip: {
+                    mode: 'index',
+                    callbacks: {
+                        label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(1)}%`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    stacked: true,
+                    ticks: {
+                        color: textColor,
+                        maxTicksLimit: 12
+                    },
+                    grid: { color: gridColor }
+                },
+                y: {
+                    stacked: true,
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        color: textColor,
+                        callback: (value) => value + '%'
+                    },
+                    grid: { color: gridColor }
+                }
+            }
+        }
+    });
+}
+
+// Auto-initialize when portfolio is visualized
+// This gets called from your existing visualizePortfolio() function
+</script>
             </div>
         </div>
     </div>
