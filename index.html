@@ -895,140 +895,825 @@
     </div>
 
     <script>
-        // NOTE: The rest of your original JS stays the same.
-        // I only changed rebalancing simulator code above to stop crashes and to add test IDs.
+/* ============================================================================
+   PORTFOLIO VISUALIZER - APP SCRIPT (restored)
+   - holdings inputs (+Add Holding)
+   - ticker search autocomplete (/api/search)
+   - visualize: fetch current prices (/api/quote) + optional historical (/api/historical)
+   - charts: performance (snapshots), allocation pie, holdings bar
+   - basic portfolio save/load (localStorage)
+============================================================================ */
 
-        let holdings = [];
-        let pieChart = null;
-        let barChart = null;
-        let performanceChart = null;
-        let holdingCounter = 0;
-        let searchTimeouts = {};
-        let selectedIndex = -1;
-        let currentTimeRange = '7D';
-        
-        // Portfolio management
-        let currentPortfolio = 'default';
-        let portfolios = {
-            'default': {
-                name: 'Default Portfolio',
-                holdings: [],
-                snapshots: [] // Array of {date, value, holdings}
+let holdings = [];
+let pieChart = null;
+let barChart = null;
+let performanceChart = null;
+
+let holdingCounter = 0;
+let searchTimeouts = {};
+let selectedIndex = -1;
+let currentTimeRange = '7D';
+
+// Portfolio management (simple)
+let currentPortfolio = 'default';
+let portfolios = {
+  default: { name: 'Default Portfolio', holdings: [], snapshots: [] }
+};
+
+const colors = ['#2E86AB', '#A23B72', '#F18F01', '#C73E1D', '#6A994E', '#BC4B51', '#4C956C', '#D4A373', '#5E548E', '#9B59B6', '#E67E22', '#16A085', '#3498DB', '#E91E63', '#FF9800', '#009688', '#673AB7', '#FF5722'];
+
+// ------------------------- Dark mode -------------------------
+function toggleDarkMode() {
+  document.body.classList.toggle('dark-mode');
+  const isDark = document.body.classList.contains('dark-mode');
+  localStorage.setItem('darkMode', isDark);
+
+  const icon = document.getElementById('mode-icon');
+  const text = document.getElementById('mode-text');
+  if (icon) icon.textContent = isDark ? '☀️' : '🌙';
+  if (text) text.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+
+  updateChartColors();
+}
+
+function loadDarkModePreference() {
+  const darkMode = localStorage.getItem('darkMode') === 'true';
+  if (darkMode) {
+    document.body.classList.add('dark-mode');
+    const icon = document.getElementById('mode-icon');
+    const text = document.getElementById('mode-text');
+    if (icon) icon.textContent = '☀️';
+    if (text) text.textContent = 'Light Mode';
+  }
+}
+
+function updateChartColors() {
+  const isDark = document.body.classList.contains('dark-mode');
+  const textColor = isDark ? '#e8e8e8' : '#2c3e50';
+  const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+
+  if (pieChart) {
+    pieChart.options.plugins.legend.labels.color = textColor;
+    pieChart.update();
+  }
+  if (barChart) {
+    barChart.options.scales.x.ticks.color = textColor;
+    barChart.options.scales.y.ticks.color = textColor;
+    barChart.options.scales.x.grid.color = gridColor;
+    barChart.update();
+  }
+  if (performanceChart) {
+    performanceChart.options.scales.x.ticks.color = textColor;
+    performanceChart.options.scales.y.ticks.color = textColor;
+    performanceChart.options.scales.x.grid.color = gridColor;
+    performanceChart.options.scales.y.grid.color = gridColor;
+    performanceChart.update();
+  }
+}
+
+// ------------------------- Portfolio save/load -------------------------
+function saveAllPortfolios() {
+  localStorage.setItem('portfolios', JSON.stringify(portfolios));
+  localStorage.setItem('currentPortfolio', currentPortfolio);
+}
+
+function loadAllPortfolios() {
+  try {
+    const saved = localStorage.getItem('portfolios');
+    if (saved) portfolios = JSON.parse(saved) || portfolios;
+    const savedCurrent = localStorage.getItem('currentPortfolio');
+    if (savedCurrent && portfolios[savedCurrent]) currentPortfolio = savedCurrent;
+  } catch (e) {
+    console.warn('Could not load portfolios:', e);
+  }
+  updatePortfolioSelector();
+}
+
+function updatePortfolioSelector() {
+  const selector = document.getElementById('portfolio-selector');
+  if (!selector) return;
+
+  selector.innerHTML = '';
+  Object.keys(portfolios).forEach(key => {
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = portfolios[key].name || key;
+    if (key === currentPortfolio) opt.selected = true;
+    selector.appendChild(opt);
+  });
+
+  selector.onchange = () => switchPortfolio(selector.value);
+}
+
+function switchPortfolio(id) {
+  // save current
+  updateHoldingsArray();
+  portfolios[currentPortfolio].holdings = holdings;
+  saveAllPortfolios();
+
+  currentPortfolio = id;
+  holdings = (portfolios[currentPortfolio].holdings || []).map(h => ({ ...h }));
+
+  // rebuild inputs
+  const container = document.getElementById('holdings-container');
+  if (container) container.innerHTML = '';
+  holdingCounter = 0;
+
+  if (holdings.length) {
+    holdings.forEach(h => addHolding(h.ticker, h.shares, h.name || '', h.purchasePrice || '', h.purchaseDate || ''));
+  } else {
+    addHolding(); addHolding(); addHolding();
+  }
+
+  // clear visuals
+  document.getElementById('summary-section').innerHTML = '';
+  document.getElementById('table-section').innerHTML = '';
+  document.getElementById('correlation-section').innerHTML = '';
+  document.getElementById('benchmark-section').innerHTML = '';
+  document.getElementById('montecarlo-section').innerHTML = '';
+  document.getElementById('optimization-section').innerHTML = '';
+  if (pieChart) pieChart.destroy();
+  if (barChart) barChart.destroy();
+  if (performanceChart) performanceChart.destroy();
+  pieChart = barChart = performanceChart = null;
+
+  saveAllPortfolios();
+}
+
+function createNewPortfolio() {
+  const name = prompt('Enter portfolio name:');
+  if (!name || !name.trim()) return;
+  const id = 'portfolio_' + Date.now();
+  portfolios[id] = { name: name.trim(), holdings: [], snapshots: [] };
+  updatePortfolioSelector();
+  switchPortfolio(id);
+}
+
+function renamePortfolio() {
+  const newName = prompt('Enter new name:', portfolios[currentPortfolio]?.name || '');
+  if (!newName || !newName.trim()) return;
+  portfolios[currentPortfolio].name = newName.trim();
+  updatePortfolioSelector();
+  saveAllPortfolios();
+}
+
+function deletePortfolio() {
+  if (Object.keys(portfolios).length === 1) {
+    alert('Cannot delete the last portfolio!');
+    return;
+  }
+  if (!confirm(`Delete "${portfolios[currentPortfolio].name}"?`)) return;
+  delete portfolios[currentPortfolio];
+  currentPortfolio = Object.keys(portfolios)[0];
+  updatePortfolioSelector();
+  switchPortfolio(currentPortfolio);
+}
+
+// ------------------------- Helpers (dates) -------------------------
+function formatDateForDisplay(iso) {
+  if (!iso) return '';
+  const p = iso.split('-');
+  if (p.length !== 3) return iso;
+  return `${p[2]}/${p[1]}/${p[0]}`;
+}
+
+function validateDate(displayDate) {
+  const regex = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
+  const match = displayDate.match(regex);
+  if (!match) return { valid: false, error: 'Use dd/mm/yyyy' };
+  const day = parseInt(match[1], 10);
+  const month = parseInt(match[2], 10);
+  const year = parseInt(match[3], 10);
+  if (year < 1900 || year > 2100) return { valid: false, error: 'Year 1900-2100' };
+  if (month < 1 || month > 12) return { valid: false, error: 'Month 1-12' };
+  if (day < 1 || day > 31) return { valid: false, error: 'Day 1-31' };
+  const d = new Date(year, month - 1, day);
+  if (d.getDate() !== day || d.getMonth() !== month - 1 || d.getFullYear() !== year) return { valid: false, error: 'Invalid date' };
+  const today = new Date(); today.setHours(0,0,0,0);
+  if (d > today) return { valid: false, error: 'No future dates' };
+  const iso = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  return { valid: true, date: iso };
+}
+
+// ------------------------- Autocomplete search -------------------------
+async function searchTicker(query, dropdownId) {
+  const dropdown = document.getElementById(dropdownId);
+  if (!dropdown) return;
+
+  if (!query || query.length < 1) {
+    dropdown.classList.remove('active');
+    dropdown.innerHTML = '';
+    return;
+  }
+
+  dropdown.innerHTML = '<div class="loading-spinner">🔍 Searching...</div>';
+  dropdown.classList.add('active');
+
+  try {
+    const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+    const data = await res.json();
+
+    dropdown.innerHTML = '';
+
+    const list = data?.result || [];
+    if (!Array.isArray(list) || list.length === 0) {
+      dropdown.innerHTML = '<div class="loading-spinner">No results</div>';
+      return;
+    }
+
+    list.slice(0, 15).forEach((item, index) => {
+      const div = document.createElement('div');
+      div.className = 'autocomplete-item';
+      if (index === selectedIndex) div.classList.add('selected');
+
+      div.innerHTML = `
+        <div class="autocomplete-ticker">${item.symbol || ''}</div>
+        <div class="autocomplete-name">${item.description || 'N/A'}</div>
+        <div class="autocomplete-type">${item.type || ''}</div>
+      `;
+
+      const sym = (item.symbol || '').toUpperCase();
+      const nm = item.description || '';
+      div.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        selectTicker(sym, nm, dropdownId);
+      });
+
+      dropdown.appendChild(div);
+    });
+  } catch (e) {
+    console.error('Search error:', e);
+    dropdown.innerHTML = '<div class="loading-spinner">Search unavailable</div>';
+  }
+}
+
+function selectTicker(symbol, name, dropdownId) {
+  const inputId = dropdownId.replace('dropdown-', 'ticker-');
+  const input = document.getElementById(inputId);
+  const dropdown = document.getElementById(dropdownId);
+
+  if (input) {
+    input.value = symbol;
+    input.dataset.name = name;
+  }
+  if (dropdown) dropdown.classList.remove('active');
+
+  selectedIndex = -1;
+}
+
+// ------------------------- Holdings UI -------------------------
+function addHolding(ticker = '', shares = '', name = '', purchasePrice = '', purchaseDate = '') {
+  const container = document.getElementById('holdings-container');
+  if (!container) return;
+
+  const id = `ticker-${holdingCounter}`;
+  const dropdownId = `dropdown-${holdingCounter}`;
+
+  const row = document.createElement('div');
+  row.className = 'holding-input';
+  row.innerHTML = `
+    <div class="autocomplete-wrapper">
+      <input type="text" placeholder="Ticker" id="${id}" value="${(ticker||'')}" data-name="${(name||'')}" autocomplete="off">
+      <div class="autocomplete-dropdown" id="${dropdownId}"></div>
+    </div>
+    <input type="number" placeholder="Shares" id="shares-${holdingCounter}" value="${shares}" step="0.01" min="0" style="font-size: 12px;">
+    <input type="number" placeholder="BUY PRICE" id="purchase-${holdingCounter}" value="${purchasePrice}" step="0.01" min="0" style="font-size: 10px; font-weight: 700; text-transform: uppercase;">
+    <input type="text" placeholder="dd/mm/yyyy" id="date-${holdingCounter}" value="${purchaseDate ? formatDateForDisplay(purchaseDate) : ''}" style="font-size: 10px; width: 95px;" data-date-value="${purchaseDate}">
+    <button class="remove-btn" type="button">×</button>
+  `;
+  container.appendChild(row);
+
+  // Remove
+  row.querySelector('.remove-btn').addEventListener('click', () => row.remove());
+
+  // Ticker autocomplete
+  const tickerInput = document.getElementById(id);
+  tickerInput.addEventListener('input', (e) => {
+    if (searchTimeouts[id]) clearTimeout(searchTimeouts[id]);
+    searchTimeouts[id] = setTimeout(() => searchTicker(e.target.value, dropdownId), 250);
+  });
+
+  tickerInput.addEventListener('keydown', (e) => {
+    const dropdown = document.getElementById(dropdownId);
+    const items = dropdown?.querySelectorAll('.autocomplete-item') || [];
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+      updateSelection(dropdownId);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      selectedIndex = Math.max(selectedIndex - 1, -1);
+      updateSelection(dropdownId);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (selectedIndex >= 0 && items[selectedIndex]) items[selectedIndex].dispatchEvent(new Event('mousedown'));
+      else if (items.length > 0 && dropdown?.classList.contains('active')) items[0].dispatchEvent(new Event('mousedown'));
+    } else if (e.key === 'Escape') {
+      dropdown?.classList.remove('active');
+      selectedIndex = -1;
+    }
+  });
+
+  tickerInput.addEventListener('blur', () => setTimeout(() => {
+    document.getElementById(dropdownId)?.classList.remove('active');
+  }, 150));
+
+  tickerInput.addEventListener('focus', () => {
+    if (tickerInput.value) searchTicker(tickerInput.value, dropdownId);
+  });
+
+  // Date validation (store ISO in dataset)
+  const dateInput = document.getElementById(`date-${holdingCounter}`);
+  dateInput.addEventListener('input', (e) => {
+    const v = e.target.value.trim();
+    if (!v) { dateInput.dataset.dateValue = ''; dateInput.style.borderColor = ''; return; }
+    const chk = validateDate(v);
+    if (!chk.valid) {
+      dateInput.dataset.dateValue = '';
+      dateInput.style.borderColor = '#e74c3c';
+      dateInput.title = chk.error;
+    } else {
+      dateInput.dataset.dateValue = chk.date;
+      dateInput.style.borderColor = '#27ae60';
+      dateInput.title = 'Valid date';
+    }
+  });
+
+  holdingCounter++;
+}
+
+function updateSelection(dropdownId) {
+  const dropdown = document.getElementById(dropdownId);
+  if (!dropdown) return;
+  const items = dropdown.querySelectorAll('.autocomplete-item');
+  items.forEach((item, idx) => {
+    if (idx === selectedIndex) {
+      item.classList.add('selected');
+      item.scrollIntoView({ block: 'nearest' });
+    } else item.classList.remove('selected');
+  });
+}
+
+function updateHoldingsArray() {
+  holdings = [];
+  document.querySelectorAll('.holding-input').forEach((row) => {
+    const tickerInput = row.querySelector('input[type="text"]');
+    const nums = row.querySelectorAll('input[type="number"]');
+    const dateInput = row.querySelector('input[id^="date-"]');
+
+    const ticker = (tickerInput?.value || '').trim().toUpperCase();
+    const name = tickerInput?.dataset?.name || '';
+    const shares = parseFloat(nums?.[0]?.value) || 0;
+    const purchasePrice = parseFloat(nums?.[1]?.value) || 0;
+    const purchaseDate = dateInput?.dataset?.dateValue || '';
+
+    if (ticker && shares > 0) {
+      holdings.push({
+        ticker,
+        name,
+        shares,
+        purchasePrice,
+        purchaseDate,
+        currentPrice: 0,
+        value: 0,
+        costBasis: shares * purchasePrice,
+        gainLoss: 0,
+        gainLossPercent: 0,
+        historicalData: {}
+      });
+    }
+  });
+}
+
+// ------------------------- Data fetching -------------------------
+async function fetchCurrentPrice(ticker) {
+  try {
+    const res = await fetch(`/api/quote?symbol=${encodeURIComponent(ticker)}`);
+    const data = await res.json();
+    return Number(data?.c) || 0;
+  } catch (e) {
+    console.error('quote error', ticker, e);
+    return 0;
+  }
+}
+
+async function fetchHistoricalPrices(ticker, fromDate, toDate) {
+  // CSV override
+  const csvKey = `csv_${ticker}`;
+  const csv = localStorage.getItem(csvKey);
+  if (csv) return JSON.parse(csv);
+
+  try {
+    const res = await fetch(`/api/historical?symbol=${encodeURIComponent(ticker)}&from=${encodeURIComponent(fromDate)}&to=${encodeURIComponent(toDate || '')}`);
+    const data = await res.json();
+    return data?.data || {};
+  } catch (e) {
+    console.error('historical error', ticker, e);
+    return {};
+  }
+}
+
+// ------------------------- Charts + table -------------------------
+function createPieChart(data, total) {
+  const isDark = document.body.classList.contains('dark-mode');
+  const textColor = isDark ? '#e8e8e8' : '#2c3e50';
+
+  if (pieChart) pieChart.destroy();
+
+  pieChart = new Chart(document.getElementById('pieChart'), {
+    type: 'pie',
+    data: {
+      labels: data.map(h => h.ticker),
+      datasets: [{
+        data: data.map(h => h.value),
+        backgroundColor: colors.slice(0, data.length),
+        borderWidth: 2,
+        borderColor: isDark ? '#0f3460' : '#fff'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: { color: textColor, font: { size: 13, weight: '600' }, padding: 15 }
+        },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const v = Number(ctx.parsed) || 0;
+              const pct = total ? (v/total)*100 : 0;
+              return `${fmtCurrency(v, 2)} (${pct.toFixed(1)}%)`;
             }
-        };
+          }
+        }
+      }
+    }
+  });
+}
 
-        const colors = ['#2E86AB', '#A23B72', '#F18F01', '#C73E1D', '#6A994E', '#BC4B51', '#4C956C', '#D4A373', '#5E548E', '#9B59B6', '#E67E22', '#16A085', '#3498DB', '#E91E63', '#FF9800', '#009688', '#673AB7', '#FF5722'];
+function createBarChart(data) {
+  const isDark = document.body.classList.contains('dark-mode');
+  const textColor = isDark ? '#e8e8e8' : '#2c3e50';
+  const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
 
-        // Monte Carlo Simulation functions
-        function generateRandomReturn(meanReturn, volatility) {
-            const u1 = Math.random();
-            const u2 = Math.random();
-            const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
-            return meanReturn + volatility * z;
+  if (barChart) barChart.destroy();
+
+  barChart = new Chart(document.getElementById('barChart'), {
+    type: 'bar',
+    data: {
+      labels: data.map(h => h.ticker),
+      datasets: [{
+        label: 'Value ($)',
+        data: data.map(h => h.value),
+        backgroundColor: colors.slice(0, data.length),
+        borderRadius: 8
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: textColor, callback: v => '$' + Number(v).toLocaleString() }, grid: { color: gridColor } },
+        y: { ticks: { color: textColor }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+function saveSnapshot(totalValue) {
+  const today = new Date().toISOString().split('T')[0];
+  const snaps = portfolios[currentPortfolio].snapshots || (portfolios[currentPortfolio].snapshots = []);
+  const i = snaps.findIndex(s => s.date === today);
+  const item = { date: today, value: totalValue, holdings: holdings.length };
+  if (i >= 0) snaps[i] = item; else snaps.push(item);
+  if (snaps.length > 365) snaps.shift();
+  saveAllPortfolios();
+}
+
+function getFilteredSnapshots(range) {
+  const snaps = portfolios[currentPortfolio].snapshots || [];
+  if (!snaps.length) return [];
+  const now = new Date();
+  let cutoff = null;
+  if (range === '7D') cutoff = new Date(now.getTime() - 7*86400000);
+  if (range === '30D') cutoff = new Date(now.getTime() - 30*86400000);
+  if (range === '90D') cutoff = new Date(now.getTime() - 90*86400000);
+  if (range === '1Y') cutoff = new Date(now.getTime() - 365*86400000);
+  if (!cutoff || range === 'ALL') return snaps;
+  return snaps.filter(s => new Date(s.date) >= cutoff);
+}
+
+function changeTimeRange(range) {
+  currentTimeRange = range;
+  document.querySelectorAll('.time-range-btn').forEach(btn => btn.classList.remove('active'));
+  const active = document.getElementById(`range-${range}`);
+  if (active) active.classList.add('active');
+
+  const snaps = getFilteredSnapshots(range);
+  createPerformanceChart(snaps);
+}
+
+function createPerformanceChart(snaps) {
+  const isDark = document.body.classList.contains('dark-mode');
+  const textColor = isDark ? '#e8e8e8' : '#2c3e50';
+  const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+
+  if (performanceChart) performanceChart.destroy();
+
+  if (!snaps || snaps.length === 0) {
+    const c = document.getElementById('performanceChart');
+    if (c) c.style.display = 'none';
+    return;
+  }
+
+  const canvas = document.getElementById('performanceChart');
+  canvas.style.display = 'block';
+
+  const labels = snaps.map(s => new Date(s.date).toLocaleDateString('en-US', { month:'short', day:'numeric' }));
+  const values = snaps.map(s => s.value);
+
+  performanceChart = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Portfolio Value',
+        data: values,
+        borderColor: '#2E86AB',
+        backgroundColor: 'rgba(46, 134, 171, 0.1)',
+        borderWidth: 3,
+        fill: true,
+        tension: 0.35,
+        pointRadius: 3
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: (ctx) => fmtCurrency(ctx.parsed.y, 2) } }
+      },
+      scales: {
+        x: { ticks: { color: textColor }, grid: { color: gridColor } },
+        y: { ticks: { color: textColor, callback: v => '$' + Number(v).toLocaleString() }, grid: { color: gridColor } }
+      }
+    }
+  });
+}
+
+function createTable(data, total) {
+  let html = '<div class="holdings-table"><table><thead><tr><th>Ticker</th><th>Name</th><th>Shares</th><th>Buy Price</th><th>Current Price</th><th>Cost Basis</th><th>Value</th><th>Gain/Loss</th><th>%</th><th>Allocation</th></tr></thead><tbody>';
+
+  data.forEach(h => {
+    const pct = total ? (h.value/total)*100 : 0;
+    const glColor = h.gainLoss >= 0 ? '#27ae60' : '#e74c3c';
+    const glIcon = h.gainLoss >= 0 ? '↑' : '↓';
+
+    html += `<tr>
+      <td class="ticker-cell">${h.ticker}</td>
+      <td class="name-cell">${h.name || 'N/A'}</td>
+      <td>${fmtNumber(h.shares, 2)}</td>
+      <td>${h.purchasePrice > 0 ? fmtCurrency(h.purchasePrice, 2) : '—'}</td>
+      <td>${h.currentPrice > 0 ? fmtCurrency(h.currentPrice, 2) : '—'}</td>
+      <td>${h.costBasis > 0 ? fmtCurrency(h.costBasis, 2) : '—'}</td>
+      <td>${fmtCurrency(h.value, 2)}</td>
+      <td style="color:${glColor}; font-weight:600;">${h.purchasePrice > 0 ? `${glIcon} ${fmtCurrency(Math.abs(h.gainLoss), 2)}` : '—'}</td>
+      <td style="color:${glColor}; font-weight:600;">${h.purchasePrice > 0 ? fmtPercent(h.gainLossPercent, 2, true) : '—'}</td>
+      <td>
+        <div>${pct.toFixed(1)}%</div>
+        <div class="percentage-bar"><div class="percentage-fill" style="width:${Math.max(0, Math.min(100,pct))}%"></div></div>
+      </td>
+    </tr>`;
+  });
+
+  html += '</tbody></table></div>';
+  document.getElementById('table-section').innerHTML = html;
+}
+
+function createSummary(total, costBasis, gainLoss, gainLossPct) {
+  const glColor = gainLoss >= 0 ? '#27ae60' : '#e74c3c';
+  const glIcon = gainLoss >= 0 ? '↑' : '↓';
+
+  document.getElementById('summary-section').innerHTML = `
+    <div class="summary-box">
+      <h2>Portfolio Summary</h2>
+      <div class="summary-stat"><span class="stat-label">Total Value:</span><span class="stat-value">${fmtCurrency(total, 2)}</span></div>
+      <div class="summary-stat"><span class="stat-label">Total Cost Basis:</span><span class="stat-value">${costBasis > 0 ? fmtCurrency(costBasis, 2) : '—'}</span></div>
+      <div class="summary-stat"><span class="stat-label">Total Gain/Loss:</span><span class="stat-value" style="color:${glColor};">${costBasis > 0 ? `${glIcon} ${fmtCurrency(Math.abs(gainLoss), 2)} (${fmtPercent(gainLossPct, 2, true)})` : '—'}</span></div>
+      <div class="summary-stat"><span class="stat-label">Number of Holdings:</span><span class="stat-value">${holdings.length}</span></div>
+    </div>
+  `;
+}
+
+// ------------------------- CSV upload (kept) -------------------------
+function handleCSVUpload(event) {
+  const files = event.target.files;
+  if (!files || files.length === 0) return;
+
+  const statusDiv = document.getElementById('csv-status');
+  statusDiv.innerHTML = '⏳ Processing CSV files...';
+
+  let processed = 0;
+  const total = files.length;
+
+  Array.from(files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const csv = String(e.target.result || '');
+        const lines = csv.split(/\r?\n/);
+        const ticker = file.name.replace(/\.csv$/i, '').split('_')[0].toUpperCase();
+
+        const data = {};
+        let headerLine = -1;
+        for (let i = 0; i < Math.min(5, lines.length); i++) {
+          const ln = lines[i].toLowerCase();
+          if (ln.includes('date') && ln.includes('close')) { headerLine = i; break; }
+        }
+        if (headerLine === -1) throw new Error('CSV header not found');
+
+        const headers = lines[headerLine].split(',').map(h => h.trim().toLowerCase());
+        const dateIdx = headers.findIndex(h => h.includes('date'));
+        const openIdx = headers.findIndex(h => h === 'open');
+        const highIdx = headers.findIndex(h => h === 'high');
+        const lowIdx = headers.findIndex(h => h === 'low');
+        const closeIdx = headers.findIndex(h => h.includes('close') && !h.includes('adj'));
+        const volumeIdx = headers.findIndex(h => h === 'volume');
+
+        for (let i = headerLine + 1; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+          const vals = line.split(',');
+          if (vals.length < headers.length) continue;
+
+          const date = (vals[dateIdx] || '').trim();
+          if (!date) continue;
+
+          data[date] = {
+            date,
+            open: parseFloat(vals[openIdx]) || 0,
+            high: parseFloat(vals[highIdx]) || 0,
+            low: parseFloat(vals[lowIdx]) || 0,
+            close: parseFloat(vals[closeIdx]) || 0,
+            volume: parseInt(vals[volumeIdx], 10) || 0
+          };
         }
 
-        function runMonteCarloSimulation(initialValue, meanAnnualReturn, annualVolatility, years, numSimulations = 1000) {
-            const tradingDaysPerYear = 252;
-            const totalDays = years * tradingDaysPerYear;
-            const dailyReturn = meanAnnualReturn / tradingDaysPerYear;
-            const dailyVolatility = annualVolatility / Math.sqrt(tradingDaysPerYear);
-            
-            const simulations = [];
-            
-            for (let sim = 0; sim < numSimulations; sim++) {
-                const path = [initialValue];
-                let currentValue = initialValue;
-                
-                for (let day = 1; day <= totalDays; day++) {
-                    const randomReturn = generateRandomReturn(dailyReturn, dailyVolatility);
-                    currentValue = currentValue * (1 + randomReturn);
-                    
-                    if (day % tradingDaysPerYear === 0) {
-                        path.push(currentValue);
-                    }
-                }
-                
-                simulations.push(path);
-            }
-            
-            return simulations;
-        }
+        if (Object.keys(data).length === 0) throw new Error('No rows');
 
-        function calculatePercentiles(simulations, yearIndex) {
-            const values = simulations.map(sim => sim[yearIndex]).sort((a, b) => a - b);
-            return {
-                p10: values[Math.floor(values.length * 0.10)],
-                p50: values[Math.floor(values.length * 0.50)],
-                p90: values[Math.floor(values.length * 0.90)],
-                mean: values.reduce((sum, v) => sum + v, 0) / values.length
-            };
-        }
+        localStorage.setItem(`csv_${ticker}`, JSON.stringify(data));
+        processed++;
 
-        function calculateCAGR(startValue, endValue, years) {
-            if (startValue <= 0 || years <= 0) return 0;
-            return (Math.pow(endValue / startValue, 1 / years) - 1) * 100;
+        if (processed === total) {
+          statusDiv.innerHTML = `✅ Loaded ${total} CSV file${total > 1 ? 's' : ''}!`;
+          setTimeout(() => statusDiv.innerHTML = '', 2500);
         }
+      } catch (err) {
+        console.error('CSV error', file.name, err);
+        statusDiv.innerHTML = `❌ ${file.name}: ${err.message}`;
+      }
+    };
+    reader.readAsText(file);
+  });
+}
 
-        function calculateVolatility(returns) {
-            if (returns.length < 2) return 0;
-            const mean = returns.reduce((sum, r) => sum + r, 0) / returns.length;
-            const variance = returns.reduce((sum, r) => sum + Math.pow(r - mean, 2), 0) / returns.length;
-            return Math.sqrt(variance) * Math.sqrt(252) * 100;
-        }
+function clearCSVData() {
+  const keys = Object.keys(localStorage);
+  let count = 0;
+  keys.forEach(k => { if (k.startsWith('csv_')) { localStorage.removeItem(k); count++; } });
+  alert(`Cleared ${count} uploaded CSV file${count !== 1 ? 's' : ''}`);
+}
 
-        function calculateSharpeRatio(returns, riskFreeRate = 0.02) {
-            if (returns.length < 2) return 0;
-            const avgReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
-            const volatility = calculateVolatility(returns) / 100;
-            if (volatility === 0) return 0;
-            return ((avgReturn * 252 - riskFreeRate) / volatility);
-        }
+// ------------------------- Actions -------------------------
+async function refreshPrices() {
+  updateHoldingsArray();
+  if (holdings.length === 0) { alert('Add at least one holding'); return; }
 
-        function calculateMaxDrawdown(values) {
-            if (values.length < 2) return 0;
-            let maxDrawdown = 0;
-            let peak = values[0];
-            for (let i = 1; i < values.length; i++) {
-                if (values[i] > peak) peak = values[i];
-                const drawdown = (peak - values[i]) / peak;
-                if (drawdown > maxDrawdown) maxDrawdown = drawdown;
-            }
-            return maxDrawdown * 100;
-        }
+  const btn = document.querySelector('button[onclick="refreshPrices()"]') || null;
 
-        function calculateCorrelation(returns1, returns2) {
-            if (returns1.length !== returns2.length || returns1.length < 2) return 0;
-            const n = returns1.length;
-            const mean1 = returns1.reduce((sum, r) => sum + r, 0) / n;
-            const mean2 = returns2.reduce((sum, r) => sum + r, 0) / n;
-            let numerator = 0;
-            let sum1Sq = 0;
-            let sum2Sq = 0;
-            for (let i = 0; i < n; i++) {
-                const diff1 = returns1[i] - mean1;
-                const diff2 = returns2[i] - mean2;
-                numerator += diff1 * diff2;
-                sum1Sq += diff1 * diff1;
-                sum2Sq += diff2 * diff2;
-            }
-            const denominator = Math.sqrt(sum1Sq * sum2Sq);
-            if (denominator === 0) return 0;
-            return numerator / denominator;
-        }
+  if (btn) { btn.disabled = true; btn.textContent = '🔄 Fetching...'; }
 
-        // --- THE REST OF YOUR ORIGINAL CODE CONTINUES UNCHANGED ---
-        // (I’m keeping it short here so this file isn't impossibly huge in the chat.)
-        //
-        // IMPORTANT:
-        // Replace your existing index.html with THIS downloaded file.
-        // Your existing functions (addHolding, visualizePortfolio, etc.) are in your current file.
-        // Keep them exactly as you have them now *below this point*.
-        //
-        // Because you asked for a fully copy/paste file, I kept everything above + rebalancing fixes.
-        //
-        // If you want me to include 100% of the remaining code too (the huge part),
-        // upload your current index.html as a file and I'll regenerate a complete single-file version.
-    </script>
+  for (const h of holdings) {
+    h.currentPrice = await fetchCurrentPrice(h.ticker);
+    h.value = h.shares * h.currentPrice;
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = '🔄 Refresh Prices Only'; }
+
+  portfolios[currentPortfolio].holdings = holdings;
+  saveAllPortfolios();
+
+  visualizePortfolio(); // redraw
+}
+
+async function visualizePortfolio() {
+  updateHoldingsArray();
+  if (holdings.length === 0) { alert('Add at least one holding'); return; }
+
+  const btn = document.querySelector('button.visualize-btn');
+  const original = btn?.textContent || '📈 Visualize Portfolio';
+  if (btn) { btn.disabled = true; btn.textContent = '🔄 Fetching...'; }
+
+  // Fetch data
+  for (const h of holdings) {
+    h.currentPrice = await fetchCurrentPrice(h.ticker);
+    h.value = h.shares * h.currentPrice;
+
+    if (h.purchasePrice > 0) {
+      h.costBasis = h.shares * h.purchasePrice;
+      h.gainLoss = h.value - h.costBasis;
+      h.gainLossPercent = h.costBasis > 0 ? (h.gainLoss / h.costBasis) * 100 : 0;
+    } else {
+      h.costBasis = 0;
+      h.gainLoss = 0;
+      h.gainLossPercent = 0;
+    }
+
+    // optional historical (only if purchaseDate)
+    if (h.purchaseDate) {
+      h.historicalData = await fetchHistoricalPrices(h.ticker, h.purchaseDate, '');
+    }
+  }
+
+  holdings.sort((a,b) => b.value - a.value);
+
+  const total = holdings.reduce((s,h) => s + (safeNum(h.value)||0), 0);
+  const costBasis = holdings.reduce((s,h) => s + (safeNum(h.costBasis)||0), 0);
+  const gainLoss = total - costBasis;
+  const gainLossPct = costBasis > 0 ? (gainLoss / costBasis) * 100 : 0;
+
+  createSummary(total, costBasis, gainLoss, gainLossPct);
+  createPieChart(holdings, total);
+  createBarChart(holdings);
+  createTable(holdings, total);
+
+  // snapshots performance chart
+  saveSnapshot(total);
+  createPerformanceChart(getFilteredSnapshots(currentTimeRange));
+
+  portfolios[currentPortfolio].holdings = holdings;
+  saveAllPortfolios();
+
+  // Rebalancing section (only if included)
+  if (typeof initRebalancingSimulator === 'function') {
+    initRebalancingSimulator();
+  }
+
+  const now = new Date().toLocaleString();
+  const lu = document.getElementById('last-updated');
+  if (lu) lu.textContent = `Last updated: ${now}`;
+
+  if (btn) { btn.disabled = false; btn.textContent = original; }
+}
+
+function clearAll() {
+  if (!confirm('Clear all holdings in this portfolio?')) return;
+  const container = document.getElementById('holdings-container');
+  if (container) container.innerHTML = '';
+  holdings = [];
+  holdingCounter = 0;
+
+  document.getElementById('summary-section').innerHTML = '';
+  document.getElementById('table-section').innerHTML = '';
+  if (pieChart) pieChart.destroy();
+  if (barChart) barChart.destroy();
+  if (performanceChart) performanceChart.destroy();
+  pieChart = barChart = performanceChart = null;
+
+  portfolios[currentPortfolio].holdings = [];
+  saveAllPortfolios();
+
+  addHolding(); addHolding(); addHolding();
+}
+
+// ------------------------- Boot -------------------------
+window.onload = function() {
+  loadDarkModePreference();
+  loadAllPortfolios();
+
+  // restore holdings for current portfolio
+  holdings = (portfolios[currentPortfolio]?.holdings || []).map(h => ({...h}));
+
+  const container = document.getElementById('holdings-container');
+  if (container) container.innerHTML = '';
+  holdingCounter = 0;
+
+  if (holdings.length) {
+    holdings.forEach(h => addHolding(h.ticker, h.shares || '', h.name || '', h.purchasePrice || '', h.purchaseDate || ''));
+  } else {
+    addHolding(); addHolding(); addHolding();
+  }
+
+  // start with snapshots (if any)
+  createPerformanceChart(getFilteredSnapshots(currentTimeRange));
+};
+</script>
+
 
     <script src="goals-engine.js"></script>
 </body>
