@@ -1,7 +1,48 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
+<script>
+// ============================================================================
+// SAFE FORMAT HELPERS (prevents .toLocaleString() crashes)
+// ============================================================================
+function safeNum(n) {
+  const x = (n === null || n === undefined) ? NaN : Number(n);
+  return Number.isFinite(x) ? x : null;
+}
+function fmtCurrency(n, digits = 0) {
+  const x = safeNum(n);
+  if (x === null) return '—';
+  return x.toLocaleString('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits
+  });
+}
+function fmtNumber(n, digits = 0) {
+  const x = safeNum(n);
+  if (x === null) return '—';
+  return x.toLocaleString('en-US', {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits
+  });
+}
+function fmtPercent(n, digits = 1, withSign = false) {
+  const x = safeNum(n);
+  if (x === null) return '—';
+  const sign = withSign && x > 0 ? '+' : '';
+  return `${sign}${x.toFixed(digits)}%`;
+}
+function fmtInt(n) {
+  const x = safeNum(n);
+  if (x === null) return '—';
+  return Math.round(x).toLocaleString('en-US');
+}
+</script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portfolio Visualizer</title>
@@ -1308,7 +1349,11 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
                         },
                         tooltip: {
                             callbacks: {
-                                label: (context) => `$${context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2})}`
+                                label: (context) => {
+                                    const y = safeNum(context.parsed?.y);
+                                    if (y === null) return `${context.dataset.label}: —`;
+                                    return `${context.dataset.label}: ${fmtCurrency(y, 2)}`;
+                                }
                             }
                         },
                         title: {
@@ -1440,7 +1485,11 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
                         legend: { display: false },
                         tooltip: {
                             callbacks: {
-                                label: (context) => `$${context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2})}`
+                                label: (context) => {
+                                    const y = safeNum(context.parsed?.y);
+                                    if (y === null) return `${context.dataset.label}: —`;
+                                    return `${context.dataset.label}: ${fmtCurrency(y, 2)}`;
+                                }
                             }
                         }
                     },
@@ -1514,7 +1563,11 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
                         legend: { display: false },
                         tooltip: {
                             callbacks: {
-                                label: (context) => `$${context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2})}`
+                                label: (context) => {
+                                    const y = safeNum(context.parsed?.y);
+                                    if (y === null) return `${context.dataset.label}: —`;
+                                    return `${context.dataset.label}: ${fmtCurrency(y, 2)}`;
+                                }
                             }
                         }
                     },
@@ -2283,7 +2336,7 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
                             },
                             tooltip: {
                                 callbacks: {
-                                    label: (context) => `${context.dataset.label}: $${context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2})}`
+                                    label: (context) => `${context.dataset.label}: $${safeNum(context.parsed?.y)===null?'—':Number(context.parsed.y).toLocaleString('en-US',{minimumFractionDigits:2})}`
                                 }
                             }
                         },
