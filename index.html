@@ -895,6 +895,36 @@
     </div>
 
     <script>
+
+// ============================================================================
+// SAFE FORMAT HELPERS (prevents .toLocaleString() crashes)
+// ============================================================================
+function safeNum(n) {
+  const x = (n === null || n === undefined) ? NaN : Number(n);
+  return Number.isFinite(x) ? x : null;
+}
+function fmtCurrency(n, digits = 0) {
+  const x = safeNum(n);
+  if (x === null) return '—';
+  return x.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: digits, maximumFractionDigits: digits });
+}
+function fmtNumber(n, digits = 0) {
+  const x = safeNum(n);
+  if (x === null) return '—';
+  return x.toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+}
+function fmtPercent(n, digits = 1, withSign = false) {
+  const x = safeNum(n);
+  if (x === null) return '—';
+  const sign = withSign && x > 0 ? '+' : '';
+  return `${sign}${x.toFixed(digits)}%`;
+}
+function fmtInt(n) {
+  const x = safeNum(n);
+  if (x === null) return '—';
+  return Math.round(x).toLocaleString('en-US');
+}
+
 /* ============================================================================
    PORTFOLIO VISUALIZER - APP SCRIPT (restored)
    - holdings inputs (+Add Holding)
@@ -1692,26 +1722,33 @@ function clearAll() {
 }
 
 // ------------------------- Boot -------------------------
+
 window.onload = function() {
   loadDarkModePreference();
   loadAllPortfolios();
 
-  // restore holdings for current portfolio
+  // Restore holdings for current portfolio
   holdings = (portfolios[currentPortfolio]?.holdings || []).map(h => ({...h}));
 
   const container = document.getElementById('holdings-container');
   if (container) container.innerHTML = '';
   holdingCounter = 0;
 
+  // Render saved holdings (if any)
   if (holdings.length) {
-    holdings.forEach(h => addHolding(h.ticker, h.shares || '', h.name || '', h.purchasePrice || '', h.purchaseDate || ''));
-  } else {
-    addHolding(); addHolding(); addHolding();
+    holdings.forEach(h => addHolding(
+      h.ticker,
+      h.shares || '',
+      h.name || '',
+      h.purchasePrice || '',
+      h.purchaseDate || ''
+    ));
   }
 
-  // start with snapshots (if any)
-  createPerformanceChart(getFilteredSnapshots(currentTimeRange));
+  // Always ensure at least 3 input rows exist
+  while (holdingCounter < 3) addHolding();
 };
+
 </script>
 
 
