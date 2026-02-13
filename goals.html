@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1130,9 +1131,9 @@
                             ${getInsight(goal, currentSim)}
                         </div>
 
-                        ${currentSim.probability < 70 ? `
+                        
                         <button class="show-plans-btn" data-testid="show-plans" onclick="togglePlans('${goal.id}')">
-                            💡 Show Action Plans to Improve
+                            💡 Show Action Plans
                         </button>
 
                         <div id="plans-${goal.id}" class="plan-section" style="display: none;">
@@ -1147,7 +1148,7 @@
                                 <strong>💡 Tip:</strong> Click any strategy above to see how it affects your forecast and probability!
                             </div>
                         </div>
-                        ` : ''} 
+                         
                     </div>
                 `;
             }).join('');
