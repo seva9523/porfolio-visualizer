@@ -240,6 +240,7 @@ function fmtInt(n) {
             font-size: 12px;
             color: var(--text-secondary);
             margin-top: 3px;
+            pointer-events: none;
         }
         
         .autocomplete-type {
@@ -502,7 +503,8 @@ function fmtInt(n) {
                 <div class="chart-wrapper">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                         <div class="chart-title">Performance Over Time</div>
-                        <div style="display: flex; gap: 8px;">
+                        <div id="performanceModeBadge" data-testid="performance-mode" style="font-size:12px; font-weight:600; opacity:0.85; margin-top:4px;">Historical Performance</div>
+                        <div style="display: flex; gap: 8px;" id="timeRangeControls" data-testid="time-range-controls">
                             <button onclick="changeTimeRange('7D')" id="range-7D" class="time-range-btn active">7D</button>
                             <button onclick="changeTimeRange('30D')" id="range-30D" class="time-range-btn">30D</button>
                             <button onclick="changeTimeRange('90D')" id="range-90D" class="time-range-btn">90D</button>
@@ -1289,6 +1291,8 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
         }
 
         function createEstimatedPerformanceChart(holdings, fromDate) {
+            document.getElementById('performanceModeBadge').textContent = 'Estimated Growth';
+            const tr = document.getElementById('timeRangeControls'); if (tr) tr.style.display = 'none';
             console.log('Creating estimated performance chart (linear interpolation)');
             
             // Hide time range buttons (they don't apply to estimated chart)
@@ -1388,6 +1392,8 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
         }
 
         function createHistoricalPerformanceChart(holdings, fromDate) {
+            document.getElementById('performanceModeBadge').textContent = 'Historical Performance';
+            const tr = document.getElementById('timeRangeControls'); if (tr) tr.style.display = 'flex';
             console.log('Creating historical performance chart from:', fromDate);
             
             // Show time range buttons (they apply to historical chart)
