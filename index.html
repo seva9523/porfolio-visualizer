@@ -2650,11 +2650,15 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
                     );
                 }
                 
-                // Calculate gain/loss
-                if (holding.purchasePrice > 0) {
-                    holding.costBasis = holding.shares * holding.purchasePrice;
+                // Calculate gain/loss - always set costBasis
+                holding.costBasis = (holding.shares || 0) * (holding.purchasePrice || 0);
+                
+                if (holding.purchasePrice > 0 && holding.costBasis > 0) {
                     holding.gainLoss = holding.value - holding.costBasis;
                     holding.gainLossPercent = (holding.gainLoss / holding.costBasis) * 100;
+                } else {
+                    holding.gainLoss = 0;
+                    holding.gainLossPercent = 0;
                 }
                 
                 console.log(`${holding.ticker}: Price=$${holding.currentPrice}, Value=$${holding.value}`);
