@@ -2780,6 +2780,9 @@ initRebalancingSimulator();
   totalCostBasis = safeNum(totalCostBasis, 0);
   totalGainLoss = safeNum(totalGainLoss, 0);
   totalGainLossPercent = safeNum(totalGainLossPercent, 0);
+  
+  // DEBUG: Log values to verify calculations
+  console.log('createSummary called:', {total, totalCostBasis, totalGainLoss, totalGainLossPercent});
 
             const gainLossColor = totalGainLoss >= 0 ? '#27ae60' : '#e74c3c';
             const gainLossIcon = totalGainLoss >= 0 ? '↑' : '↓';
