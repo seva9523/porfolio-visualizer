@@ -516,6 +516,7 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                         <div class="chart-title">Performance Over Time</div>
                         <div id="performanceModeBadge" data-testid="performance-mode" style="font-size:12px; font-weight:600; opacity:0.85; margin-top:4px;">Historical Performance</div>
+                        <div id="performanceModeText" data-testid="performance-mode-text" style="font-size:12px; font-weight:600; opacity:0.85; margin-top:2px; display:none;">Historical Performance</div>
                         <div style="display: flex; gap: 8px;" id="timeRangeControls" data-testid="time-range-controls">
                             <button onclick="changeTimeRange('7D')" id="range-7D" class="time-range-btn active">7D</button>
                             <button onclick="changeTimeRange('30D')" id="range-30D" class="time-range-btn">30D</button>
@@ -1315,6 +1316,8 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
 
         function createEstimatedPerformanceChart(holdings, fromDate) {
             document.getElementById('performanceModeBadge').textContent = 'Estimated Growth';
+  const pmt = document.getElementById('performanceModeText'); if (pmt) { pmt.textContent = 'Estimated Growth'; pmt.style.display = 'block'; }
+
             const tr = document.getElementById('timeRangeControls'); if (tr) tr.style.display = 'none';
             console.log('Creating estimated performance chart (linear interpolation)');
             
@@ -1416,6 +1419,8 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
 
         function createHistoricalPerformanceChart(holdings, fromDate) {
             document.getElementById('performanceModeBadge').textContent = 'Historical Performance';
+  const pmt = document.getElementById('performanceModeText'); if (pmt) { pmt.textContent = 'Historical Performance'; pmt.style.display = 'block'; }
+
             const tr = document.getElementById('timeRangeControls'); if (tr) tr.style.display = 'flex';
             console.log('Creating historical performance chart from:', fromDate);
             
@@ -2688,6 +2693,12 @@ initRebalancingSimulator();
         }
 
         function createSummary(total, totalCostBasis, totalGainLoss, totalGainLossPercent) {
+  // Coerce inputs to finite numbers for stable UI + tests
+  total = safeNum(total, 0);
+  totalCostBasis = safeNum(totalCostBasis, 0);
+  totalGainLoss = safeNum(totalGainLoss, 0);
+  totalGainLossPercent = safeNum(totalGainLossPercent, 0);
+
             const gainLossColor = totalGainLoss >= 0 ? '#27ae60' : '#e74c3c';
             const gainLossIcon = totalGainLoss >= 0 ? '↑' : '↓';
             const gainLossDisplay = totalCostBasis > 0 ? `
