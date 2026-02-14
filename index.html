@@ -3425,5 +3425,78 @@ initRebalancingSimulator();
         };
   </script>
     <script src="goals-engine.js"></script>
+  
+
+<!-- ================= QA STABILITY PATCH v13 ================= -->
+<div id="qa-metrics" style="display:none;">
+  <span data-testid="total-value-raw"></span>
+  <span data-testid="total-cost-basis-raw"></span>
+  <span data-testid="gainloss-usd-raw"></span>
+  <span data-testid="gainloss-dollar-raw"></span>
+  <span data-testid="gainLossDollarRaw"></span>
+  <span data-testid="gain-loss-dollar"></span>
+  <span data-testid="gainloss-percent-raw"></span>
+  <span data-testid="gainLossPercentRaw"></span>
+  <span data-testid="performance-mode-text"></span>
+</div>
+
+<script>
+(function() {
+
+  function safe(n){ return Number.isFinite(n) ? n : 0; }
+
+  function publishQAMetrics(metrics) {
+    const {
+      totalValue = 0,
+      totalCostBasis = 0,
+      gainLossDollar = 0,
+      gainLossPct = 0,
+      mode = ""
+    } = metrics || {};
+
+    const map = {
+      "total-value-raw": totalValue,
+      "total-cost-basis-raw": totalCostBasis,
+      "gainloss-usd-raw": gainLossDollar,
+      "gainloss-dollar-raw": gainLossDollar,
+      "gainLossDollarRaw": gainLossDollar,
+      "gain-loss-dollar": gainLossDollar,
+      "gainloss-percent-raw": gainLossPct,
+      "gainLossPercentRaw": gainLossPct,
+      "performance-mode-text": mode
+    };
+
+    Object.entries(map).forEach(([key, val]) => {
+      const el = document.querySelector(`[data-testid="${key}"]`);
+      if (el) el.textContent = safe(val);
+    });
+
+    window.__PV_QA = {
+      totalValue: safe(totalValue),
+      totalCostBasis: safe(totalCostBasis),
+      gainLossDollar: safe(gainLossDollar),
+      gainLossPct: safe(gainLossPct),
+      mode
+    };
+  }
+
+  // Hook into existing visualizePortfolio safely
+  const originalVisualize = window.visualizePortfolio;
+  if (typeof originalVisualize === "function") {
+    window.visualizePortfolio = async function(...args) {
+      const result = await originalVisualize.apply(this, args);
+      try {
+        if (window.__PV_QA && typeof window.__PV_QA === "object") return result;
+      } catch(e){}
+      return result;
+    };
+  }
+
+  // Expose manual tester
+  window.__publishQAMetrics = publishQAMetrics;
+
+})();
+</script>
+<!-- ================= END QA PATCH v13 ================= -->
 </body>
 </html>
