@@ -1888,6 +1888,18 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
                 if (searchTimeouts[id]) clearTimeout(searchTimeouts[id]);
                 searchTimeouts[id] = setTimeout(() => searchTicker(e.target.value, dropdownId), 400);
             });
+
+            // If an autocomplete menu is open, it can cover the input and block clear/focus actions.
+            // Hide it immediately on focus (and shortly after blur) to keep interactions reliable.
+            tickerInput.addEventListener('focus', () => {
+                const dd = document.getElementById(dropdownId);
+                if (dd) dd.classList.remove('active');
+            });
+
+            tickerInput.addEventListener('blur', () => {
+                const dd = document.getElementById(dropdownId);
+                if (dd) setTimeout(() => dd.classList.remove('active'), 50);
+            });
             
             tickerInput.addEventListener('keydown', (e) => {
                 const dropdown = document.getElementById(dropdownId);
@@ -2783,7 +2795,7 @@ initRebalancingSimulator();
                 const el = qa.querySelector(sel);
                 if (el) el.textContent = (val == null || Number.isNaN(val)) ? '' : String(val);
               };
-              set('[data-testid="total-value-raw"]', totalValue);
+              set('[data-testid="total-value-raw"]', total);
               set('[data-testid="cost-basis-raw"]', totalCostBasis);
               set('[data-testid="gainloss-usd-raw"]', gainLossDollar);
               set('[data-testid="gainloss-pct-raw"]', gainLossPercent);
