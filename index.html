@@ -13,9 +13,9 @@ if (typeof window !== 'undefined' && window.Cypress) {
 // ============================================================================
 // SAFE FORMAT HELPERS (prevents .toLocaleString() crashes)
 // ============================================================================
-function safeNum(n) {
+function safeNum(n, fallback = null) {
   const x = (n === null || n === undefined) ? NaN : Number(n);
-  return Number.isFinite(x) ? x : null;
+  return Number.isFinite(x) ? x : fallback;
 }
 function fmtCurrency(n, digits = 0) {
   const x = safeNum(n);
@@ -1293,7 +1293,12 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
             document.getElementById(`range-${range}`).classList.add('active');
             
             // Check if we have an estimated chart (no historical data)
-            const hasHistoricalData = holdings.some(h => h.historicalData && Object.keys(h.historicalData).length > 0);
+            const hasHistoricalData = holdings.some(h => {
+    const hd = h.historicalData;
+    if (!hd) return false;
+    const series = Array.isArray(hd) ? hd : (Array.isArray(hd.series) ? hd.series : []);
+    return series.length >= 2;
+  });
             
             if (!hasHistoricalData && holdings.length > 0) {
                 // For estimated chart, always show full range (ignore time range buttons)
@@ -2646,7 +2651,12 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
             
             // Create historical performance chart if we have purchase dates
             if (earliestDate) {
-                const hasHistoricalData = holdings.some(h => h.historicalData && Object.keys(h.historicalData).length > 0);
+                const hasHistoricalData = holdings.some(h => {
+    const hd = h.historicalData;
+    if (!hd) return false;
+    const series = Array.isArray(hd) ? hd : (Array.isArray(hd.series) ? hd.series : []);
+    return series.length >= 2;
+  });
                 
                 if (hasHistoricalData) {
                     createHistoricalPerformanceChart(holdings, earliestDate);
@@ -2797,8 +2807,8 @@ initRebalancingSimulator();
               };
               set('[data-testid="total-value-raw"]', total);
               set('[data-testid="cost-basis-raw"]', totalCostBasis);
-              const gainLossDollar = (typeof totalCostBasis === 'number' && isFinite(totalCostBasis)) ? (total - totalCostBasis) : null;
-              const gainLossPercent = (typeof totalCostBasis === 'number' && isFinite(totalCostBasis) && totalCostBasis !== 0) ? (gainLossDollar / totalCostBasis * 100) : null;
+              const gainLossDollar = (isFinite(totalCostBasis) ? (total - totalCostBasis) : 0);
+              const gainLossPercent = (isFinite(totalCostBasis) && totalCostBasis !== 0) ? (gainLossDollar / totalCostBasis) : 0;
               set('[data-testid="gainloss-usd-raw"]', gainLossDollar);
               set('[data-testid="gainloss-pct-raw"]', gainLossPercent);
             })();
