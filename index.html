@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- FIXED_VERSION_2026_02_14_v5 -->
 
 <script>
 // Cypress QA mode
@@ -1336,20 +1337,7 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
                 return; // Don't redraw, keep showing the estimated chart
             }
             
-            // If we have historical data, redraw the historical chart with time filter
-            if (hasHistoricalData) {
-                const earliestDate = holdings
-                    .filter(h => h.purchaseDate)
-                    .map(h => h.purchaseDate)
-                    .sort()[0];
-                
-                if (earliestDate) {
-                    createHistoricalPerformanceChart(holdings, earliestDate, range);
-                    return;
-                }
-            }
-            
-            // Fallback: Redraw performance chart with filtered snapshots
+            // Redraw performance chart with filtered snapshots
             const filteredSnapshots = getFilteredSnapshots(range);
             if (filteredSnapshots.length > 0) {
                 createPerformanceChart(filteredSnapshots);
@@ -1459,12 +1447,12 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
             console.log('Estimated chart created:', { from: fromDate, purchaseValue, currentValue });
         }
 
-        function createHistoricalPerformanceChart(holdings, fromDate, timeRange = 'ALL') {
+        function createHistoricalPerformanceChart(holdings, fromDate) {
             document.getElementById('performanceModeBadge').textContent = 'Historical Performance';
   const pmt = document.getElementById('performanceModeText'); if (pmt) { pmt.textContent = 'Historical Performance'; pmt.style.display = 'block'; }
 
             const tr = document.getElementById('timeRangeControls'); if (tr) tr.style.display = 'flex';
-            console.log('Creating historical performance chart from:', fromDate, 'with time range:', timeRange);
+            console.log('Creating historical performance chart from:', fromDate);
             
             // Show time range buttons (they apply to historical chart)
             const timeRangeBtns = document.querySelectorAll('.time-range-btn');
@@ -1497,34 +1485,7 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
             }
             
             // Sort dates
-            let sortedDates = Array.from(allDates).sort();
-            
-            // Apply time range filter
-            if (timeRange !== 'ALL') {
-                const now = new Date();
-                let cutoffDate;
-                
-                switch(timeRange) {
-                    case '7D':
-                        cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-                        break;
-                    case '30D':
-                        cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-                        break;
-                    case '90D':
-                        cutoffDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-                        break;
-                    case '1Y':
-                        cutoffDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-                        break;
-                }
-                
-                if (cutoffDate) {
-                    const cutoffDateStr = cutoffDate.toISOString().split('T')[0];
-                    sortedDates = sortedDates.filter(date => date >= cutoffDateStr);
-                    console.log('Filtered to', timeRange, ':', sortedDates.length, 'dates');
-                }
-            }
+            const sortedDates = Array.from(allDates).sort();
             
             // Calculate portfolio value for each date
             const portfolioValues = sortedDates.map(date => {
@@ -2694,22 +2655,14 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
                     );
                 }
                 
-                // Calculate gain/loss (using safe number helpers)
-                const purchasePrice = safeNum(holding.purchasePrice, 0);
-                const shares = safeNum(holding.shares, 0);
-                const value = safeNum(holding.value, 0);
-
-                holding.costBasis = shares * purchasePrice;
-
-                if (purchasePrice > 0 && holding.costBasis > 0) {
-                    holding.gainLoss = value - holding.costBasis;
+                // Calculate gain/loss
+                if (holding.purchasePrice > 0) {
+                    holding.costBasis = holding.shares * holding.purchasePrice;
+                    holding.gainLoss = holding.value - holding.costBasis;
                     holding.gainLossPercent = (holding.gainLoss / holding.costBasis) * 100;
-                } else {
-                    holding.gainLoss = 0;
-                    holding.gainLossPercent = 0;
                 }
                 
-                console.log(`${holding.ticker}: Price=$${holding.currentPrice}, Value=$${holding.value}, PurchasePrice=$${purchasePrice}, CostBasis=$${holding.costBasis}, GainLoss=$${holding.gainLoss}`);
+                console.log(`${holding.ticker}: Price=$${holding.currentPrice}, Value=$${holding.value}`);
             }
             
             const now = new Date().toLocaleString();
@@ -2780,9 +2733,6 @@ initRebalancingSimulator();
   totalCostBasis = safeNum(totalCostBasis, 0);
   totalGainLoss = safeNum(totalGainLoss, 0);
   totalGainLossPercent = safeNum(totalGainLossPercent, 0);
-  
-  // DEBUG: Log values to verify calculations
-  console.log('createSummary called:', {total, totalCostBasis, totalGainLoss, totalGainLossPercent});
 
             const gainLossColor = totalGainLoss >= 0 ? '#27ae60' : '#e74c3c';
             const gainLossIcon = totalGainLoss >= 0 ? '↑' : '↓';
@@ -2879,7 +2829,7 @@ initRebalancingSimulator();
                         ` : ''}
                     </div>
                 </div>
-            ` : '';
+            `;
             
             document.getElementById('summary-section').innerHTML = `
                 <div class="summary-box">
