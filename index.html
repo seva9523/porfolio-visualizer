@@ -855,7 +855,11 @@ function createPerformanceComparisonChart(results, textColor, gridColor) {
                 },
                 tooltip: {
                     callbacks: {
-                        label: (context) => `${context.dataset.label}: $${context.parsed.y.toLocaleString('en-US', {maximumFractionDigits: 0})}`
+                        label: (context) => {
+              const y = context.parsed && context.parsed.y;
+              if (y === null || y === undefined || Number.isNaN(y)) return `${context.dataset.label}: —`;
+              return `${context.dataset.label}: $${Number(y).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+            }
                     }
                 }
             },
