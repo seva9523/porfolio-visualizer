@@ -1319,10 +1319,15 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
             
             // Check if we have an estimated chart (no historical data)
             const hasHistoricalData = holdings.some(h => {
-    const hd = h.historicalData;
-    if (!hd) return false;
-    const series = Array.isArray(hd) ? hd : (Array.isArray(hd.series) ? hd.series : []);
-    return series.length >= 2;
+    if (!h.historicalData || typeof h.historicalData !== 'object') return false;
+    if (Array.isArray(h.historicalData)) {
+        return h.historicalData.length >= 2;
+    }
+    if (Array.isArray(h.historicalData.series)) {
+        return h.historicalData.series.length >= 2;
+    }
+    const dataKeys = Object.keys(h.historicalData);
+    return dataKeys.length >= 2;
   });
             
             if (!hasHistoricalData && holdings.length > 0) {
