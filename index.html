@@ -2741,13 +2741,13 @@ initRebalancingSimulator();
             const gainLossDisplay = `
                 <div class="summary-stat">
                     <span class="stat-label">Total Cost Basis:</span>
-                    <span class="stat-value" data-testid="total-cost-basis">${fmtCurrency(totalCostBasis, 2)}</span>
+                    <span class="stat-value" data-testid="total-cost-basis">$${totalCostBasis.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                 </div>
                 <div class="summary-stat">
                     <span class="stat-label">Total Gain/Loss:</span>
                     <span class="stat-value" data-testid="total-gainloss" style="color: ${gainLossColor};">
-                        ${gainLossIcon} ${fmtCurrency(Math.abs(totalGainLoss), 2)}
-                        (${fmtPercent(totalGainLossPercent, 2, true)})
+                        ${gainLossIcon} $${Math.abs(totalGainLoss).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        (${totalGainLoss >= 0 ? '+' : ''}${totalGainLossPercent.toFixed(2)}%)
                     </span>
                 </div>
             `;
