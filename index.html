@@ -2794,7 +2794,7 @@ initRebalancingSimulator();
                     maintainAspectRatio: true, 
                     plugins: { 
                         legend: { display: false }, 
-                        tooltip: { callbacks: { label: (context) => `$${context.parsed.x.toLocaleString('en-US', {minimumFractionDigits: 2})}` } } 
+                        tooltip: { callbacks: { label: (context) => `${fmtCurrency(context.parsed?.x, 2)}` } } 
                     }, 
                     scales: { 
                         x: { 
@@ -3006,7 +3006,7 @@ initRebalancingSimulator();
                         },
                         tooltip: {
                             callbacks: {
-                                label: (context) => `${context.dataset.label}: $${context.parsed.y.toLocaleString('en-US', {maximumFractionDigits: 0})}`
+                                label: (context) => `${context.dataset.label}: $${safeNum(context.parsed?.y)===null?(()=>{throw new Error('NA')})():safeNum(context.parsed?.y).toLocaleString('en-US', {maximumFractionDigits: 0})}`
                             }
                         }
                     },
