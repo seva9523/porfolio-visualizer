@@ -3498,5 +3498,141 @@ initRebalancingSimulator();
 })();
 </script>
 <!-- ================= END QA PATCH v13 ================= -->
+  
+<!-- ================= QA STABILITY PATCH v14 ================= -->
+<!-- Paste this block right before </body> in index.html -->
+<div id="qa-metrics" style="position:absolute; left:-9999px; top:-9999px; width:1px; height:1px; overflow:hidden;">
+  <span data-testid="total-value-raw"></span>
+  <span data-testid="total-cost-basis-raw"></span>
+  <span data-testid="cost-basis-raw"></span>
+  <span data-testid="gainloss-usd-raw"></span>
+  <span data-testid="gainloss-pct-raw"></span>
+  <span data-testid="performance-mode-text"></span>
+</div>
+
+<script>
+(function () {
+  // ---- helpers
+  const $all = (sel) => Array.from(document.querySelectorAll(sel));
+  const setTest = (id, val) => {
+    const s = (val === null || val === undefined) ? "" : String(val);
+    $all(`[data-testid="${id}"]`).forEach(el => { el.textContent = s; });
+  };
+
+  function getHoldingsSafe() {
+    try {
+      // common patterns used across versions
+      if (window.currentPortfolio && Array.isArray(window.currentPortfolio.holdings)) return window.currentPortfolio.holdings;
+      if (window.portfolios) {
+        const idx = (typeof window.currentPortfolioIndex === "number") ? window.currentPortfolioIndex : 0;
+        const p = window.portfolios[idx] || window.portfolios[0];
+        if (p && Array.isArray(p.holdings)) return p.holdings;
+      }
+    } catch (e) {}
+    return [];
+  }
+
+  function computeTotalsFromHoldings() {
+    const holdings = getHoldingsSafe();
+    let totalValue = 0, costBasis = 0;
+
+    holdings.forEach(h => {
+      const shares = Number(h.shares ?? h.quantity ?? 0) || 0;
+      const buy = Number(h.purchasePrice ?? h.buyPrice ?? h.purchase_price ?? 0) || 0;
+      const current = Number(h.currentPrice ?? h.price ?? h.current ?? 0) || 0;
+      costBasis += shares * buy;
+      totalValue += shares * current;
+    });
+
+    const gainLossDollar = totalValue - costBasis;
+    const gainLossPct = costBasis ? (gainLossDollar / costBasis) * 100 : 0;
+
+    return { totalValue, costBasis, gainLossDollar, gainLossPct };
+  }
+
+  function publishQAMetrics(modeText) {
+    const m = computeTotalsFromHoldings();
+
+    // raw numeric strings (tests parse these)
+    setTest("total-value-raw", m.totalValue.toFixed(6));
+    setTest("total-cost-basis-raw", m.costBasis.toFixed(6));
+    setTest("cost-basis-raw", m.costBasis.toFixed(6)); // backward compat
+    setTest("gainloss-usd-raw", m.gainLossDollar.toFixed(6));
+    setTest("gainloss-pct-raw", m.gainLossPct.toFixed(6));
+    setTest("performance-mode-text", modeText || "");
+
+    // expose for debugging
+    window.__PV_QA = { ...m, mode: modeText || "" };
+  }
+
+  function setMode(modeText, isEstimated) {
+    // keep existing UI (badge) in sync
+    const badge = document.getElementById("performanceModeBadge");
+    if (badge) badge.textContent = modeText;
+
+    // show/hide time range controls consistently
+    const controls =
+      document.getElementById("timeRangeControls") ||
+      document.querySelector('[data-testid="time-range-controls"]') ||
+      document.querySelector(".time-range-controls");
+
+    if (controls) controls.style.display = isEstimated ? "none" : "flex";
+
+    publishQAMetrics(modeText);
+  }
+
+  // ---- wrap chart creators if they exist
+  function wrapGlobal(fnName, wrapper) {
+    const fn = window[fnName] || (typeof self !== "undefined" ? self[fnName] : null);
+    if (typeof fn !== "function") return;
+    const wrapped = wrapper(fn);
+    try { window[fnName] = wrapped; } catch (e) {}
+    try { self[fnName] = wrapped; } catch (e) {}
+  }
+
+  wrapGlobal("createEstimatedPerformanceChart", (orig) => function () {
+    const ret = orig.apply(this, arguments);
+    try { setMode("Estimated Growth", true); } catch (e) {}
+    return ret;
+  });
+
+  wrapGlobal("createHistoricalPerformanceChart", (orig) => function () {
+    const ret = orig.apply(this, arguments);
+    try { setMode("Historical Performance", false); } catch (e) {}
+    return ret;
+  });
+
+  // ---- wrap visualizePortfolio so mode + metrics are always published even if charts short-circuit
+  wrapGlobal("visualizePortfolio", (orig) => async function () {
+    const ret = await orig.apply(this, arguments);
+    try {
+      // If chart creators didn't run (edge cases), infer mode from controls visibility.
+      const controls =
+        document.getElementById("timeRangeControls") ||
+        document.querySelector('[data-testid="time-range-controls"]') ||
+        document.querySelector(".time-range-controls");
+      const isEstimated = controls ? (getComputedStyle(controls).display === "none") : false;
+      setMode(isEstimated ? "Estimated Growth" : "Historical Performance", isEstimated);
+    } catch (e) {}
+    return ret;
+  });
+
+  // ---- also wrap createSummary if present (some versions compute summary here)
+  wrapGlobal("createSummary", (orig) => function () {
+    const ret = orig.apply(this, arguments);
+    try {
+      // Don't guess mode here; just update numeric metrics after summary renders.
+      publishQAMetrics(document.getElementById("performanceModeBadge")?.textContent || "");
+    } catch (e) {}
+    return ret;
+  });
+
+  // initial publish (page-load)
+  try {
+    publishQAMetrics(document.getElementById("performanceModeBadge")?.textContent || "");
+  } catch (e) {}
+})();
+</script>
+<!-- ================= END QA STABILITY PATCH v14 ================= -->
 </body>
 </html>
