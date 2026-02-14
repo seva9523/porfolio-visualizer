@@ -17,6 +17,32 @@ function safeNum(n, fallback = null) {
   const x = (n === null || n === undefined) ? NaN : Number(n);
   return Number.isFinite(x) ? x : fallback;
 }
+
+function pickPrice(payload) {
+  // Accept many API shapes: {price}, {c}, {last}, {lastPrice}, {quote:{c}}, {data:{price}}, etc.
+  if (!payload) return null;
+
+  // direct candidates
+  const direct = [payload.price, payload.c, payload.last, payload.lastPrice, payload.close, payload.current];
+  for (const v of direct) {
+    const n = safeNum(v, null);
+    if (n !== null) return n;
+  }
+
+  // nested candidates
+  const nested = [
+    payload.quote?.c, payload.quote?.price, payload.quote?.last, payload.quote?.lastPrice,
+    payload.data?.price, payload.data?.c, payload.data?.last, payload.data?.lastPrice,
+    payload.result?.price, payload.result?.c, payload.result?.last
+  ];
+  for (const v of nested) {
+    const n = safeNum(v, null);
+    if (n !== null) return n;
+  }
+
+  return null;
+}
+
 function fmtCurrency(n, digits = 0) {
   const x = safeNum(n);
   if (x === null) return '—';
