@@ -2797,6 +2797,8 @@ initRebalancingSimulator();
               };
               set('[data-testid="total-value-raw"]', total);
               set('[data-testid="cost-basis-raw"]', totalCostBasis);
+              const gainLossDollar = (typeof totalCostBasis === 'number' && isFinite(totalCostBasis)) ? (total - totalCostBasis) : null;
+              const gainLossPercent = (typeof totalCostBasis === 'number' && isFinite(totalCostBasis) && totalCostBasis !== 0) ? (gainLossDollar / totalCostBasis * 100) : null;
               set('[data-testid="gainloss-usd-raw"]', gainLossDollar);
               set('[data-testid="gainloss-pct-raw"]', gainLossPercent);
             })();
