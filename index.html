@@ -1336,7 +1336,20 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
                 return; // Don't redraw, keep showing the estimated chart
             }
             
-            // Redraw performance chart with filtered snapshots
+            // If we have historical data, redraw the historical chart with time filter
+            if (hasHistoricalData) {
+                const earliestDate = holdings
+                    .filter(h => h.purchaseDate)
+                    .map(h => h.purchaseDate)
+                    .sort()[0];
+                
+                if (earliestDate) {
+                    createHistoricalPerformanceChart(holdings, earliestDate, range);
+                    return;
+                }
+            }
+            
+            // Fallback: Redraw performance chart with filtered snapshots
             const filteredSnapshots = getFilteredSnapshots(range);
             if (filteredSnapshots.length > 0) {
                 createPerformanceChart(filteredSnapshots);
@@ -1446,12 +1459,12 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
             console.log('Estimated chart created:', { from: fromDate, purchaseValue, currentValue });
         }
 
-        function createHistoricalPerformanceChart(holdings, fromDate) {
+        function createHistoricalPerformanceChart(holdings, fromDate, timeRange = 'ALL') {
             document.getElementById('performanceModeBadge').textContent = 'Historical Performance';
   const pmt = document.getElementById('performanceModeText'); if (pmt) { pmt.textContent = 'Historical Performance'; pmt.style.display = 'block'; }
 
             const tr = document.getElementById('timeRangeControls'); if (tr) tr.style.display = 'flex';
-            console.log('Creating historical performance chart from:', fromDate);
+            console.log('Creating historical performance chart from:', fromDate, 'with time range:', timeRange);
             
             // Show time range buttons (they apply to historical chart)
             const timeRangeBtns = document.querySelectorAll('.time-range-btn');
@@ -1484,7 +1497,34 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
             }
             
             // Sort dates
-            const sortedDates = Array.from(allDates).sort();
+            let sortedDates = Array.from(allDates).sort();
+            
+            // Apply time range filter
+            if (timeRange !== 'ALL') {
+                const now = new Date();
+                let cutoffDate;
+                
+                switch(timeRange) {
+                    case '7D':
+                        cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                        break;
+                    case '30D':
+                        cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                        break;
+                    case '90D':
+                        cutoffDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+                        break;
+                    case '1Y':
+                        cutoffDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+                        break;
+                }
+                
+                if (cutoffDate) {
+                    const cutoffDateStr = cutoffDate.toISOString().split('T')[0];
+                    sortedDates = sortedDates.filter(date => date >= cutoffDateStr);
+                    console.log('Filtered to', timeRange, ':', sortedDates.length, 'dates');
+                }
+            }
             
             // Calculate portfolio value for each date
             const portfolioValues = sortedDates.map(date => {
