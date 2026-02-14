@@ -2664,7 +2664,7 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
                     holding.gainLossPercent = 0;
                 }
                 
-                console.log(`${holding.ticker}: Price=$${holding.currentPrice}, Value=$${holding.value}`);
+                console.log(`${holding.ticker}: Price=$${holding.currentPrice}, Value=$${holding.value}, PurchasePrice=$${purchasePrice}, CostBasis=$${holding.costBasis}, GainLoss=$${holding.gainLoss}`);
             }
             
             const now = new Date().toLocaleString();
@@ -2738,19 +2738,19 @@ initRebalancingSimulator();
 
             const gainLossColor = totalGainLoss >= 0 ? '#27ae60' : '#e74c3c';
             const gainLossIcon = totalGainLoss >= 0 ? '↑' : '↓';
-            const gainLossDisplay = totalCostBasis > 0 ? `
+            const gainLossDisplay = `
                 <div class="summary-stat">
                     <span class="stat-label">Total Cost Basis:</span>
-                    <span class="stat-value" data-testid="total-cost-basis">$${totalCostBasis.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                    <span class="stat-value" data-testid="total-cost-basis">${fmtCurrency(totalCostBasis, 2)}</span>
                 </div>
                 <div class="summary-stat">
                     <span class="stat-label">Total Gain/Loss:</span>
                     <span class="stat-value" data-testid="total-gainloss" style="color: ${gainLossColor};">
-                        ${gainLossIcon} $${Math.abs(totalGainLoss).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                        (${totalGainLoss >= 0 ? '+' : ''}${totalGainLossPercent.toFixed(2)}%)
+                        ${gainLossIcon} ${fmtCurrency(Math.abs(totalGainLoss), 2)}
+                        (${fmtPercent(totalGainLossPercent, 2, true)})
                     </span>
                 </div>
-            ` : '';
+            `;
             
             // Calculate years from earliest purchase date
             const earliestDate = holdings
