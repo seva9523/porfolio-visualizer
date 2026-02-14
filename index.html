@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- FIXED_VERSION_2026_02_14_v5 -->
 
 <script>
 // Cypress QA mode
@@ -1321,12 +1320,8 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
             // Check if we have an estimated chart (no historical data)
             const hasHistoricalData = holdings.some(h => {
     if (!h.historicalData || typeof h.historicalData !== 'object') return false;
-    if (Array.isArray(h.historicalData)) {
-        return h.historicalData.length >= 2;
-    }
-    if (Array.isArray(h.historicalData.series)) {
-        return h.historicalData.series.length >= 2;
-    }
+    if (Array.isArray(h.historicalData)) return h.historicalData.length >= 2;
+    if (Array.isArray(h.historicalData.series)) return h.historicalData.series.length >= 2;
     const dataKeys = Object.keys(h.historicalData);
     return dataKeys.length >= 2;
   });
@@ -2688,12 +2683,8 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
             if (earliestDate) {
                 const hasHistoricalData = holdings.some(h => {
     if (!h.historicalData || typeof h.historicalData !== 'object') return false;
-    if (Array.isArray(h.historicalData)) {
-        return h.historicalData.length >= 2;
-    }
-    if (Array.isArray(h.historicalData.series)) {
-        return h.historicalData.series.length >= 2;
-    }
+    if (Array.isArray(h.historicalData)) return h.historicalData.length >= 2;
+    if (Array.isArray(h.historicalData.series)) return h.historicalData.series.length >= 2;
     const dataKeys = Object.keys(h.historicalData);
     return dataKeys.length >= 2;
   });
@@ -2829,7 +2820,7 @@ initRebalancingSimulator();
                         ` : ''}
                     </div>
                 </div>
-            `;
+            ` : '';
             
             document.getElementById('summary-section').innerHTML = `
                 <div class="summary-box">
