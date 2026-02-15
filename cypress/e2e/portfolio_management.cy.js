@@ -5,16 +5,23 @@
 const BASE_URL =
   Cypress.env("baseUrl") || "https://porfolio-visualizer-taca.vercel.app";
 
+// Shared stubs that persist across the test
+let promptStub;
+let confirmStub;
+let alertStub;
+
 describe("Portfolio Management — CRUD + persistence", () => {
   beforeEach(() => {
-    cy.visit(BASE_URL);
     cy.clearLocalStorage();
-    cy.reload();
-    // Stub prompt/confirm/alert on every test — set return values per test
-    cy.window().then((win) => {
-      win._promptStub = cy.stub(win, "prompt");
-      win._confirmStub = cy.stub(win, "confirm");
-      win._alertStub = cy.stub(win, "alert");
+
+    // Stub prompt/confirm/alert BEFORE the page loads so they are in place
+    // when window.onload fires
+    cy.visit(BASE_URL, {
+      onBeforeLoad(win) {
+        promptStub = cy.stub(win, "prompt");
+        confirmStub = cy.stub(win, "confirm");
+        alertStub = cy.stub(win, "alert");
+      },
     });
   });
 
@@ -27,9 +34,7 @@ describe("Portfolio Management — CRUD + persistence", () => {
   });
 
   it("creates a new portfolio and switches to it", () => {
-    cy.window().then((win) => {
-      win._promptStub.returns("My Tech Stocks");
-    });
+    promptStub.returns("My Tech Stocks");
 
     cy.contains("button", "New").click();
 
@@ -51,9 +56,7 @@ describe("Portfolio Management — CRUD + persistence", () => {
     cy.get("#shares-0").clear().type("10");
 
     // Create a new portfolio
-    cy.window().then((win) => {
-      win._promptStub.returns("Bonds Portfolio");
-    });
+    promptStub.returns("Bonds Portfolio");
     cy.contains("button", "New").click();
 
     cy.get(".holding-input").should("have.length", 3);
@@ -86,9 +89,8 @@ describe("Portfolio Management — CRUD + persistence", () => {
   });
 
   it("renames the current portfolio", () => {
-    cy.window().then((win) => {
-      win._promptStub.onFirstCall().returns("Temp Portfolio");
-    });
+    // Create a second portfolio first
+    promptStub.onFirstCall().returns("Temp Portfolio");
     cy.contains("button", "New").click();
 
     cy.get("#portfolio-selector option:selected").should(
@@ -96,9 +98,8 @@ describe("Portfolio Management — CRUD + persistence", () => {
       "Temp Portfolio"
     );
 
-    cy.window().then((win) => {
-      win._promptStub.onSecondCall().returns("Renamed Portfolio");
-    });
+    // Now rename it
+    promptStub.onSecondCall().returns("Renamed Portfolio");
     cy.contains("button", "Rename").click();
 
     cy.get("#portfolio-selector option:selected").should(
@@ -108,10 +109,8 @@ describe("Portfolio Management — CRUD + persistence", () => {
   });
 
   it("deletes a portfolio and switches to the remaining one", () => {
-    cy.window().then((win) => {
-      win._promptStub.returns("To Delete");
-      win._confirmStub.returns(true);
-    });
+    promptStub.returns("To Delete");
+    confirmStub.returns(true);
 
     cy.contains("button", "New").click();
     cy.get("#portfolio-selector option").should("have.length", 2);
@@ -126,14 +125,12 @@ describe("Portfolio Management — CRUD + persistence", () => {
   });
 
   it("cannot delete the last remaining portfolio", () => {
-    cy.window().then((win) => {
-      win._confirmStub.returns(true);
-    });
+    confirmStub.returns(true);
 
     cy.contains("button", "Delete").click();
 
-    cy.window().then((win) => {
-      expect(win._alertStub).to.have.been.calledOnce;
+    cy.then(() => {
+      expect(alertStub).to.have.been.calledOnce;
     });
 
     cy.get("#portfolio-selector option").should("have.length", 1);
@@ -145,12 +142,10 @@ describe("Portfolio Management — CRUD + persistence", () => {
     cy.get("#ticker-0").clear().type("MSFT");
     cy.get("#shares-0").clear().type("25");
 
-    cy.window().then((win) => {
-      win._promptStub.returns("Second");
-    });
+    promptStub.returns("Second");
     cy.contains("button", "New").click();
 
-    // Switch back to default to save
+    // Switch back to default to trigger save
     cy.get("#portfolio-selector").select("Default Portfolio");
 
     cy.get(".holding-input")
@@ -158,7 +153,7 @@ describe("Portfolio Management — CRUD + persistence", () => {
       .find('input[placeholder="Ticker"]')
       .should("have.value", "MSFT");
 
-    // Reload
+    // Reload — stubs will be gone but we only need to check data persistence
     cy.reload();
 
     cy.get("#portfolio-selector option:selected").should(
