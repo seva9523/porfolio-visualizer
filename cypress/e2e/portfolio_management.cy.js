@@ -1,7 +1,6 @@
 // cypress/e2e/portfolio_management.cy.js
 //
 // Tests for multi-portfolio management: create, rename, delete, switch, persistence.
-// Uses window.prompt/confirm stubs since these are browser dialogs.
 
 const BASE_URL =
   Cypress.env("baseUrl") || "https://porfolio-visualizer-taca.vercel.app";
@@ -11,6 +10,12 @@ describe("Portfolio Management — CRUD + persistence", () => {
     cy.visit(BASE_URL);
     cy.clearLocalStorage();
     cy.reload();
+    // Stub prompt/confirm/alert on every test — set return values per test
+    cy.window().then((win) => {
+      win._promptStub = cy.stub(win, "prompt");
+      win._confirmStub = cy.stub(win, "confirm");
+      win._alertStub = cy.stub(win, "alert");
+    });
   });
 
   it("starts with a Default Portfolio selected", () => {
@@ -22,37 +27,24 @@ describe("Portfolio Management — CRUD + persistence", () => {
   });
 
   it("creates a new portfolio and switches to it", () => {
-    // Stub prompt to return a portfolio name
     cy.window().then((win) => {
-      cy.stub(win, "prompt").returns("My Tech Stocks");
+      win._promptStub.returns("My Tech Stocks");
     });
 
-    // Click the New button
     cy.contains("button", "New").click();
 
-    // Selector should now show the new portfolio as selected
     cy.get("#portfolio-selector option:selected").should(
       "contain.text",
       "My Tech Stocks"
     );
-
-    // Selector should have 2 options total
     cy.get("#portfolio-selector option").should("have.length", 2);
-
-    // Holdings container should have empty rows (default 3)
     cy.get(".holding-input").should("have.length", 3);
   });
 
   it("switches between portfolios and preserves holdings", () => {
-    // Stub quote/historical to avoid real API calls
-    cy.intercept("GET", /\/api\/quote/, {
-      statusCode: 200,
-      body: { c: 100 },
-    });
-    cy.intercept("GET", /\/api\/historical/, {
-      statusCode: 200,
-      body: { data: {} },
-    });
+    cy.intercept("GET", /\/api\/quote/, { statusCode: 200, body: { c: 100 } });
+    cy.intercept("GET", /\/api\/historical/, { statusCode: 200, body: { data: {} } });
+    cy.intercept("GET", /\/api\/search/, { statusCode: 200, body: { result: [] } });
 
     // Fill a holding in the default portfolio
     cy.get("#ticker-0").clear().type("AAPL");
@@ -60,48 +52,55 @@ describe("Portfolio Management — CRUD + persistence", () => {
 
     // Create a new portfolio
     cy.window().then((win) => {
-      cy.stub(win, "prompt").returns("Bonds Portfolio");
+      win._promptStub.returns("Bonds Portfolio");
     });
     cy.contains("button", "New").click();
 
-    // Now in "Bonds Portfolio" — fill a different holding
+    cy.get(".holding-input").should("have.length", 3);
     cy.get("#ticker-0").clear().type("BND");
     cy.get("#shares-0").clear().type("50");
 
     // Switch back to Default Portfolio
     cy.get("#portfolio-selector").select("Default Portfolio");
 
-    // Should see AAPL with 10 shares
-    cy.get("#ticker-0").should("have.value", "AAPL");
-    cy.get("#shares-0").should("have.value", "10");
+    cy.get(".holding-input")
+      .eq(0)
+      .find('input[placeholder="Ticker"]')
+      .should("have.value", "AAPL");
+    cy.get(".holding-input")
+      .eq(0)
+      .find('input[placeholder="Shares"]')
+      .should("have.value", "10");
 
     // Switch to Bonds Portfolio
     cy.get("#portfolio-selector").select("Bonds Portfolio");
 
-    // Should see BND with 50 shares
-    cy.get("#ticker-0").should("have.value", "BND");
-    cy.get("#shares-0").should("have.value", "50");
+    cy.get(".holding-input")
+      .eq(0)
+      .find('input[placeholder="Ticker"]')
+      .should("have.value", "BND");
+    cy.get(".holding-input")
+      .eq(0)
+      .find('input[placeholder="Shares"]')
+      .should("have.value", "50");
   });
 
   it("renames the current portfolio", () => {
-    // First create a second portfolio so rename is allowed
     cy.window().then((win) => {
-      cy.stub(win, "prompt")
-        .onFirstCall()
-        .returns("Temp Portfolio")
-        .onSecondCall()
-        .returns("Renamed Portfolio");
-      cy.stub(win, "alert"); // suppress "create first" alert
+      win._promptStub.onFirstCall().returns("Temp Portfolio");
     });
-
     cy.contains("button", "New").click();
+
     cy.get("#portfolio-selector option:selected").should(
       "contain.text",
       "Temp Portfolio"
     );
 
-    // Now rename it
+    cy.window().then((win) => {
+      win._promptStub.onSecondCall().returns("Renamed Portfolio");
+    });
     cy.contains("button", "Rename").click();
+
     cy.get("#portfolio-selector option:selected").should(
       "contain.text",
       "Renamed Portfolio"
@@ -109,19 +108,16 @@ describe("Portfolio Management — CRUD + persistence", () => {
   });
 
   it("deletes a portfolio and switches to the remaining one", () => {
-    // Create a second portfolio
     cy.window().then((win) => {
-      cy.stub(win, "prompt").returns("To Delete");
-      cy.stub(win, "confirm").returns(true);
+      win._promptStub.returns("To Delete");
+      win._confirmStub.returns(true);
     });
 
     cy.contains("button", "New").click();
     cy.get("#portfolio-selector option").should("have.length", 2);
 
-    // Delete it
     cy.contains("button", "Delete").click();
 
-    // Should be back to 1 portfolio
     cy.get("#portfolio-selector option").should("have.length", 1);
     cy.get("#portfolio-selector option:selected").should(
       "contain.text",
@@ -131,46 +127,53 @@ describe("Portfolio Management — CRUD + persistence", () => {
 
   it("cannot delete the last remaining portfolio", () => {
     cy.window().then((win) => {
-      const alertStub = cy.stub(win, "alert");
-      cy.stub(win, "confirm").returns(true);
-
-      // Try to delete the only portfolio
-      cy.contains("button", "Delete").click();
-
-      // Alert should fire with "Cannot delete" message
-      cy.wrap(alertStub).should("have.been.calledOnce");
+      win._confirmStub.returns(true);
     });
 
-    // Portfolio should still exist
+    cy.contains("button", "Delete").click();
+
+    cy.window().then((win) => {
+      expect(win._alertStub).to.have.been.calledOnce;
+    });
+
     cy.get("#portfolio-selector option").should("have.length", 1);
   });
 
   it("portfolio data persists after page reload", () => {
-    // Fill a holding
+    cy.intercept("GET", /\/api\/search/, { statusCode: 200, body: { result: [] } });
+
     cy.get("#ticker-0").clear().type("MSFT");
     cy.get("#shares-0").clear().type("25");
 
-    // Create a second portfolio to trigger save
     cy.window().then((win) => {
-      cy.stub(win, "prompt").returns("Second");
+      win._promptStub.returns("Second");
     });
     cy.contains("button", "New").click();
 
-    // Switch back to default to save current state
+    // Switch back to default to save
     cy.get("#portfolio-selector").select("Default Portfolio");
 
-    // Reload page
+    cy.get(".holding-input")
+      .eq(0)
+      .find('input[placeholder="Ticker"]')
+      .should("have.value", "MSFT");
+
+    // Reload
     cy.reload();
 
-    // Default portfolio should still have MSFT
     cy.get("#portfolio-selector option:selected").should(
       "contain.text",
       "Default Portfolio"
     );
-    cy.get("#ticker-0").should("have.value", "MSFT");
-    cy.get("#shares-0").should("have.value", "25");
+    cy.get(".holding-input")
+      .eq(0)
+      .find('input[placeholder="Ticker"]')
+      .should("have.value", "MSFT");
+    cy.get(".holding-input")
+      .eq(0)
+      .find('input[placeholder="Shares"]')
+      .should("have.value", "25");
 
-    // Second portfolio should still exist
     cy.get("#portfolio-selector option").should("have.length", 2);
   });
 });
