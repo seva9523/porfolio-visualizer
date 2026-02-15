@@ -14,16 +14,30 @@ function clickVisualize() {
 }
 
 function parseMoney(text) {
+  // Try to match a dollar amount pattern first (e.g. "$100.00" or "$1,234.56")
+  const dollarMatch = text.match(/\$[\d,]+(\.\d+)?/);
+  if (dollarMatch) {
+    const cleaned = dollarMatch[0].replace(/[^0-9.-]/g, "");
+    const n = Number(cleaned);
+    if (Number.isFinite(n)) return n;
+  }
+  // Fallback: strip non-numeric and try
   const cleaned = text.replace(/[^0-9.-]/g, "");
   const n = Number(cleaned);
   return Number.isFinite(n) ? n : null;
 }
 
 function parsePercent(text) {
-  // "+12.34%" -> 12.34
-  const m = text.match(/-?\d+(\.\d+)?/);
-  if (!m) return null;
-  const n = Number(m[0]);
+  // Match the number immediately before a % sign (return abs value)
+  const m = text.match(/-?(\d+(\.\d+)?)(?=%)/);
+  if (!m) {
+    // Fallback: match last number in string
+    const all = text.match(/-?\d+(\.\d+)?/g);
+    if (!all || all.length === 0) return null;
+    const n = Number(all[all.length - 1]);
+    return Number.isFinite(n) ? Math.abs(n) : null;
+  }
+  const n = Number(m[1]); // m[1] is the capture group without the optional minus
   return Number.isFinite(n) ? n : null;
 }
 
