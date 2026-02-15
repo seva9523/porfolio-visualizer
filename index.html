@@ -2118,7 +2118,12 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
                 
                 const shares = parseFloat(sharesInput?.value) || 0;
                 const purchasePrice = parseFloat(purchaseInput?.value) || 0;
-                const purchaseDate = dateInput?.dataset?.dateValue || '';
+                let purchaseDate = dateInput?.dataset?.dateValue || '';
+                // Fallback: if dataset not yet set (debounce pending), parse directly from input value
+                if (!purchaseDate && dateInput?.value) {
+                    const v = validateDate(dateInput.value);
+                    if (v.valid) purchaseDate = v.date;
+                }
                 
                 console.log(`Reading holding ${index}:`, {ticker, shares, purchasePrice, purchaseDate, dateInputFound: !!dateInput});
                 
