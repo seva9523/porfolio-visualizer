@@ -1712,7 +1712,15 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
             if (pieChart) pieChart.destroy();
             if (barChart) barChart.destroy();
             
-            saveAllPortfolios();
+            
+
+            // Keep selector UI in sync when switching programmatically
+            const selector = document.getElementById('portfolio-selector');
+            if (selector && selector.value !== currentPortfolio) {
+                selector.value = currentPortfolio;
+            }
+
+saveAllPortfolios();
         }
 
         function createNewPortfolio() {
@@ -1726,8 +1734,8 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
                 snapshots: []
             };
             
-            updatePortfolioSelector();
             switchPortfolio(id);
+            updatePortfolioSelector();
         }
 
         function renamePortfolio() {
