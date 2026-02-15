@@ -1669,6 +1669,7 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
                 currentPortfolio = savedCurrent;
             }
             updatePortfolioSelector();
+            renderCurrentPortfolio();
         }
 
         function updatePortfolioSelector() {
@@ -1684,6 +1685,31 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
             }
             
             selector.onchange = () => switchPortfolio(selector.value);
+        }
+
+
+        // Render the currently selected portfolio into the UI (used on initial load)
+        function renderCurrentPortfolio() {
+            holdings = portfolios[currentPortfolio]?.holdings || [];
+
+            // Clear and reload UI
+            const container = document.getElementById('holdings-container');
+            if (container) container.innerHTML = '';
+            holdingCounter = 0;
+
+            if (holdings.length > 0) {
+                holdings.forEach(h => addHolding(h.ticker, h.shares, h.name, h.purchasePrice || '', h.purchaseDate || ''));
+            } else {
+                addHolding(); addHolding(); addHolding();
+            }
+
+            // Clear visualizations
+            const summary = document.getElementById('summary-section');
+            const table = document.getElementById('table-section');
+            if (summary) summary.innerHTML = '';
+            if (table) table.innerHTML = '';
+            if (pieChart) pieChart.destroy();
+            if (barChart) barChart.destroy();
         }
 
         function switchPortfolio(portfolioId) {
