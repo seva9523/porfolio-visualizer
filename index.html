@@ -2650,10 +2650,11 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
                     );
                 }
                 
-                // Calculate gain/loss - always set costBasis
-                holding.costBasis = (holding.shares || 0) * (holding.purchasePrice || 0);
+                // Calculate gain/loss
+                // Always set costBasis (even if 0) so it exists for summing
+                holding.costBasis = (holding.purchasePrice || 0) * (holding.shares || 0);
                 
-                if (holding.purchasePrice > 0 && holding.costBasis > 0) {
+                if (holding.purchasePrice > 0) {
                     holding.gainLoss = holding.value - holding.costBasis;
                     holding.gainLossPercent = (holding.gainLoss / holding.costBasis) * 100;
                 } else {
