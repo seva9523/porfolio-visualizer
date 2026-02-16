@@ -157,6 +157,41 @@
         .scmp-label{font-weight:600;color:var(--text2);font-size:12px}
         /* Compare summary */
         .cmp-summary{padding:20px;background:var(--input-bg);border-radius:12px;font-size:14px;line-height:1.8;margin-bottom:20px}
+        /* Guided mode */
+        .guide-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
+        .guide-box{background:var(--container);border-radius:20px;max-width:540px;width:100%;padding:32px;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:90vh;overflow-y:auto}
+        .guide-box h3{font-size:20px;margin-bottom:6px}.guide-box p{font-size:14px;color:var(--text2);line-height:1.7}
+        .guide-q{font-size:15px;font-weight:700;margin:18px 0 10px}
+        .guide-opts{display:flex;flex-direction:column;gap:8px}
+        .guide-opt{padding:14px 18px;border:2px solid var(--border);border-radius:10px;background:var(--card);cursor:pointer;font-size:14px;transition:all .2s;text-align:left}
+        .guide-opt:hover,.guide-opt.sel{border-color:var(--accent);background:var(--accent-l);color:var(--accent)}
+        .guide-nav{display:flex;gap:10px;margin-top:20px}
+        .guide-nav button{flex:1;padding:12px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer}
+        .guide-next{background:var(--accent);color:#fff}.guide-next:hover{opacity:.9}
+        .guide-back{background:var(--input-bg);color:var(--text)}.guide-back:hover{opacity:.8}
+        .guide-results{margin-top:16px}
+        .guide-result{padding:16px;border:2px solid var(--border);border-radius:12px;margin-bottom:12px;cursor:pointer;transition:all .2s}
+        .guide-result:hover{border-color:var(--accent);background:var(--accent-l)}
+        /* Confidence card */
+        .conf-card{padding:24px;background:linear-gradient(135deg,var(--input-bg),var(--card));border:2px solid var(--border);border-radius:16px;margin-bottom:20px}
+        .conf-card h3{font-size:18px;margin-bottom:8px}
+        .conf-sentence{font-size:16px;line-height:1.6;margin-bottom:16px;font-weight:500}
+        .traffic-row{display:flex;gap:16px;flex-wrap:wrap}
+        .traffic-item{flex:1;min-width:140px;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:10px;text-align:center}
+        .traffic-label{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text2);margin-bottom:6px}
+        .traffic-dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:middle}
+        .traffic-val{font-size:14px;font-weight:700}
+        /* View toggle */
+        .vtoggle{display:inline-flex;border:2px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:20px;font-size:13px}
+        .vtoggle button{padding:8px 18px;border:none;background:var(--card);color:var(--text);cursor:pointer;font-weight:600;transition:all .2s}
+        .vtoggle button.vt-on{background:var(--accent);color:#fff}
+        .detailed-only{display:none}.detailed-only.show{display:block}
+        /* Core-first banner */
+        .core-banner{padding:12px 18px;background:rgba(46,134,171,.06);border:1px solid rgba(46,134,171,.15);border-radius:10px;font-size:12px;line-height:1.6;margin-bottom:20px;color:var(--text2)}
+        /* Alloc modal */
+        .alloc-modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:1001;display:flex;align-items:center;justify-content:center;padding:20px}
+        .alloc-modal-box{background:var(--container);border-radius:16px;max-width:420px;width:100%;padding:28px;box-shadow:0 16px 50px rgba(0,0,0,.3)}
+        .alloc-modal-box h4{font-size:16px;margin-bottom:10px}.alloc-modal-box p{font-size:13px;color:var(--text2);line-height:1.6}
         @media(max-width:768px){.tgrid{grid-template-columns:1fr}.sgrid{grid-template-columns:1fr 1fr}.hdr h1{font-size:22px}.dtog{position:static;margin-top:10px}.tmets{grid-template-columns:1fr 1fr}.ctrls{flex-direction:column}.suit-grid{grid-template-columns:1fr}}
     </style>
 </head>
@@ -175,6 +210,21 @@
             </ol>
             <p style="font-style:italic;font-size:13px">Remember: this is for learning, not investment advice.</p>
             <button class="onb-btn" onclick="dismissOnb()" data-testid="onboarding-dismiss">Got it, let's explore! →</button>
+        </div>
+    </div>
+    <!-- Feature 1: Guided Mode Overlay -->
+    <div id="guide-overlay" class="guide-overlay" style="display:none" data-testid="guided-mode">
+        <div class="guide-box" id="guide-content"></div>
+    </div>
+    <!-- Feature 3: Allocation Confirmation Modal -->
+    <div id="alloc-modal" class="alloc-modal" style="display:none" data-testid="alloc-modal">
+        <div class="alloc-modal-box">
+            <h4>⚠️ Just checking in...</h4>
+            <p id="alloc-modal-msg">This allocation could strongly influence your results — both positively and negatively.</p>
+            <div style="display:flex;gap:10px;margin-top:16px">
+                <button onclick="confirmAlloc()" style="flex:1;padding:12px;border:none;border-radius:10px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer">Yes, show me →</button>
+                <button onclick="cancelAlloc()" style="flex:1;padding:12px;border:none;border-radius:10px;background:var(--input-bg);color:var(--text);font-weight:600;cursor:pointer">Let me reconsider</button>
+            </div>
         </div>
     </div>
     <div class="container">
@@ -205,11 +255,15 @@
                 <p style="margin-top:8px;font-style:italic">This is for learning and exploration — not investment advice.</p>
             </div>
 
+            <!-- Feature 6: Core-First Banner -->
+            <div class="core-banner" data-testid="core-banner">💡 <strong>Good to know:</strong> Many investors build a core portfolio first (broad stock and bond funds). Themes are often used as <strong>additional ideas to explore</strong> alongside a diversified foundation.</div>
+
             <!-- ===== LIST VIEW ===== -->
             <div id="lv">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
                     <h2 style="font-size:20px">Explore Themes</h2>
                     <div style="display:flex;gap:8px;flex-wrap:wrap">
+                        <button class="cbtn" onclick="startGuide()" data-testid="help-choose-btn">🧭 Help Me Choose</button>
                         <button class="xbtn" onclick="exportThemesCSV()" data-testid="export-csv-btn">📥 Download Data</button>
                     </div>
                 </div>
@@ -525,6 +579,151 @@ function safetyMessages(c,corrSP){
     if(corrSP!=null&&corrSP>.9)msgs.push('🔗 <strong>Moves like the market:</strong> This theme behaves very similarly to the overall stock market. It may not add much diversification.');
     if(c.vol<8)msgs.push('😌 <strong>Very calm:</strong> This theme doesn\'t swing much. That\'s reassuring but also means growth potential is limited.');
     return msgs;
+}
+
+// ============================================================================
+// FEATURE 1: "HELP ME CHOOSE" GUIDED MODE
+// ============================================================================
+let guideStep=0,guideAnswers={};
+function startGuide(){guideStep=0;guideAnswers={};renderGuideStep();document.getElementById('guide-overlay').style.display='flex'}
+function closeGuide(){document.getElementById('guide-overlay').style.display='none'}
+
+const GUIDE_QS=[
+    {q:'How long until you may need this money?',opts:['Less than 3 years','3–5 years','5–10 years','10+ years'],key:'horizon'},
+    {q:'How do you feel about big drops in value?',opts:['I get very uncomfortable','I can handle some ups and downs','I\'m okay with large swings'],key:'risk'},
+    {q:'What matters more to you?',opts:['Growing as fast as possible','Staying stable and steady','Generating regular income'],key:'goal'}
+];
+
+function renderGuideStep(){
+    const el=document.getElementById('guide-content');
+    if(guideStep<GUIDE_QS.length){
+        const gq=GUIDE_QS[guideStep];
+        el.innerHTML=`
+            <div style="display:flex;justify-content:space-between;align-items:center"><h3>🧭 Help Me Choose</h3><button onclick="closeGuide()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text2)">✕</button></div>
+            <p style="margin-bottom:4px">Question ${guideStep+1} of ${GUIDE_QS.length}</p>
+            <div class="guide-q">${gq.q}</div>
+            <div class="guide-opts">${gq.opts.map((o,i)=>`<div class="guide-opt${guideAnswers[gq.key]===i?' sel':''}" onclick="guideSelect('${gq.key}',${i})" data-testid="guide-opt-${i}">${o}</div>`).join('')}</div>
+            <div class="guide-nav">
+                ${guideStep>0?'<button class="guide-back" onclick="guideStep--;renderGuideStep()">← Back</button>':''}
+                <button class="guide-next" onclick="guideNext()" ${guideAnswers[gq.key]==null?'disabled style="opacity:.4"':''} data-testid="guide-next">Next →</button>
+            </div>`;
+    } else { renderGuideResults(el) }
+}
+function guideSelect(key,i){guideAnswers[key]=i;renderGuideStep()}
+function guideNext(){if(guideAnswers[GUIDE_QS[guideStep].key]!=null){guideStep++;renderGuideStep()}}
+
+function renderGuideResults(el){
+    const h=guideAnswers.horizon||0,r=guideAnswers.risk||0,g=guideAnswers.goal||0;
+    // Score each theme for suitability
+    const scored=THEMES.map(t=>{
+        const c=cache[t.id]?.computed||emptyM();const ux=THEME_UX[t.id]||{riskLevel:'medium'};
+        let score=0;
+        // Horizon: longer = more tolerance for growth themes
+        if(h>=2&&t.category==='growth')score+=2;
+        if(h<=1&&(t.category==='defensive'||t.category==='income'))score+=3;
+        if(h>=3&&(ux.riskLevel==='high'||ux.riskLevel==='very-high'))score+=1;
+        // Risk tolerance
+        if(r===0&&c.vol!=null&&c.vol<18)score+=3;
+        if(r===0&&c.vol!=null&&c.vol>25)score-=2;
+        if(r===2&&c.vol!=null&&c.vol>20)score+=1;
+        if(r===1)score+=1;
+        // Goal
+        if(g===0&&t.category==='growth')score+=3;
+        if(g===1&&(t.category==='defensive'||c.vol<16))score+=3;
+        if(g===2&&t.category==='income')score+=4;
+        return{theme:t,score,ux};
+    }).sort((a,b)=>b.score-a.score).slice(0,3);
+
+    const horizonText=['short-term (under 3 years)','medium-term (3–5 years)','long-term (5–10 years)','very long-term (10+ years)'][h];
+    const goalText=['fast growth','stability','regular income'][g];
+    el.innerHTML=`
+        <div style="display:flex;justify-content:space-between;align-items:center"><h3>🧭 Themes to Explore</h3><button onclick="closeGuide()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text2)">✕</button></div>
+        <p>Based on your answers (${horizonText}, prefer ${goalText}), these themes may be worth exploring:</p>
+        <p style="font-size:11px;color:var(--text2);font-style:italic;margin-bottom:12px">These are starting points for learning — not investment recommendations.</p>
+        <div class="guide-results" data-testid="guide-results">${scored.map(s=>`
+            <div class="guide-result" onclick="closeGuide();showDetail('${s.theme.id}')">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                    <strong>${s.theme.name}</strong> ${riskPill(s.ux.riskLevel)}
+                </div>
+                <div style="font-size:13px;color:var(--text2);margin-top:6px">${s.ux.simpleDesc||s.theme.description}</div>
+            </div>`).join('')}
+        </div>
+        <button class="guide-back" onclick="closeGuide()" style="width:100%;margin-top:14px;padding:12px;border-radius:10px">Close & Browse All Themes</button>`;
+}
+
+// ============================================================================
+// FEATURE 2: CONFIDENCE CARD
+// ============================================================================
+function confidenceCard(t,c,tr){
+    const ux=THEME_UX[t.id]||{};
+    // One-sentence summary
+    const volW=c.vol>25?'quite bumpy':c.vol>16?'moderately bumpy':'relatively calm';
+    const growW=c.cagr5y!=null?(c.cagr5y>12?'has grown well':c.cagr5y>5?'has grown modestly':'has had modest or negative growth'):'has limited history';
+    const ddW=c.maxDD>40?'can experience large drops during stress':'has manageable drops during stress';
+    const sentence=`This theme is ${volW}, ${growW} over 5 years, and ${ddW}.`;
+
+    // Traffic lights
+    const bumpDot=c.vol>25?['var(--red)','Very Bumpy']:c.vol>16?['var(--orange)','Moderate']:['var(--green)','Calm'];
+    const divDot=c.corrSP!=null?(c.corrSP>.8?['var(--red)','Moves Like Market']:c.corrSP>.5?['var(--orange)','Some Diversification']:['var(--green)','Good Diversifier']):['var(--text2)','Unknown'];
+    const popDot=tr.score>=65?['var(--red)','Very Popular']:tr.score<=25?['var(--blue)','Out of Favor']:['var(--green)','Normal'];
+
+    return`<div class="conf-card" data-testid="confidence-card">
+        <h3>📋 In One Sentence</h3>
+        <div class="conf-sentence">${sentence}</div>
+        <div class="traffic-row">
+            <div class="traffic-item"><div class="traffic-label">Bumpiness <span class="tt" data-tip="How much this theme's price swings up and down day to day">?</span></div><div class="traffic-val"><span class="traffic-dot" style="background:${bumpDot[0]}"></span>${bumpDot[1]}</div></div>
+            <div class="traffic-item"><div class="traffic-label">Diversification <span class="tt" data-tip="Does this theme move differently from the overall market? If yes, it helps spread risk.">?</span></div><div class="traffic-val"><span class="traffic-dot" style="background:${divDot[0]}"></span>${divDot[1]}</div></div>
+            <div class="traffic-item"><div class="traffic-label">Popularity <span class="tt" data-tip="Is this theme popular right now? Very popular themes may be stretched — and can cool off.">?</span></div><div class="traffic-val"><span class="traffic-dot" style="background:${popDot[0]}"></span>${popDot[1]}</div></div>
+        </div>
+    </div>`;
+}
+
+// ============================================================================
+// FEATURE 3: ALLOCATION GUARDRAILS
+// ============================================================================
+let pendingSimId=null,pendingSimPct=null;
+function runSimGuarded(id,pct){
+    const tc=cache[id]?.computed;const tr=cache[id]?.trend||emptyTrend();
+    const isRisky=(tc&&tc.vol>25)||(tr.score>70)||(tc&&tc.corrSP>.85);
+    // Gentle nudge for risky themes
+    if(isRisky&&pct>10){
+        document.getElementById('alloc-modal-msg').innerHTML=pct>25?
+            `<strong>That's a large allocation (${pct}%).</strong><br>This theme is higher-risk. A ${pct}% allocation could strongly influence your results — both positively and negatively. Are you sure?`:
+            `For beginners, this type of theme is often used in smaller amounts (e.g. 5–10%). You chose ${pct}%. That's fine — just be aware it adds more risk.`;
+        pendingSimId=id;pendingSimPct=pct;
+        document.getElementById('alloc-modal').style.display='flex';
+        return;
+    }
+    runSim(id,pct);
+}
+function confirmAlloc(){document.getElementById('alloc-modal').style.display='none';if(pendingSimId)runSim(pendingSimId,pendingSimPct)}
+function cancelAlloc(){document.getElementById('alloc-modal').style.display='none'}
+
+// ============================================================================
+// FEATURE 5: STRESS MINI-STORIES
+// ============================================================================
+const STRESS_STORIES={
+    ai:{covid:'AI spending paused as businesses cut budgets during lockdowns.',rate2022:'Growth stocks were repriced as rising rates reduced future earnings value.',tech2022:'Speculative AI names sold off alongside broader tech sector.'},
+    clean_energy:{covid:'Renewable projects delayed; energy demand collapsed globally.',rate2022:'Capital-intensive projects became more expensive as borrowing costs rose.',tech2022:'Clean energy stocks lost appeal as fossil fuel prices surged.'},
+    semiconductors:{covid:'Supply chain disruptions initially hurt, then demand surged for chips.',rate2022:'Chip demand softened as consumer electronics spending slowed.',tech2022:'Inventory corrections hit the semiconductor cycle.'},
+    cybersecurity:{covid:'Work-from-home actually boosted cybersecurity spending.',rate2022:'Premium valuations compressed alongside other growth stocks.',tech2022:'Cybersecurity proved more resilient than broader tech.'},
+    healthcare_innovation:{covid:'Biotech rallied on vaccine hopes, then gave back gains.',rate2022:'Drug pricing concerns and rate hikes hit biotech valuations.',tech2022:'Healthcare was a relative safe haven during the tech selloff.'},
+    emerging_markets:{covid:'Capital fled developing markets during initial panic.',rate2022:'Strong dollar and rising US rates made EM less attractive.',tech2022:'EM was already struggling with China slowdown.'},
+    dividend_income:{covid:'Dividend stocks fell alongside the market; some companies cut payouts.',rate2022:'Rising bond yields made dividend stocks less attractive by comparison.',tech2022:'Dividend stocks held up relatively well as value outperformed.'},
+    inflation_protection:{covid:'Flight to safety initially helped TIPS before rates collapsed.',rate2022:'Rising real rates hurt TIPS prices despite inflation running hot.',tech2022:'TIPS stabilized as inflation expectations moderated.'},
+    commodities:{covid:'Oil went negative briefly. Broad commodities collapsed on demand fears.',rate2022:'Commodities surged — energy and grains rallied on supply disruptions.',tech2022:'Commodity prices cooled as recession fears grew.'},
+    mega_cap_tech:{covid:'Big tech initially dropped, then surged as digital adoption accelerated.',rate2022:'Rate hikes punished growth valuations; big tech led the decline.',tech2022:'Mega caps faced margin pressure and advertising slowdown.'},
+    bitcoin:{covid:'Bitcoin crashed 50%+ in March 2020 panic selling.',rate2022:'Crypto collapsed as speculative assets were abandoned.',tech2022:'Bitcoin traded like a leveraged tech stock during the downturn.'}
+};
+
+// ============================================================================
+// FEATURE 8: SIMPLE / DETAILED VIEW TOGGLE
+// ============================================================================
+let detailViewMode='simple';
+function toggleViewMode(mode){
+    detailViewMode=mode;
+    document.querySelectorAll('.vtoggle button').forEach(b=>b.classList.toggle('vt-on',b.dataset.mode===mode));
+    document.querySelectorAll('.detailed-only').forEach(el=>el.classList.toggle('show',mode==='detailed'));
 }
 
 // ============================================================================
@@ -923,6 +1122,7 @@ function showDetail(id){
     document.getElementById('lv').style.display='none';
     document.getElementById('cv').classList.remove('on');
     document.getElementById('dv').classList.add('on');
+    detailViewMode='simple'; // Reset to simple on each open
 
     const t=THEMES.find(x=>x.id===id),c=cache[id]?.computed||emptyM(),tr=cache[id]?.trend||emptyTrend();
     const tk=t.representativeAssets[0];
@@ -931,27 +1131,30 @@ function showDetail(id){
     const tl=trendLabel(tr.score);
     const lch=lifecycleHuman(tr.lifecycle);
 
-    // Stress period returns — with human context
+    // Feature 5: Stress mini-stories
+    const stories=STRESS_STORIES[t.id]||{};
     const stressHTML=STRESS_PERIODS.map(sp=>{
         const ret=stressReturn(c.dates,c.closes,sp.from,sp.to);
         const spRet=stressReturn(benchCache.SP500?.dates||[],Object.keys(benchCache.SP500?.hist||{}).sort().map(d=>benchCache.SP500.hist[d].close),sp.from,sp.to);
-        const narrative=ret!=null&&spRet!=null?(Math.abs(ret-spRet)<5?'Behaved similarly to the overall market.':(ret<spRet?'Fell harder than the overall market — this theme was hit worse.':'Held up better than the overall market during this crisis.')):'';
-        return`<tr><td style="text-align:left;font-weight:600">${sp.name}</td><td style="font-size:11px;color:var(--text2)">${sp.desc}</td><td style="color:${pc(ret)}">${fp(ret)}</td><td style="color:${pc(spRet)}">${fp(spRet)}</td><td style="font-size:11px;color:var(--text2);text-align:left">${narrative}</td></tr>`;
+        const narrative=ret!=null&&spRet!=null?(Math.abs(ret-spRet)<5?'Behaved similarly to the overall market.':(ret<spRet?'Fell harder than the overall market.':'Held up better than the overall market.')):'';
+        const story=stories[sp.id]||'';
+        return`<tr><td style="text-align:left;font-weight:600">${sp.name}</td><td style="font-size:11px;color:var(--text2)">${sp.desc}</td><td style="color:${pc(ret)}">${fp(ret)}</td><td style="color:${pc(spRet)}">${fp(spRet)}</td><td style="font-size:11px;color:var(--text2);text-align:left">${narrative}${story?'<br><em style="font-size:10px">'+story+'</em>':''}</td></tr>`;
     }).join('');
 
-    // Signal breakdown with human labels
+    // Signal breakdown
     const sigNames={'Momentum':'Recent Strength','Rel. Strength':'Beating the Market?','Vol. Regime':'How Calm Right Now','DD Recovery':'Bounced Back?','Trend Stability':'Consistency'};
     const sigHTML=tr.signals.map(s=>{
         const col=s.score>=60?'var(--green)':s.score>=30?'var(--orange)':'var(--red)';
-        const hName=sigNames[s.name]||s.name;
-        return`<tr><td style="font-weight:600">${hName}</td><td>${s.weight}%</td><td><div class="sigbar" style="width:${s.score}px;background:${col}"></div> ${s.score}/100</td><td style="font-size:11px;color:var(--text2)">${s.raw}</td></tr>`;
+        return`<tr><td style="font-weight:600">${sigNames[s.name]||s.name}</td><td>${s.weight}%</td><td><div class="sigbar" style="width:${s.score}px;background:${col}"></div> ${s.score}/100</td><td style="font-size:11px;color:var(--text2)">${s.raw}</td></tr>`;
     }).join('');
 
-    // Guardrails: use Feature 7 smart safety messages
+    // Safety messages
     const safetyMsgs=safetyMessages(c,c.corrSP);
-    // Also add old hype/trend guardrails
     if(tr.score>75)safetyMsgs.push('⚠️ <strong>Rising fast:</strong> This theme has surged recently. Rapid rises are often followed by pullbacks — be thoughtful about timing.');
     if(c.maxDD>40&&c.maxDD<=50)safetyMsgs.push('📉 <strong>Past drops over 40%:</strong> This theme has experienced large declines. Make sure you could handle that emotionally.');
+
+    // Feature 2: Confidence card
+    const confCard=confidenceCard(t,c,tr);
 
     el.innerHTML=`
         <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:25px">
@@ -970,12 +1173,22 @@ function showDetail(id){
                 <button class="xbtn" onclick="exportDetailCSV('${id}')">📥 Download Data</button>
             </div>
         </div>
+
+        <!-- Feature 8: View Toggle -->
+        <div class="vtoggle" data-testid="view-toggle">
+            <button class="vt-on" data-mode="simple" onclick="toggleViewMode('simple')">🟢 Simple View</button>
+            <button data-mode="detailed" onclick="toggleViewMode('detailed')">📊 Detailed View</button>
+        </div>
+
         <div class="disc"><strong>🎓 Learning Tool:</strong> This page helps you understand this theme. It is not telling you to invest. Data via representative ETF (${tk}).</div>
 
         ${safetyMsgs.length?'<div class="guardrail" data-testid="guardrails">'+safetyMsgs.join('<br style="margin-bottom:6px">')+'</div>':''}
 
+        <!-- Feature 2: Confidence Card (always visible) -->
+        ${confCard}
+
         <!-- Trend Strength -->
-        <div class="sbox" data-testid="trending-section">
+        <div class="sbox detailed-only" data-testid="trending-section">
             <h3>${tl.icon} Trend Strength: <span style="color:${trendColor(tr.score)};font-size:22px">${tl.label}</span> <span style="font-size:14px;font-weight:400;color:var(--text2)">(${tr.score}/100)</span></h3>
             <p style="font-size:13px;color:var(--text2);margin-bottom:6px">${tl.note}</p>
             <p style="font-size:13px;color:var(--text2);margin-bottom:6px">${lch.label} — ${lch.desc}</p>
@@ -1005,68 +1218,72 @@ function showDetail(id){
             <p style="font-size:11px;color:var(--text2);margin-top:10px;font-style:italic">Everyone's situation is different. These are general observations, not personal advice.</p>
         </div>
 
-        <!-- Performance — Human Labels -->
+        <!-- Performance — Simple: key metrics only -->
         <div class="sbox">
             <h3>📊 How Has It Performed? <span class="tt" data-tip="Based on ETF (${tk}). Past performance doesn't guarantee future results.">?</span></h3>
             <div class="sgrid" data-testid="theme-stats">
                 <div class="sc"><div class="sc-l">1-Year Growth <span class="tt" data-tip="How much this theme grew (or shrank) in the past 12 months">?</span></div><div class="sc-v" style="color:${pc(c.cagr1y)}">${fp(c.cagr1y)}</div></div>
                 <div class="sc"><div class="sc-l">3-Year Growth <span class="tt" data-tip="Average annual growth over the past 3 years (compounded)">?</span></div><div class="sc-v" style="color:${pc(c.cagr3y)}">${fp(c.cagr3y)}</div></div>
                 <div class="sc"><div class="sc-l">5-Year Growth <span class="tt" data-tip="Average annual growth over the past 5 years (compounded)">?</span></div><div class="sc-v" style="color:${pc(c.cagr5y)}">${fp(c.cagr5y)}</div></div>
-                <div class="sc"><div class="sc-l">10-Year Growth <span class="tt" data-tip="Average annual growth over the past 10 years, if available">?</span></div><div class="sc-v" style="color:${pc(c.cagr10y)}">${fp(c.cagr10y)}</div></div>
+                <div class="sc detailed-only show"><div class="sc-l">10-Year Growth <span class="tt" data-tip="Average annual growth over the past 10 years, if available">?</span></div><div class="sc-v" style="color:${pc(c.cagr10y)}">${fp(c.cagr10y)}</div></div>
                 <div class="sc"><div class="sc-l">How Bumpy <span class="tt" data-tip="How much the price swings up and down. Higher = more unpredictable.">?</span></div><div class="sc-v">${volLabel(c.vol)}</div><div class="mexp">${fa(c.vol)}</div></div>
                 <div class="sc"><div class="sc-l">Biggest Drop <span class="tt" data-tip="The worst fall from a peak. Helps you imagine how scary bad times could feel.">?</span></div><div class="sc-v" style="color:var(--red)">${c.maxDD!=null?'-'+fa(c.maxDD):'—'}</div></div>
-                <div class="sc"><div class="sc-l">Reward / Risk <span class="tt" data-tip="How much growth you got for each unit of bumpiness. Higher = better deal. (Sharpe Ratio)">?</span></div><div class="sc-v">${fn(c.sharpe)}</div><div class="mexp">${describeSharpe(c.sharpe)}</div></div>
-                <div class="sc"><div class="sc-l">Downside Score <span class="tt" data-tip="Similar to Reward/Risk but only penalizes drops — ignores upside swings. Higher = better. (Sortino)">?</span></div><div class="sc-v">${fn(c.sortino)}</div></div>
-                <div class="sc"><div class="sc-l">Recovery Score <span class="tt" data-tip="Growth relative to worst drop. Higher = recovers well from crashes. (Calmar)">?</span></div><div class="sc-v">${fn(c.calmar)}</div></div>
-                <div class="sc"><div class="sc-l">Moves with Market <span class="tt" data-tip="How closely this follows the S&P 500. 1.0 = identical. 0 = independent. Helps you know if it diversifies. (Correlation)">?</span></div><div class="sc-v" style="color:${cc(c.corrSP)}">${fc(c.corrSP)}</div><div class="mexp">${describeCorr(c.corrSP,'the stock market')}</div></div>
-                <div class="sc"><div class="sc-l">Moves with Bonds <span class="tt" data-tip="How closely this follows bonds. Low number = good diversifier vs bonds.">?</span></div><div class="sc-v" style="color:${cc(c.corrAGG)}">${fc(c.corrAGG)}</div></div>
-                <div class="sc"><div class="sc-l">Rally Power <span class="tt" data-tip="When the market goes up, does this go up more or less? Over 100% = outperforms in good times.">?</span></div><div class="sc-v">${c.upCapture!=null?c.upCapture.toFixed(0)+'%':'—'}</div></div>
-                <div class="sc"><div class="sc-l">Crash Exposure <span class="tt" data-tip="When the market drops, does this drop more or less? Under 100% = you lose less in bad times.">?</span></div><div class="sc-v">${c.dnCapture!=null?c.dnCapture.toFixed(0)+'%':'—'}</div></div>
+                <div class="sc"><div class="sc-l">Reward / Risk <span class="tt" data-tip="How much growth you got for each unit of bumpiness. Higher = better deal.">?</span></div><div class="sc-v">${fn(c.sharpe)}</div><div class="mexp">${describeSharpe(c.sharpe)}</div></div>
+                <div class="sc detailed-only show"><div class="sc-l">Downside Score <span class="tt" data-tip="Similar to Reward/Risk but only penalizes drops — ignores upside swings. Higher = better. (Sortino)">?</span></div><div class="sc-v">${fn(c.sortino)}</div></div>
+                <div class="sc detailed-only show"><div class="sc-l">Recovery Score <span class="tt" data-tip="Growth relative to worst drop. Higher = recovers well from crashes. (Calmar)">?</span></div><div class="sc-v">${fn(c.calmar)}</div></div>
+                <div class="sc"><div class="sc-l">Moves with Market <span class="tt" data-tip="How closely this follows the S&P 500. 1.0 = identical. 0 = independent.">?</span></div><div class="sc-v" style="color:${cc(c.corrSP)}">${fc(c.corrSP)}</div><div class="mexp">${describeCorr(c.corrSP,'the stock market')}</div></div>
+                <div class="sc detailed-only show"><div class="sc-l">Moves with Bonds <span class="tt" data-tip="How closely this follows bonds. Low number = good diversifier vs bonds.">?</span></div><div class="sc-v" style="color:${cc(c.corrAGG)}">${fc(c.corrAGG)}</div></div>
+                <div class="sc detailed-only show"><div class="sc-l">Rally Power <span class="tt" data-tip="When the market goes up, does this go up more or less? Over 100% = outperforms in good times.">?</span></div><div class="sc-v">${c.upCapture!=null?c.upCapture.toFixed(0)+'%':'—'}</div></div>
+                <div class="sc detailed-only show"><div class="sc-l">Crash Exposure <span class="tt" data-tip="When the market drops, does this drop more or less? Under 100% = you lose less in bad times.">?</span></div><div class="sc-v">${c.dnCapture!=null?c.dnCapture.toFixed(0)+'%':'—'}</div></div>
             </div>
             <p style="font-size:12px;color:var(--text2);margin-top:14px">${describeVol(c.vol)} ${describeDD(c.maxDD)}</p>
             <div style="margin-top:20px"><canvas id="perf-ch" style="max-height:280px"></canvas></div>
-            <div style="margin-top:20px"><canvas id="dd-ch" style="max-height:200px"></canvas></div>
-            <div style="margin-top:20px"><canvas id="vol-ch" style="max-height:200px"></canvas></div>
-            <div style="margin-top:20px"><canvas id="rcorr-ch" style="max-height:200px"></canvas></div>
+            <div class="detailed-only" style="margin-top:20px"><canvas id="dd-ch" style="max-height:200px"></canvas></div>
+            <div class="detailed-only" style="margin-top:20px"><canvas id="vol-ch" style="max-height:200px"></canvas></div>
+            <div class="detailed-only" style="margin-top:20px"><canvas id="rcorr-ch" style="max-height:200px"></canvas></div>
         </div>
 
-        <!-- Stress Test — Emotional -->
+        <!-- Stress Test with Feature 5 mini-stories -->
         <div class="sbox" data-testid="stress-section">
             <h3>🔥 How Did It Handle Crises?</h3>
             <p style="font-size:12px;color:var(--text2);margin-bottom:12px">This helps you imagine how it might feel during a real market panic. Would you have been able to hold on?</p>
             <table class="stress-tbl"><thead><tr><th style="text-align:left">Crisis</th><th>What Happened</th><th>${t.name}</th><th>S&P 500</th><th style="text-align:left">What It Means</th></tr></thead><tbody>${stressHTML}</tbody></table>
         </div>
 
-        <!-- Risks — Human -->
+        <!-- Risks -->
         <div class="sbox" data-testid="risk-section">
             <h3>⚠️ What Could Go Wrong?</h3>
             <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Every theme has risks. Understanding them helps you decide if you're comfortable.</p>
             <ul class="rlist">${t.risks.map(r=>'<li>'+r+'</li>').join('')}</ul>
         </div>
 
-        <!-- Methodology -->
+        <!-- Feature 7: Enhanced Methodology with trust upgrades -->
         <div class="sbox" data-testid="methodology-section">
             <h3>📋 How We Track This Theme</h3>
             <div class="mpanel">
                 <strong>What ETF do we use?</strong> ${tk} — ${t.methodology}<br>
-                <strong>Data:</strong> Daily prices | Holdings: proxy only<br>
-                <strong>Last checked:</strong> ${t.lastUpdated}<br>
+                <strong>Data source:</strong> Historical price database (ETF proxy) | Holdings: approximate only<br>
+                <strong>Last data check:</strong> ${t.lastUpdated}<br>
                 <strong>Compared against:</strong> ${t.benchmarks.join(', ')}<br>
-                <strong>⚠️ Limitations:</strong> We track this theme using a single ETF, which may not capture the full picture. Think of it as an approximation.
+                <strong>⚠️ Limitations:</strong> We track this theme using a single ETF, which may not capture the full picture. Holdings data is approximate, not exact.<br><br>
+                <strong>🔄 What could cause this data to change?</strong><br>
+                • The ETF provider may update their selection rules or add/remove companies<br>
+                • Market shifts could change which companies are included<br>
+                • New regulations may redefine what counts as part of this theme
             </div>
         </div>
 
-        <!-- Portfolio Sim — Personal -->
+        <!-- Feature 3: Portfolio Sim with allocation guardrails -->
         <div class="sbox" data-testid="simulation-section">
             <h3>🧪 What If I Added This to My Portfolio? <span class="tt" data-tip="This is a hypothetical 'what-if' — not a recommendation to invest.">?</span></h3>
             ${portfolio&&portfolio.length>0?`
                 <p style="font-size:13px;color:var(--text2);margin-bottom:14px">Pick an amount to see how adding this theme <strong>might have changed</strong> your portfolio. This uses historical data — the future could be different.</p>
                 <div class="sa-btns" data-testid="sim-alloc-btns">
-                    <button class="sa-btn" onclick="runSim('${id}',5)">A little (5%)</button>
-                    <button class="sa-btn" onclick="runSim('${id}',10)">Some (10%)</button>
-                    <button class="sa-btn" onclick="runSim('${id}',20)">A lot (20%)</button>
+                    <button class="sa-btn" onclick="runSimGuarded('${id}',5)">A little (5%)</button>
+                    <button class="sa-btn" onclick="runSimGuarded('${id}',10)">Some (10%)</button>
+                    <button class="sa-btn" onclick="runSimGuarded('${id}',20)">A lot (20%)</button>
                     <input type="number" id="ca" placeholder="Custom %" min="1" max="50" style="width:80px;padding:8px;border:2px solid var(--border);border-radius:8px;font-size:13px;background:var(--card);color:var(--text)">
-                    <button class="sa-btn" onclick="runSim('${id}',parseInt(document.getElementById('ca').value)||10)">Apply</button>
+                    <button class="sa-btn" onclick="runSimGuarded('${id}',parseInt(document.getElementById('ca').value)||10)">Apply</button>
                 </div><div id="sim-r"></div>
             `:`<div style="padding:30px;text-align:center;background:var(--input-bg);border-radius:12px"><div style="font-size:14px;color:var(--text2)">You haven't built a portfolio yet. <a href="/" style="color:var(--accent);font-weight:600">Create your portfolio first</a>, then come back to try this.</div></div>`}
         </div>
@@ -1079,7 +1296,12 @@ function showDetail(id){
         </div>
     `;
 
-    if(c.dates.length>20){drawPerf(c);drawDD(c);drawVol(c);drawRollingCorr(c)}
+    // Draw charts — perf always, others only if we have data
+    if(c.dates.length>20){
+        drawPerf(c);drawDD(c);drawVol(c);drawRollingCorr(c);
+    }
+    // Apply initial view mode
+    toggleViewMode('simple');
 }
 
 function showList(){
@@ -1233,6 +1455,21 @@ function showCompare(){
         <!-- Feature 1: Overlap Warning -->
         ${overlapSection}
 
+        <!-- Feature 4: "If You Already Own..." ETF Baseline Checker -->
+        <div class="sbox" data-testid="etf-overlap-check">
+            <h3>🔍 If You Already Own Common ETFs...</h3>
+            <p style="font-size:12px;color:var(--text2);margin-bottom:12px">Check how these themes relate to funds you might already have. This helps you understand if adding a theme truly diversifies your portfolio.</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+                <label style="display:flex;align-items:center;gap:6px;padding:8px 14px;border:2px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">
+                    <input type="checkbox" class="etf-chk" value="SP500" onchange="updateETFOverlap()" style="accent-color:var(--accent)"> S&P 500 (SPY)
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;padding:8px 14px;border:2px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">
+                    <input type="checkbox" class="etf-chk" value="AGG" onchange="updateETFOverlap()" style="accent-color:var(--accent)"> Bonds (AGG)
+                </label>
+            </div>
+            <div id="etf-overlap-results" style="font-size:13px;color:var(--text2);line-height:1.7"></div>
+        </div>
+
         <!-- Simple comparison grid -->
         <div class="sbox">
             <h3>How Are They Different?</h3>
@@ -1293,6 +1530,34 @@ function exportCompareCSV(){
     const csv=rows.map(r=>r.join(',')).join('\n');
     const blob=new Blob([csv],{type:'text/csv'});
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='theme_comparison.csv';a.click();
+}
+
+// Feature 4: ETF Baseline Overlap Checker
+function updateETFOverlap(){
+    const checked=[...document.querySelectorAll('.etf-chk:checked')].map(c=>c.value);
+    const el=document.getElementById('etf-overlap-results');
+    if(checked.length===0){el.innerHTML='<em>Select an ETF above to see how these themes relate to it.</em>';return}
+    const ids=[...compareSet];
+    const themes=ids.map(id=>THEMES.find(t=>t.id===id));
+    let html='';
+    checked.forEach(bench=>{
+        const benchName=bench==='SP500'?'the S&P 500':'Bonds (AGG)';
+        html+=`<div style="margin-bottom:14px"><strong>Compared to ${benchName}:</strong><br>`;
+        themes.forEach(t=>{
+            const c=cache[t.id]?.computed||emptyM();
+            const r=bench==='SP500'?c.corrSP:c.corrAGG;
+            if(r==null){html+=`• <strong>${t.name}</strong>: No data available<br>`;return}
+            let msg;
+            if(r>.85)msg='moves very similarly — adding this may not diversify much if you already own '+benchName+'.';
+            else if(r>.6)msg='has some connection — it partially moves with '+benchName+'.';
+            else if(r>.2)msg='behaves somewhat differently — could add diversification.';
+            else if(r>-.2)msg='behaves quite differently — good potential diversifier vs '+benchName+'.';
+            else msg='tends to move in the opposite direction — strong diversifier.';
+            html+=`• <strong>${t.name}</strong> (${r.toFixed(2)}): ${msg}<br>`;
+        });
+        html+='</div>';
+    });
+    el.innerHTML=html;
 }
 
 // ============================================================================
