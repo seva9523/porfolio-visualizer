@@ -127,10 +127,56 @@
         .guardrail{padding:12px 16px;border-radius:10px;font-size:12px;line-height:1.6;margin-top:12px;background:rgba(241,143,1,.06);border:1px solid rgba(241,143,1,.2)}
         /* Metric explanation */
         .mexp{font-size:11px;color:var(--text2);margin-top:2px;font-weight:400;line-height:1.4}
+        /* Onboarding modal */
+        .onb-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
+        .onb-box{background:var(--container);border-radius:20px;max-width:480px;width:100%;padding:32px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+        .onb-box h3{font-size:20px;margin-bottom:12px}.onb-box p{font-size:14px;color:var(--text2);line-height:1.7}
+        .onb-box ol{margin:14px 0 14px 22px;font-size:14px;color:var(--text2);line-height:2}
+        .onb-btn{display:block;width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:16px}
+        .onb-btn:hover{opacity:.9}
+        /* Overlap warning */
+        .overlap-box{padding:14px 18px;border-radius:10px;font-size:13px;line-height:1.6;margin-bottom:16px}
+        .overlap-high{background:rgba(231,76,60,.06);border:1px solid rgba(231,76,60,.2)}
+        .overlap-mod{background:rgba(241,143,1,.06);border:1px solid rgba(241,143,1,.2)}
+        .overlap-low{background:rgba(39,174,96,.06);border:1px solid rgba(39,174,96,.2)}
+        /* Hype badge */
+        .hype-badge{display:inline-block;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;margin-left:4px;cursor:help;position:relative}
+        .hype-badge:hover::after{content:attr(data-tip);position:absolute;bottom:120%;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:6px 10px;border-radius:6px;font-size:11px;z-index:100;min-width:200px;white-space:normal;font-weight:400}
+        .hype-hot{background:rgba(231,76,60,.1);color:var(--red)}
+        .hype-normal{background:rgba(46,134,171,.08);color:var(--blue)}
+        .hype-cold{background:rgba(100,149,237,.1);color:#4a7fb5}
+        /* Freshness */
+        .fresh-badge{display:inline-block;font-size:9px;font-weight:600;padding:2px 8px;border-radius:4px;margin-left:4px}
+        .fresh-ok{background:rgba(39,174,96,.1);color:var(--green)}
+        .fresh-old{background:rgba(241,143,1,.1);color:var(--orange)}
+        /* Simple compare grid */
+        .scmp-grid{display:grid;grid-template-columns:auto repeat(var(--cols,2),1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;font-size:13px;margin-top:12px}
+        .scmp-grid>div{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center}
+        .scmp-grid>div:nth-child(-n+var(--cols-plus)){font-weight:700;background:var(--input-bg);font-size:12px}
+        .scmp-hdr{font-weight:700;background:var(--input-bg);font-size:12px!important}
+        .scmp-label{font-weight:600;color:var(--text2);font-size:12px}
+        /* Compare summary */
+        .cmp-summary{padding:20px;background:var(--input-bg);border-radius:12px;font-size:14px;line-height:1.8;margin-bottom:20px}
         @media(max-width:768px){.tgrid{grid-template-columns:1fr}.sgrid{grid-template-columns:1fr 1fr}.hdr h1{font-size:22px}.dtog{position:static;margin-top:10px}.tmets{grid-template-columns:1fr 1fr}.ctrls{flex-direction:column}.suit-grid{grid-template-columns:1fr}}
     </style>
 </head>
 <body>
+    <!-- Feature 4: Onboarding Modal -->
+    <div id="onb" class="onb-overlay" style="display:none" data-testid="onboarding-modal">
+        <div class="onb-box">
+            <h3>👋 Welcome! Here's how to use this page</h3>
+            <p>This tool helps you explore different investment themes — like AI, Clean Energy, or Dividends.</p>
+            <ol>
+                <li>🔍 Pick a theme you're curious about</li>
+                <li>📊 Check how risky it feels and how it's performed</li>
+                <li>🔥 See how it handled past crises</li>
+                <li>🧪 Try adding a small amount to your portfolio</li>
+                <li>⚖️ Compare it with another theme</li>
+            </ol>
+            <p style="font-style:italic;font-size:13px">Remember: this is for learning, not investment advice.</p>
+            <button class="onb-btn" onclick="dismissOnb()" data-testid="onboarding-dismiss">Got it, let's explore! →</button>
+        </div>
+    </div>
     <div class="container">
         <div class="hdr">
             <button class="dtog" onclick="toggleDark()" id="dtog"><span id="mi">🌙</span><span id="mt">Dark Mode</span></button>
@@ -332,6 +378,156 @@ function simNarrative(cC,bC,cV,bV,cDD,bDD){
 }
 
 // ============================================================================
+// FEATURE 4: ONBOARDING (show once, stored in localStorage)
+// ============================================================================
+function showOnboarding(){
+    if(localStorage.getItem('themeOnbSeen'))return;
+    document.getElementById('onb').style.display='flex';
+}
+function dismissOnb(){
+    localStorage.setItem('themeOnbSeen','1');
+    document.getElementById('onb').style.display='none';
+}
+
+// ============================================================================
+// FEATURE 5: HYPE / HEAT INDICATOR
+// Based on trend score + lifecycle
+// ============================================================================
+function hypeBadge(trendScore,lifecycle){
+    if(trendScore>=65||(lifecycle&&lifecycle.includes('Crowded'))){
+        return'<span class="hype-badge hype-hot" data-tip="This idea is very popular right now. Popular ideas can rise quickly but may also cool off — be thoughtful." data-testid="hype-hot">🔥 Very Popular</span>';
+    }
+    if(trendScore<=25){
+        return'<span class="hype-badge hype-cold" data-tip="This idea is out of favor right now. Out-of-favor themes can be opportunities or warning signs." data-testid="hype-cold">🧊 Out of Favor</span>';
+    }
+    return'<span class="hype-badge hype-normal" data-tip="Interest in this theme is at a normal level." data-testid="hype-normal">🙂 Normal Interest</span>';
+}
+
+// ============================================================================
+// FEATURE 6: DATA FRESHNESS BADGE
+// Based on lastUpdated field in theme data
+// ============================================================================
+function freshBadge(lastUpdated){
+    if(!lastUpdated)return'<span class="fresh-badge fresh-old">⚠️ Unknown data age</span>';
+    const[y,m]=lastUpdated.split('-').map(Number);
+    const then=new Date(y,m-1);
+    const monthsAgo=((new Date())-then)/(1000*60*60*24*30);
+    if(monthsAgo<=6)return'<span class="fresh-badge fresh-ok" data-testid="fresh-ok">✅ Data recent</span>';
+    return'<span class="fresh-badge fresh-old" data-testid="fresh-old">⚠️ Data may be older</span>';
+}
+
+// ============================================================================
+// FEATURE 1: OVERLAP DETECTION (correlation-based proxy)
+// Since we don't have holdings, uses monthly return correlation as proxy
+// ============================================================================
+function detectOverlap(id1,id2){
+    const c1=cache[id1]?.computed,c2=cache[id2]?.computed;
+    if(!c1||!c2||c1.mr.length<10||c2.mr.length<10)return{level:'unknown',corr:null};
+    const r=corr(c1.mr,c2.mr);
+    if(r==null)return{level:'unknown',corr:null};
+    if(r>.85)return{level:'high',corr:r};
+    if(r>.6)return{level:'moderate',corr:r};
+    return{level:'low',corr:r};
+}
+
+function overlapHTML(overlaps){
+    if(!overlaps||overlaps.length===0)return'';
+    const highOnes=overlaps.filter(o=>o.level==='high');
+    const modOnes=overlaps.filter(o=>o.level==='moderate');
+    let html='';
+    if(highOnes.length>0){
+        const pairs=highOnes.map(o=>`<strong>${o.name1}</strong> and <strong>${o.name2}</strong>`).join(', ');
+        html+=`<div class="overlap-box overlap-high" data-testid="overlap-high">
+            <strong>⚠️ High Overlap Detected</strong><br>
+            ${pairs} move very similarly (correlation above 85%).<br>
+            <span style="color:var(--text2)">You might be less diversified than you think. Owning both is like doubling down on the same idea.</span>
+        </div>`;
+    }
+    if(modOnes.length>0){
+        const pairs=modOnes.map(o=>`<strong>${o.name1}</strong> & <strong>${o.name2}</strong>`).join(', ');
+        html+=`<div class="overlap-box overlap-mod" data-testid="overlap-mod">
+            <strong>ℹ️ Some Overlap</strong><br>
+            ${pairs} share some similarities (correlation 60-85%).<br>
+            <span style="color:var(--text2)">These themes share some common drivers. You still get some diversification, but less than you might expect.</span>
+        </div>`;
+    }
+    if(highOnes.length===0&&modOnes.length===0){
+        html+=`<div class="overlap-box overlap-low" data-testid="overlap-low">
+            <strong>✅ Good Diversification</strong><br>
+            <span style="color:var(--text2)">These themes tend to move independently. Owning them together may spread your risk well.</span>
+        </div>`;
+    }
+    return html;
+}
+
+function getOverlapsForThemes(ids){
+    const overlaps=[];
+    for(let i=0;i<ids.length;i++){
+        for(let j=i+1;j<ids.length;j++){
+            const o=detectOverlap(ids[i],ids[j]);
+            const t1=THEMES.find(t=>t.id===ids[i]),t2=THEMES.find(t=>t.id===ids[j]);
+            overlaps.push({...o,name1:t1?.name||ids[i],name2:t2?.name||ids[j]});
+        }
+    }
+    return overlaps;
+}
+
+// ============================================================================
+// FEATURE 2: BEGINNER-FRIENDLY COMPARE SUMMARY
+// Generates plain-English comparison narrative
+// ============================================================================
+function compareSummary(themes){
+    if(themes.length<2)return'';
+    const data=themes.map(t=>{
+        const c=cache[t.id]?.computed||emptyM();
+        const tr=cache[t.id]?.trend||emptyTrend();
+        return{name:t.name,vol:c.vol,cagr:c.cagr5y,maxDD:c.maxDD,trend:tr.score,corrSP:c.corrSP};
+    });
+
+    // Find extremes
+    const bumpiest=data.reduce((a,b)=>((a.vol||0)>(b.vol||0)?a:b));
+    const calmest=data.reduce((a,b)=>((a.vol||999)<(b.vol||999)?a:b));
+    const fastest=data.reduce((a,b)=>((a.cagr||0)>(b.cagr||0)?a:b));
+    const hottest=data.reduce((a,b)=>(a.trend>b.trend?a:b));
+
+    const lines=[];
+    if(bumpiest.name!==calmest.name){
+        lines.push(`<strong>${bumpiest.name}</strong> tends to swing more dramatically, while <strong>${calmest.name}</strong> is calmer day to day.`);
+    }
+    if(fastest.cagr!=null&&calmest.cagr!=null&&fastest.name!==calmest.name){
+        if(fastest.cagr>calmest.cagr+2)
+            lines.push(`<strong>${fastest.name}</strong> has historically grown faster, but that came with more risk.`);
+    }
+    if(hottest.trend>60)lines.push(`<strong>${hottest.name}</strong> is the hottest right now — but remember, what's popular today may cool off tomorrow.`);
+
+    // Crisis comparison
+    const worst=data.reduce((a,b)=>((a.maxDD||0)>(b.maxDD||0)?a:b));
+    const best=data.reduce((a,b)=>((a.maxDD||999)<(b.maxDD||999)?a:b));
+    if(worst.name!==best.name&&worst.maxDD!=null&&best.maxDD!=null){
+        lines.push(`If markets fall sharply: <strong>${worst.name}</strong> historically dropped about ${Math.round(worst.maxDD)}%, while <strong>${best.name}</strong> dropped about ${Math.round(best.maxDD)}%.`);
+    }
+
+    return lines.join('<br><br>');
+}
+
+// Simple compare grid row builder
+function scmpRow(label,values){
+    return`<div class="scmp-label">${label}</div>`+values.map(v=>`<div>${v}</div>`).join('');
+}
+
+// ============================================================================
+// FEATURE 7: SMART SAFETY MESSAGES (conditional guardrails)
+// ============================================================================
+function safetyMessages(c,corrSP){
+    const msgs=[];
+    if(c.vol>30)msgs.push('🎢 <strong>High swings:</strong> This theme can move a lot in value day to day. That\'s normal for this type, but make sure you\'re comfortable with it.');
+    if(c.maxDD>50)msgs.push('📉 <strong>Large past drops:</strong> This theme has fallen more than 50% from a peak before. That\'s a lot — imagine your $10,000 becoming $5,000 temporarily.');
+    if(corrSP!=null&&corrSP>.9)msgs.push('🔗 <strong>Moves like the market:</strong> This theme behaves very similarly to the overall stock market. It may not add much diversification.');
+    if(c.vol<8)msgs.push('😌 <strong>Very calm:</strong> This theme doesn\'t swing much. That\'s reassuring but also means growth potential is limited.');
+    return msgs;
+}
+
+// ============================================================================
 // STATE
 // ============================================================================
 let cache = {};        // themeId -> {hist, quote, computed, trend}
@@ -346,7 +542,7 @@ let watchlist = JSON.parse(localStorage.getItem('themeWatchlist')||'[]');
 // INIT
 // ============================================================================
 document.addEventListener('DOMContentLoaded', async () => {
-    loadDark(); loadPortfolio(); renderGrid();
+    loadDark(); loadPortfolio(); showOnboarding(); renderGrid();
     await fetchAll();
     document.getElementById('load-bar').style.display = 'none';
     renderGrid();
@@ -699,6 +895,8 @@ function renderGridFiltered(themes){
                 <div>
                     <div class="ctag ${catCls(t.category)}">${t.category.toUpperCase()}</div>
                     ${isTrend?'<span class="badge b-trend" data-testid="trending-badge">🔥 Hot Right Now</span>':''}
+                    ${hypeBadge(tr.score,tr.lifecycle)}
+                    ${freshBadge(t.lastUpdated)}
                 </div>
                 ${compareMode?`<input type="checkbox" ${compareSet.has(t.id)?'checked':''} style="width:18px;height:18px;accent-color:var(--accent)" onclick="toggleCompareItem('${t.id}',event)">`:''}
             </div>
@@ -749,17 +947,19 @@ function showDetail(id){
         return`<tr><td style="font-weight:600">${hName}</td><td>${s.weight}%</td><td><div class="sigbar" style="width:${s.score}px;background:${col}"></div> ${s.score}/100</td><td style="font-size:11px;color:var(--text2)">${s.raw}</td></tr>`;
     }).join('');
 
-    // Guardrails
-    let guardrails=[];
-    if(c.vol>30)guardrails.push('🎢 This theme has very high price swings. Only invest money you can afford to leave alone for a long time.');
-    if(tr.score>75)guardrails.push('⚠️ This theme has risen rapidly recently. Rapid rises are often followed by pullbacks — be cautious about jumping in after a big run-up.');
-    if(c.maxDD>40)guardrails.push('📉 This theme has experienced drops of over 40% in the past. Make sure you could handle that emotionally before committing.');
+    // Guardrails: use Feature 7 smart safety messages
+    const safetyMsgs=safetyMessages(c,c.corrSP);
+    // Also add old hype/trend guardrails
+    if(tr.score>75)safetyMsgs.push('⚠️ <strong>Rising fast:</strong> This theme has surged recently. Rapid rises are often followed by pullbacks — be thoughtful about timing.');
+    if(c.maxDD>40&&c.maxDD<=50)safetyMsgs.push('📉 <strong>Past drops over 40%:</strong> This theme has experienced large declines. Make sure you could handle that emotionally.');
 
     el.innerHTML=`
         <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:25px">
             <div>
                 <div class="ctag ${catCls(t.category)}">${t.category.toUpperCase()}</div>
                 ${riskPill(ux.riskLevel)}
+                ${hypeBadge(tr.score,tr.lifecycle)}
+                ${freshBadge(t.lastUpdated)}
                 <span class="mtag">${t.megaTheme}</span>
                 ${t.tags.map(tg=>'<span class="mtag">'+tg+'</span>').join('')}
                 <h2 style="font-size:24px;font-weight:700;margin-top:6px">${t.name}</h2>
@@ -772,7 +972,7 @@ function showDetail(id){
         </div>
         <div class="disc"><strong>🎓 Learning Tool:</strong> This page helps you understand this theme. It is not telling you to invest. Data via representative ETF (${tk}).</div>
 
-        ${guardrails.length?'<div class="guardrail" data-testid="guardrails">'+guardrails.join('<br style="margin-bottom:6px">')+'</div>':''}
+        ${safetyMsgs.length?'<div class="guardrail" data-testid="guardrails">'+safetyMsgs.join('<br style="margin-bottom:6px">')+'</div>':''}
 
         <!-- Trend Strength -->
         <div class="sbox" data-testid="trending-section">
@@ -949,7 +1149,7 @@ function drawRollingCorr(c){
 // COMPARE VIEW — side by side 2-5 themes
 // ============================================================================
 function showCompare(){
-    if(compareSet.size<2){alert('Select at least 2 themes to compare.');return}
+    if(compareSet.size<2){alert('Pick at least 2 themes to compare.');return}
     charts.forEach(c=>c.destroy());charts=[];
     document.getElementById('lv').style.display='none';
     document.getElementById('dv').classList.remove('on');
@@ -959,7 +1159,31 @@ function showCompare(){
     const themes=ids.map(id=>THEMES.find(t=>t.id===id));
     const el=document.getElementById('cc');
 
-    // Metrics comparison table
+    // Feature 1: Overlap detection
+    const overlaps=getOverlapsForThemes(ids);
+    const overlapSection=overlapHTML(overlaps);
+
+    // Feature 2: Plain-English summary
+    const summary=compareSummary(themes);
+
+    // Simple comparison grid (beginner-friendly)
+    const cols=themes.length;
+    const simpleRows=[
+        {label:'How bumpy it feels',fn:t=>{const c=cache[t.id]?.computed||emptyM();return volLabel(c.vol)}},
+        {label:'Biggest historical drop',fn:t=>{const c=cache[t.id]?.computed||emptyM();return c.maxDD!=null?'-'+Math.round(c.maxDD)+'%':'—'}},
+        {label:'5-year growth (per year)',fn:t=>{const c=cache[t.id]?.computed||emptyM();return c.cagr5y!=null?(c.cagr5y>=0?'+':'')+c.cagr5y.toFixed(1)+'%':'—'}},
+        {label:'Diversifies your portfolio?',fn:t=>{const c=cache[t.id]?.computed||emptyM();return c.corrSP!=null?(c.corrSP>.8?'Moves like market':c.corrSP>.5?'Somewhat':'Good diversifier'):'—'}},
+        {label:'Recently popular?',fn:t=>{const tr=cache[t.id]?.trend||emptyTrend();const tl=trendLabel(tr.score);return tl.icon+' '+tl.label}},
+        {label:'Risk level',fn:t=>{const ux=THEME_UX[t.id];return ux?ux.riskLevel.replace('-',' ').replace(/\b\w/g,l=>l.toUpperCase()):'Medium'}}
+    ];
+
+    let simpleHTML=`<div style="overflow-x:auto"><table class="ctable" data-testid="simple-compare"><thead><tr><th style="text-align:left">Feature</th>${themes.map(t=>'<th>'+t.name+'</th>').join('')}</tr></thead><tbody>`;
+    simpleRows.forEach(r=>{
+        simpleHTML+=`<tr><td style="text-align:left;font-weight:600">${r.label}</td>${themes.map(t=>`<td>${r.fn(t)}</td>`).join('')}</tr>`;
+    });
+    simpleHTML+='</tbody></table></div>';
+
+    // Advanced metrics table (collapsible)
     const metrics=['cagr1y','cagr3y','cagr5y','vol','maxDD','sharpe','sortino','calmar','corrSP','corrAGG'];
     const labels=['1-Year Growth','3-Year Growth','5-Year Growth','How Bumpy','Biggest Drop','Reward/Risk','Downside Score','Recovery Score','Moves with Market','Moves with Bonds'];
 
@@ -969,17 +1193,15 @@ function showCompare(){
         themes.forEach(t=>{
             const c=cache[t.id]?.computed||emptyM();
             const v=c[m];
-            const isBad=m==='maxDD';
             tableHTML+=`<td style="color:${m==='vol'||m==='maxDD'?'var(--text)':pc(v)}">${m==='maxDD'&&v!=null?'-'+fa(v):['sharpe','sortino','calmar','corrSP','corrAGG'].includes(m)?fn(v):fp(v)}</td>`;
         });
         tableHTML+='</tr>';
     });
-    // Trending row
-    tableHTML+=`<tr><td style="font-weight:600;text-align:left">Trending Score</td>`;
+    tableHTML+=`<tr><td style="font-weight:600;text-align:left">Trend Strength</td>`;
     themes.forEach(t=>{const tr=cache[t.id]?.trend||emptyTrend();tableHTML+=`<td style="color:${trendColor(tr.score)};font-weight:700">${tr.score}/100</td>`});
     tableHTML+='</tr></tbody></table>';
 
-    // Correlation matrix between selected themes
+    // Correlation matrix
     let corrHTML='<table class="stress-tbl"><thead><tr><th></th>'+themes.map(t=>'<th>'+t.name.split(' ')[0]+'</th>').join('')+'</tr></thead><tbody>';
     themes.forEach((t1,i)=>{
         corrHTML+=`<tr><td style="font-weight:600;text-align:left">${t1.name.split(' ')[0]}</td>`;
@@ -999,8 +1221,23 @@ function showCompare(){
 
     el.innerHTML=`
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
-            <h2 style="font-size:20px">⚖️ Comparing ${themes.length} Themes Side by Side</h2>
+            <h2 style="font-size:20px">⚖️ Comparing ${themes.length} Themes</h2>
             <button class="xbtn" onclick="exportCompareCSV()">📥 Download Comparison</button>
+        </div>
+
+        <!-- Feature 2: Plain-English Summary -->
+        ${summary?`<div class="cmp-summary" data-testid="compare-summary">
+            <strong>📝 The Big Picture</strong><br><br>${summary}
+        </div>`:''}
+
+        <!-- Feature 1: Overlap Warning -->
+        ${overlapSection}
+
+        <!-- Simple comparison grid -->
+        <div class="sbox">
+            <h3>How Are They Different?</h3>
+            <p style="font-size:12px;color:var(--text2);margin-bottom:10px">A quick side-by-side of what matters most.</p>
+            ${simpleHTML}
         </div>
 
         <div class="sbox">
@@ -1009,19 +1246,22 @@ function showCompare(){
         </div>
 
         <div class="sbox">
-            <h3>Key Numbers at a Glance</h3>
-            ${tableHTML}
+            <h3>Do They Move Together? <span class="tt" data-tip="High numbers mean they go up and down at the same time — less diversification benefit.">?</span></h3>
+            <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Lower numbers = more independent = better for spreading risk.</p>
+            ${corrHTML}
         </div>
 
+        <!-- Advanced metrics (collapsible) -->
         <div class="sbox">
-            <h3>Do They Move Together? <span class="tt" data-tip="Shows how similarly these themes behave. High numbers mean they tend to go up and down at the same time — less diversification benefit.">?</span></h3>
-            ${corrHTML}
+            <details style="cursor:pointer">
+                <summary style="font-size:15px;font-weight:700;padding:4px 0">📊 View All Detailed Numbers</summary>
+                <div style="margin-top:14px">${tableHTML}</div>
+            </details>
         </div>
 
         <div class="disc" style="margin-top:20px">This comparison is for learning only. Past performance does not guarantee future results.</div>
     `;
 
-    // Draw overlay performance chart
     drawComparePerf(themes);
 }
 
