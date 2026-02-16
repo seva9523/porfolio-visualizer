@@ -104,7 +104,30 @@
         .ftr{text-align:center;padding:20px 30px;font-size:11px;color:var(--text2);border-top:1px solid var(--border)}
         .spin{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp .8s linear infinite}
         @keyframes sp{to{transform:rotate(360deg)}}
-        @media(max-width:768px){.tgrid{grid-template-columns:1fr}.sgrid{grid-template-columns:1fr 1fr}.hdr h1{font-size:22px}.dtog{position:static;margin-top:10px}.tmets{grid-template-columns:1fr 1fr}.ctrls{flex-direction:column}}
+        /* Welcome */
+        .welcome{padding:24px;background:var(--input-bg);border-radius:14px;margin-bottom:25px;line-height:1.7}
+        .welcome h3{font-size:18px;margin-bottom:8px}
+        .welcome p{font-size:13px;color:var(--text2)}
+        .welcome ul{margin:10px 0 0 20px;font-size:13px;color:var(--text2)}
+        .welcome li{margin-bottom:4px}
+        /* Risk pill */
+        .rpill{display:inline-block;font-size:11px;font-weight:700;padding:3px 12px;border-radius:20px;margin-top:6px}
+        .rpill-low{background:rgba(39,174,96,.12);color:var(--green)}
+        .rpill-med{background:rgba(241,143,1,.12);color:var(--orange)}
+        .rpill-high{background:rgba(231,76,60,.12);color:var(--red)}
+        .rpill-vhigh{background:rgba(231,76,60,.2);color:var(--red)}
+        /* Suitability */
+        .suit-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px}
+        .suit-box{padding:16px;border-radius:12px;font-size:13px;line-height:1.6}
+        .suit-yes{background:rgba(39,174,96,.06);border:1px solid rgba(39,174,96,.2)}
+        .suit-no{background:rgba(231,76,60,.04);border:1px solid rgba(231,76,60,.15)}
+        .suit-box h4{font-size:14px;margin-bottom:8px}
+        .suit-box li{margin-bottom:4px}
+        /* Guardrail */
+        .guardrail{padding:12px 16px;border-radius:10px;font-size:12px;line-height:1.6;margin-top:12px;background:rgba(241,143,1,.06);border:1px solid rgba(241,143,1,.2)}
+        /* Metric explanation */
+        .mexp{font-size:11px;color:var(--text2);margin-top:2px;font-weight:400;line-height:1.4}
+        @media(max-width:768px){.tgrid{grid-template-columns:1fr}.sgrid{grid-template-columns:1fr 1fr}.hdr h1{font-size:22px}.dtog{position:static;margin-top:10px}.tmets{grid-template-columns:1fr 1fr}.ctrls{flex-direction:column}.suit-grid{grid-template-columns:1fr}}
     </style>
 </head>
 <body>
@@ -112,7 +135,7 @@
         <div class="hdr">
             <button class="dtog" onclick="toggleDark()" id="dtog"><span id="mi">🌙</span><span id="mt">Dark Mode</span></button>
             <h1>🔭 Theme & Trend Explorer</h1>
-            <p>Explore major market themes — educational research only</p>
+            <p>Discover the big ideas shaping the market — simple, visual, and jargon-free</p>
         </div>
         <div class="nav">
             <a href="/" class="nb">📊 Portfolio Visualizer</a>
@@ -120,38 +143,52 @@
             <span class="nb act">🔭 Market Themes</span>
         </div>
         <div class="cnt">
-            <div class="disc"><strong>⚠️ Educational Use Only:</strong> This section is for <strong>educational and analytical purposes only</strong> and does <strong>not constitute financial advice</strong>. Past performance does not guarantee future results. Theme data uses representative ETFs for illustration.</div>
+            <div class="disc"><strong>🎓 Learning Tool:</strong> This section helps you <strong>explore and understand</strong> different market themes. It does <strong>not tell you what to buy</strong>. Past performance does not guarantee future results.</div>
+
+            <!-- Welcome Explainer -->
+            <div class="welcome" id="welcome-box" data-testid="welcome-section">
+                <h3>👋 What is a Market Theme?</h3>
+                <p>A market theme is a group of companies connected by a <strong>big idea</strong> — like Artificial Intelligence, Clean Energy, or Dividend Income. Think of it like a trend or category in the economy.</p>
+                <p style="margin-top:8px"><strong>What can you do here?</strong></p>
+                <ul>
+                    <li>🔍 See which ideas have been doing well recently</li>
+                    <li>📊 Understand how risky or stable each theme is</li>
+                    <li>⚖️ Compare different themes side by side</li>
+                    <li>🧪 See what adding a theme might do to your portfolio</li>
+                </ul>
+                <p style="margin-top:8px;font-style:italic">This is for learning and exploration — not investment advice.</p>
+            </div>
 
             <!-- ===== LIST VIEW ===== -->
             <div id="lv">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
-                    <h2 style="font-size:20px">Market Themes</h2>
+                    <h2 style="font-size:20px">Explore Themes</h2>
                     <div style="display:flex;gap:8px;flex-wrap:wrap">
-                        <button class="xbtn" onclick="exportThemesCSV()" data-testid="export-csv-btn">📥 Export CSV</button>
+                        <button class="xbtn" onclick="exportThemesCSV()" data-testid="export-csv-btn">📥 Download Data</button>
                     </div>
                 </div>
                 <div class="ctrls" data-testid="controls-bar">
-                    <input class="sinp" type="text" placeholder="🔍 Search themes..." id="search-in" oninput="applyFilters()" data-testid="search-input">
+                    <input class="sinp" type="text" placeholder="🔍 Search by name, tag, or topic..." id="search-in" oninput="applyFilters()" data-testid="search-input">
                     <select class="fsel" id="cat-fil" onchange="applyFilters()" data-testid="category-filter">
-                        <option value="all">All Categories</option>
-                        <option value="growth">Growth</option>
-                        <option value="defensive">Defensive</option>
-                        <option value="alternative">Alternative</option>
-                        <option value="income">Income</option>
+                        <option value="all">All Types</option>
+                        <option value="growth">Growth-Focused</option>
+                        <option value="defensive">Defensive / Protective</option>
+                        <option value="alternative">Alternative / Diversifier</option>
+                        <option value="income">Income-Focused</option>
                     </select>
                     <select class="fsel" id="sort-by" onchange="applyFilters()" data-testid="sort-select">
-                        <option value="trending">Sort: Trending Score</option>
-                        <option value="cagr5y">Sort: 5Y CAGR</option>
-                        <option value="volatility">Sort: Volatility</option>
-                        <option value="sharpe">Sort: Sharpe Ratio</option>
-                        <option value="maxdd">Sort: Max Drawdown</option>
+                        <option value="trending">Sort: What's Hot Now</option>
+                        <option value="cagr5y">Sort: 5-Year Growth</option>
+                        <option value="volatility">Sort: Calmest First</option>
+                        <option value="sharpe">Sort: Best Reward/Risk</option>
+                        <option value="maxdd">Sort: Smallest Drops</option>
                         <option value="name">Sort: Name A-Z</option>
                     </select>
-                    <button class="cbtn" id="cmp-btn" onclick="toggleCompareMode()" data-testid="compare-toggle">⚡ Compare</button>
+                    <button class="cbtn" id="cmp-btn" onclick="toggleCompareMode()" data-testid="compare-toggle">⚡ Compare Themes</button>
                 </div>
                 <div id="cmp-bar" style="display:none;margin-bottom:15px;padding:12px 16px;background:var(--accent-l);border:2px solid var(--accent);border-radius:10px;font-size:13px">
-                    <span style="font-weight:700;color:var(--accent)">Compare Mode:</span> Select 2-5 themes, then click
-                    <button class="cbtn on" onclick="showCompare()" style="margin-left:8px;padding:6px 14px;font-size:12px" data-testid="compare-go-btn">Compare Selected →</button>
+                    <span style="font-weight:700;color:var(--accent)">Compare Mode:</span> Pick 2-5 themes you're curious about, then click
+                    <button class="cbtn on" onclick="showCompare()" style="margin-left:8px;padding:6px 14px;font-size:12px" data-testid="compare-go-btn">See Comparison →</button>
                     <span id="cmp-count" style="margin-left:8px;color:var(--text2)">0 selected</span>
                 </div>
                 <div id="load-bar" style="text-align:center;padding:40px;color:var(--text2)"><div class="spin"></div><div style="margin-top:10px;font-size:13px">Fetching theme data...</div></div>
@@ -170,7 +207,7 @@
                 <div id="cc"></div>
             </div>
         </div>
-        <div class="ftr">Past performance does not guarantee future results. This tool is for educational purposes only and does not recommend investments.</div>
+        <div class="ftr">🎓 This tool is for learning and exploration. Past performance does not guarantee future results. Nothing here is investment advice.</div>
     </div>
 <script>
 // ============================================================================
@@ -198,6 +235,101 @@ const STRESS_PERIODS = [
     {id:"rate2022",name:"2022 Rate Shock",from:"2022-01-03",to:"2022-10-12",desc:"Fed aggressive tightening cycle"},
     {id:"tech2022",name:"Tech Rout Q4 2022",from:"2022-08-16",to:"2022-12-28",desc:"Growth/tech sector drawdown"}
 ];
+
+// ============================================================================
+// HUMAN-FRIENDLY THEME METADATA
+// suitableFor / notSuitableFor / riskLevel / simpleDesc per theme
+// ============================================================================
+const THEME_UX = {
+    ai:{riskLevel:"high",simpleDesc:"Companies building AI technology — from chips to software",suitableFor:["You believe AI will keep growing over the next decade","You're comfortable with big ups and downs","You want exposure to cutting-edge technology"],notSuitableFor:["You dislike seeing large drops in value","You need stable, predictable returns","You prefer companies that pay dividends"]},
+    clean_energy:{riskLevel:"high",simpleDesc:"Companies in solar, wind, and renewable energy",suitableFor:["You care about sustainability and clean technology","You're a long-term investor (10+ years)","You can handle high ups and downs"],notSuitableFor:["You want steady returns year over year","You're uncomfortable with government policy risk","You need income from your investments"]},
+    semiconductors:{riskLevel:"high",simpleDesc:"The companies that make computer chips — the 'brains' inside every device",suitableFor:["You want exposure to a critical technology sector","You're OK with boom-and-bust cycles","You have a long time horizon"],notSuitableFor:["You prefer calm, steady investments","You worry about geopolitical tensions","You can't tolerate 30%+ drops"]},
+    cybersecurity:{riskLevel:"medium-high",simpleDesc:"Companies protecting the internet — from cloud security to threat detection",suitableFor:["You see cybersecurity as a growing necessity","You want tech exposure with some resilience","You're investing for 5+ years"],notSuitableFor:["You want established, profitable companies","You prefer low volatility","You need dividend income"]},
+    healthcare_innovation:{riskLevel:"high",simpleDesc:"Biotech, genomics, and medical breakthroughs",suitableFor:["You believe in long-term medical innovation","You can handle all-or-nothing drug trial results","You want diversification beyond tech"],notSuitableFor:["You dislike unpredictable outcomes","You're investing for less than 5 years","You prefer steadily growing businesses"]},
+    emerging_markets:{riskLevel:"high",simpleDesc:"Investing in developing countries like China, India, and Brazil",suitableFor:["You want global diversification","You believe developing economies will grow faster","You have a long time horizon (10+ years)"],notSuitableFor:["You're uncomfortable with political instability","You worry about currency fluctuations","You prefer familiar, domestic companies"]},
+    dividend_income:{riskLevel:"low-medium",simpleDesc:"Established companies that regularly pay you cash from their profits",suitableFor:["You want regular income from your investments","You prefer larger, more stable companies","You're saving for retirement"],notSuitableFor:["You want fast-growing, exciting companies","You're looking for maximum growth","You don't need income right now"]},
+    inflation_protection:{riskLevel:"low",simpleDesc:"Government bonds that adjust with inflation to protect your purchasing power",suitableFor:["You worry about rising prices eating into your savings","You want a calmer, more protective investment","You're looking to preserve wealth, not grow it fast"],notSuitableFor:["You want high growth","You're young and can take more risk","You want exciting returns"]},
+    commodities:{riskLevel:"medium-high",simpleDesc:"Physical stuff like gold, oil, and agricultural products",suitableFor:["You want something that doesn't move with stocks","You're worried about inflation","You want to diversify beyond traditional investments"],notSuitableFor:["You want regular income or dividends","You prefer simple, easy-to-understand investments","You can't tolerate sharp price swings"]},
+    mega_cap_tech:{riskLevel:"medium-high",simpleDesc:"The biggest tech companies in the world — the ones you use every day",suitableFor:["You want exposure to dominant technology platforms","You're comfortable with tech-heavy concentration","You're investing for 5+ years"],notSuitableFor:["You want broad diversification","You worry about big tech regulation","You prefer value-oriented strategies"]},
+    bitcoin:{riskLevel:"very-high",simpleDesc:"Digital currency — highly speculative with extreme price swings",suitableFor:["You can handle losing 50%+ and not panicking","You see Bitcoin as a long-term store of value","This would be a very small part of your portfolio"],notSuitableFor:["You can't stomach seeing your money halve in value","You need stability or income","You're new to investing"]}
+};
+
+// ============================================================================
+// HUMAN-FRIENDLY LABEL HELPERS
+// These translate quant metrics into plain English
+// ============================================================================
+function riskPill(level){
+    const map={'low':['🟢 Low Risk','rpill-low'],'low-medium':['🟢 Lower Risk','rpill-low'],'medium':['🟡 Medium Risk','rpill-med'],'medium-high':['🟠 Medium-High Risk','rpill-med'],'high':['🔴 Higher Risk','rpill-high'],'very-high':['🔴 Very High Risk','rpill-vhigh']};
+    const[label,cls]=map[level]||map['medium'];
+    return`<span class="rpill ${cls}">${label}</span>`;
+}
+
+function volLabel(v){
+    if(v==null)return'—';
+    if(v<10)return'Very Calm';if(v<16)return'Moderate';if(v<25)return'Bumpy';if(v<35)return'Wild';return'Extreme';
+}
+
+function trendLabel(s){
+    if(s>=75)return{icon:'🔥',label:'Very Strong',note:'This theme has been rising rapidly. Rapid rises can reverse — be cautious.'};
+    if(s>=50)return{icon:'📈',label:'Strong',note:'This theme has solid recent momentum.'};
+    if(s>=30)return{icon:'➡️',label:'Moderate',note:'This theme has mixed recent signals.'};
+    if(s>=15)return{icon:'📉',label:'Weak',note:'This theme has been losing steam recently.'};
+    return{icon:'⬇️',label:'Very Weak',note:'This theme has been declining or stagnant.'};
+}
+
+function lifecycleHuman(lc){
+    if(lc.includes('Crowded'))return{label:'⚠️ Getting Crowded',desc:'Many people are piling in. Could be stretched.'};
+    if(lc.includes('Accelerating'))return{label:'📈 Gaining Momentum',desc:'Growing interest and positive performance.'};
+    if(lc.includes('Emerging'))return{label:'🌱 Early Stage',desc:'Starting to get attention. Still developing.'};
+    return{label:'📉 Cooling Off',desc:'Interest and performance are fading.'};
+}
+
+function describeVol(v){
+    if(v==null)return'No data available.';
+    if(v<10)return'This theme is very calm — it doesn\'t swing much day to day.';
+    if(v<16)return'This theme has moderate ups and downs — fairly typical for the stock market.';
+    if(v<25)return'This theme is bumpier than average — expect noticeable price swings.';
+    if(v<35)return'This theme swings a lot — big gains and big losses are common.';
+    return'This theme has extreme price swings — not for the faint of heart.';
+}
+
+function describeDD(v){
+    if(v==null)return'';
+    if(v<15)return'The worst drop was fairly modest. This theme has been relatively stable.';
+    if(v<25)return'The worst drop was noticeable but manageable for most investors.';
+    if(v<40)return'The worst drop was significant — imagine seeing a third of your money disappear temporarily.';
+    return'The worst drop was severe — you\'d need strong conviction to hold through that.';
+}
+
+function describeSharpe(v){
+    if(v==null)return'';
+    if(v>0.8)return'Excellent — strong returns for the level of ups and downs.';
+    if(v>0.4)return'Good — decent returns relative to the bumpiness.';
+    if(v>0)return'Modest — the returns haven\'t fully compensated for the ride.';
+    return'Negative — the ups and downs haven\'t been worth the returns so far.';
+}
+
+function describeCorr(v,label){
+    if(v==null)return'';
+    if(v>.8)return`Moves very closely with ${label}. Adds little diversification.`;
+    if(v>.5)return`Mostly moves with ${label}, but has some independence.`;
+    if(v>.2)return`Partially connected to ${label}. Provides some diversification.`;
+    if(v>-.2)return`Very different from ${label}. Good for spreading risk.`;
+    return`Tends to move opposite to ${label}. Strong diversifier.`;
+}
+
+function simNarrative(cC,bC,cV,bV,cDD,bDD){
+    const parts=[];
+    if(bC>cC+1)parts.push('📈 Your portfolio could grow a bit faster over time.');
+    else if(bC<cC-1)parts.push('📉 Your portfolio growth might slow down slightly.');
+    else parts.push('➡️ Growth would be similar to what you have now.');
+    if(bV>cV+2)parts.push('🎢 It would become more bumpy — bigger ups and downs day to day.');
+    else if(bV<cV-2)parts.push('😌 It would become calmer — smaller swings.');
+    else parts.push('⚖️ The bumpiness would stay about the same.');
+    if(bDD>cDD+5)parts.push('📉 In bad times, you could see bigger drops than your current portfolio.');
+    else if(bDD<cDD-3)parts.push('🛡️ In bad times, the drops might be smaller.');
+    return parts.join('<br>');
+}
 
 // ============================================================================
 // STATE
@@ -557,28 +689,30 @@ function renderGridFiltered(themes){
 
     grid.innerHTML=themes.map(t=>{
         const c=cache[t.id]?.computed||emptyM(),tr=cache[t.id]?.trend||emptyTrend();
+        const ux=THEME_UX[t.id]||{riskLevel:'medium',simpleDesc:t.description};
         const isTrend=top3.includes(t.id);
-        const tcol=trendColor(tr.score);
+        const tl=trendLabel(tr.score);
+        const lch=lifecycleHuman(tr.lifecycle);
         return `
         <div class="tcard${compareSet.has(t.id)?' cmp-sel':''}" data-tid="${t.id}" onclick="${compareMode?`toggleCompareItem('${t.id}',event)`:`showDetail('${t.id}')`}" data-testid="theme-card-${t.id}">
             <div style="display:flex;justify-content:space-between;align-items:flex-start">
                 <div>
                     <div class="ctag ${catCls(t.category)}">${t.category.toUpperCase()}</div>
-                    ${isTrend?'<span class="badge b-trend" data-testid="trending-badge">📈 Trending</span>':''}
-                    <span class="badge b-lc ${lcClass(tr.lifecycle)}">${tr.lifecycle}</span>
+                    ${isTrend?'<span class="badge b-trend" data-testid="trending-badge">🔥 Hot Right Now</span>':''}
                 </div>
                 ${compareMode?`<input type="checkbox" ${compareSet.has(t.id)?'checked':''} style="width:18px;height:18px;accent-color:var(--accent)" onclick="toggleCompareItem('${t.id}',event)">`:''}
             </div>
             <div class="tcard-name" style="margin-top:6px">${t.name}</div>
-            <div class="tcard-desc">${t.description}</div>
-            <div class="tmets">
-                <div class="tmet"><div class="tmet-l">5Y CAGR</div><div class="tmet-v" style="color:${pc(c.cagr5y)}">${fp(c.cagr5y)}</div></div>
-                <div class="tmet"><div class="tmet-l">Volatility</div><div class="tmet-v">${fa(c.vol)}</div></div>
-                <div class="tmet"><div class="tmet-l">Sharpe</div><div class="tmet-v">${fn(c.sharpe)}</div></div>
-                <div class="tmet"><div class="tmet-l">Max DD</div><div class="tmet-v" style="color:var(--red)">${c.maxDD!=null?'-'+fa(c.maxDD):'—'}</div></div>
+            <div class="tcard-desc">${ux.simpleDesc}</div>
+            ${riskPill(ux.riskLevel)}
+            <div class="tmets" style="margin-top:10px">
+                <div class="tmet"><div class="tmet-l">5-Year Growth</div><div class="tmet-v" style="color:${pc(c.cagr5y)}">${fp(c.cagr5y)}</div><div class="mexp">${c.cagr5y!=null?'per year avg':'no data'}</div></div>
+                <div class="tmet"><div class="tmet-l">How Bumpy</div><div class="tmet-v">${volLabel(c.vol)}</div><div class="mexp">${c.vol!=null?fa(c.vol)+' swing':'—'}</div></div>
+                <div class="tmet"><div class="tmet-l">Reward/Risk</div><div class="tmet-v">${fn(c.sharpe)}</div><div class="mexp">${c.sharpe!=null?(c.sharpe>0.5?'Good':'Modest'):'—'}</div></div>
+                <div class="tmet"><div class="tmet-l">Biggest Drop</div><div class="tmet-v" style="color:var(--red)">${c.maxDD!=null?'-'+fa(c.maxDD):'—'}</div><div class="mexp">worst peak to bottom</div></div>
             </div>
-            <div class="sbar"><div class="sfill" style="width:${tr.score}%;background:${tcol}"></div></div>
-            <div class="slbl"><span>Trending: ${tr.score}/100</span><span style="color:${tcol}">${tr.lifecycle}</span></div>
+            <div class="sbar" style="margin-top:10px"><div class="sfill" style="width:${tr.score}%;background:${trendColor(tr.score)}"></div></div>
+            <div class="slbl"><span>${tl.icon} Trend: ${tl.label}</span><span style="color:${trendColor(tr.score)}">${lch.label}</span></div>
         </div>`;
     }).join('');
 }
@@ -594,115 +728,153 @@ function showDetail(id){
 
     const t=THEMES.find(x=>x.id===id),c=cache[id]?.computed||emptyM(),tr=cache[id]?.trend||emptyTrend();
     const tk=t.representativeAssets[0];
+    const ux=THEME_UX[t.id]||{riskLevel:'medium',simpleDesc:t.description,suitableFor:[],notSuitableFor:[]};
     const el=document.getElementById('dc');
+    const tl=trendLabel(tr.score);
+    const lch=lifecycleHuman(tr.lifecycle);
 
-    // Stress period returns
+    // Stress period returns — with human context
     const stressHTML=STRESS_PERIODS.map(sp=>{
         const ret=stressReturn(c.dates,c.closes,sp.from,sp.to);
         const spRet=stressReturn(benchCache.SP500?.dates||[],Object.keys(benchCache.SP500?.hist||{}).sort().map(d=>benchCache.SP500.hist[d].close),sp.from,sp.to);
-        return`<tr><td style="text-align:left;font-weight:600">${sp.name}</td><td style="font-size:11px;color:var(--text2)">${sp.desc}</td><td style="color:${pc(ret)}">${fp(ret)}</td><td style="color:${pc(spRet)}">${fp(spRet)}</td></tr>`;
+        const narrative=ret!=null&&spRet!=null?(Math.abs(ret-spRet)<5?'Behaved similarly to the overall market.':(ret<spRet?'Fell harder than the overall market — this theme was hit worse.':'Held up better than the overall market during this crisis.')):'';
+        return`<tr><td style="text-align:left;font-weight:600">${sp.name}</td><td style="font-size:11px;color:var(--text2)">${sp.desc}</td><td style="color:${pc(ret)}">${fp(ret)}</td><td style="color:${pc(spRet)}">${fp(spRet)}</td><td style="font-size:11px;color:var(--text2);text-align:left">${narrative}</td></tr>`;
     }).join('');
 
-    // Signal breakdown
+    // Signal breakdown with human labels
+    const sigNames={'Momentum':'Recent Strength','Rel. Strength':'Beating the Market?','Vol. Regime':'How Calm Right Now','DD Recovery':'Bounced Back?','Trend Stability':'Consistency'};
     const sigHTML=tr.signals.map(s=>{
         const col=s.score>=60?'var(--green)':s.score>=30?'var(--orange)':'var(--red)';
-        return`<tr><td style="font-weight:600">${s.name}</td><td>${s.weight}%</td><td><div class="sigbar" style="width:${s.score}px;background:${col}"></div> ${s.score}</td><td style="font-size:11px;color:var(--text2)">${s.raw}</td></tr>`;
+        const hName=sigNames[s.name]||s.name;
+        return`<tr><td style="font-weight:600">${hName}</td><td>${s.weight}%</td><td><div class="sigbar" style="width:${s.score}px;background:${col}"></div> ${s.score}/100</td><td style="font-size:11px;color:var(--text2)">${s.raw}</td></tr>`;
     }).join('');
+
+    // Guardrails
+    let guardrails=[];
+    if(c.vol>30)guardrails.push('🎢 This theme has very high price swings. Only invest money you can afford to leave alone for a long time.');
+    if(tr.score>75)guardrails.push('⚠️ This theme has risen rapidly recently. Rapid rises are often followed by pullbacks — be cautious about jumping in after a big run-up.');
+    if(c.maxDD>40)guardrails.push('📉 This theme has experienced drops of over 40% in the past. Make sure you could handle that emotionally before committing.');
 
     el.innerHTML=`
         <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:25px">
             <div>
                 <div class="ctag ${catCls(t.category)}">${t.category.toUpperCase()}</div>
-                <span class="badge b-lc ${lcClass(tr.lifecycle)}">${tr.lifecycle}</span>
+                ${riskPill(ux.riskLevel)}
                 <span class="mtag">${t.megaTheme}</span>
                 ${t.tags.map(tg=>'<span class="mtag">'+tg+'</span>').join('')}
                 <h2 style="font-size:24px;font-weight:700;margin-top:6px">${t.name}</h2>
-                <p style="font-size:14px;color:var(--text2);line-height:1.6;margin-top:6px">${t.overview}</p>
+                <p style="font-size:14px;color:var(--text2);line-height:1.6;margin-top:6px">${ux.simpleDesc}</p>
+                <p style="font-size:13px;color:var(--text2);line-height:1.6;margin-top:8px">${t.overview}</p>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <button class="xbtn" onclick="exportDetailCSV('${id}')">📥 Export CSV</button>
+                <button class="xbtn" onclick="exportDetailCSV('${id}')">📥 Download Data</button>
             </div>
         </div>
-        <div class="disc"><strong>📋 Disclaimer:</strong> For educational purposes only. Does not constitute financial advice. Data via representative ETF (${tk}).</div>
+        <div class="disc"><strong>🎓 Learning Tool:</strong> This page helps you understand this theme. It is not telling you to invest. Data via representative ETF (${tk}).</div>
 
-        <!-- Trending Score -->
+        ${guardrails.length?'<div class="guardrail" data-testid="guardrails">'+guardrails.join('<br style="margin-bottom:6px">')+'</div>':''}
+
+        <!-- Trend Strength -->
         <div class="sbox" data-testid="trending-section">
-            <h3>📈 Trending Score: <span style="color:${trendColor(tr.score)};font-size:24px">${tr.score}/100</span> <span class="badge b-lc ${lcClass(tr.lifecycle)}">${tr.lifecycle}</span></h3>
-            <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Trending based on recent short-term performance. Short-term trends do not predict future returns.</p>
-            <table class="sigtbl" data-testid="signal-table">
-                <thead><tr><th>Signal</th><th>Weight</th><th>Score</th><th>Detail</th></tr></thead>
-                <tbody>${sigHTML}</tbody>
-            </table>
+            <h3>${tl.icon} Trend Strength: <span style="color:${trendColor(tr.score)};font-size:22px">${tl.label}</span> <span style="font-size:14px;font-weight:400;color:var(--text2)">(${tr.score}/100)</span></h3>
+            <p style="font-size:13px;color:var(--text2);margin-bottom:6px">${tl.note}</p>
+            <p style="font-size:13px;color:var(--text2);margin-bottom:6px">${lch.label} — ${lch.desc}</p>
+            <p style="font-size:11px;color:var(--text2);font-style:italic;margin-bottom:12px">⏱ Short-term trends can reverse quickly. This does not predict the future.</p>
+            <details style="cursor:pointer;font-size:13px;color:var(--accent);font-weight:600">
+                <summary>How is this calculated? (click to see breakdown)</summary>
+                <table class="sigtbl" data-testid="signal-table" style="margin-top:8px">
+                    <thead><tr><th>What We Measure</th><th>Weight</th><th>Score</th><th>Detail</th></tr></thead>
+                    <tbody>${sigHTML}</tbody>
+                </table>
+            </details>
         </div>
 
-        <!-- Performance Stats -->
-        <div class="sbox">
-            <h3>📊 Historical Performance <span class="tt" data-tip="Based on ${tk}. Past performance does not predict future results.">?</span></h3>
-            <div class="sgrid" data-testid="theme-stats">
-                <div class="sc"><div class="sc-l">1Y Return</div><div class="sc-v" style="color:${pc(c.cagr1y)}">${fp(c.cagr1y)}</div></div>
-                <div class="sc"><div class="sc-l">3Y CAGR</div><div class="sc-v" style="color:${pc(c.cagr3y)}">${fp(c.cagr3y)}</div></div>
-                <div class="sc"><div class="sc-l">5Y CAGR</div><div class="sc-v" style="color:${pc(c.cagr5y)}">${fp(c.cagr5y)}</div></div>
-                <div class="sc"><div class="sc-l">10Y CAGR</div><div class="sc-v" style="color:${pc(c.cagr10y)}">${fp(c.cagr10y)}</div></div>
-                <div class="sc"><div class="sc-l">Volatility <span class="tt" data-tip="Annualized standard deviation of daily returns">?</span></div><div class="sc-v">${fa(c.vol)}</div></div>
-                <div class="sc"><div class="sc-l">Max DD <span class="tt" data-tip="Largest peak-to-trough decline">?</span></div><div class="sc-v" style="color:var(--red)">${c.maxDD!=null?'-'+fa(c.maxDD):'—'}</div></div>
-                <div class="sc"><div class="sc-l">Sharpe <span class="tt" data-tip="(CAGR - Rf) / Volatility. Rf=4.5%">?</span></div><div class="sc-v">${fn(c.sharpe)}</div></div>
-                <div class="sc"><div class="sc-l">Sortino <span class="tt" data-tip="Like Sharpe but penalizes only downside vol">?</span></div><div class="sc-v">${fn(c.sortino)}</div></div>
-                <div class="sc"><div class="sc-l">Calmar <span class="tt" data-tip="CAGR / Max Drawdown">?</span></div><div class="sc-v">${fn(c.calmar)}</div></div>
-                <div class="sc"><div class="sc-l">Corr S&P <span class="tt" data-tip="Monthly return correlation with S&P 500">?</span></div><div class="sc-v" style="color:${cc(c.corrSP)}">${fc(c.corrSP)}</div></div>
-                <div class="sc"><div class="sc-l">Corr Bonds</div><div class="sc-v" style="color:${cc(c.corrAGG)}">${fc(c.corrAGG)}</div></div>
-                <div class="sc"><div class="sc-l">Up Capture <span class="tt" data-tip="Performance in up markets vs S&P 500. >100% = outperforms in rallies">?</span></div><div class="sc-v">${c.upCapture!=null?c.upCapture.toFixed(0)+'%':'—'}</div></div>
-                <div class="sc"><div class="sc-l">Down Capture <span class="tt" data-tip="Performance in down markets vs S&P 500. <100% = loses less in selloffs">?</span></div><div class="sc-v">${c.dnCapture!=null?c.dnCapture.toFixed(0)+'%':'—'}</div></div>
+        <!-- Is This Right for Me? -->
+        <div class="sbox" data-testid="suitability-section">
+            <h3>🤔 Is This Right for Me?</h3>
+            <div class="suit-grid">
+                <div class="suit-box suit-yes">
+                    <h4>✅ This theme may suit you if:</h4>
+                    <ul style="padding-left:18px">${(ux.suitableFor||[]).map(s=>'<li>'+s+'</li>').join('')}</ul>
+                </div>
+                <div class="suit-box suit-no">
+                    <h4>⚠️ This theme may NOT suit you if:</h4>
+                    <ul style="padding-left:18px">${(ux.notSuitableFor||[]).map(s=>'<li>'+s+'</li>').join('')}</ul>
+                </div>
             </div>
+            <p style="font-size:11px;color:var(--text2);margin-top:10px;font-style:italic">Everyone's situation is different. These are general observations, not personal advice.</p>
+        </div>
+
+        <!-- Performance — Human Labels -->
+        <div class="sbox">
+            <h3>📊 How Has It Performed? <span class="tt" data-tip="Based on ETF (${tk}). Past performance doesn't guarantee future results.">?</span></h3>
+            <div class="sgrid" data-testid="theme-stats">
+                <div class="sc"><div class="sc-l">1-Year Growth <span class="tt" data-tip="How much this theme grew (or shrank) in the past 12 months">?</span></div><div class="sc-v" style="color:${pc(c.cagr1y)}">${fp(c.cagr1y)}</div></div>
+                <div class="sc"><div class="sc-l">3-Year Growth <span class="tt" data-tip="Average annual growth over the past 3 years (compounded)">?</span></div><div class="sc-v" style="color:${pc(c.cagr3y)}">${fp(c.cagr3y)}</div></div>
+                <div class="sc"><div class="sc-l">5-Year Growth <span class="tt" data-tip="Average annual growth over the past 5 years (compounded)">?</span></div><div class="sc-v" style="color:${pc(c.cagr5y)}">${fp(c.cagr5y)}</div></div>
+                <div class="sc"><div class="sc-l">10-Year Growth <span class="tt" data-tip="Average annual growth over the past 10 years, if available">?</span></div><div class="sc-v" style="color:${pc(c.cagr10y)}">${fp(c.cagr10y)}</div></div>
+                <div class="sc"><div class="sc-l">How Bumpy <span class="tt" data-tip="How much the price swings up and down. Higher = more unpredictable.">?</span></div><div class="sc-v">${volLabel(c.vol)}</div><div class="mexp">${fa(c.vol)}</div></div>
+                <div class="sc"><div class="sc-l">Biggest Drop <span class="tt" data-tip="The worst fall from a peak. Helps you imagine how scary bad times could feel.">?</span></div><div class="sc-v" style="color:var(--red)">${c.maxDD!=null?'-'+fa(c.maxDD):'—'}</div></div>
+                <div class="sc"><div class="sc-l">Reward / Risk <span class="tt" data-tip="How much growth you got for each unit of bumpiness. Higher = better deal. (Sharpe Ratio)">?</span></div><div class="sc-v">${fn(c.sharpe)}</div><div class="mexp">${describeSharpe(c.sharpe)}</div></div>
+                <div class="sc"><div class="sc-l">Downside Score <span class="tt" data-tip="Similar to Reward/Risk but only penalizes drops — ignores upside swings. Higher = better. (Sortino)">?</span></div><div class="sc-v">${fn(c.sortino)}</div></div>
+                <div class="sc"><div class="sc-l">Recovery Score <span class="tt" data-tip="Growth relative to worst drop. Higher = recovers well from crashes. (Calmar)">?</span></div><div class="sc-v">${fn(c.calmar)}</div></div>
+                <div class="sc"><div class="sc-l">Moves with Market <span class="tt" data-tip="How closely this follows the S&P 500. 1.0 = identical. 0 = independent. Helps you know if it diversifies. (Correlation)">?</span></div><div class="sc-v" style="color:${cc(c.corrSP)}">${fc(c.corrSP)}</div><div class="mexp">${describeCorr(c.corrSP,'the stock market')}</div></div>
+                <div class="sc"><div class="sc-l">Moves with Bonds <span class="tt" data-tip="How closely this follows bonds. Low number = good diversifier vs bonds.">?</span></div><div class="sc-v" style="color:${cc(c.corrAGG)}">${fc(c.corrAGG)}</div></div>
+                <div class="sc"><div class="sc-l">Rally Power <span class="tt" data-tip="When the market goes up, does this go up more or less? Over 100% = outperforms in good times.">?</span></div><div class="sc-v">${c.upCapture!=null?c.upCapture.toFixed(0)+'%':'—'}</div></div>
+                <div class="sc"><div class="sc-l">Crash Exposure <span class="tt" data-tip="When the market drops, does this drop more or less? Under 100% = you lose less in bad times.">?</span></div><div class="sc-v">${c.dnCapture!=null?c.dnCapture.toFixed(0)+'%':'—'}</div></div>
+            </div>
+            <p style="font-size:12px;color:var(--text2);margin-top:14px">${describeVol(c.vol)} ${describeDD(c.maxDD)}</p>
             <div style="margin-top:20px"><canvas id="perf-ch" style="max-height:280px"></canvas></div>
             <div style="margin-top:20px"><canvas id="dd-ch" style="max-height:200px"></canvas></div>
             <div style="margin-top:20px"><canvas id="vol-ch" style="max-height:200px"></canvas></div>
             <div style="margin-top:20px"><canvas id="rcorr-ch" style="max-height:200px"></canvas></div>
         </div>
 
-        <!-- Stress Test -->
+        <!-- Stress Test — Emotional -->
         <div class="sbox" data-testid="stress-section">
-            <h3>🔥 Stress Period Analysis</h3>
-            <table class="stress-tbl"><thead><tr><th style="text-align:left">Period</th><th>Description</th><th>${t.name}</th><th>S&P 500</th></tr></thead><tbody>${stressHTML}</tbody></table>
+            <h3>🔥 How Did It Handle Crises?</h3>
+            <p style="font-size:12px;color:var(--text2);margin-bottom:12px">This helps you imagine how it might feel during a real market panic. Would you have been able to hold on?</p>
+            <table class="stress-tbl"><thead><tr><th style="text-align:left">Crisis</th><th>What Happened</th><th>${t.name}</th><th>S&P 500</th><th style="text-align:left">What It Means</th></tr></thead><tbody>${stressHTML}</tbody></table>
         </div>
 
-        <!-- Risks -->
+        <!-- Risks — Human -->
         <div class="sbox" data-testid="risk-section">
-            <h3>⚠️ What Are the Risks?</h3>
+            <h3>⚠️ What Could Go Wrong?</h3>
+            <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Every theme has risks. Understanding them helps you decide if you're comfortable.</p>
             <ul class="rlist">${t.risks.map(r=>'<li>'+r+'</li>').join('')}</ul>
         </div>
 
         <!-- Methodology -->
         <div class="sbox" data-testid="methodology-section">
-            <h3>📋 Methodology & Data</h3>
+            <h3>📋 How We Track This Theme</h3>
             <div class="mpanel">
-                <strong>Representative ETF:</strong> ${tk}<br>
-                <strong>Methodology:</strong> ${t.methodology}<br>
-                <strong>Data Coverage:</strong> Prices (daily) | Holdings: proxy only<br>
-                <strong>Last Updated:</strong> ${t.lastUpdated}<br>
-                <strong>Benchmarks:</strong> ${t.benchmarks.join(', ')}<br>
-                <strong>Limitations:</strong> Single-ETF proxy may not capture full theme exposure. Holdings data is approximate. Short history for some ETFs.
+                <strong>What ETF do we use?</strong> ${tk} — ${t.methodology}<br>
+                <strong>Data:</strong> Daily prices | Holdings: proxy only<br>
+                <strong>Last checked:</strong> ${t.lastUpdated}<br>
+                <strong>Compared against:</strong> ${t.benchmarks.join(', ')}<br>
+                <strong>⚠️ Limitations:</strong> We track this theme using a single ETF, which may not capture the full picture. Think of it as an approximation.
             </div>
         </div>
 
-        <!-- Portfolio Sim -->
+        <!-- Portfolio Sim — Personal -->
         <div class="sbox" data-testid="simulation-section">
-            <h3>🧪 Simulate Adding to Portfolio <span class="tt" data-tip="Hypothetical only. Not a recommendation.">?</span></h3>
+            <h3>🧪 What If I Added This to My Portfolio? <span class="tt" data-tip="This is a hypothetical 'what-if' — not a recommendation to invest.">?</span></h3>
             ${portfolio&&portfolio.length>0?`
-                <p style="font-size:13px;color:var(--text2);margin-bottom:14px">Choose a hypothetical allocation to see how adding this theme would change portfolio characteristics.</p>
+                <p style="font-size:13px;color:var(--text2);margin-bottom:14px">Pick an amount to see how adding this theme <strong>might have changed</strong> your portfolio. This uses historical data — the future could be different.</p>
                 <div class="sa-btns" data-testid="sim-alloc-btns">
-                    <button class="sa-btn" onclick="runSim('${id}',5)">5%</button>
-                    <button class="sa-btn" onclick="runSim('${id}',10)">10%</button>
-                    <button class="sa-btn" onclick="runSim('${id}',20)">20%</button>
+                    <button class="sa-btn" onclick="runSim('${id}',5)">A little (5%)</button>
+                    <button class="sa-btn" onclick="runSim('${id}',10)">Some (10%)</button>
+                    <button class="sa-btn" onclick="runSim('${id}',20)">A lot (20%)</button>
                     <input type="number" id="ca" placeholder="Custom %" min="1" max="50" style="width:80px;padding:8px;border:2px solid var(--border);border-radius:8px;font-size:13px;background:var(--card);color:var(--text)">
                     <button class="sa-btn" onclick="runSim('${id}',parseInt(document.getElementById('ca').value)||10)">Apply</button>
                 </div><div id="sim-r"></div>
-            `:`<div style="padding:30px;text-align:center;background:var(--input-bg);border-radius:12px"><div style="font-size:14px;color:var(--text2)">No portfolio data. <a href="/" style="color:var(--accent);font-weight:600">Visualize your portfolio</a> first.</div></div>`}
+            `:`<div style="padding:30px;text-align:center;background:var(--input-bg);border-radius:12px"><div style="font-size:14px;color:var(--text2)">You haven't built a portfolio yet. <a href="/" style="color:var(--accent);font-weight:600">Create your portfolio first</a>, then come back to try this.</div></div>`}
         </div>
 
         <!-- Rebalancing -->
         <div class="sbox" data-testid="rebalancing-compat">
-            <h3>🔄 Add to Portfolio & Rebalancing</h3>
-            <p style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:12px">Representative ETF (<strong>${tk}</strong>) can be added as a holding. Once added, all rebalancing strategies (annual, quarterly, threshold) apply.</p>
+            <h3>🔄 Want to Add This Theme?</h3>
+            <p style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:12px">You can add the ETF <strong>${tk}</strong> as a holding in your portfolio. Once added, it works with all the rebalancing tools automatically.</p>
             <div class="cta"><a href="/">← Go to Portfolio Visualizer</a> and add <strong>${tk}</strong> as a holding.</div>
         </div>
     `;
@@ -789,7 +961,7 @@ function showCompare(){
 
     // Metrics comparison table
     const metrics=['cagr1y','cagr3y','cagr5y','vol','maxDD','sharpe','sortino','calmar','corrSP','corrAGG'];
-    const labels=['1Y Return','3Y CAGR','5Y CAGR','Volatility','Max DD','Sharpe','Sortino','Calmar','Corr S&P','Corr Bonds'];
+    const labels=['1-Year Growth','3-Year Growth','5-Year Growth','How Bumpy','Biggest Drop','Reward/Risk','Downside Score','Recovery Score','Moves with Market','Moves with Bonds'];
 
     let tableHTML=`<table class="ctable" data-testid="compare-table"><thead><tr><th>Metric</th>${themes.map(t=>'<th>'+t.name+'</th>').join('')}</tr></thead><tbody>`;
     metrics.forEach((m,mi)=>{
@@ -827,26 +999,26 @@ function showCompare(){
 
     el.innerHTML=`
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
-            <h2 style="font-size:20px">📊 Comparing ${themes.length} Themes</h2>
-            <button class="xbtn" onclick="exportCompareCSV()">📥 Export Comparison CSV</button>
+            <h2 style="font-size:20px">⚖️ Comparing ${themes.length} Themes Side by Side</h2>
+            <button class="xbtn" onclick="exportCompareCSV()">📥 Download Comparison</button>
         </div>
 
         <div class="sbox">
-            <h3>Performance Comparison</h3>
+            <h3>How They've Grown Over Time</h3>
             <canvas id="cmp-perf-ch" style="max-height:300px"></canvas>
         </div>
 
         <div class="sbox">
-            <h3>Key Metrics</h3>
+            <h3>Key Numbers at a Glance</h3>
             ${tableHTML}
         </div>
 
         <div class="sbox">
-            <h3>Correlation Matrix <span class="tt" data-tip="Monthly return correlations between selected themes">?</span></h3>
+            <h3>Do They Move Together? <span class="tt" data-tip="Shows how similarly these themes behave. High numbers mean they tend to go up and down at the same time — less diversification benefit.">?</span></h3>
             ${corrHTML}
         </div>
 
-        <div class="disc" style="margin-top:20px">Past performance does not guarantee future results. This comparison is for educational purposes only.</div>
+        <div class="disc" style="margin-top:20px">This comparison is for learning only. Past performance does not guarantee future results.</div>
     `;
 
     // Draw overlay performance chart
@@ -910,21 +1082,24 @@ function runSim(id,pct){
     const tn=THEMES.find(t=>t.id===id)?.name||'Theme';
 
     document.getElementById('sim-r').innerHTML=`
+        <div style="padding:16px;background:var(--input-bg);border-radius:12px;margin-bottom:14px;font-size:13px;line-height:1.7">
+            <strong>If you added ${pct}% of ${tn}:</strong><br>${simNarrative(cC,bC,cV,bV,cDD,bDD)}
+        </div>
         <table class="ctable" data-testid="sim-comparison-table">
-            <thead><tr><th>Metric</th><th>Current (est.)</th><th>With ${pct}% ${tn}</th></tr></thead>
+            <thead><tr><th>What We Measured</th><th>Your Portfolio Now (est.)</th><th>With ${pct}% ${tn}</th></tr></thead>
             <tbody>
-                <tr><td>CAGR</td><td style="color:${pc(cC)}">${fp(cC)}</td><td style="color:${pc(bC)}">${fp(bC)}</td></tr>
-                <tr><td>Volatility</td><td>${fa(cV)}</td><td>${fa(bV)}</td></tr>
-                <tr><td>Max DD (est.)</td><td style="color:var(--red)">-${fa(cDD)}</td><td style="color:var(--red)">-${fa(bDD)}</td></tr>
-                <tr><td>Sharpe</td><td>${cSh.toFixed(2)}</td><td>${bSh.toFixed(2)}</td></tr>
-                <tr><td>MC Median (10Y)</td><td>$${mcC.med.toLocaleString('en-US',{maximumFractionDigits:0})}</td><td>$${mcB.med.toLocaleString('en-US',{maximumFractionDigits:0})}</td></tr>
-                <tr><td>MC 5th Pctl</td><td style="color:var(--red)">$${mcC.p5.toLocaleString('en-US',{maximumFractionDigits:0})}</td><td style="color:var(--red)">$${mcB.p5.toLocaleString('en-US',{maximumFractionDigits:0})}</td></tr>
-                <tr><td>MC 95th Pctl</td><td style="color:var(--green)">$${mcC.p95.toLocaleString('en-US',{maximumFractionDigits:0})}</td><td style="color:var(--green)">$${mcB.p95.toLocaleString('en-US',{maximumFractionDigits:0})}</td></tr>
+                <tr><td>Average Yearly Growth <span class="tt" data-tip="How fast your portfolio grows on average each year">?</span></td><td style="color:${pc(cC)}">${fp(cC)}</td><td style="color:${pc(bC)}">${fp(bC)}</td></tr>
+                <tr><td>How Bumpy <span class="tt" data-tip="How much your portfolio value swings around">?</span></td><td>${volLabel(cV)} (${fa(cV)})</td><td>${volLabel(bV)} (${fa(bV)})</td></tr>
+                <tr><td>Worst Drop (est.) <span class="tt" data-tip="How much it might fall during a crisis">?</span></td><td style="color:var(--red)">-${fa(cDD)}</td><td style="color:var(--red)">-${fa(bDD)}</td></tr>
+                <tr><td>Reward / Risk <span class="tt" data-tip="How much growth per unit of bumpiness. Higher = better.">?</span></td><td>${cSh.toFixed(2)}</td><td>${bSh.toFixed(2)}</td></tr>
+                <tr><td>Likely Value in 10 Years <span class="tt" data-tip="Middle outcome from 5,000 simulations">?</span></td><td>$${mcC.med.toLocaleString('en-US',{maximumFractionDigits:0})}</td><td>$${mcB.med.toLocaleString('en-US',{maximumFractionDigits:0})}</td></tr>
+                <tr><td>Bad Luck Scenario <span class="tt" data-tip="If things go poorly (bottom 5% of outcomes)">?</span></td><td style="color:var(--red)">$${mcC.p5.toLocaleString('en-US',{maximumFractionDigits:0})}</td><td style="color:var(--red)">$${mcB.p5.toLocaleString('en-US',{maximumFractionDigits:0})}</td></tr>
+                <tr><td>Great Luck Scenario <span class="tt" data-tip="If things go very well (top 5% of outcomes)">?</span></td><td style="color:var(--green)">$${mcC.p95.toLocaleString('en-US',{maximumFractionDigits:0})}</td><td style="color:var(--green)">$${mcB.p95.toLocaleString('en-US',{maximumFractionDigits:0})}</td></tr>
             </tbody>
         </table>
-        ${vi>3?'<div class="vwarn">⚠️ This allocation increases projected volatility by '+vi.toFixed(1)+' ppts.</div>':''}
+        ${vi>3?'<div class="vwarn">🎢 Adding this theme would make your portfolio noticeably bumpier — the swings increase by about '+vi.toFixed(1)+' percentage points. Make sure you\'re comfortable with that.</div>':''}
         <div style="margin-top:20px"><canvas id="mc-hist" style="max-height:220px" data-testid="mc-histogram"></canvas></div>
-        <div style="margin-top:12px;font-size:11px;color:var(--text2);text-align:center">Estimates use simplified blending (assumed ρ=${(rho*100).toFixed(0)}%). MC: ${mcC.n.toLocaleString()} sims. For illustration only — not investment advice.</div>
+        <div style="margin-top:12px;font-size:11px;color:var(--text2);text-align:center">This is a "what-if" simulation, not a prediction. We ran ${mcC.n.toLocaleString()} scenarios. Real results will be different.</div>
     `;
     drawMCHist(mcC.f,mcB.f,tn,pct);
 }
