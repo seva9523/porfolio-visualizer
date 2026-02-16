@@ -1026,21 +1026,25 @@ function applyFilters(){
 // ============================================================================
 // COMPARE MODE
 // ============================================================================
+function handleCardClick(id,ev){
+    if(compareMode){toggleCompareItem(id,ev)}
+    else{showDetail(id)}
+}
+
 function toggleCompareMode(){
     compareMode=!compareMode;
     document.getElementById('cmp-btn').classList.toggle('on',compareMode);
     document.getElementById('cmp-bar').style.display=compareMode?'block':'none';
-    if(!compareMode){compareSet.clear();renderGrid()}
+    if(!compareMode){compareSet.clear()}
+    renderGrid(); // Always re-render to show/hide checkboxes
 }
 
 function toggleCompareItem(id,ev){
-    ev.stopPropagation();
+    if(ev)ev.stopPropagation();
     if(compareSet.has(id))compareSet.delete(id);
     else if(compareSet.size<5)compareSet.add(id);
     document.getElementById('cmp-count').textContent=compareSet.size+' selected';
-    document.querySelectorAll('.tcard').forEach(c=>{
-        c.classList.toggle('cmp-sel',compareSet.has(c.dataset.tid));
-    });
+    renderGrid(); // Re-render to update checkbox state
 }
 
 // ============================================================================
@@ -1089,7 +1093,7 @@ function renderGridFiltered(themes){
         const tl=trendLabel(tr.score);
         const lch=lifecycleHuman(tr.lifecycle);
         return `
-        <div class="tcard${compareSet.has(t.id)?' cmp-sel':''}" data-tid="${t.id}" onclick="${compareMode?`toggleCompareItem('${t.id}',event)`:`showDetail('${t.id}')`}" data-testid="theme-card-${t.id}">
+        <div class="tcard${compareSet.has(t.id)?' cmp-sel':''}" data-tid="${t.id}" onclick="handleCardClick('${t.id}',event)" data-testid="theme-card-${t.id}">
             <div style="display:flex;justify-content:space-between;align-items:flex-start">
                 <div>
                     <div class="ctag ${catCls(t.category)}">${t.category.toUpperCase()}</div>
@@ -1097,7 +1101,7 @@ function renderGridFiltered(themes){
                     ${hypeBadge(tr.score,tr.lifecycle)}
                     ${freshBadge(t.lastUpdated)}
                 </div>
-                ${compareMode?`<input type="checkbox" ${compareSet.has(t.id)?'checked':''} style="width:18px;height:18px;accent-color:var(--accent)" onclick="toggleCompareItem('${t.id}',event)">`:''}
+                ${compareMode?`<input type="checkbox" ${compareSet.has(t.id)?'checked':''} style="width:18px;height:18px;accent-color:var(--accent)" onclick="event.stopPropagation();toggleCompareItem('${t.id}',event)">`:''}
             </div>
             <div class="tcard-name" style="margin-top:6px">${t.name}</div>
             <div class="tcard-desc">${ux.simpleDesc}</div>
