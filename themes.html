@@ -6,478 +6,579 @@
     <title>Theme & Trend Explorer - Portfolio Visualizer</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --bg-gradient-start: #f8f9fa; --bg-gradient-end: #e9ecef;
-            --container-bg: #ffffff;
-            --header-gradient-start: #5E548E; --header-gradient-end: #9F86C0;
-            --text-primary: #2c3e50; --text-secondary: #7f8c8d;
-            --input-bg: #f8f9fa; --input-border: #ddd;
-            --border-color: #e0e0e0; --chart-bg: #ffffff; --card-bg: #ffffff;
-        }
-        body.dark-mode {
-            --bg-gradient-start: #1a1a2e; --bg-gradient-end: #16213e;
-            --container-bg: #1e1e2f;
-            --text-primary: #e0e0e0; --text-secondary: #a0a0a0;
-            --input-bg: #2a2a3e; --input-border: #404060;
-            --border-color: #404060; --chart-bg: #252540; --card-bg: #252540;
-        }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end)); min-height: 100vh; padding: 20px; color: var(--text-primary); }
-        .container { max-width: 1200px; margin: 0 auto; background: var(--container-bg); border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.15); overflow: hidden; }
-        .header { background: linear-gradient(135deg, var(--header-gradient-start), var(--header-gradient-end)); color: white; padding: 30px; text-align: center; position: relative; }
-        .header h1 { font-size: 28px; margin-bottom: 5px; } .header p { opacity: 0.9; font-size: 14px; }
-        .dark-mode-toggle { position: absolute; top: 15px; right: 20px; background: rgba(255,255,255,0.2); border: none; color: white; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
-        .dark-mode-toggle:hover { background: rgba(255,255,255,0.3); }
-        .nav-bar { display: flex; gap: 10px; padding: 15px 30px; background: var(--input-bg); border-bottom: 1px solid var(--border-color); flex-wrap: wrap; }
-        .nav-btn { padding: 8px 18px; border: 2px solid var(--border-color); border-radius: 8px; background: var(--card-bg); color: var(--text-primary); font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; transition: all 0.2s; }
-        .nav-btn:hover { border-color: #5E548E; color: #5E548E; }
-        .nav-btn.active-nav { border-color: #5E548E; color: #5E548E; background: rgba(94,84,142,0.08); }
-        .content { padding: 30px; }
-        .disclaimer-box { padding: 12px 18px; background: rgba(241,143,1,0.08); border-left: 3px solid #F18F01; border-radius: 4px; font-size: 12px; margin-bottom: 25px; line-height: 1.6; color: var(--text-primary); }
-        /* Theme Grid */
-        .theme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
-        .theme-card { background: var(--card-bg); border: 2px solid var(--border-color); border-radius: 14px; padding: 22px; cursor: pointer; transition: all 0.25s; position: relative; }
-        .theme-card:hover { border-color: #5E548E; transform: translateY(-2px); box-shadow: 0 8px 25px rgba(94,84,142,0.15); }
-        .theme-card-name { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
-        .theme-card-desc { font-size: 12px; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.5; }
-        .theme-metrics { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-        .theme-metric { text-align: center; padding: 8px 4px; background: var(--input-bg); border-radius: 8px; }
-        .theme-metric-label { font-size: 10px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; margin-bottom: 3px; }
-        .theme-metric-value { font-size: 16px; font-weight: 700; }
-        .trending-badge { position: absolute; top: 12px; right: 12px; background: linear-gradient(135deg, #F18F01, #e67e00); color: white; font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
-        .category-tag { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 4px; margin-bottom: 8px; }
-        .cat-growth { background: rgba(46,134,171,0.15); color: #2E86AB; }
-        .cat-defensive { background: rgba(39,174,96,0.15); color: #27ae60; }
-        .cat-alternative { background: rgba(241,143,1,0.15); color: #F18F01; }
-        .cat-income { background: rgba(142,68,173,0.15); color: #8e44ad; }
-        /* Detail View */
-        .detail-view { display: none; } .detail-view.active { display: block; }
-        .back-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: var(--input-bg); border: 2px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 13px; font-weight: 600; cursor: pointer; margin-bottom: 20px; transition: all 0.2s; }
-        .back-btn:hover { border-color: #5E548E; }
-        .detail-header { margin-bottom: 25px; } .detail-header h2 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
-        .detail-header p { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
-        .section-box { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; padding: 24px; margin-bottom: 20px; }
-        .section-box h3 { font-size: 16px; font-weight: 700; margin-bottom: 14px; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
-        .stat-card { padding: 14px; background: var(--input-bg); border-radius: 10px; text-align: center; }
-        .stat-card-label { font-size: 10px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; margin-bottom: 4px; }
-        .stat-card-value { font-size: 20px; font-weight: 700; }
-        .risk-list { list-style: none; padding: 0; }
-        .risk-list li { padding: 8px 0; border-bottom: 1px solid var(--border-color); font-size: 13px; line-height: 1.5; }
-        .risk-list li:last-child { border-bottom: none; }
-        /* Simulation */
-        .sim-alloc-btns { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
-        .sim-alloc-btn { padding: 8px 20px; border: 2px solid var(--border-color); border-radius: 8px; background: var(--card-bg); color: var(--text-primary); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-        .sim-alloc-btn:hover, .sim-alloc-btn.active { border-color: #5E548E; background: rgba(94,84,142,0.1); color: #5E548E; }
-        .comparison-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
-        .comparison-table th, .comparison-table td { padding: 12px; text-align: center; border-bottom: 1px solid var(--border-color); }
-        .comparison-table th { background: var(--input-bg); font-weight: 700; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); }
-        .comparison-table td { font-weight: 600; }
-        .vol-warning { margin-top: 12px; padding: 10px 14px; background: rgba(231,76,60,0.08); border-left: 3px solid #e74c3c; border-radius: 4px; font-size: 12px; color: var(--text-primary); }
-        .tooltip-icon { display: inline-block; width: 16px; height: 16px; background: var(--text-secondary); color: var(--card-bg); border-radius: 50%; font-size: 10px; text-align: center; line-height: 16px; font-weight: 700; cursor: help; margin-left: 4px; position: relative; }
-        .tooltip-icon:hover::after { content: attr(data-tip); position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 11px; white-space: nowrap; z-index: 100; font-weight: 400; max-width: 260px; white-space: normal; }
-        .cta-box { padding: 18px; background: var(--input-bg); border: 2px dashed var(--border-color); border-radius: 12px; text-align: center; margin-top: 15px; }
-        .cta-box a { color: #5E548E; font-weight: 700; text-decoration: none; }
-        .cta-box a:hover { text-decoration: underline; }
-        .mc-histogram-bar { display: inline-block; vertical-align: bottom; background: rgba(94,84,142,0.6); border-radius: 2px 2px 0 0; margin: 0 1px; }
-        .footer-disclaimer { text-align: center; padding: 20px 30px; font-size: 11px; color: var(--text-secondary); border-top: 1px solid var(--border-color); }
-        .loading-spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--border-color); border-top-color: #5E548E; border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @media (max-width: 768px) { .theme-grid { grid-template-columns: 1fr; } .stats-grid { grid-template-columns: 1fr 1fr; } .header h1 { font-size: 22px; } .dark-mode-toggle { position: static; margin-top: 10px; } }
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{--bg-start:#f8f9fa;--bg-end:#e9ecef;--container:#fff;--text:#2c3e50;--text2:#7f8c8d;--input-bg:#f8f9fa;--input-border:#ddd;--border:#e0e0e0;--chart-bg:#fff;--card:#fff;--accent:#5E548E;--accent-l:rgba(94,84,142,.08);--green:#27ae60;--red:#e74c3c;--orange:#F18F01;--blue:#2E86AB}
+        body.dark-mode{--bg-start:#1a1a2e;--bg-end:#16213e;--container:#1e1e2f;--text:#e0e0e0;--text2:#a0a0a0;--input-bg:#2a2a3e;--input-border:#404060;--border:#404060;--chart-bg:#252540;--card:#252540}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,var(--bg-start),var(--bg-end));min-height:100vh;padding:20px;color:var(--text)}
+        .container{max-width:1280px;margin:0 auto;background:var(--container);border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.15);overflow:hidden}
+        .hdr{background:linear-gradient(135deg,#5E548E,#9F86C0);color:#fff;padding:30px;text-align:center;position:relative}
+        .hdr h1{font-size:28px;margin-bottom:5px}.hdr p{opacity:.9;font-size:14px}
+        .dtog{position:absolute;top:15px;right:20px;background:rgba(255,255,255,.2);border:none;color:#fff;padding:6px 14px;border-radius:20px;cursor:pointer;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
+        .dtog:hover{background:rgba(255,255,255,.3)}
+        .nav{display:flex;gap:10px;padding:15px 30px;background:var(--input-bg);border-bottom:1px solid var(--border);flex-wrap:wrap}
+        .nb{padding:8px 18px;border:2px solid var(--border);border-radius:8px;background:var(--card);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s}
+        .nb:hover{border-color:var(--accent);color:var(--accent)}
+        .nb.act{border-color:var(--accent);color:var(--accent);background:var(--accent-l)}
+        .cnt{padding:30px}
+        .disc{padding:12px 18px;background:rgba(241,143,1,.08);border-left:3px solid var(--orange);border-radius:4px;font-size:12px;margin-bottom:25px;line-height:1.6}
+        /* Controls */
+        .ctrls{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+        .sinp{flex:1;min-width:180px;padding:10px 14px;border:2px solid var(--border);border-radius:8px;background:var(--card);color:var(--text);font-size:13px;outline:none}
+        .sinp:focus{border-color:var(--accent)}
+        .fsel{padding:10px;border:2px solid var(--border);border-radius:8px;background:var(--card);color:var(--text);font-size:13px;cursor:pointer}
+        .cbtn{padding:10px 18px;border:2px solid var(--accent);border-radius:8px;background:var(--accent-l);color:var(--accent);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s}
+        .cbtn:hover,.cbtn.on{background:var(--accent);color:#fff}
+        /* Grid */
+        .tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px}
+        .tcard{background:var(--card);border:2px solid var(--border);border-radius:14px;padding:22px;cursor:pointer;transition:all .25s;position:relative}
+        .tcard:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 25px rgba(94,84,142,.15)}
+        .tcard.cmp-sel{border-color:var(--accent);box-shadow:0 0 0 3px rgba(94,84,142,.2)}
+        .tcard-name{font-size:17px;font-weight:700;margin-bottom:4px}
+        .tcard-desc{font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.5}
+        .tmets{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+        .tmet{text-align:center;padding:6px 4px;background:var(--input-bg);border-radius:8px}
+        .tmet-l{font-size:9px;color:var(--text2);font-weight:600;text-transform:uppercase;margin-bottom:2px}
+        .tmet-v{font-size:15px;font-weight:700}
+        /* Score bar */
+        .sbar{height:6px;border-radius:3px;background:var(--border);overflow:hidden;margin-top:8px}
+        .sfill{height:100%;border-radius:3px;transition:width .5s}
+        .slbl{font-size:10px;color:var(--text2);margin-top:3px;display:flex;justify-content:space-between}
+        /* Badges */
+        .badge{display:inline-block;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;margin-right:4px}
+        .b-trend{background:linear-gradient(135deg,var(--orange),#e67e00);color:#fff}
+        .b-lc{padding:3px 8px;font-size:9px;border-radius:4px;font-weight:700}
+        .lc-em{background:rgba(46,134,171,.15);color:var(--blue)}
+        .lc-ac{background:rgba(39,174,96,.15);color:var(--green)}
+        .lc-cr{background:rgba(241,143,1,.15);color:var(--orange)}
+        .lc-ro{background:rgba(231,76,60,.15);color:var(--red)}
+        .ctag{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;margin-bottom:8px}
+        .c-gr{background:rgba(46,134,171,.15);color:var(--blue)}
+        .c-df{background:rgba(39,174,96,.15);color:var(--green)}
+        .c-al{background:rgba(241,143,1,.15);color:var(--orange)}
+        .c-in{background:rgba(142,68,173,.15);color:#8e44ad}
+        /* Detail/Compare */
+        .dview{display:none}.dview.on{display:block}
+        .cview{display:none}.cview.on{display:block}
+        .bbtn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:var(--input-bg);border:2px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-weight:600;cursor:pointer;margin-bottom:20px}
+        .bbtn:hover{border-color:var(--accent)}
+        .sbox{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px}
+        .sbox h3{font-size:16px;font-weight:700;margin-bottom:14px}
+        .sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px}
+        .sc{padding:14px;background:var(--input-bg);border-radius:10px;text-align:center}
+        .sc-l{font-size:10px;color:var(--text2);font-weight:600;text-transform:uppercase;margin-bottom:4px}
+        .sc-v{font-size:20px;font-weight:700}
+        .rlist{list-style:none;padding:0}
+        .rlist li{padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;line-height:1.5}
+        .rlist li:last-child{border-bottom:none}
+        /* Signal breakdown table */
+        .sigtbl{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
+        .sigtbl th,.sigtbl td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)}
+        .sigtbl th{font-size:10px;text-transform:uppercase;color:var(--text2);font-weight:700}
+        .sigbar{display:inline-block;height:8px;border-radius:4px;vertical-align:middle}
+        /* Comparison */
+        .ctable{width:100%;border-collapse:collapse;font-size:13px}
+        .ctable th,.ctable td{padding:12px;text-align:center;border-bottom:1px solid var(--border)}
+        .ctable th{background:var(--input-bg);font-weight:700;font-size:11px;text-transform:uppercase;color:var(--text2)}
+        .ctable td{font-weight:600}
+        /* Sim */
+        .sa-btns{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px}
+        .sa-btn{padding:8px 20px;border:2px solid var(--border);border-radius:8px;background:var(--card);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
+        .sa-btn:hover,.sa-btn.on{border-color:var(--accent);background:var(--accent-l);color:var(--accent)}
+        .vwarn{margin-top:12px;padding:10px 14px;background:rgba(231,76,60,.08);border-left:3px solid var(--red);border-radius:4px;font-size:12px}
+        .cta{padding:18px;background:var(--input-bg);border:2px dashed var(--border);border-radius:12px;text-align:center;margin-top:15px}
+        .cta a{color:var(--accent);font-weight:700;text-decoration:none}
+        /* Tooltip */
+        .tt{display:inline-block;width:16px;height:16px;background:var(--text2);color:var(--card);border-radius:50%;font-size:10px;text-align:center;line-height:16px;font-weight:700;cursor:help;margin-left:4px;position:relative}
+        .tt:hover::after{content:attr(data-tip);position:absolute;bottom:120%;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:6px 10px;border-radius:6px;font-size:11px;z-index:100;font-weight:400;max-width:280px;white-space:normal;min-width:180px}
+        /* Methodology */
+        .mpanel{background:var(--input-bg);border:1px solid var(--border);border-radius:10px;padding:16px;font-size:12px;line-height:1.7;color:var(--text2)}
+        .mpanel strong{color:var(--text)}
+        .mtag{display:inline-block;padding:2px 8px;background:var(--card);border:1px solid var(--border);border-radius:4px;font-size:10px;font-weight:600;margin-right:6px;margin-bottom:4px}
+        /* Export */
+        .xbtn{padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);font-size:11px;font-weight:600;cursor:pointer;transition:all .2s}
+        .xbtn:hover{border-color:var(--accent);color:var(--accent)}
+        /* Stress */
+        .stress-tbl{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
+        .stress-tbl th,.stress-tbl td{padding:10px;text-align:center;border-bottom:1px solid var(--border)}
+        .stress-tbl th{font-size:10px;text-transform:uppercase;color:var(--text2);font-weight:700;background:var(--input-bg)}
+        .ftr{text-align:center;padding:20px 30px;font-size:11px;color:var(--text2);border-top:1px solid var(--border)}
+        .spin{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp .8s linear infinite}
+        @keyframes sp{to{transform:rotate(360deg)}}
+        @media(max-width:768px){.tgrid{grid-template-columns:1fr}.sgrid{grid-template-columns:1fr 1fr}.hdr h1{font-size:22px}.dtog{position:static;margin-top:10px}.tmets{grid-template-columns:1fr 1fr}.ctrls{flex-direction:column}}
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <button class="dark-mode-toggle" onclick="toggleDarkMode()" id="dark-toggle">
-                <span id="mode-icon">🌙</span>
-                <span id="mode-text">Dark Mode</span>
-            </button>
+        <div class="hdr">
+            <button class="dtog" onclick="toggleDark()" id="dtog"><span id="mi">🌙</span><span id="mt">Dark Mode</span></button>
             <h1>🔭 Theme & Trend Explorer</h1>
             <p>Explore major market themes — educational research only</p>
         </div>
-        <div class="nav-bar">
-            <a href="/" class="nav-btn">📊 Portfolio Visualizer</a>
-            <a href="/goals.html" class="nav-btn">🎯 Goals Simulator</a>
-            <span class="nav-btn active-nav">🔭 Market Themes</span>
+        <div class="nav">
+            <a href="/" class="nb">📊 Portfolio Visualizer</a>
+            <a href="/goals.html" class="nb">🎯 Goals Simulator</a>
+            <span class="nb act">🔭 Market Themes</span>
         </div>
-        <div class="content">
-            <div class="disclaimer-box">
-                <strong>⚠️ Educational Use Only:</strong> This section is for <strong>educational and analytical purposes only</strong> and does <strong>not constitute financial advice</strong>.
-                Past performance does not guarantee future results. Theme data uses representative ETFs for illustration.
-            </div>
-            <!-- LIST VIEW -->
-            <div id="list-view">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
-                    <h2 style="font-size:20px;">Market Themes</h2>
-                    <div style="font-size:12px; color:var(--text-secondary);">
-                        <span class="tooltip-icon" data-tip="Themes with strong recent 3-month relative performance. Short-term trends do not predict future returns.">?</span>
-                        📈 = Currently Trending (quantitative, short-term)
+        <div class="cnt">
+            <div class="disc"><strong>⚠️ Educational Use Only:</strong> This section is for <strong>educational and analytical purposes only</strong> and does <strong>not constitute financial advice</strong>. Past performance does not guarantee future results. Theme data uses representative ETFs for illustration.</div>
+
+            <!-- ===== LIST VIEW ===== -->
+            <div id="lv">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+                    <h2 style="font-size:20px">Market Themes</h2>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap">
+                        <button class="xbtn" onclick="exportThemesCSV()" data-testid="export-csv-btn">📥 Export CSV</button>
                     </div>
                 </div>
-                <div id="loading-bar" style="text-align:center; padding:40px; color:var(--text-secondary);">
-                    <div class="loading-spinner"></div>
-                    <div style="margin-top:10px; font-size:13px;">Fetching theme data...</div>
+                <div class="ctrls" data-testid="controls-bar">
+                    <input class="sinp" type="text" placeholder="🔍 Search themes..." id="search-in" oninput="applyFilters()" data-testid="search-input">
+                    <select class="fsel" id="cat-fil" onchange="applyFilters()" data-testid="category-filter">
+                        <option value="all">All Categories</option>
+                        <option value="growth">Growth</option>
+                        <option value="defensive">Defensive</option>
+                        <option value="alternative">Alternative</option>
+                        <option value="income">Income</option>
+                    </select>
+                    <select class="fsel" id="sort-by" onchange="applyFilters()" data-testid="sort-select">
+                        <option value="trending">Sort: Trending Score</option>
+                        <option value="cagr5y">Sort: 5Y CAGR</option>
+                        <option value="volatility">Sort: Volatility</option>
+                        <option value="sharpe">Sort: Sharpe Ratio</option>
+                        <option value="maxdd">Sort: Max Drawdown</option>
+                        <option value="name">Sort: Name A-Z</option>
+                    </select>
+                    <button class="cbtn" id="cmp-btn" onclick="toggleCompareMode()" data-testid="compare-toggle">⚡ Compare</button>
                 </div>
-                <div class="theme-grid" id="theme-grid"></div>
+                <div id="cmp-bar" style="display:none;margin-bottom:15px;padding:12px 16px;background:var(--accent-l);border:2px solid var(--accent);border-radius:10px;font-size:13px">
+                    <span style="font-weight:700;color:var(--accent)">Compare Mode:</span> Select 2-5 themes, then click
+                    <button class="cbtn on" onclick="showCompare()" style="margin-left:8px;padding:6px 14px;font-size:12px" data-testid="compare-go-btn">Compare Selected →</button>
+                    <span id="cmp-count" style="margin-left:8px;color:var(--text2)">0 selected</span>
+                </div>
+                <div id="load-bar" style="text-align:center;padding:40px;color:var(--text2)"><div class="spin"></div><div style="margin-top:10px;font-size:13px">Fetching theme data...</div></div>
+                <div class="tgrid" id="tgrid" data-testid="theme-grid"></div>
             </div>
-            <!-- DETAIL VIEW -->
-            <div id="detail-view" class="detail-view">
-                <button class="back-btn" onclick="showListView()" data-testid="back-btn">← Back to Themes</button>
-                <div id="detail-content"></div>
-            </div>
-        </div>
-        <div class="footer-disclaimer">
-            Past performance does not guarantee future results. This tool is for educational purposes only and does not recommend investments.
-        </div>
-    </div>
 
+            <!-- ===== DETAIL VIEW ===== -->
+            <div id="dv" class="dview">
+                <button class="bbtn" onclick="showList()" data-testid="back-btn">← Back to Themes</button>
+                <div id="dc"></div>
+            </div>
+
+            <!-- ===== COMPARE VIEW ===== -->
+            <div id="cv" class="cview">
+                <button class="bbtn" onclick="showList()" data-testid="compare-back-btn">← Back to Themes</button>
+                <div id="cc"></div>
+            </div>
+        </div>
+        <div class="ftr">Past performance does not guarantee future results. This tool is for educational purposes only and does not recommend investments.</div>
+    </div>
 <script>
 // ============================================================================
-// THEME DATA MODEL — each theme maps to a representative ETF
-// Extendable: just add new entries to this array
+// THEME DATA MODEL (extendable — just add entries)
+// Fields: id, name, description, category, megaTheme, tags[], representativeAssets[],
+//         methodology, overview, risks[], benchmarks[], lastUpdated
 // ============================================================================
 const THEMES = [
-    {
-        id: "ai", name: "Artificial Intelligence",
-        description: "Companies involved in AI software, semiconductors, and automation infrastructure.",
-        representativeAssets: ["BOTZ"], category: "growth",
-        overview: "AI theme returns are driven by corporate spending on AI infrastructure, semiconductor demand, and software adoption. Returns can be volatile due to hype cycles, regulatory shifts, and rapid technology changes.",
-        risks: [
-            "🎯 <strong>Sector Concentration:</strong> Heavily weighted toward a few mega-cap technology companies",
-            "📉 <strong>Valuation Risk:</strong> High growth expectations already priced in — vulnerable to compression",
-            "⚖️ <strong>Regulatory Risk:</strong> Increasing government scrutiny of AI development and deployment",
-            "🔄 <strong>Technology Disruption:</strong> Rapid innovation can quickly shift competitive advantages",
-            "📊 <strong>High Volatility:</strong> Theme has historically exhibited above-average price swings"
-        ]
-    },
-    {
-        id: "clean_energy", name: "Clean Energy",
-        description: "Solar, wind, battery, and renewable energy infrastructure companies.",
-        representativeAssets: ["ICLN"], category: "growth",
-        overview: "Clean energy returns are influenced by government policy (subsidies, mandates), commodity prices, interest rates (capital-intensive projects), and technological efficiency gains.",
-        risks: [
-            "⚖️ <strong>Policy Dependence:</strong> Returns highly sensitive to government subsidies and regulations",
-            "💰 <strong>Interest Rate Sensitivity:</strong> Capital-intensive sector hurt by rising rates",
-            "📉 <strong>Cyclical Downturns:</strong> Commodity price swings impact profitability",
-            "🌍 <strong>Geopolitical Risk:</strong> Supply chain concentration in specific regions",
-            "📊 <strong>High Volatility:</strong> Historically more volatile than broad market indices"
-        ]
-    },
-    {
-        id: "semiconductors", name: "Semiconductors",
-        description: "Chip designers, manufacturers, and semiconductor equipment companies.",
-        representativeAssets: ["SMH"], category: "growth",
-        overview: "Semiconductor returns are driven by cyclical demand patterns, AI infrastructure buildout, consumer electronics, and automotive chip demand. The sector is capital-intensive with long production cycles.",
-        risks: [
-            "🔄 <strong>Cyclicality:</strong> Semiconductor demand follows boom-bust cycles",
-            "🌍 <strong>Geopolitical Risk:</strong> Manufacturing concentrated in Taiwan and South Korea",
-            "💰 <strong>Capital Intensity:</strong> Massive investment required for new fabrication plants",
-            "🎯 <strong>Customer Concentration:</strong> Revenue often dependent on a few large buyers",
-            "📊 <strong>High Volatility:</strong> Amplified market moves due to operating leverage"
-        ]
-    },
-    {
-        id: "cybersecurity", name: "Cybersecurity",
-        description: "Network security, cloud security, identity management, and threat detection firms.",
-        representativeAssets: ["CIBR"], category: "growth",
-        overview: "Cybersecurity spending is driven by increasing digital threats, regulatory compliance, and enterprise cloud migration. The sector tends to be resilient during downturns as security spending is non-discretionary.",
-        risks: [
-            "📉 <strong>Valuation Risk:</strong> Many cybersecurity firms trade at premium multiples",
-            "🔄 <strong>Competition:</strong> Low barriers create constant competitive pressure",
-            "🎯 <strong>Acquisition Risk:</strong> Smaller firms frequently acquired, changing composition",
-            "💰 <strong>Profitability Concerns:</strong> Many firms prioritize growth over profits",
-            "📊 <strong>Moderate-High Volatility:</strong> Growth stock characteristics amplify market moves"
-        ]
-    },
-    {
-        id: "healthcare_innovation", name: "Healthcare Innovation",
-        description: "Genomics, biotech, medical devices, and digital health companies.",
-        representativeAssets: ["IBB"], category: "growth",
-        overview: "Healthcare innovation is driven by demographic trends (aging populations), technological breakthroughs (gene therapy, mRNA), and regulatory approvals. Binary outcomes from drug trials create unique risk profiles.",
-        risks: [
-            "⚖️ <strong>Regulatory Risk:</strong> FDA approvals/rejections create binary outcomes",
-            "📉 <strong>Clinical Trial Risk:</strong> Drug failures can cause significant losses",
-            "💰 <strong>Pricing Pressure:</strong> Political scrutiny of drug pricing",
-            "🔄 <strong>Patent Cliffs:</strong> Revenue drops when key patents expire",
-            "📊 <strong>High Volatility:</strong> Individual stock moves can be extreme"
-        ]
-    },
-    {
-        id: "emerging_markets", name: "Emerging Markets",
-        description: "Broad exposure to developing economies including China, India, Brazil, and others.",
-        representativeAssets: ["EEM"], category: "growth",
-        overview: "Emerging market returns are driven by GDP growth differentials, commodity cycles, currency movements, and capital flows. They offer diversification but with additional political and currency risks.",
-        risks: [
-            "🌍 <strong>Political Risk:</strong> Governance and policy instability in developing nations",
-            "💱 <strong>Currency Risk:</strong> Local currency depreciation erodes returns for foreign investors",
-            "📉 <strong>Capital Flow Risk:</strong> Vulnerable to sudden foreign capital withdrawal",
-            "⚖️ <strong>Regulatory Uncertainty:</strong> Changing rules can impact foreign investors",
-            "📊 <strong>Higher Volatility:</strong> Typically more volatile than developed market equities"
-        ]
-    },
-    {
-        id: "dividend_income", name: "Dividend Income",
-        description: "High-dividend-yield stocks focused on consistent income generation.",
-        representativeAssets: ["VYM"], category: "income",
-        overview: "Dividend strategies focus on mature companies with stable cash flows. Returns come from both payments and moderate capital appreciation. They tend to underperform in strong growth markets but provide downside cushion.",
-        risks: [
-            "📉 <strong>Interest Rate Sensitivity:</strong> Dividend stocks compete with bonds; rising rates reduce appeal",
-            "🔄 <strong>Dividend Cuts:</strong> Companies may reduce dividends during economic stress",
-            "🎯 <strong>Sector Concentration:</strong> Often heavy in utilities, financials, and real estate",
-            "💰 <strong>Growth Lag:</strong> May underperform growth-oriented strategies in bull markets",
-            "📊 <strong>Moderate Volatility:</strong> Generally lower than broad market but not immune"
-        ]
-    },
-    {
-        id: "inflation_protection", name: "Inflation Protection",
-        description: "TIPS, commodities, and real assets designed to hedge against rising prices.",
-        representativeAssets: ["TIP"], category: "defensive",
-        overview: "Inflation-protected strategies aim to preserve purchasing power. TIPS adjust principal with CPI. Returns are modest in low-inflation environments but provide insurance during inflationary periods.",
-        risks: [
-            "📉 <strong>Low Real Returns:</strong> May underperform equities significantly over long periods",
-            "💰 <strong>Deflation Risk:</strong> TIPS can lose value in deflationary environments",
-            "🔄 <strong>Interest Rate Risk:</strong> Duration exposure means price declines when real rates rise",
-            "🎯 <strong>Limited Upside:</strong> Designed for protection, not wealth accumulation",
-            "📊 <strong>Low Volatility:</strong> Generally stable but with lower expected returns"
-        ]
-    },
-    {
-        id: "commodities", name: "Commodities",
-        description: "Broad commodity exposure including energy, metals, and agriculture.",
-        representativeAssets: ["DJP"], category: "alternative",
-        overview: "Commodity returns are driven by supply-demand dynamics, geopolitical events, weather, and inflation expectations. They often have low correlation with equities, providing diversification benefits.",
-        risks: [
-            "📉 <strong>Contango Drag:</strong> Futures-based products may lose value from roll costs",
-            "🌍 <strong>Geopolitical Sensitivity:</strong> Prices heavily influenced by political events",
-            "🔄 <strong>Cyclicality:</strong> Commodity prices follow boom-bust super-cycles",
-            "💰 <strong>No Income:</strong> Commodities don't generate dividends or interest",
-            "📊 <strong>High Volatility:</strong> Individual commodity swings can be extreme"
-        ]
-    },
-    {
-        id: "mega_cap_tech", name: "US Mega Cap Tech",
-        description: "Largest US technology companies by market capitalization.",
-        representativeAssets: ["QQQ"], category: "growth",
-        overview: "Mega cap tech returns are driven by digital advertising, cloud computing, consumer electronics, and platform economics. These companies have dominant market positions but face increasing regulatory scrutiny.",
-        risks: [
-            "🎯 <strong>Concentration Risk:</strong> A few companies dominate index returns",
-            "⚖️ <strong>Antitrust Risk:</strong> Regulatory actions could force breakups or limit growth",
-            "📉 <strong>Valuation Risk:</strong> Premium valuations leave little margin for disappointment",
-            "🔄 <strong>Market Rotation:</strong> Growth-to-value rotations can cause sharp underperformance",
-            "📊 <strong>Moderate-High Volatility:</strong> Tech-heavy exposure amplifies market drawdowns"
-        ]
-    },
-    {
-        id: "bitcoin", name: "Bitcoin / Digital Assets",
-        description: "Exposure to Bitcoin and the broader digital asset ecosystem.",
-        representativeAssets: ["IBIT"], category: "alternative",
-        overview: "Bitcoin returns are driven by adoption trends, monetary policy expectations, regulatory developments, and speculative sentiment. It exhibits very high volatility and low correlation with traditional assets.",
-        risks: [
-            "📊 <strong>Extreme Volatility:</strong> Drawdowns of 50-80% have occurred historically",
-            "⚖️ <strong>Regulatory Risk:</strong> Government bans or restrictions remain possible",
-            "🔄 <strong>Market Manipulation:</strong> Less regulated markets may be subject to manipulation",
-            "💰 <strong>No Intrinsic Cash Flow:</strong> Value based on supply scarcity and demand, not earnings",
-            "🌍 <strong>Custody/Security Risk:</strong> Unique risks around digital asset security"
-        ]
-    }
+{id:"ai",name:"Artificial Intelligence",description:"Companies involved in AI software, semiconductors, and automation infrastructure.",category:"growth",megaTheme:"Technology",tags:["AI","machine learning","automation","semiconductors"],representativeAssets:["BOTZ"],benchmarks:["SPY"],methodology:"Tracked via Global X Robotics & AI ETF (BOTZ). Holdings include companies with significant AI revenue exposure. Limitations: ETF may include robotics firms not purely AI-focused.",overview:"AI theme returns are driven by corporate spending on AI infrastructure, semiconductor demand, and software adoption. Returns can be volatile due to hype cycles, regulatory shifts, and rapid technology changes.",risks:["🎯 <strong>Sector Concentration:</strong> Heavily weighted toward a few mega-cap technology companies","📉 <strong>Valuation Risk:</strong> High growth expectations already priced in — vulnerable to compression","⚖️ <strong>Regulatory Risk:</strong> Increasing government scrutiny of AI development and deployment","🔄 <strong>Technology Disruption:</strong> Rapid innovation can quickly shift competitive advantages","📊 <strong>High Volatility:</strong> Theme has historically exhibited above-average price swings"],lastUpdated:"2025-05"},
+{id:"clean_energy",name:"Clean Energy",description:"Solar, wind, battery, and renewable energy infrastructure companies.",category:"growth",megaTheme:"Sustainability",tags:["solar","wind","renewables","ESG"],representativeAssets:["ICLN"],benchmarks:["SPY"],methodology:"Tracked via iShares Global Clean Energy ETF (ICLN). Covers solar, wind, and other renewable energy companies globally. Limitations: Includes utilities that may have mixed energy sources.",overview:"Clean energy returns are influenced by government policy (subsidies, mandates), commodity prices, interest rates (capital-intensive projects), and technological efficiency gains.",risks:["⚖️ <strong>Policy Dependence:</strong> Returns highly sensitive to government subsidies and regulations","💰 <strong>Interest Rate Sensitivity:</strong> Capital-intensive sector hurt by rising rates","📉 <strong>Cyclical Downturns:</strong> Commodity price swings impact profitability","🌍 <strong>Geopolitical Risk:</strong> Supply chain concentration in specific regions","📊 <strong>High Volatility:</strong> Historically more volatile than broad market indices"],lastUpdated:"2025-05"},
+{id:"semiconductors",name:"Semiconductors",description:"Chip designers, manufacturers, and semiconductor equipment companies.",category:"growth",megaTheme:"Technology",tags:["chips","fabrication","ASML","TSMC","NVIDIA"],representativeAssets:["SMH"],benchmarks:["SPY"],methodology:"Tracked via VanEck Semiconductor ETF (SMH). Concentrated portfolio of ~25 major semiconductor companies. Limitations: Top-heavy — top 5 holdings often exceed 40% weight.",overview:"Semiconductor returns are driven by cyclical demand patterns, AI infrastructure buildout, consumer electronics, and automotive chip demand. The sector is capital-intensive with long production cycles.",risks:["🔄 <strong>Cyclicality:</strong> Semiconductor demand follows boom-bust cycles","🌍 <strong>Geopolitical Risk:</strong> Manufacturing concentrated in Taiwan and South Korea","💰 <strong>Capital Intensity:</strong> Massive investment required for new fabrication plants","🎯 <strong>Customer Concentration:</strong> Revenue often dependent on a few large buyers","📊 <strong>High Volatility:</strong> Amplified market moves due to operating leverage"],lastUpdated:"2025-05"},
+{id:"cybersecurity",name:"Cybersecurity",description:"Network security, cloud security, identity management, and threat detection firms.",category:"growth",megaTheme:"Technology",tags:["security","cloud","network","zero-trust"],representativeAssets:["CIBR"],benchmarks:["SPY"],methodology:"Tracked via First Trust NASDAQ Cybersecurity ETF (CIBR). Limitations: Some holdings derive cybersecurity revenue as secondary business line.",overview:"Cybersecurity spending is driven by increasing digital threats, regulatory compliance, and enterprise cloud migration. The sector tends to be resilient during downturns as security spending is non-discretionary.",risks:["📉 <strong>Valuation Risk:</strong> Many cybersecurity firms trade at premium multiples","🔄 <strong>Competition:</strong> Low barriers create constant competitive pressure","🎯 <strong>Acquisition Risk:</strong> Smaller firms frequently acquired, changing composition","💰 <strong>Profitability Concerns:</strong> Many firms prioritize growth over profits","📊 <strong>Moderate-High Volatility:</strong> Growth stock characteristics amplify market moves"],lastUpdated:"2025-05"},
+{id:"healthcare_innovation",name:"Healthcare Innovation",description:"Genomics, biotech, medical devices, and digital health companies.",category:"growth",megaTheme:"Healthcare",tags:["biotech","genomics","pharma","medtech"],representativeAssets:["IBB"],benchmarks:["SPY"],methodology:"Tracked via iShares Biotechnology ETF (IBB). Covers NASDAQ-listed biotech firms. Limitations: Excludes many medtech and digital health companies.",overview:"Healthcare innovation is driven by demographic trends (aging populations), technological breakthroughs (gene therapy, mRNA), and regulatory approvals. Binary outcomes from drug trials create unique risk profiles.",risks:["⚖️ <strong>Regulatory Risk:</strong> FDA approvals/rejections create binary outcomes","📉 <strong>Clinical Trial Risk:</strong> Drug failures can cause significant losses","💰 <strong>Pricing Pressure:</strong> Political scrutiny of drug pricing","🔄 <strong>Patent Cliffs:</strong> Revenue drops when key patents expire","📊 <strong>High Volatility:</strong> Individual stock moves can be extreme"],lastUpdated:"2025-05"},
+{id:"emerging_markets",name:"Emerging Markets",description:"Broad exposure to developing economies including China, India, Brazil, and others.",category:"growth",megaTheme:"Global",tags:["China","India","Brazil","developing"],representativeAssets:["EEM"],benchmarks:["SPY"],methodology:"Tracked via iShares MSCI Emerging Markets ETF (EEM). Broad diversified EM exposure. Limitations: China often >30% weight; may not represent all EM equally.",overview:"Emerging market returns are driven by GDP growth differentials, commodity cycles, currency movements, and capital flows. They offer diversification but with additional political and currency risks.",risks:["🌍 <strong>Political Risk:</strong> Governance and policy instability in developing nations","💱 <strong>Currency Risk:</strong> Local currency depreciation erodes returns","📉 <strong>Capital Flow Risk:</strong> Vulnerable to sudden foreign capital withdrawal","⚖️ <strong>Regulatory Uncertainty:</strong> Changing rules can impact foreign investors","📊 <strong>Higher Volatility:</strong> Typically more volatile than developed market equities"],lastUpdated:"2025-05"},
+{id:"dividend_income",name:"Dividend Income",description:"High-dividend-yield stocks focused on consistent income generation.",category:"income",megaTheme:"Income",tags:["dividends","yield","value","income"],representativeAssets:["VYM"],benchmarks:["SPY"],methodology:"Tracked via Vanguard High Dividend Yield ETF (VYM). ~400+ stocks screened for above-average dividend yield. Limitations: Focuses on yield, not dividend growth.",overview:"Dividend strategies focus on mature companies with stable cash flows. Returns come from both payments and moderate capital appreciation. They tend to underperform in strong growth markets but provide downside cushion.",risks:["📉 <strong>Interest Rate Sensitivity:</strong> Dividend stocks compete with bonds; rising rates reduce appeal","🔄 <strong>Dividend Cuts:</strong> Companies may reduce dividends during economic stress","🎯 <strong>Sector Concentration:</strong> Often heavy in utilities, financials, and real estate","💰 <strong>Growth Lag:</strong> May underperform growth-oriented strategies in bull markets","📊 <strong>Moderate Volatility:</strong> Generally lower than broad market but not immune"],lastUpdated:"2025-05"},
+{id:"inflation_protection",name:"Inflation Protection",description:"TIPS, commodities, and real assets designed to hedge against rising prices.",category:"defensive",megaTheme:"Macro",tags:["TIPS","inflation","real assets","CPI"],representativeAssets:["TIP"],benchmarks:["AGG"],methodology:"Tracked via iShares TIPS Bond ETF (TIP). US Treasury Inflation-Protected Securities. Limitations: Pure TIPS exposure — does not include commodities or real estate.",overview:"Inflation-protected strategies aim to preserve purchasing power. TIPS adjust principal with CPI. Returns are modest in low-inflation environments but provide insurance during inflationary periods.",risks:["📉 <strong>Low Real Returns:</strong> May underperform equities significantly over long periods","💰 <strong>Deflation Risk:</strong> TIPS can lose value in deflationary environments","🔄 <strong>Interest Rate Risk:</strong> Duration exposure means price declines when real rates rise","🎯 <strong>Limited Upside:</strong> Designed for protection, not wealth accumulation","📊 <strong>Low Volatility:</strong> Generally stable but with lower expected returns"],lastUpdated:"2025-05"},
+{id:"commodities",name:"Commodities",description:"Broad commodity exposure including energy, metals, and agriculture.",category:"alternative",megaTheme:"Macro",tags:["gold","oil","agriculture","metals"],representativeAssets:["DJP"],benchmarks:["SPY"],methodology:"Tracked via iPath Bloomberg Commodity Index ETN (DJP). Broad commodity futures basket. Limitations: Futures-based — subject to contango drag; ETN structure has credit risk.",overview:"Commodity returns are driven by supply-demand dynamics, geopolitical events, weather, and inflation expectations. They often have low correlation with equities, providing diversification benefits.",risks:["📉 <strong>Contango Drag:</strong> Futures-based products may lose value from roll costs","🌍 <strong>Geopolitical Sensitivity:</strong> Prices heavily influenced by political events","🔄 <strong>Cyclicality:</strong> Commodity prices follow boom-bust super-cycles","💰 <strong>No Income:</strong> Commodities don't generate dividends or interest","📊 <strong>High Volatility:</strong> Individual commodity swings can be extreme"],lastUpdated:"2025-05"},
+{id:"mega_cap_tech",name:"US Mega Cap Tech",description:"Largest US technology companies by market capitalization.",category:"growth",megaTheme:"Technology",tags:["FAANG","big tech","cloud","platforms"],representativeAssets:["QQQ"],benchmarks:["SPY"],methodology:"Tracked via Invesco QQQ Trust (QQQ). NASDAQ-100 index — top 100 non-financial NASDAQ stocks. Limitations: Not purely tech — includes consumer, healthcare, and telecom names.",overview:"Mega cap tech returns are driven by digital advertising, cloud computing, consumer electronics, and platform economics. These companies have dominant market positions but face increasing regulatory scrutiny.",risks:["🎯 <strong>Concentration Risk:</strong> A few companies dominate index returns","⚖️ <strong>Antitrust Risk:</strong> Regulatory actions could force breakups or limit growth","📉 <strong>Valuation Risk:</strong> Premium valuations leave little margin for disappointment","🔄 <strong>Market Rotation:</strong> Growth-to-value rotations can cause sharp underperformance","📊 <strong>Moderate-High Volatility:</strong> Tech-heavy exposure amplifies market drawdowns"],lastUpdated:"2025-05"},
+{id:"bitcoin",name:"Bitcoin / Digital Assets",description:"Exposure to Bitcoin and the broader digital asset ecosystem.",category:"alternative",megaTheme:"Crypto",tags:["bitcoin","crypto","digital assets","blockchain"],representativeAssets:["IBIT"],benchmarks:["SPY"],methodology:"Tracked via iShares Bitcoin Trust ETF (IBIT). Spot Bitcoin ETF. Limitations: Launched Jan 2024 — limited history; uses BTC price for extended backtest.",overview:"Bitcoin returns are driven by adoption trends, monetary policy expectations, regulatory developments, and speculative sentiment. It exhibits very high volatility and low correlation with traditional assets.",risks:["📊 <strong>Extreme Volatility:</strong> Drawdowns of 50-80% have occurred historically","⚖️ <strong>Regulatory Risk:</strong> Government bans or restrictions remain possible","🔄 <strong>Market Manipulation:</strong> Less regulated markets may be subject to manipulation","💰 <strong>No Intrinsic Cash Flow:</strong> Value based on supply scarcity and demand, not earnings","🌍 <strong>Custody/Security Risk:</strong> Unique risks around digital asset security"],lastUpdated:"2025-05"}
+];
+
+// Stress test periods (fixed windows)
+const STRESS_PERIODS = [
+    {id:"covid",name:"COVID Crash",from:"2020-02-19",to:"2020-03-23",desc:"Pandemic-driven sell-off"},
+    {id:"rate2022",name:"2022 Rate Shock",from:"2022-01-03",to:"2022-10-12",desc:"Fed aggressive tightening cycle"},
+    {id:"tech2022",name:"Tech Rout Q4 2022",from:"2022-08-16",to:"2022-12-28",desc:"Growth/tech sector drawdown"}
 ];
 
 // ============================================================================
 // STATE
 // ============================================================================
-let themeDataCache = {};   // themeId -> { hist, quote, computed }
-let benchmarkCache = {};   // "SP500" | "AGG" -> { hist, monthlyReturns }
-let userPortfolio = null;
-let activeCharts = [];     // track Chart instances for cleanup
+let cache = {};        // themeId -> {hist, quote, computed, trend}
+let benchCache = {};   // "SP500"|"AGG" -> {hist, monthly, daily}
+let portfolio = null;  // user portfolio from localStorage
+let charts = [];       // active Chart.js instances
+let compareMode = false;
+let compareSet = new Set();
+let watchlist = JSON.parse(localStorage.getItem('themeWatchlist')||'[]');
 
 // ============================================================================
-// INITIALIZATION
+// INIT
 // ============================================================================
 document.addEventListener('DOMContentLoaded', async () => {
-    loadDarkMode();
-    loadUserPortfolio();
-    renderThemeGrid();
-    await fetchAllData();
-    document.getElementById('loading-bar').style.display = 'none';
-    renderThemeGrid();
+    loadDark(); loadPortfolio(); renderGrid();
+    await fetchAll();
+    document.getElementById('load-bar').style.display = 'none';
+    renderGrid();
 });
 
-function toggleDarkMode() {
+function toggleDark(){
     document.body.classList.toggle('dark-mode');
-    const isDark = document.body.classList.contains('dark-mode');
-    localStorage.setItem('darkMode', isDark);
-    document.getElementById('mode-icon').textContent = isDark ? '☀️' : '🌙';
-    document.getElementById('mode-text').textContent = isDark ? 'Light Mode' : 'Dark Mode';
+    const d=document.body.classList.contains('dark-mode');
+    localStorage.setItem('darkMode',d);
+    document.getElementById('mi').textContent=d?'☀️':'🌙';
+    document.getElementById('mt').textContent=d?'Light Mode':'Dark Mode';
 }
-
-function loadDarkMode() {
-    if (localStorage.getItem('darkMode') === 'true') {
+function loadDark(){
+    if(localStorage.getItem('darkMode')==='true'){
         document.body.classList.add('dark-mode');
-        document.getElementById('mode-icon').textContent = '☀️';
-        document.getElementById('mode-text').textContent = 'Light Mode';
+        document.getElementById('mi').textContent='☀️';
+        document.getElementById('mt').textContent='Light Mode';
     }
 }
-
-function loadUserPortfolio() {
-    try {
-        const portfolios = JSON.parse(localStorage.getItem('portfolios') || '{}');
-        const currentId = localStorage.getItem('currentPortfolio') || 'default';
-        const p = portfolios[currentId];
-        if (p && p.holdings && p.holdings.length > 0) {
-            userPortfolio = p.holdings.filter(h => h.ticker && h.value > 0);
-        }
-    } catch(e) { userPortfolio = null; }
+function loadPortfolio(){
+    try{
+        const ps=JSON.parse(localStorage.getItem('portfolios')||'{}');
+        const cid=localStorage.getItem('currentPortfolio')||'default';
+        const p=ps[cid];
+        if(p&&p.holdings&&p.holdings.length>0) portfolio=p.holdings.filter(h=>h.ticker&&h.value>0);
+    }catch(e){portfolio=null}
 }
 
 // ============================================================================
-// DATA FETCHING
+// DATA FETCHING (with caching)
 // ============================================================================
-async function fetchAllData() {
-    // Fetch benchmarks + all themes in parallel
-    const benchmarkPromises = [
-        fetchHistorical('^GSPC').then(h => { benchmarkCache['SP500'] = { hist: h, monthlyReturns: computeMonthlyReturns(h) }; }),
-        fetchHistorical('AGG').then(h => { benchmarkCache['AGG'] = { hist: h, monthlyReturns: computeMonthlyReturns(h) }; })
+async function fetchAll(){
+    const bProms=[
+        fetchHist('^GSPC').then(h=>{benchCache.SP500={hist:h,...computeBenchReturns(h)}}),
+        fetchHist('AGG').then(h=>{benchCache.AGG={hist:h,...computeBenchReturns(h)}})
     ];
-    const themePromises = THEMES.map(async (theme) => {
-        const ticker = theme.representativeAssets[0];
-        try {
-            const [hist, price] = await Promise.all([fetchHistorical(ticker), fetchQuote(ticker)]);
-            const computed = computeThemeMetrics(hist, price);
-            themeDataCache[theme.id] = { hist, quote: price, computed };
-        } catch(e) {
-            console.error(`Error fetching ${ticker}:`, e);
-            themeDataCache[theme.id] = { hist: {}, quote: 0, computed: emptyMetrics() };
+    const tProms=THEMES.map(async t=>{
+        const tk=t.representativeAssets[0];
+        try{
+            const[h,q]=await Promise.all([fetchHist(tk),fetchQuote(tk)]);
+            const comp=computeMetrics(h,q);
+            const trend=computeTrendScore(comp);
+            cache[t.id]={hist:h,quote:q,computed:comp,trend};
+        }catch(e){
+            console.error(`Err ${tk}:`,e);
+            cache[t.id]={hist:{},quote:0,computed:emptyM(),trend:emptyTrend()};
         }
     });
-    await Promise.allSettled([...benchmarkPromises, ...themePromises]);
+    await Promise.allSettled([...bProms,...tProms]);
 }
 
-async function fetchHistorical(ticker) {
-    try {
-        const from = new Date(); from.setFullYear(from.getFullYear() - 10);
-        const res = await fetch(`/api/historical?symbol=${encodeURIComponent(ticker)}&from=${from.toISOString().split('T')[0]}&to=${new Date().toISOString().split('T')[0]}`);
-        if (!res.ok) return {};
-        const data = await res.json();
-        return data.data || {};
-    } catch(e) { return {}; }
+function computeBenchReturns(h){
+    const dates=Object.keys(h).sort();
+    const daily=[];
+    for(let i=1;i<dates.length;i++){const p=h[dates[i-1]]?.close,c=h[dates[i]]?.close;if(p&&c)daily.push((c-p)/p)}
+    const monthly=[];
+    for(let i=21;i<dates.length;i+=21){const p=h[dates[i-21]]?.close,c=h[dates[i]]?.close;if(p&&c)monthly.push((c-p)/p)}
+    return{daily,monthly,dates};
 }
 
-async function fetchQuote(ticker) {
-    try {
-        const res = await fetch(`/api/quote?symbol=${encodeURIComponent(ticker)}`);
-        if (!res.ok) return 0;
-        const d = await res.json();
-        return d?.c || d?.price || 0;
-    } catch(e) { return 0; }
+async function fetchHist(tk){
+    try{
+        const f=new Date();f.setFullYear(f.getFullYear()-10);
+        const r=await fetch(`/api/historical?symbol=${encodeURIComponent(tk)}&from=${f.toISOString().split('T')[0]}&to=${new Date().toISOString().split('T')[0]}`);
+        if(!r.ok)return{};const d=await r.json();return d.data||{};
+    }catch(e){return{}}
+}
+async function fetchQuote(tk){
+    try{const r=await fetch(`/api/quote?symbol=${encodeURIComponent(tk)}`);if(!r.ok)return 0;const d=await r.json();return d?.c||d?.price||0}catch(e){return 0}
 }
 
 // ============================================================================
-// CALCULATION ENGINE — consistent with portfolio visualizer
+// METRICS CALCULATION ENGINE
+// Consistent with portfolio visualizer: CAGR, vol, maxDD, Sharpe, Sortino, Calmar
 // ============================================================================
-function computeMonthlyReturns(hist) {
-    const dates = Object.keys(hist).sort();
-    const monthly = [];
-    for (let i = 21; i < dates.length; i += 21) {
-        const prev = hist[dates[i-21]]?.close;
-        const curr = hist[dates[i]]?.close;
-        if (prev && curr) monthly.push((curr - prev) / prev);
-    }
-    return monthly;
-}
-
-function computeThemeMetrics(hist, currentPrice) {
-    const dates = Object.keys(hist).sort();
-    if (dates.length < 20) return emptyMetrics();
-    const closes = dates.map(d => hist[d].close);
-    const n = closes.length;
+function computeMetrics(hist, price){
+    const dates=Object.keys(hist).sort();
+    if(dates.length<20)return emptyM();
+    const closes=dates.map(d=>hist[d].close),n=closes.length;
 
     // Daily returns
-    const dailyReturns = [];
-    for (let i = 1; i < n; i++) dailyReturns.push((closes[i] - closes[i-1]) / closes[i-1]);
+    const dr=[];for(let i=1;i<n;i++)dr.push((closes[i]-closes[i-1])/closes[i-1]);
 
-    // Monthly returns for correlation
-    const monthlyReturns = [];
-    for (let i = 21; i < n; i += 21) monthlyReturns.push((closes[i] - closes[i-21]) / closes[i-21]);
+    // Monthly returns (for correlation)
+    const mr=[];for(let i=21;i<n;i+=21)mr.push((closes[i]-closes[i-21])/closes[i-21]);
 
-    // CAGR for various periods
-    const now = new Date();
-    function cagrFrom(yearsAgo) {
-        const target = new Date(now); target.setFullYear(target.getFullYear() - yearsAgo);
-        const targetStr = target.toISOString().split('T')[0];
-        const idx = dates.findIndex(d => d >= targetStr);
-        if (idx < 0 || idx >= n - 1) return null;
-        const years = (new Date(dates[n-1]) - new Date(dates[idx])) / (365.25 * 86400000);
-        if (years < 0.5) return null;
-        return (Math.pow(closes[n-1] / closes[idx], 1 / years) - 1) * 100;
+    // CAGR helper
+    const now=new Date();
+    function cagr(y){
+        const t=new Date(now);t.setFullYear(t.getFullYear()-y);const ts=t.toISOString().split('T')[0];
+        const idx=dates.findIndex(d=>d>=ts);if(idx<0||idx>=n-1)return null;
+        const yrs=(new Date(dates[n-1])-new Date(dates[idx]))/(365.25*864e5);
+        if(yrs<.5)return null;return(Math.pow(closes[n-1]/closes[idx],1/yrs)-1)*100;
     }
 
     // Volatility (annualized std dev)
-    const mean = dailyReturns.reduce((s,r)=>s+r,0) / dailyReturns.length;
-    const variance = dailyReturns.reduce((s,r)=>s+(r-mean)**2,0) / dailyReturns.length;
-    const volatility = Math.sqrt(variance) * Math.sqrt(252) * 100;
+    const mean=dr.reduce((s,r)=>s+r,0)/dr.length;
+    const variance=dr.reduce((s,r)=>s+(r-mean)**2,0)/dr.length;
+    const vol=Math.sqrt(variance)*Math.sqrt(252)*100;
 
     // Max drawdown (peak-to-trough)
-    let peak = closes[0], maxDD = 0;
-    for (let i = 1; i < n; i++) { if (closes[i] > peak) peak = closes[i]; const dd = (peak - closes[i]) / peak; if (dd > maxDD) maxDD = dd; }
+    let peak=closes[0],maxDD=0;
+    const ddSeries=closes.map(v=>{if(v>peak)peak=v;const dd=(peak-v)/peak;if(dd>maxDD)maxDD=dd;return-dd*100});
 
-    // 3-month simple return
-    const perf3m = n > 63 ? ((closes[n-1] - closes[n-1-63]) / closes[n-1-63]) * 100 : null;
+    // 3M, 6M, 12M simple returns
+    const ret=(lb)=>n>lb?((closes[n-1]-closes[n-1-lb])/closes[n-1-lb])*100:null;
+    const p1m=ret(21),p3m=ret(63),p6m=ret(126),p12m=ret(252);
+
+    // Sharpe (rf=4.5% annual)
+    const rf=4.5;const cagr5=cagr(5);
+    const sharpe=vol>0&&cagr5!=null?(cagr5-rf)/vol:null;
+
+    // Sortino (downside deviation)
+    const negReturns=dr.filter(r=>r<0);
+    const downDev=negReturns.length>0?Math.sqrt(negReturns.reduce((s,r)=>s+r**2,0)/negReturns.length)*Math.sqrt(252)*100:0;
+    const sortino=downDev>0&&cagr5!=null?(cagr5-rf)/downDev:null;
+
+    // Calmar (CAGR / maxDD)
+    const calmar=maxDD>0&&cagr5!=null?cagr5/(maxDD*100):null;
 
     // Correlations with benchmarks
-    const corrSP500 = calcCorrelation(monthlyReturns, benchmarkCache['SP500']?.monthlyReturns || []);
-    const corrBonds = calcCorrelation(monthlyReturns, benchmarkCache['AGG']?.monthlyReturns || []);
+    const corrSP=corr(mr,benchCache.SP500?.monthly||[]);
+    const corrAGG=corr(mr,benchCache.AGG?.monthly||[]);
 
-    return { cagr1y: cagrFrom(1), cagr3y: cagrFrom(3), cagr5y: cagrFrom(5), cagr10y: cagrFrom(10), volatility, maxDrawdown: maxDD * 100, perf3m, corrSP500, corrBonds, dailyReturns, monthlyReturns, dates, closes, currentPrice };
+    // Up/Down capture vs S&P 500
+    const spDaily=benchCache.SP500?.daily||[];
+    const len=Math.min(dr.length,spDaily.length);
+    let upSum=0,upBench=0,dnSum=0,dnBench=0;
+    for(let i=dr.length-len;i<dr.length;i++){
+        const j=i-(dr.length-len);
+        if(spDaily[j]>=0){upSum+=dr[i];upBench+=spDaily[j]}
+        else{dnSum+=dr[i];dnBench+=spDaily[j]}
+    }
+    const upCapture=upBench!==0?(upSum/upBench)*100:null;
+    const dnCapture=dnBench!==0?(dnSum/dnBench)*100:null;
+
+    return{cagr1y:cagr(1),cagr3y:cagr(3),cagr5y:cagr(5),cagr10y:cagr(10),vol,maxDD:maxDD*100,p1m,p3m,p6m,p12m,sharpe,sortino,calmar,corrSP,corrAGG,upCapture,dnCapture,dr,mr,dates,closes,ddSeries,price};
 }
 
-function emptyMetrics() {
-    return { cagr1y:null, cagr3y:null, cagr5y:null, cagr10y:null, volatility:null, maxDrawdown:null, perf3m:null, corrSP500:null, corrBonds:null, dailyReturns:[], monthlyReturns:[], dates:[], closes:[], currentPrice:0 };
+function emptyM(){return{cagr1y:null,cagr3y:null,cagr5y:null,cagr10y:null,vol:null,maxDD:null,p1m:null,p3m:null,p6m:null,p12m:null,sharpe:null,sortino:null,calmar:null,corrSP:null,corrAGG:null,upCapture:null,dnCapture:null,dr:[],mr:[],dates:[],closes:[],ddSeries:[],price:0}}
+
+function corr(a,b){
+    const l=Math.min(a.length,b.length);if(l<10)return null;
+    const x=a.slice(-l),y=b.slice(-l);
+    const mx=x.reduce((s,v)=>s+v,0)/l,my=y.reduce((s,v)=>s+v,0)/l;
+    let cv=0,vx=0,vy=0;
+    for(let i=0;i<l;i++){const dx=x[i]-mx,dy=y[i]-my;cv+=dx*dy;vx+=dx*dx;vy+=dy*dy}
+    const d=Math.sqrt(vx*vy);return d===0?0:cv/d;
 }
 
-function calcCorrelation(r1, r2) {
-    const len = Math.min(r1.length, r2.length);
-    if (len < 10) return null;
-    const a = r1.slice(-len), b = r2.slice(-len);
-    const mA = a.reduce((s,v)=>s+v,0)/len, mB = b.reduce((s,v)=>s+v,0)/len;
-    let cov=0, vA=0, vB=0;
-    for (let i=0;i<len;i++) { const da=a[i]-mA, db=b[i]-mB; cov+=da*db; vA+=da*da; vB+=db*db; }
-    const d = Math.sqrt(vA*vB);
-    return d === 0 ? 0 : cov / d;
-}
-
-// Formatting helpers
-function fmtPct(v, d=1) { if (v==null||isNaN(v)) return '—'; return (v>=0?'+':'')+v.toFixed(d)+'%'; }
-function fmtPctAbs(v, d=1) { if (v==null||isNaN(v)) return '—'; return v.toFixed(d)+'%'; }
-function fmtCorr(v) { if (v==null||isNaN(v)) return '—'; return v.toFixed(2); }
-function pctColor(v) { if (v==null||isNaN(v)) return 'var(--text-secondary)'; return v>=0?'#27ae60':'#e74c3c'; }
-function corrColor(v) { if (v==null) return 'var(--text-secondary)'; return v > 0.6 ? '#27ae60' : v > 0.3 ? '#F18F01' : '#2E86AB'; }
-
-function getTrendingIds() {
-    return THEMES.map(t => ({ id: t.id, p: themeDataCache[t.id]?.computed?.perf3m ?? -Infinity }))
-        .sort((a,b)=>b.p-a.p).slice(0,3).filter(s=>s.p>0).map(s=>s.id);
+// Stress period returns
+function stressReturn(dates,closes,from,to){
+    const fi=dates.findIndex(d=>d>=from),ti=dates.findIndex(d=>d>=to);
+    if(fi<0||ti<0||fi>=ti)return null;
+    return((closes[ti]-closes[fi])/closes[fi])*100;
 }
 
 // ============================================================================
-// RENDER: THEME LIST
+// TRENDING ENGINE — Multi-signal score 0-100 with decomposition
+// Signals: Momentum(40%), RelStrength(25%), VolRegime(15%), DDRecovery(10%), TrendStability(10%)
 // ============================================================================
-function renderThemeGrid() {
-    const grid = document.getElementById('theme-grid');
-    const trending = getTrendingIds();
-    grid.innerHTML = THEMES.map(theme => {
-        const c = themeDataCache[theme.id]?.computed || emptyMetrics();
-        const catClass = 'cat-' + (theme.category==='growth'?'growth':theme.category==='defensive'?'defensive':theme.category==='alternative'?'alternative':'income');
+function computeTrendScore(c){
+    if(!c.dr||c.dr.length<60)return emptyTrend();
+
+    // 1. MOMENTUM (40%) — weighted multi-horizon returns, vol-adjusted
+    const mom1m=c.p1m!=null?c.p1m:0, mom3m=c.p3m!=null?c.p3m:0;
+    const mom6m=c.p6m!=null?c.p6m:0, mom12m=c.p12m!=null?c.p12m:0;
+    const rawMom=mom1m*0.35+mom3m*0.30+mom6m*0.20+mom12m*0.15;
+    const volAdj=c.vol>0?rawMom/(c.vol/100):rawMom;
+    // Normalize: -2 to +2 maps to 0-100
+    const momScore=Math.max(0,Math.min(100,(volAdj+2)/4*100));
+
+    // 2. RELATIVE STRENGTH vs S&P 500 (25%)
+    const spMonthly=benchCache.SP500?.monthly||[];
+    const spLen=Math.min(c.mr.length,spMonthly.length);
+    let relRet=0;
+    if(spLen>=3){
+        const t3=c.mr.slice(-3).reduce((s,v)=>s+v,0);
+        const sp3=spMonthly.slice(-3).reduce((s,v)=>s+v,0);
+        relRet=(t3-sp3)*100;
+    }
+    const relScore=Math.max(0,Math.min(100,(relRet+30)/60*100));
+
+    // 3. VOLATILITY REGIME (15%) — current vol vs 1Y avg vol
+    const recent30=c.dr.slice(-30);
+    const rMean=recent30.reduce((s,v)=>s+v,0)/30;
+    const rVol=Math.sqrt(recent30.reduce((s,r)=>s+(r-rMean)**2,0)/30)*Math.sqrt(252)*100;
+    const volRatio=c.vol>0?rVol/c.vol:1;
+    // Low ratio = calmer = higher score; >1.5 = elevated
+    const volScore=Math.max(0,Math.min(100,(2-volRatio)/1.5*100));
+
+    // 4. DRAWDOWN RECOVERY (10%) — distance from peak
+    const closes=c.closes;
+    const peak=Math.max(...closes);
+    const current=closes[closes.length-1];
+    const distFromPeak=peak>0?(current/peak):1;
+    const ddRecScore=Math.max(0,Math.min(100,distFromPeak*100));
+
+    // 5. TREND STABILITY (10%) — % of 21-day rolling windows with positive returns
+    let posCount=0,totalWindows=0;
+    for(let i=21;i<c.dr.length;i+=5){
+        const windowRet=c.closes[i]-c.closes[i-21];
+        if(windowRet>0)posCount++;
+        totalWindows++;
+    }
+    const stabScore=totalWindows>0?(posCount/totalWindows)*100:50;
+
+    // Weighted final score
+    const score=momScore*0.40+relScore*0.25+volScore*0.15+ddRecScore*0.10+stabScore*0.10;
+    const finalScore=Math.round(Math.max(0,Math.min(100,score)));
+
+    // Lifecycle label
+    let lifecycle='Emerging';
+    if(finalScore>=70)lifecycle='Crowded / Extended';
+    else if(finalScore>=40)lifecycle='Accelerating';
+    else if(finalScore>=20)lifecycle='Emerging';
+    else lifecycle='Rolling Over';
+
+    return{
+        score:finalScore,lifecycle,
+        signals:[
+            {name:'Momentum',weight:40,score:Math.round(momScore),raw:rawMom.toFixed(1)+'%'},
+            {name:'Rel. Strength',weight:25,score:Math.round(relScore),raw:(relRet>=0?'+':'')+relRet.toFixed(1)+'% vs S&P'},
+            {name:'Vol. Regime',weight:15,score:Math.round(volScore),raw:'Current '+rVol.toFixed(1)+'% vs Avg '+c.vol.toFixed(1)+'%'},
+            {name:'DD Recovery',weight:10,score:Math.round(ddRecScore),raw:(distFromPeak*100).toFixed(1)+'% of peak'},
+            {name:'Trend Stability',weight:10,score:Math.round(stabScore),raw:stabScore.toFixed(0)+'% periods positive'}
+        ]
+    };
+}
+
+function emptyTrend(){return{score:0,lifecycle:'Unknown',signals:[]}}
+
+function trendColor(s){return s>=70?'var(--orange)':s>=40?'var(--green)':s>=20?'var(--blue)':'var(--red)'}
+function lcClass(lc){
+    if(lc.includes('Crowded'))return'lc-cr';if(lc.includes('Accelerating'))return'lc-ac';
+    if(lc.includes('Emerging'))return'lc-em';return'lc-ro';
+}
+
+// ============================================================================
+// FORMATTING HELPERS
+// ============================================================================
+function fp(v,d=1){if(v==null||isNaN(v))return'—';return(v>=0?'+':'')+v.toFixed(d)+'%'}
+function fa(v,d=1){if(v==null||isNaN(v))return'—';return v.toFixed(d)+'%'}
+function fc(v){if(v==null||isNaN(v))return'—';return v.toFixed(2)}
+function fn(v){if(v==null||isNaN(v))return'—';return v.toFixed(2)}
+function pc(v){if(v==null||isNaN(v))return'var(--text2)';return v>=0?'var(--green)':'var(--red)'}
+function cc(v){if(v==null)return'var(--text2)';return v>.6?'var(--green)':v>.3?'var(--orange)':'var(--blue)'}
+function catCls(c){return c==='growth'?'c-gr':c==='defensive'?'c-df':c==='alternative'?'c-al':'c-in'}
+
+// ============================================================================
+// SEARCH, FILTER, SORT
+// ============================================================================
+function applyFilters(){
+    const q=document.getElementById('search-in').value.toLowerCase();
+    const cat=document.getElementById('cat-fil').value;
+    const sort=document.getElementById('sort-by').value;
+
+    let filtered=THEMES.filter(t=>{
+        const matchQ=!q||t.name.toLowerCase().includes(q)||t.description.toLowerCase().includes(q)||t.tags.some(tg=>tg.toLowerCase().includes(q))||t.megaTheme.toLowerCase().includes(q);
+        const matchCat=cat==='all'||t.category===cat;
+        return matchQ&&matchCat;
+    });
+
+    // Sort
+    filtered.sort((a,b)=>{
+        const ca=cache[a.id]?.computed||emptyM(),cb=cache[b.id]?.computed||emptyM();
+        const ta=cache[a.id]?.trend||emptyTrend(),tb=cache[b.id]?.trend||emptyTrend();
+        switch(sort){
+            case'trending':return tb.score-ta.score;
+            case'cagr5y':return(cb.cagr5y||0)-(ca.cagr5y||0);
+            case'volatility':return(ca.vol||999)-(cb.vol||999);
+            case'sharpe':return(cb.sharpe||0)-(ca.sharpe||0);
+            case'maxdd':return(ca.maxDD||999)-(cb.maxDD||999);
+            case'name':return a.name.localeCompare(b.name);
+            default:return 0;
+        }
+    });
+
+    renderGridFiltered(filtered);
+}
+
+// ============================================================================
+// COMPARE MODE
+// ============================================================================
+function toggleCompareMode(){
+    compareMode=!compareMode;
+    document.getElementById('cmp-btn').classList.toggle('on',compareMode);
+    document.getElementById('cmp-bar').style.display=compareMode?'block':'none';
+    if(!compareMode){compareSet.clear();renderGrid()}
+}
+
+function toggleCompareItem(id,ev){
+    ev.stopPropagation();
+    if(compareSet.has(id))compareSet.delete(id);
+    else if(compareSet.size<5)compareSet.add(id);
+    document.getElementById('cmp-count').textContent=compareSet.size+' selected';
+    document.querySelectorAll('.tcard').forEach(c=>{
+        c.classList.toggle('cmp-sel',compareSet.has(c.dataset.tid));
+    });
+}
+
+// ============================================================================
+// CSV EXPORT
+// ============================================================================
+function exportThemesCSV(){
+    const rows=[['Theme','Category','5Y CAGR','Volatility','MaxDD','Sharpe','Sortino','Trending Score','Lifecycle','Corr S&P','Corr Bonds']];
+    THEMES.forEach(t=>{
+        const c=cache[t.id]?.computed||emptyM(),tr=cache[t.id]?.trend||emptyTrend();
+        rows.push([t.name,t.category,c.cagr5y?.toFixed(2)||'',c.vol?.toFixed(2)||'',c.maxDD?.toFixed(2)||'',c.sharpe?.toFixed(2)||'',c.sortino?.toFixed(2)||'',tr.score,tr.lifecycle,c.corrSP?.toFixed(2)||'',c.corrAGG?.toFixed(2)||'']);
+    });
+    const csv=rows.map(r=>r.join(',')).join('\n');
+    const blob=new Blob([csv],{type:'text/csv'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='theme_explorer_data.csv';a.click();
+}
+
+function exportDetailCSV(themeId){
+    const t=THEMES.find(x=>x.id===themeId);
+    const c=cache[themeId]?.computed||emptyM(),tr=cache[themeId]?.trend||emptyTrend();
+    const rows=[
+        ['Metric','Value'],['Theme',t.name],['Category',t.category],['ETF Proxy',t.representativeAssets[0]],
+        ['1Y Return',c.cagr1y?.toFixed(2)||''],['3Y CAGR',c.cagr3y?.toFixed(2)||''],['5Y CAGR',c.cagr5y?.toFixed(2)||''],
+        ['10Y CAGR',c.cagr10y?.toFixed(2)||''],['Volatility',c.vol?.toFixed(2)||''],['Max Drawdown',c.maxDD?.toFixed(2)||''],
+        ['Sharpe',c.sharpe?.toFixed(2)||''],['Sortino',c.sortino?.toFixed(2)||''],['Calmar',c.calmar?.toFixed(2)||''],
+        ['Corr S&P 500',c.corrSP?.toFixed(2)||''],['Corr Bonds',c.corrAGG?.toFixed(2)||''],
+        ['Trending Score',tr.score],['Lifecycle',tr.lifecycle]
+    ];
+    const csv=rows.map(r=>r.join(',')).join('\n');
+    const blob=new Blob([csv],{type:'text/csv'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`theme_${themeId}_data.csv`;a.click();
+}
+
+// ============================================================================
+// RENDER: THEME GRID (LIST VIEW)
+// ============================================================================
+function renderGrid(){applyFilters()}
+
+function renderGridFiltered(themes){
+    const grid=document.getElementById('tgrid');
+    const top3=THEMES.map(t=>({id:t.id,s:cache[t.id]?.trend?.score||0})).sort((a,b)=>b.s-a.s).slice(0,3).filter(x=>x.s>50).map(x=>x.id);
+
+    grid.innerHTML=themes.map(t=>{
+        const c=cache[t.id]?.computed||emptyM(),tr=cache[t.id]?.trend||emptyTrend();
+        const isTrend=top3.includes(t.id);
+        const tcol=trendColor(tr.score);
         return `
-        <div class="theme-card" onclick="showDetail('${theme.id}')" data-testid="theme-card-${theme.id}">
-            ${trending.includes(theme.id) ? '<div class="trending-badge" data-testid="trending-badge">📈 Trending</div>' : ''}
-            <div class="category-tag ${catClass}">${theme.category.toUpperCase()}</div>
-            <div class="theme-card-name">${theme.name}</div>
-            <div class="theme-card-desc">${theme.description}</div>
-            <div class="theme-metrics">
-                <div class="theme-metric"><div class="theme-metric-label">5Y CAGR</div><div class="theme-metric-value" style="color:${pctColor(c.cagr5y)}">${fmtPct(c.cagr5y)}</div></div>
-                <div class="theme-metric"><div class="theme-metric-label">Volatility</div><div class="theme-metric-value">${fmtPctAbs(c.volatility)}</div></div>
-                <div class="theme-metric"><div class="theme-metric-label">Max DD</div><div class="theme-metric-value" style="color:#e74c3c">${c.maxDrawdown!=null?'-'+fmtPctAbs(c.maxDrawdown):'—'}</div></div>
+        <div class="tcard${compareSet.has(t.id)?' cmp-sel':''}" data-tid="${t.id}" onclick="${compareMode?`toggleCompareItem('${t.id}',event)`:`showDetail('${t.id}')`}" data-testid="theme-card-${t.id}">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                <div>
+                    <div class="ctag ${catCls(t.category)}">${t.category.toUpperCase()}</div>
+                    ${isTrend?'<span class="badge b-trend" data-testid="trending-badge">📈 Trending</span>':''}
+                    <span class="badge b-lc ${lcClass(tr.lifecycle)}">${tr.lifecycle}</span>
+                </div>
+                ${compareMode?`<input type="checkbox" ${compareSet.has(t.id)?'checked':''} style="width:18px;height:18px;accent-color:var(--accent)" onclick="toggleCompareItem('${t.id}',event)">`:''}
             </div>
+            <div class="tcard-name" style="margin-top:6px">${t.name}</div>
+            <div class="tcard-desc">${t.description}</div>
+            <div class="tmets">
+                <div class="tmet"><div class="tmet-l">5Y CAGR</div><div class="tmet-v" style="color:${pc(c.cagr5y)}">${fp(c.cagr5y)}</div></div>
+                <div class="tmet"><div class="tmet-l">Volatility</div><div class="tmet-v">${fa(c.vol)}</div></div>
+                <div class="tmet"><div class="tmet-l">Sharpe</div><div class="tmet-v">${fn(c.sharpe)}</div></div>
+                <div class="tmet"><div class="tmet-l">Max DD</div><div class="tmet-v" style="color:var(--red)">${c.maxDD!=null?'-'+fa(c.maxDD):'—'}</div></div>
+            </div>
+            <div class="sbar"><div class="sfill" style="width:${tr.score}%;background:${tcol}"></div></div>
+            <div class="slbl"><span>Trending: ${tr.score}/100</span><span style="color:${tcol}">${tr.lifecycle}</span></div>
         </div>`;
     }).join('');
 }
@@ -485,329 +586,366 @@ function renderThemeGrid() {
 // ============================================================================
 // RENDER: DETAIL VIEW
 // ============================================================================
-function showDetail(themeId) {
-    // Destroy old charts
-    activeCharts.forEach(c => c.destroy()); activeCharts = [];
+function showDetail(id){
+    charts.forEach(c=>c.destroy());charts=[];
+    document.getElementById('lv').style.display='none';
+    document.getElementById('cv').classList.remove('on');
+    document.getElementById('dv').classList.add('on');
 
-    document.getElementById('list-view').style.display = 'none';
-    document.getElementById('detail-view').classList.add('active');
+    const t=THEMES.find(x=>x.id===id),c=cache[id]?.computed||emptyM(),tr=cache[id]?.trend||emptyTrend();
+    const tk=t.representativeAssets[0];
+    const el=document.getElementById('dc');
 
-    const theme = THEMES.find(t => t.id === themeId);
-    const c = themeDataCache[themeId]?.computed || emptyMetrics();
-    const container = document.getElementById('detail-content');
-    const catClass = 'cat-' + (theme.category==='growth'?'growth':theme.category==='defensive'?'defensive':theme.category==='alternative'?'alternative':'income');
-    const ticker = theme.representativeAssets[0];
+    // Stress period returns
+    const stressHTML=STRESS_PERIODS.map(sp=>{
+        const ret=stressReturn(c.dates,c.closes,sp.from,sp.to);
+        const spRet=stressReturn(benchCache.SP500?.dates||[],Object.keys(benchCache.SP500?.hist||{}).sort().map(d=>benchCache.SP500.hist[d].close),sp.from,sp.to);
+        return`<tr><td style="text-align:left;font-weight:600">${sp.name}</td><td style="font-size:11px;color:var(--text2)">${sp.desc}</td><td style="color:${pc(ret)}">${fp(ret)}</td><td style="color:${pc(spRet)}">${fp(spRet)}</td></tr>`;
+    }).join('');
 
-    container.innerHTML = `
-        <div class="detail-header">
-            <div class="category-tag ${catClass}">${theme.category.toUpperCase()}</div>
-            <h2>${theme.name}</h2>
-            <p>${theme.overview}</p>
-        </div>
-        <div class="disclaimer-box"><strong>📋 Disclaimer:</strong> This section is for educational purposes only and does not constitute financial advice.</div>
+    // Signal breakdown
+    const sigHTML=tr.signals.map(s=>{
+        const col=s.score>=60?'var(--green)':s.score>=30?'var(--orange)':'var(--red)';
+        return`<tr><td style="font-weight:600">${s.name}</td><td>${s.weight}%</td><td><div class="sigbar" style="width:${s.score}px;background:${col}"></div> ${s.score}</td><td style="font-size:11px;color:var(--text2)">${s.raw}</td></tr>`;
+    }).join('');
 
-        <!-- Historical Performance -->
-        <div class="section-box">
-            <h3>📊 Historical Performance <span class="tooltip-icon" data-tip="Based on representative ETF (${ticker}). Past performance does not predict future results.">?</span></h3>
-            <div class="stats-grid" data-testid="theme-stats">
-                <div class="stat-card"><div class="stat-card-label">1Y Return</div><div class="stat-card-value" style="color:${pctColor(c.cagr1y)}">${fmtPct(c.cagr1y)}</div></div>
-                <div class="stat-card"><div class="stat-card-label">3Y CAGR</div><div class="stat-card-value" style="color:${pctColor(c.cagr3y)}">${fmtPct(c.cagr3y)}</div></div>
-                <div class="stat-card"><div class="stat-card-label">5Y CAGR</div><div class="stat-card-value" style="color:${pctColor(c.cagr5y)}">${fmtPct(c.cagr5y)}</div></div>
-                <div class="stat-card"><div class="stat-card-label">10Y CAGR</div><div class="stat-card-value" style="color:${pctColor(c.cagr10y)}">${fmtPct(c.cagr10y)}</div></div>
-                <div class="stat-card"><div class="stat-card-label">Volatility <span class="tooltip-icon" data-tip="Annualized standard deviation of daily returns">?</span></div><div class="stat-card-value">${fmtPctAbs(c.volatility)}</div></div>
-                <div class="stat-card"><div class="stat-card-label">Max Drawdown <span class="tooltip-icon" data-tip="Largest peak-to-trough decline">?</span></div><div class="stat-card-value" style="color:#e74c3c">${c.maxDrawdown!=null?'-'+fmtPctAbs(c.maxDrawdown):'—'}</div></div>
-                <div class="stat-card"><div class="stat-card-label">3M Perf</div><div class="stat-card-value" style="color:${pctColor(c.perf3m)}">${fmtPct(c.perf3m)}</div></div>
-                <div class="stat-card"><div class="stat-card-label">Corr S&P 500 <span class="tooltip-icon" data-tip="Rolling monthly return correlation with S&P 500. 1.0 = moves identically, 0 = uncorrelated">?</span></div><div class="stat-card-value" style="color:${corrColor(c.corrSP500)}">${fmtCorr(c.corrSP500)}</div></div>
-                <div class="stat-card"><div class="stat-card-label">Corr Bonds <span class="tooltip-icon" data-tip="Rolling monthly return correlation with US Aggregate Bonds (AGG)">?</span></div><div class="stat-card-value" style="color:${corrColor(c.corrBonds)}">${fmtCorr(c.corrBonds)}</div></div>
+    el.innerHTML=`
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:25px">
+            <div>
+                <div class="ctag ${catCls(t.category)}">${t.category.toUpperCase()}</div>
+                <span class="badge b-lc ${lcClass(tr.lifecycle)}">${tr.lifecycle}</span>
+                <span class="mtag">${t.megaTheme}</span>
+                ${t.tags.map(tg=>'<span class="mtag">'+tg+'</span>').join('')}
+                <h2 style="font-size:24px;font-weight:700;margin-top:6px">${t.name}</h2>
+                <p style="font-size:14px;color:var(--text2);line-height:1.6;margin-top:6px">${t.overview}</p>
             </div>
-            <div style="margin-top:20px;"><canvas id="perf-chart" style="max-height:280px;"></canvas></div>
-            <div style="margin-top:20px;"><canvas id="drawdown-chart" style="max-height:200px;"></canvas></div>
-            <div style="margin-top:20px;"><canvas id="vol-chart" style="max-height:200px;"></canvas></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="xbtn" onclick="exportDetailCSV('${id}')">📥 Export CSV</button>
+            </div>
+        </div>
+        <div class="disc"><strong>📋 Disclaimer:</strong> For educational purposes only. Does not constitute financial advice. Data via representative ETF (${tk}).</div>
+
+        <!-- Trending Score -->
+        <div class="sbox" data-testid="trending-section">
+            <h3>📈 Trending Score: <span style="color:${trendColor(tr.score)};font-size:24px">${tr.score}/100</span> <span class="badge b-lc ${lcClass(tr.lifecycle)}">${tr.lifecycle}</span></h3>
+            <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Trending based on recent short-term performance. Short-term trends do not predict future returns.</p>
+            <table class="sigtbl" data-testid="signal-table">
+                <thead><tr><th>Signal</th><th>Weight</th><th>Score</th><th>Detail</th></tr></thead>
+                <tbody>${sigHTML}</tbody>
+            </table>
         </div>
 
-        <!-- Risk Education (mandatory) -->
-        <div class="section-box" data-testid="risk-section">
+        <!-- Performance Stats -->
+        <div class="sbox">
+            <h3>📊 Historical Performance <span class="tt" data-tip="Based on ${tk}. Past performance does not predict future results.">?</span></h3>
+            <div class="sgrid" data-testid="theme-stats">
+                <div class="sc"><div class="sc-l">1Y Return</div><div class="sc-v" style="color:${pc(c.cagr1y)}">${fp(c.cagr1y)}</div></div>
+                <div class="sc"><div class="sc-l">3Y CAGR</div><div class="sc-v" style="color:${pc(c.cagr3y)}">${fp(c.cagr3y)}</div></div>
+                <div class="sc"><div class="sc-l">5Y CAGR</div><div class="sc-v" style="color:${pc(c.cagr5y)}">${fp(c.cagr5y)}</div></div>
+                <div class="sc"><div class="sc-l">10Y CAGR</div><div class="sc-v" style="color:${pc(c.cagr10y)}">${fp(c.cagr10y)}</div></div>
+                <div class="sc"><div class="sc-l">Volatility <span class="tt" data-tip="Annualized standard deviation of daily returns">?</span></div><div class="sc-v">${fa(c.vol)}</div></div>
+                <div class="sc"><div class="sc-l">Max DD <span class="tt" data-tip="Largest peak-to-trough decline">?</span></div><div class="sc-v" style="color:var(--red)">${c.maxDD!=null?'-'+fa(c.maxDD):'—'}</div></div>
+                <div class="sc"><div class="sc-l">Sharpe <span class="tt" data-tip="(CAGR - Rf) / Volatility. Rf=4.5%">?</span></div><div class="sc-v">${fn(c.sharpe)}</div></div>
+                <div class="sc"><div class="sc-l">Sortino <span class="tt" data-tip="Like Sharpe but penalizes only downside vol">?</span></div><div class="sc-v">${fn(c.sortino)}</div></div>
+                <div class="sc"><div class="sc-l">Calmar <span class="tt" data-tip="CAGR / Max Drawdown">?</span></div><div class="sc-v">${fn(c.calmar)}</div></div>
+                <div class="sc"><div class="sc-l">Corr S&P <span class="tt" data-tip="Monthly return correlation with S&P 500">?</span></div><div class="sc-v" style="color:${cc(c.corrSP)}">${fc(c.corrSP)}</div></div>
+                <div class="sc"><div class="sc-l">Corr Bonds</div><div class="sc-v" style="color:${cc(c.corrAGG)}">${fc(c.corrAGG)}</div></div>
+                <div class="sc"><div class="sc-l">Up Capture <span class="tt" data-tip="Performance in up markets vs S&P 500. >100% = outperforms in rallies">?</span></div><div class="sc-v">${c.upCapture!=null?c.upCapture.toFixed(0)+'%':'—'}</div></div>
+                <div class="sc"><div class="sc-l">Down Capture <span class="tt" data-tip="Performance in down markets vs S&P 500. <100% = loses less in selloffs">?</span></div><div class="sc-v">${c.dnCapture!=null?c.dnCapture.toFixed(0)+'%':'—'}</div></div>
+            </div>
+            <div style="margin-top:20px"><canvas id="perf-ch" style="max-height:280px"></canvas></div>
+            <div style="margin-top:20px"><canvas id="dd-ch" style="max-height:200px"></canvas></div>
+            <div style="margin-top:20px"><canvas id="vol-ch" style="max-height:200px"></canvas></div>
+            <div style="margin-top:20px"><canvas id="rcorr-ch" style="max-height:200px"></canvas></div>
+        </div>
+
+        <!-- Stress Test -->
+        <div class="sbox" data-testid="stress-section">
+            <h3>🔥 Stress Period Analysis</h3>
+            <table class="stress-tbl"><thead><tr><th style="text-align:left">Period</th><th>Description</th><th>${t.name}</th><th>S&P 500</th></tr></thead><tbody>${stressHTML}</tbody></table>
+        </div>
+
+        <!-- Risks -->
+        <div class="sbox" data-testid="risk-section">
             <h3>⚠️ What Are the Risks?</h3>
-            <ul class="risk-list">${theme.risks.map(r=>'<li>'+r+'</li>').join('')}</ul>
+            <ul class="rlist">${t.risks.map(r=>'<li>'+r+'</li>').join('')}</ul>
         </div>
 
-        <!-- Portfolio Simulation -->
-        <div class="section-box" data-testid="simulation-section">
-            <h3>🧪 Simulate Adding to Your Portfolio <span class="tooltip-icon" data-tip="Hypothetical simulation using historical data only. Not a recommendation.">?</span></h3>
-            ${userPortfolio && userPortfolio.length > 0 ? `
-                <p style="font-size:13px; color:var(--text-secondary); margin-bottom:14px;">
-                    Choose a hypothetical allocation to see how adding this theme would have changed your portfolio's historical characteristics.
-                </p>
-                <div class="sim-alloc-btns" data-testid="sim-alloc-btns">
-                    <button class="sim-alloc-btn" onclick="runSimulation('${themeId}', 5)">5%</button>
-                    <button class="sim-alloc-btn" onclick="runSimulation('${themeId}', 10)">10%</button>
-                    <button class="sim-alloc-btn" onclick="runSimulation('${themeId}', 20)">20%</button>
-                    <input type="number" id="custom-alloc" placeholder="Custom %" min="1" max="50" style="width:80px; padding:8px; border:2px solid var(--border-color); border-radius:8px; font-size:13px; background:var(--card-bg); color:var(--text-primary);">
-                    <button class="sim-alloc-btn" onclick="runSimulation('${themeId}', parseInt(document.getElementById('custom-alloc').value)||10)">Apply</button>
-                </div>
-                <div id="sim-results"></div>
-            ` : `
-                <div style="padding:30px; text-align:center; background:var(--input-bg); border-radius:12px;">
-                    <div style="font-size:14px; color:var(--text-secondary);">
-                        No portfolio data found. <a href="/" style="color:#5E548E; font-weight:600;">Visualize your portfolio</a> first to enable simulation.
-                    </div>
-                </div>
-            `}
-        </div>
-
-        <!-- Rebalancing Compatibility -->
-        <div class="section-box" data-testid="rebalancing-compat">
-            <h3>🔄 Add to Your Portfolio & Rebalancing Simulator</h3>
-            <p style="font-size:13px; color:var(--text-secondary); line-height:1.6; margin-bottom:12px;">
-                This theme's representative ETF (<strong>${ticker}</strong>) can be added as a holding in your portfolio.
-                Once added, it integrates with the Rebalancing Simulator — all strategies (annual, quarterly, threshold-based) will apply to it like any other asset.
-            </p>
-            <div class="cta-box">
-                <a href="/">← Go to Portfolio Visualizer</a> and add <strong>${ticker}</strong> as a holding to include this theme in rebalancing simulations.
+        <!-- Methodology -->
+        <div class="sbox" data-testid="methodology-section">
+            <h3>📋 Methodology & Data</h3>
+            <div class="mpanel">
+                <strong>Representative ETF:</strong> ${tk}<br>
+                <strong>Methodology:</strong> ${t.methodology}<br>
+                <strong>Data Coverage:</strong> Prices (daily) | Holdings: proxy only<br>
+                <strong>Last Updated:</strong> ${t.lastUpdated}<br>
+                <strong>Benchmarks:</strong> ${t.benchmarks.join(', ')}<br>
+                <strong>Limitations:</strong> Single-ETF proxy may not capture full theme exposure. Holdings data is approximate. Short history for some ETFs.
             </div>
+        </div>
+
+        <!-- Portfolio Sim -->
+        <div class="sbox" data-testid="simulation-section">
+            <h3>🧪 Simulate Adding to Portfolio <span class="tt" data-tip="Hypothetical only. Not a recommendation.">?</span></h3>
+            ${portfolio&&portfolio.length>0?`
+                <p style="font-size:13px;color:var(--text2);margin-bottom:14px">Choose a hypothetical allocation to see how adding this theme would change portfolio characteristics.</p>
+                <div class="sa-btns" data-testid="sim-alloc-btns">
+                    <button class="sa-btn" onclick="runSim('${id}',5)">5%</button>
+                    <button class="sa-btn" onclick="runSim('${id}',10)">10%</button>
+                    <button class="sa-btn" onclick="runSim('${id}',20)">20%</button>
+                    <input type="number" id="ca" placeholder="Custom %" min="1" max="50" style="width:80px;padding:8px;border:2px solid var(--border);border-radius:8px;font-size:13px;background:var(--card);color:var(--text)">
+                    <button class="sa-btn" onclick="runSim('${id}',parseInt(document.getElementById('ca').value)||10)">Apply</button>
+                </div><div id="sim-r"></div>
+            `:`<div style="padding:30px;text-align:center;background:var(--input-bg);border-radius:12px"><div style="font-size:14px;color:var(--text2)">No portfolio data. <a href="/" style="color:var(--accent);font-weight:600">Visualize your portfolio</a> first.</div></div>`}
+        </div>
+
+        <!-- Rebalancing -->
+        <div class="sbox" data-testid="rebalancing-compat">
+            <h3>🔄 Add to Portfolio & Rebalancing</h3>
+            <p style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:12px">Representative ETF (<strong>${tk}</strong>) can be added as a holding. Once added, all rebalancing strategies (annual, quarterly, threshold) apply.</p>
+            <div class="cta"><a href="/">← Go to Portfolio Visualizer</a> and add <strong>${tk}</strong> as a holding.</div>
         </div>
     `;
 
-    // Draw charts
-    if (c.dates.length > 20) { drawPerfChart(c); drawDrawdownChart(c); drawVolChart(c); }
+    if(c.dates.length>20){drawPerf(c);drawDD(c);drawVol(c);drawRollingCorr(c)}
 }
 
-function showListView() {
-    activeCharts.forEach(c => c.destroy()); activeCharts = [];
-    document.getElementById('detail-view').classList.remove('active');
-    document.getElementById('list-view').style.display = 'block';
+function showList(){
+    charts.forEach(c=>c.destroy());charts=[];
+    document.getElementById('dv').classList.remove('on');
+    document.getElementById('cv').classList.remove('on');
+    document.getElementById('lv').style.display='block';
 }
 
 // ============================================================================
-// CHARTS — Performance, Drawdown, Rolling Volatility
+// CHARTS — Performance, Drawdown, Rolling Vol, Rolling Correlation
 // ============================================================================
-function chartColors() {
-    const isDark = document.body.classList.contains('dark-mode');
-    return { text: isDark ? '#ccc' : '#666', grid: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' };
+function chCol(){const d=document.body.classList.contains('dark-mode');return{t:d?'#ccc':'#666',g:d?'rgba(255,255,255,.08)':'rgba(0,0,0,.05)'}}
+
+function sample(arr,max){
+    if(arr.length<=max)return{d:arr,ix:arr.map((_,i)=>i)};
+    const step=Math.max(1,Math.floor(arr.length/max));const ix=[],d=[];
+    for(let i=0;i<arr.length;i+=step){ix.push(i);d.push(arr[i])}
+    if(ix[ix.length-1]!==arr.length-1){ix.push(arr.length-1);d.push(arr[arr.length-1])}
+    return{d,ix};
 }
 
-function sampleData(arr, maxPoints) {
-    if (arr.length <= maxPoints) return { data: arr, indices: arr.map((_,i)=>i) };
-    const step = Math.max(1, Math.floor(arr.length / maxPoints));
-    const indices = []; const data = [];
-    for (let i = 0; i < arr.length; i += step) { indices.push(i); data.push(arr[i]); }
-    if (indices[indices.length-1] !== arr.length-1) { indices.push(arr.length-1); data.push(arr[arr.length-1]); }
-    return { data, indices };
+function drawPerf(c){
+    const ctx=document.getElementById('perf-ch');if(!ctx)return;
+    const{t,g}=chCol();const base=c.closes[0];
+    const norm=c.closes.map(v=>(v/base)*100);
+    const{d,ix}=sample(norm,500);const labels=ix.map(i=>c.dates[i]);
+    charts.push(new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'Growth of $100',data:d,borderColor:'#5E548E',backgroundColor:'rgba(94,84,142,.1)',fill:true,pointRadius:0,borderWidth:2,tension:.1}]},options:{responsive:true,plugins:{legend:{labels:{color:t}},tooltip:{mode:'index',intersect:false}},scales:{x:{ticks:{color:t,maxTicksLimit:8},grid:{color:g}},y:{ticks:{color:t},grid:{color:g}}}}}));
 }
 
-function drawPerfChart(c) {
-    const ctx = document.getElementById('perf-chart'); if (!ctx) return;
-    const { text, grid } = chartColors();
-    const base = c.closes[0];
-    const normalized = c.closes.map(v => (v / base) * 100);
-    const { data, indices } = sampleData(normalized, 500);
-    const labels = indices.map(i => c.dates[i]);
-
-    activeCharts.push(new Chart(ctx, {
-        type: 'line',
-        data: { labels, datasets: [{ label: 'Growth of $100', data, borderColor: '#5E548E', backgroundColor: 'rgba(94,84,142,0.1)', fill: true, pointRadius: 0, borderWidth: 2, tension: 0.1 }] },
-        options: { responsive: true, plugins: { legend: { labels: { color: text } }, tooltip: { mode: 'index', intersect: false } }, scales: { x: { ticks: { color: text, maxTicksLimit: 8 }, grid: { color: grid } }, y: { ticks: { color: text }, grid: { color: grid } } } }
-    }));
+function drawDD(c){
+    const ctx=document.getElementById('dd-ch');if(!ctx)return;
+    const{t,g}=chCol();
+    const{d,ix}=sample(c.ddSeries,500);const labels=ix.map(i=>c.dates[i]);
+    charts.push(new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'Drawdown %',data:d,borderColor:'var(--red)',backgroundColor:'rgba(231,76,60,.1)',fill:true,pointRadius:0,borderWidth:1.5,tension:.1}]},options:{responsive:true,plugins:{legend:{labels:{color:t}}},scales:{x:{ticks:{color:t,maxTicksLimit:8},grid:{color:g}},y:{ticks:{color:t,callback:v=>v.toFixed(0)+'%'},grid:{color:g}}}}}));
 }
 
-function drawDrawdownChart(c) {
-    const ctx = document.getElementById('drawdown-chart'); if (!ctx) return;
-    const { text, grid } = chartColors();
-    let peak = c.closes[0];
-    const dd = c.closes.map(v => { if (v > peak) peak = v; return ((v - peak) / peak) * 100; });
-    const { data, indices } = sampleData(dd, 500);
-    const labels = indices.map(i => c.dates[i]);
-
-    activeCharts.push(new Chart(ctx, {
-        type: 'line',
-        data: { labels, datasets: [{ label: 'Drawdown %', data, borderColor: '#e74c3c', backgroundColor: 'rgba(231,76,60,0.1)', fill: true, pointRadius: 0, borderWidth: 1.5, tension: 0.1 }] },
-        options: { responsive: true, plugins: { legend: { labels: { color: text } } }, scales: { x: { ticks: { color: text, maxTicksLimit: 8 }, grid: { color: grid } }, y: { ticks: { color: text, callback: v => v.toFixed(0)+'%' }, grid: { color: grid } } } }
-    }));
-}
-
-function drawVolChart(c) {
-    const ctx = document.getElementById('vol-chart'); if (!ctx) return;
-    const { text, grid } = chartColors();
-    const w = 30; const rollingVol = []; const volDates = [];
-    for (let i = w; i < c.dailyReturns.length; i++) {
-        const sl = c.dailyReturns.slice(i-w, i);
-        const m = sl.reduce((s,v)=>s+v,0)/w;
-        const v = sl.reduce((s,r)=>s+(r-m)**2,0)/w;
-        rollingVol.push(Math.sqrt(v)*Math.sqrt(252)*100);
-        volDates.push(c.dates[i+1]||'');
+function drawVol(c){
+    const ctx=document.getElementById('vol-ch');if(!ctx)return;
+    const{t,g}=chCol();const w=30;const rv=[],vd=[];
+    for(let i=w;i<c.dr.length;i++){
+        const sl=c.dr.slice(i-w,i);const m=sl.reduce((s,v)=>s+v,0)/w;
+        rv.push(Math.sqrt(sl.reduce((s,r)=>s+(r-m)**2,0)/w)*Math.sqrt(252)*100);
+        vd.push(c.dates[i+1]||'');
     }
-    const { data, indices } = sampleData(rollingVol, 500);
-    const labels = indices.map(i => volDates[i]);
+    const{d,ix}=sample(rv,500);const labels=ix.map(i=>vd[i]);
+    charts.push(new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'30-Day Rolling Vol (Ann.)',data:d,borderColor:'var(--orange)',backgroundColor:'rgba(241,143,1,.1)',fill:true,pointRadius:0,borderWidth:1.5,tension:.1}]},options:{responsive:true,plugins:{legend:{labels:{color:t}}},scales:{x:{ticks:{color:t,maxTicksLimit:8},grid:{color:g}},y:{ticks:{color:t,callback:v=>v.toFixed(0)+'%'},grid:{color:g}}}}}));
+}
 
-    activeCharts.push(new Chart(ctx, {
-        type: 'line',
-        data: { labels, datasets: [{ label: '30-Day Rolling Volatility (Annualized)', data, borderColor: '#F18F01', backgroundColor: 'rgba(241,143,1,0.1)', fill: true, pointRadius: 0, borderWidth: 1.5, tension: 0.1 }] },
-        options: { responsive: true, plugins: { legend: { labels: { color: text } } }, scales: { x: { ticks: { color: text, maxTicksLimit: 8 }, grid: { color: grid } }, y: { ticks: { color: text, callback: v => v.toFixed(0)+'%' }, grid: { color: grid } } } }
-    }));
+function drawRollingCorr(c){
+    const ctx=document.getElementById('rcorr-ch');if(!ctx)return;
+    const{t,g}=chCol();
+    const spD=benchCache.SP500?.daily||[];const len=Math.min(c.dr.length,spD.length);
+    if(len<90)return;
+    const w=60;const rc=[],rd=[];
+    for(let i=w;i<len;i++){
+        const a=c.dr.slice(c.dr.length-len+i-w,c.dr.length-len+i);
+        const b=spD.slice(i-w,i);
+        rc.push(corr(a,b));
+        rd.push(c.dates[c.dates.length-len+i]||'');
+    }
+    const{d,ix}=sample(rc,500);const labels=ix.map(i=>rd[i]);
+    charts.push(new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'60-Day Rolling Corr vs S&P 500',data:d,borderColor:'var(--blue)',backgroundColor:'rgba(46,134,171,.1)',fill:true,pointRadius:0,borderWidth:1.5,tension:.1}]},options:{responsive:true,plugins:{legend:{labels:{color:t}}},scales:{x:{ticks:{color:t,maxTicksLimit:8},grid:{color:g}},y:{min:-1,max:1,ticks:{color:t},grid:{color:g}}}}}));
+}
+
+// ============================================================================
+// COMPARE VIEW — side by side 2-5 themes
+// ============================================================================
+function showCompare(){
+    if(compareSet.size<2){alert('Select at least 2 themes to compare.');return}
+    charts.forEach(c=>c.destroy());charts=[];
+    document.getElementById('lv').style.display='none';
+    document.getElementById('dv').classList.remove('on');
+    document.getElementById('cv').classList.add('on');
+
+    const ids=[...compareSet];
+    const themes=ids.map(id=>THEMES.find(t=>t.id===id));
+    const el=document.getElementById('cc');
+
+    // Metrics comparison table
+    const metrics=['cagr1y','cagr3y','cagr5y','vol','maxDD','sharpe','sortino','calmar','corrSP','corrAGG'];
+    const labels=['1Y Return','3Y CAGR','5Y CAGR','Volatility','Max DD','Sharpe','Sortino','Calmar','Corr S&P','Corr Bonds'];
+
+    let tableHTML=`<table class="ctable" data-testid="compare-table"><thead><tr><th>Metric</th>${themes.map(t=>'<th>'+t.name+'</th>').join('')}</tr></thead><tbody>`;
+    metrics.forEach((m,mi)=>{
+        tableHTML+=`<tr><td style="font-weight:600;text-align:left">${labels[mi]}</td>`;
+        themes.forEach(t=>{
+            const c=cache[t.id]?.computed||emptyM();
+            const v=c[m];
+            const isBad=m==='maxDD';
+            tableHTML+=`<td style="color:${m==='vol'||m==='maxDD'?'var(--text)':pc(v)}">${m==='maxDD'&&v!=null?'-'+fa(v):['sharpe','sortino','calmar','corrSP','corrAGG'].includes(m)?fn(v):fp(v)}</td>`;
+        });
+        tableHTML+='</tr>';
+    });
+    // Trending row
+    tableHTML+=`<tr><td style="font-weight:600;text-align:left">Trending Score</td>`;
+    themes.forEach(t=>{const tr=cache[t.id]?.trend||emptyTrend();tableHTML+=`<td style="color:${trendColor(tr.score)};font-weight:700">${tr.score}/100</td>`});
+    tableHTML+='</tr></tbody></table>';
+
+    // Correlation matrix between selected themes
+    let corrHTML='<table class="stress-tbl"><thead><tr><th></th>'+themes.map(t=>'<th>'+t.name.split(' ')[0]+'</th>').join('')+'</tr></thead><tbody>';
+    themes.forEach((t1,i)=>{
+        corrHTML+=`<tr><td style="font-weight:600;text-align:left">${t1.name.split(' ')[0]}</td>`;
+        themes.forEach((t2,j)=>{
+            if(i===j)corrHTML+='<td style="background:var(--accent-l);font-weight:700">1.00</td>';
+            else{
+                const c1=cache[t1.id]?.computed||emptyM(),c2=cache[t2.id]?.computed||emptyM();
+                const r=corr(c1.mr,c2.mr);
+                const intensity=r!=null?Math.abs(r):.5;
+                const bg=r!=null&&r>=0?`rgba(39,174,96,${intensity*.3})`:`rgba(231,76,60,${intensity*.3})`;
+                corrHTML+=`<td style="background:${bg}">${fc(r)}</td>`;
+            }
+        });
+        corrHTML+='</tr>';
+    });
+    corrHTML+='</tbody></table>';
+
+    el.innerHTML=`
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+            <h2 style="font-size:20px">📊 Comparing ${themes.length} Themes</h2>
+            <button class="xbtn" onclick="exportCompareCSV()">📥 Export Comparison CSV</button>
+        </div>
+
+        <div class="sbox">
+            <h3>Performance Comparison</h3>
+            <canvas id="cmp-perf-ch" style="max-height:300px"></canvas>
+        </div>
+
+        <div class="sbox">
+            <h3>Key Metrics</h3>
+            ${tableHTML}
+        </div>
+
+        <div class="sbox">
+            <h3>Correlation Matrix <span class="tt" data-tip="Monthly return correlations between selected themes">?</span></h3>
+            ${corrHTML}
+        </div>
+
+        <div class="disc" style="margin-top:20px">Past performance does not guarantee future results. This comparison is for educational purposes only.</div>
+    `;
+
+    // Draw overlay performance chart
+    drawComparePerf(themes);
+}
+
+function drawComparePerf(themes){
+    const ctx=document.getElementById('cmp-perf-ch');if(!ctx)return;
+    const{t,g}=chCol();
+    const colors=['#5E548E','#2E86AB','#27ae60','#F18F01','#e74c3c'];
+    const datasets=themes.map((th,i)=>{
+        const c=cache[th.id]?.computed||emptyM();
+        if(c.closes.length<20)return null;
+        const base=c.closes[0];const norm=c.closes.map(v=>(v/base)*100);
+        const{d,ix}=sample(norm,400);
+        return{label:th.name,data:d,borderColor:colors[i%5],pointRadius:0,borderWidth:2,tension:.1,fill:false,_dates:ix.map(j=>c.dates[j])};
+    }).filter(Boolean);
+
+    // Use longest date array for labels
+    const longest=datasets.reduce((a,b)=>a._dates.length>b._dates.length?a:b);
+    charts.push(new Chart(ctx,{type:'line',data:{labels:longest._dates,datasets:datasets.map(d=>({label:d.label,data:d.data,borderColor:d.borderColor,pointRadius:0,borderWidth:2,tension:.1,fill:false}))},options:{responsive:true,plugins:{legend:{labels:{color:t}},tooltip:{mode:'index',intersect:false}},scales:{x:{ticks:{color:t,maxTicksLimit:8},grid:{color:g}},y:{ticks:{color:t},grid:{color:g}}}}}));
+}
+
+function exportCompareCSV(){
+    const ids=[...compareSet];const themes=ids.map(id=>THEMES.find(t=>t.id===id));
+    const metrics=['cagr1y','cagr3y','cagr5y','vol','maxDD','sharpe','sortino'];
+    const labels=['1Y Return','3Y CAGR','5Y CAGR','Volatility','Max DD','Sharpe','Sortino'];
+    const rows=[['Metric',...themes.map(t=>t.name)]];
+    metrics.forEach((m,i)=>{
+        rows.push([labels[i],...themes.map(t=>{const c=cache[t.id]?.computed||emptyM();return c[m]?.toFixed(2)||''})]);
+    });
+    const csv=rows.map(r=>r.join(',')).join('\n');
+    const blob=new Blob([csv],{type:'text/csv'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='theme_comparison.csv';a.click();
 }
 
 // ============================================================================
 // PORTFOLIO SIMULATION + MONTE CARLO
 // ============================================================================
-function runSimulation(themeId, allocPct) {
-    const tc = themeDataCache[themeId]?.computed;
-    if (!tc || tc.dailyReturns.length < 50 || !userPortfolio) return;
+function runSim(id,pct){
+    const tc=cache[id]?.computed;
+    if(!tc||tc.dr.length<50||!portfolio)return;
+    document.querySelectorAll('.sa-btn').forEach(b=>b.classList.remove('on'));
+    if(event?.target)event.target.classList.add('on');
 
-    // Highlight active button
-    document.querySelectorAll('.sim-alloc-btn').forEach(b => b.classList.remove('active'));
-    if (event?.target) event.target.classList.add('active');
+    const w=Math.min(Math.max(pct,1),50)/100;
+    const tv=portfolio.reduce((s,h)=>s+(h.value||0),0);
+    if(tv<=0)return;
 
-    const alloc = Math.min(Math.max(allocPct, 1), 50) / 100;
-    const totalValue = userPortfolio.reduce((s,h) => s + (h.value||0), 0);
-    if (totalValue <= 0) return;
+    const cC=10,cV=15,cDD=25;// current portfolio proxy
+    const tC=tc.cagr5y||tc.cagr3y||tc.cagr1y||0,tV=tc.vol||20,tDD=tc.maxDD||30;
+    const rho=.6;
+    const bC=(1-w)*cC+w*tC;
+    const bV=Math.sqrt(((1-w)*cV/100)**2+(w*tV/100)**2+2*(1-w)*w*(cV/100)*(tV/100)*rho)*100;
+    const bDD=(1-w)*cDD+w*tDD;
+    const rf=4.5;const cSh=(cC-rf)/cV,bSh=(bC-rf)/bV;
+    const vi=bV-cV;
 
-    // Current portfolio proxy estimates (reasonable equity-like defaults)
-    // Assumption: user portfolio is broadly equity-like. Documented in output.
-    const currentCAGR = 10, currentVol = 15, currentMaxDD = 25;
-    const themeCAGR = tc.cagr5y || tc.cagr3y || tc.cagr1y || 0;
-    const themeVol = tc.volatility || 20;
-    const themeMaxDD = tc.maxDrawdown || 30;
+    const mcC=runMC(tv,cC/100,cV/100,10,5000);
+    const mcB=runMC(tv,bC/100,bV/100,10,5000);
+    const tn=THEMES.find(t=>t.id===id)?.name||'Theme';
 
-    // Blended estimates — portfolio theory (simplified with assumed correlation)
-    // Assumption: correlation between current portfolio and theme = 0.6 (documented)
-    const rho = 0.6;
-    const w = alloc;
-    const blendedCAGR = (1-w)*currentCAGR + w*themeCAGR;
-    const blendedVol = Math.sqrt(((1-w)*currentVol/100)**2 + (w*themeVol/100)**2 + 2*(1-w)*w*(currentVol/100)*(themeVol/100)*rho) * 100;
-    const blendedMaxDD = (1-w)*currentMaxDD + w*themeMaxDD;
-    const rf = 4;
-    const currentSharpe = (currentCAGR - rf) / currentVol;
-    const blendedSharpe = (blendedCAGR - rf) / blendedVol;
-    const volIncrease = blendedVol - currentVol;
-
-    // Monte Carlo simulation (10-year projection)
-    const mcCurrent = runMonteCarlo(totalValue, currentCAGR/100, currentVol/100, 10, 5000);
-    const mcBlended = runMonteCarlo(totalValue, blendedCAGR/100, blendedVol/100, 10, 5000);
-
-    const themeName = THEMES.find(t=>t.id===themeId)?.name || 'Theme';
-
-    const resultsDiv = document.getElementById('sim-results');
-    resultsDiv.innerHTML = `
-        <table class="comparison-table" data-testid="sim-comparison-table">
-            <thead><tr><th>Metric</th><th>Current Portfolio (est.)</th><th>With ${allocPct}% ${themeName}</th></tr></thead>
+    document.getElementById('sim-r').innerHTML=`
+        <table class="ctable" data-testid="sim-comparison-table">
+            <thead><tr><th>Metric</th><th>Current (est.)</th><th>With ${pct}% ${tn}</th></tr></thead>
             <tbody>
-                <tr><td>Expected CAGR <span class="tooltip-icon" data-tip="Compound Annual Growth Rate">?</span></td><td style="color:${pctColor(currentCAGR)}">${fmtPct(currentCAGR)}</td><td style="color:${pctColor(blendedCAGR)}">${fmtPct(blendedCAGR)}</td></tr>
-                <tr><td>Volatility <span class="tooltip-icon" data-tip="Annualized standard deviation">?</span></td><td>${fmtPctAbs(currentVol)}</td><td>${fmtPctAbs(blendedVol)}</td></tr>
-                <tr><td>Max Drawdown (est.)</td><td style="color:#e74c3c">-${fmtPctAbs(currentMaxDD)}</td><td style="color:#e74c3c">-${fmtPctAbs(blendedMaxDD)}</td></tr>
-                <tr><td>Sharpe Ratio <span class="tooltip-icon" data-tip="Risk-adjusted return (higher is better)">?</span></td><td>${currentSharpe.toFixed(2)}</td><td>${blendedSharpe.toFixed(2)}</td></tr>
-                <tr><td>MC Median (10Y) <span class="tooltip-icon" data-tip="Median outcome from Monte Carlo simulation">?</span></td><td>$${mcCurrent.median.toLocaleString('en-US',{maximumFractionDigits:0})}</td><td>$${mcBlended.median.toLocaleString('en-US',{maximumFractionDigits:0})}</td></tr>
-                <tr><td>MC 5th Percentile <span class="tooltip-icon" data-tip="Worst 5% outcome — downside risk measure">?</span></td><td style="color:#e74c3c">$${mcCurrent.p5.toLocaleString('en-US',{maximumFractionDigits:0})}</td><td style="color:#e74c3c">$${mcBlended.p5.toLocaleString('en-US',{maximumFractionDigits:0})}</td></tr>
-                <tr><td>MC 95th Percentile</td><td style="color:#27ae60">$${mcCurrent.p95.toLocaleString('en-US',{maximumFractionDigits:0})}</td><td style="color:#27ae60">$${mcBlended.p95.toLocaleString('en-US',{maximumFractionDigits:0})}</td></tr>
+                <tr><td>CAGR</td><td style="color:${pc(cC)}">${fp(cC)}</td><td style="color:${pc(bC)}">${fp(bC)}</td></tr>
+                <tr><td>Volatility</td><td>${fa(cV)}</td><td>${fa(bV)}</td></tr>
+                <tr><td>Max DD (est.)</td><td style="color:var(--red)">-${fa(cDD)}</td><td style="color:var(--red)">-${fa(bDD)}</td></tr>
+                <tr><td>Sharpe</td><td>${cSh.toFixed(2)}</td><td>${bSh.toFixed(2)}</td></tr>
+                <tr><td>MC Median (10Y)</td><td>$${mcC.med.toLocaleString('en-US',{maximumFractionDigits:0})}</td><td>$${mcB.med.toLocaleString('en-US',{maximumFractionDigits:0})}</td></tr>
+                <tr><td>MC 5th Pctl</td><td style="color:var(--red)">$${mcC.p5.toLocaleString('en-US',{maximumFractionDigits:0})}</td><td style="color:var(--red)">$${mcB.p5.toLocaleString('en-US',{maximumFractionDigits:0})}</td></tr>
+                <tr><td>MC 95th Pctl</td><td style="color:var(--green)">$${mcC.p95.toLocaleString('en-US',{maximumFractionDigits:0})}</td><td style="color:var(--green)">$${mcB.p95.toLocaleString('en-US',{maximumFractionDigits:0})}</td></tr>
             </tbody>
         </table>
-        ${volIncrease > 3 ? '<div class="vol-warning">⚠️ This allocation increases projected portfolio volatility by '+volIncrease.toFixed(1)+' percentage points.</div>' : ''}
-        <div style="margin-top:20px;"><h4 style="font-size:14px; font-weight:700; margin-bottom:10px;">Monte Carlo Outcome Distribution (10 Years)</h4>
-            <canvas id="mc-histogram" style="max-height:220px;" data-testid="mc-histogram"></canvas>
-        </div>
-        <div style="margin-top:15px;"><canvas id="sim-comparison-chart" style="max-height:250px;"></canvas></div>
-        <div style="margin-top:12px; font-size:11px; color:var(--text-secondary); text-align:center;">
-            Estimates use simplified blending with assumed correlation of ${(rho*100).toFixed(0)}%. Monte Carlo uses ${mcCurrent.numSims.toLocaleString()} simulations. Actual results would vary. This is for illustration only and does not constitute investment advice.
-        </div>
+        ${vi>3?'<div class="vwarn">⚠️ This allocation increases projected volatility by '+vi.toFixed(1)+' ppts.</div>':''}
+        <div style="margin-top:20px"><canvas id="mc-hist" style="max-height:220px" data-testid="mc-histogram"></canvas></div>
+        <div style="margin-top:12px;font-size:11px;color:var(--text2);text-align:center">Estimates use simplified blending (assumed ρ=${(rho*100).toFixed(0)}%). MC: ${mcC.n.toLocaleString()} sims. For illustration only — not investment advice.</div>
     `;
-
-    drawMCHistogram(mcCurrent.finals, mcBlended.finals, themeName, allocPct);
-    drawSimBarChart(currentCAGR, currentVol, currentMaxDD, currentSharpe, blendedCAGR, blendedVol, blendedMaxDD, blendedSharpe, allocPct, themeName);
+    drawMCHist(mcC.f,mcB.f,tn,pct);
 }
 
-// ============================================================================
-// MONTE CARLO ENGINE — consistent with goals-engine.js
-// ============================================================================
-function runMonteCarlo(initialValue, annualReturn, annualVol, years, numSims) {
-    const monthlyReturn = annualReturn / 12;
-    const monthlyVol = annualVol / Math.sqrt(12);
-    const totalMonths = years * 12;
-    const finals = [];
-
-    for (let s = 0; s < numSims; s++) {
-        let balance = initialValue;
-        for (let m = 0; m < totalMonths; m++) {
-            // Box-Muller transform (same as goals-engine.js)
-            const u1 = Math.random(), u2 = Math.random();
-            const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
-            balance = balance * (1 + monthlyReturn + monthlyVol * z);
-            if (balance < 0) balance = 0;
-        }
-        finals.push(balance);
-    }
-
-    finals.sort((a,b) => a - b);
-    return {
-        finals,
-        p5: finals[Math.floor(numSims * 0.05)],
-        p10: finals[Math.floor(numSims * 0.10)],
-        median: finals[Math.floor(numSims * 0.50)],
-        p90: finals[Math.floor(numSims * 0.90)],
-        p95: finals[Math.floor(numSims * 0.95)],
-        mean: finals.reduce((s,v)=>s+v,0) / numSims,
-        numSims
-    };
+function runMC(init,ar,av,yrs,ns){
+    const mr=ar/12,mv=av/Math.sqrt(12),tm=yrs*12;const f=[];
+    for(let s=0;s<ns;s++){let b=init;for(let m=0;m<tm;m++){const u1=Math.random(),u2=Math.random();const z=Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2);b=b*(1+mr+mv*z);if(b<0)b=0}f.push(b)}
+    f.sort((a,b)=>a-b);
+    return{f,p5:f[Math.floor(ns*.05)],p10:f[Math.floor(ns*.1)],med:f[Math.floor(ns*.5)],p90:f[Math.floor(ns*.9)],p95:f[Math.floor(ns*.95)],avg:f.reduce((s,v)=>s+v,0)/ns,n:ns};
 }
 
-// ============================================================================
-// SIMULATION CHARTS — Histogram + Bar Comparison
-// ============================================================================
-function drawMCHistogram(currentFinals, blendedFinals, themeName, allocPct) {
-    const ctx = document.getElementById('mc-histogram'); if (!ctx) return;
-    const { text } = chartColors();
-
-    // Create histogram bins
-    const allVals = [...currentFinals, ...blendedFinals];
-    const min = Math.min(...allVals), max = Math.max(...allVals);
-    const bins = 30;
-    const binWidth = (max - min) / bins;
-    if (binWidth <= 0) return;
-
-    function histogram(arr) {
-        const counts = new Array(bins).fill(0);
-        arr.forEach(v => { const idx = Math.min(Math.floor((v - min) / binWidth), bins - 1); counts[idx]++; });
-        return counts.map(c => c / arr.length * 100); // percentage
-    }
-
-    const labels = Array.from({length: bins}, (_, i) => '$' + Math.round(min + i * binWidth).toLocaleString('en-US'));
-    const currentHist = histogram(currentFinals);
-    const blendedHist = histogram(blendedFinals);
-
-    activeCharts.push(new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels,
-            datasets: [
-                { label: 'Current Portfolio', data: currentHist, backgroundColor: 'rgba(46,134,171,0.5)', borderRadius: 2 },
-                { label: `With ${allocPct}% ${themeName}`, data: blendedHist, backgroundColor: 'rgba(94,84,142,0.5)', borderRadius: 2 }
-            ]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { labels: { color: text } }, tooltip: { callbacks: { label: (c) => c.dataset.label + ': ' + c.raw.toFixed(1) + '% of outcomes' } } },
-            scales: {
-                x: { ticks: { color: text, maxTicksLimit: 6, maxRotation: 45 }, grid: { display: false } },
-                y: { ticks: { color: text, callback: v => v.toFixed(0) + '%' }, grid: { color: chartColors().grid }, title: { display: true, text: '% of Outcomes', color: text } }
-            }
-        }
-    }));
+function drawMCHist(cf,bf,tn,pct){
+    const ctx=document.getElementById('mc-hist');if(!ctx)return;
+    const{t}=chCol();const all=[...cf,...bf];
+    const mn=Math.min(...all),mx=Math.max(...all);const bins=30;const bw=(mx-mn)/bins;
+    if(bw<=0)return;
+    function hist(a){const c=new Array(bins).fill(0);a.forEach(v=>{const i=Math.min(Math.floor((v-mn)/bw),bins-1);c[i]++});return c.map(x=>x/a.length*100)}
+    const labels=Array.from({length:bins},(_,i)=>'$'+Math.round(mn+i*bw).toLocaleString('en-US'));
+    charts.push(new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Current',data:hist(cf),backgroundColor:'rgba(46,134,171,.5)',borderRadius:2},{label:`+${pct}% ${tn}`,data:hist(bf),backgroundColor:'rgba(94,84,142,.5)',borderRadius:2}]},options:{responsive:true,plugins:{legend:{labels:{color:t}}},scales:{x:{ticks:{color:t,maxTicksLimit:6},grid:{display:false}},y:{ticks:{color:t,callback:v=>v.toFixed(0)+'%'},grid:{color:chCol().g}}}}}));
 }
 
-function drawSimBarChart(cCAGR, cVol, cDD, cSharpe, bCAGR, bVol, bDD, bSharpe, allocPct, themeName) {
-    const ctx = document.getElementById('sim-comparison-chart'); if (!ctx) return;
-    const { text } = chartColors();
-
-    activeCharts.push(new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: ['CAGR (%)', 'Volatility (%)', 'Max DD (%)', 'Sharpe × 10'],
-            datasets: [
-                { label: 'Current Portfolio', data: [cCAGR, cVol, cDD, cSharpe*10], backgroundColor: 'rgba(46,134,171,0.7)', borderRadius: 4 },
-                { label: `With ${allocPct}% ${themeName}`, data: [bCAGR, bVol, bDD, bSharpe*10], backgroundColor: 'rgba(94,84,142,0.7)', borderRadius: 4 }
-            ]
-        },
-        options: { responsive: true, plugins: { legend: { labels: { color: text } } }, scales: { x: { ticks: { color: text } }, y: { ticks: { color: text } } } }
-    }));
-}
 </script>
 </body>
 </html>
