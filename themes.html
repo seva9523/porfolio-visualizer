@@ -310,7 +310,8 @@
                     <button class="cbtn on" onclick="showCompare()" style="margin-left:8px;padding:6px 14px;font-size:12px" data-testid="compare-go-btn">See Comparison →</button>
                     <span id="cmp-count" style="margin-left:8px;color:var(--text2)">0 selected</span>
                 </div>
-                <div id="load-bar" style="text-align:center;padding:40px;color:var(--text2)"><div class="spin"></div><div style="margin-top:10px;font-size:13px">Fetching theme data...</div></div>
+                <div id="load-bar" style="text-align:center;padding:40px;color:var(--text2)"><div class="spin"></div><div id="load-msg" style="margin-top:10px;font-size:13px">Loading themes...</div><button id="retry-load-btn" class="cbtn" onclick="retryThemeLoad()" style="display:none;margin-top:12px">Retry</button></div>
+                <div id="offline-badge" style="display:none;margin-bottom:12px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);font-size:12px"><span id="offline-msg">Using offline theme list</span> <button class="cbtn" style="padding:6px 10px;font-size:11px;margin-left:8px" onclick="retryThemeLoad()">Retry</button></div>
                 <div class="tgrid" id="tgrid" data-testid="theme-grid"></div>
             </div>
 
@@ -326,27 +327,179 @@
                 <div id="cc"></div>
             </div>
         </div>
+        <div style="padding:0 30px 16px;text-align:left">
+            <button id="diag-toggle" class="nb" style="font-size:11px;padding:5px 10px" onclick="toggleDiagnostics()">ⓘ Diagnostics</button>
+            <div id="diag-panel" style="display:none;margin-top:8px;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);font-size:12px;line-height:1.6"></div>
+        </div>
         <div class="ftr">🎓 This tool is for learning and exploration. Past performance does not guarantee future results. Nothing here is investment advice.</div>
     </div>
+
 <script>
 // ============================================================================
-// THEME DATA MODEL (extendable — just add entries)
-// Fields: id, name, description, category, megaTheme, tags[], representativeAssets[],
-//         methodology, overview, risks[], benchmarks[], lastUpdated
+// THEME DATA MODEL (loaded from /data/themes.json)
 // ============================================================================
-const THEMES = [
-{id:"ai",name:"Artificial Intelligence",description:"Companies involved in AI software, semiconductors, and automation infrastructure.",category:"growth",megaTheme:"Technology",tags:["AI","machine learning","automation","semiconductors"],representativeAssets:["BOTZ"],benchmarks:["SPY"],methodology:"Tracked via Global X Robotics & AI ETF (BOTZ). Holdings include companies with significant AI revenue exposure. Limitations: ETF may include robotics firms not purely AI-focused.",overview:"AI theme returns are driven by corporate spending on AI infrastructure, semiconductor demand, and software adoption. Returns can be volatile due to hype cycles, regulatory shifts, and rapid technology changes.",risks:["🎯 <strong>Sector Concentration:</strong> Heavily weighted toward a few mega-cap technology companies","📉 <strong>Valuation Risk:</strong> High growth expectations already priced in — vulnerable to compression","⚖️ <strong>Regulatory Risk:</strong> Increasing government scrutiny of AI development and deployment","🔄 <strong>Technology Disruption:</strong> Rapid innovation can quickly shift competitive advantages","📊 <strong>High Volatility:</strong> Theme has historically exhibited above-average price swings"],lastUpdated:"2025-05"},
-{id:"clean_energy",name:"Clean Energy",description:"Solar, wind, battery, and renewable energy infrastructure companies.",category:"growth",megaTheme:"Sustainability",tags:["solar","wind","renewables","ESG"],representativeAssets:["ICLN"],benchmarks:["SPY"],methodology:"Tracked via iShares Global Clean Energy ETF (ICLN). Covers solar, wind, and other renewable energy companies globally. Limitations: Includes utilities that may have mixed energy sources.",overview:"Clean energy returns are influenced by government policy (subsidies, mandates), commodity prices, interest rates (capital-intensive projects), and technological efficiency gains.",risks:["⚖️ <strong>Policy Dependence:</strong> Returns highly sensitive to government subsidies and regulations","💰 <strong>Interest Rate Sensitivity:</strong> Capital-intensive sector hurt by rising rates","📉 <strong>Cyclical Downturns:</strong> Commodity price swings impact profitability","🌍 <strong>Geopolitical Risk:</strong> Supply chain concentration in specific regions","📊 <strong>High Volatility:</strong> Historically more volatile than broad market indices"],lastUpdated:"2025-05"},
-{id:"semiconductors",name:"Semiconductors",description:"Chip designers, manufacturers, and semiconductor equipment companies.",category:"growth",megaTheme:"Technology",tags:["chips","fabrication","ASML","TSMC","NVIDIA"],representativeAssets:["SMH"],benchmarks:["SPY"],methodology:"Tracked via VanEck Semiconductor ETF (SMH). Concentrated portfolio of ~25 major semiconductor companies. Limitations: Top-heavy — top 5 holdings often exceed 40% weight.",overview:"Semiconductor returns are driven by cyclical demand patterns, AI infrastructure buildout, consumer electronics, and automotive chip demand. The sector is capital-intensive with long production cycles.",risks:["🔄 <strong>Cyclicality:</strong> Semiconductor demand follows boom-bust cycles","🌍 <strong>Geopolitical Risk:</strong> Manufacturing concentrated in Taiwan and South Korea","💰 <strong>Capital Intensity:</strong> Massive investment required for new fabrication plants","🎯 <strong>Customer Concentration:</strong> Revenue often dependent on a few large buyers","📊 <strong>High Volatility:</strong> Amplified market moves due to operating leverage"],lastUpdated:"2025-05"},
-{id:"cybersecurity",name:"Cybersecurity",description:"Network security, cloud security, identity management, and threat detection firms.",category:"growth",megaTheme:"Technology",tags:["security","cloud","network","zero-trust"],representativeAssets:["CIBR"],benchmarks:["SPY"],methodology:"Tracked via First Trust NASDAQ Cybersecurity ETF (CIBR). Limitations: Some holdings derive cybersecurity revenue as secondary business line.",overview:"Cybersecurity spending is driven by increasing digital threats, regulatory compliance, and enterprise cloud migration. The sector tends to be resilient during downturns as security spending is non-discretionary.",risks:["📉 <strong>Valuation Risk:</strong> Many cybersecurity firms trade at premium multiples","🔄 <strong>Competition:</strong> Low barriers create constant competitive pressure","🎯 <strong>Acquisition Risk:</strong> Smaller firms frequently acquired, changing composition","💰 <strong>Profitability Concerns:</strong> Many firms prioritize growth over profits","📊 <strong>Moderate-High Volatility:</strong> Growth stock characteristics amplify market moves"],lastUpdated:"2025-05"},
-{id:"healthcare_innovation",name:"Healthcare Innovation",description:"Genomics, biotech, medical devices, and digital health companies.",category:"growth",megaTheme:"Healthcare",tags:["biotech","genomics","pharma","medtech"],representativeAssets:["IBB"],benchmarks:["SPY"],methodology:"Tracked via iShares Biotechnology ETF (IBB). Covers NASDAQ-listed biotech firms. Limitations: Excludes many medtech and digital health companies.",overview:"Healthcare innovation is driven by demographic trends (aging populations), technological breakthroughs (gene therapy, mRNA), and regulatory approvals. Binary outcomes from drug trials create unique risk profiles.",risks:["⚖️ <strong>Regulatory Risk:</strong> FDA approvals/rejections create binary outcomes","📉 <strong>Clinical Trial Risk:</strong> Drug failures can cause significant losses","💰 <strong>Pricing Pressure:</strong> Political scrutiny of drug pricing","🔄 <strong>Patent Cliffs:</strong> Revenue drops when key patents expire","📊 <strong>High Volatility:</strong> Individual stock moves can be extreme"],lastUpdated:"2025-05"},
-{id:"emerging_markets",name:"Emerging Markets",description:"Broad exposure to developing economies including China, India, Brazil, and others.",category:"growth",megaTheme:"Global",tags:["China","India","Brazil","developing"],representativeAssets:["EEM"],benchmarks:["SPY"],methodology:"Tracked via iShares MSCI Emerging Markets ETF (EEM). Broad diversified EM exposure. Limitations: China often >30% weight; may not represent all EM equally.",overview:"Emerging market returns are driven by GDP growth differentials, commodity cycles, currency movements, and capital flows. They offer diversification but with additional political and currency risks.",risks:["🌍 <strong>Political Risk:</strong> Governance and policy instability in developing nations","💱 <strong>Currency Risk:</strong> Local currency depreciation erodes returns","📉 <strong>Capital Flow Risk:</strong> Vulnerable to sudden foreign capital withdrawal","⚖️ <strong>Regulatory Uncertainty:</strong> Changing rules can impact foreign investors","📊 <strong>Higher Volatility:</strong> Typically more volatile than developed market equities"],lastUpdated:"2025-05"},
-{id:"dividend_income",name:"Dividend Income",description:"High-dividend-yield stocks focused on consistent income generation.",category:"income",megaTheme:"Income",tags:["dividends","yield","value","income"],representativeAssets:["VYM"],benchmarks:["SPY"],methodology:"Tracked via Vanguard High Dividend Yield ETF (VYM). ~400+ stocks screened for above-average dividend yield. Limitations: Focuses on yield, not dividend growth.",overview:"Dividend strategies focus on mature companies with stable cash flows. Returns come from both payments and moderate capital appreciation. They tend to underperform in strong growth markets but provide downside cushion.",risks:["📉 <strong>Interest Rate Sensitivity:</strong> Dividend stocks compete with bonds; rising rates reduce appeal","🔄 <strong>Dividend Cuts:</strong> Companies may reduce dividends during economic stress","🎯 <strong>Sector Concentration:</strong> Often heavy in utilities, financials, and real estate","💰 <strong>Growth Lag:</strong> May underperform growth-oriented strategies in bull markets","📊 <strong>Moderate Volatility:</strong> Generally lower than broad market but not immune"],lastUpdated:"2025-05"},
-{id:"inflation_protection",name:"Inflation Protection",description:"TIPS, commodities, and real assets designed to hedge against rising prices.",category:"defensive",megaTheme:"Macro",tags:["TIPS","inflation","real assets","CPI"],representativeAssets:["TIP"],benchmarks:["AGG"],methodology:"Tracked via iShares TIPS Bond ETF (TIP). US Treasury Inflation-Protected Securities. Limitations: Pure TIPS exposure — does not include commodities or real estate.",overview:"Inflation-protected strategies aim to preserve purchasing power. TIPS adjust principal with CPI. Returns are modest in low-inflation environments but provide insurance during inflationary periods.",risks:["📉 <strong>Low Real Returns:</strong> May underperform equities significantly over long periods","💰 <strong>Deflation Risk:</strong> TIPS can lose value in deflationary environments","🔄 <strong>Interest Rate Risk:</strong> Duration exposure means price declines when real rates rise","🎯 <strong>Limited Upside:</strong> Designed for protection, not wealth accumulation","📊 <strong>Low Volatility:</strong> Generally stable but with lower expected returns"],lastUpdated:"2025-05"},
-{id:"commodities",name:"Commodities",description:"Broad commodity exposure including energy, metals, and agriculture.",category:"alternative",megaTheme:"Macro",tags:["gold","oil","agriculture","metals"],representativeAssets:["DJP"],benchmarks:["SPY"],methodology:"Tracked via iPath Bloomberg Commodity Index ETN (DJP). Broad commodity futures basket. Limitations: Futures-based — subject to contango drag; ETN structure has credit risk.",overview:"Commodity returns are driven by supply-demand dynamics, geopolitical events, weather, and inflation expectations. They often have low correlation with equities, providing diversification benefits.",risks:["📉 <strong>Contango Drag:</strong> Futures-based products may lose value from roll costs","🌍 <strong>Geopolitical Sensitivity:</strong> Prices heavily influenced by political events","🔄 <strong>Cyclicality:</strong> Commodity prices follow boom-bust super-cycles","💰 <strong>No Income:</strong> Commodities don't generate dividends or interest","📊 <strong>High Volatility:</strong> Individual commodity swings can be extreme"],lastUpdated:"2025-05"},
-{id:"mega_cap_tech",name:"US Mega Cap Tech",description:"Largest US technology companies by market capitalization.",category:"growth",megaTheme:"Technology",tags:["FAANG","big tech","cloud","platforms"],representativeAssets:["QQQ"],benchmarks:["SPY"],methodology:"Tracked via Invesco QQQ Trust (QQQ). NASDAQ-100 index — top 100 non-financial NASDAQ stocks. Limitations: Not purely tech — includes consumer, healthcare, and telecom names.",overview:"Mega cap tech returns are driven by digital advertising, cloud computing, consumer electronics, and platform economics. These companies have dominant market positions but face increasing regulatory scrutiny.",risks:["🎯 <strong>Concentration Risk:</strong> A few companies dominate index returns","⚖️ <strong>Antitrust Risk:</strong> Regulatory actions could force breakups or limit growth","📉 <strong>Valuation Risk:</strong> Premium valuations leave little margin for disappointment","🔄 <strong>Market Rotation:</strong> Growth-to-value rotations can cause sharp underperformance","📊 <strong>Moderate-High Volatility:</strong> Tech-heavy exposure amplifies market drawdowns"],lastUpdated:"2025-05"},
-{id:"bitcoin",name:"Bitcoin / Digital Assets",description:"Exposure to Bitcoin and the broader digital asset ecosystem.",category:"alternative",megaTheme:"Crypto",tags:["bitcoin","crypto","digital assets","blockchain"],representativeAssets:["IBIT"],benchmarks:["SPY"],methodology:"Tracked via iShares Bitcoin Trust ETF (IBIT). Spot Bitcoin ETF. Limitations: Launched Jan 2024 — limited history; uses BTC price for extended backtest.",overview:"Bitcoin returns are driven by adoption trends, monetary policy expectations, regulatory developments, and speculative sentiment. It exhibits very high volatility and low correlation with traditional assets.",risks:["📊 <strong>Extreme Volatility:</strong> Drawdowns of 50-80% have occurred historically","⚖️ <strong>Regulatory Risk:</strong> Government bans or restrictions remain possible","🔄 <strong>Market Manipulation:</strong> Less regulated markets may be subject to manipulation","💰 <strong>No Intrinsic Cash Flow:</strong> Value based on supply scarcity and demand, not earnings","🌍 <strong>Custody/Security Risk:</strong> Unique risks around digital asset security"],lastUpdated:"2025-05"}
+let THEMES = [];
+let THEMES_READY = false;
+const THEME_CATEGORIES = new Set(["growth","defensive","income","alternative"]);
+const FALLBACK_THEMES = [
+    {id:"ai",name:"Artificial Intelligence",description:"Companies involved in AI software, semiconductors, and automation infrastructure.",category:"growth",megaTheme:"Technology",tags:["ai","machine learning","automation","semiconductors"],representativeAssets:["BOTZ"],benchmarks:["SPY"],methodology:"Tracked via Global X Robotics & AI ETF (BOTZ).",limitations:["Proxy ETF can include robotics names that are not pure AI."],overview:"AI theme returns are driven by corporate spending on AI infrastructure, semiconductor demand, and software adoption.",risks:["High volatility and valuation sensitivity."],whoItsFor:["Investors seeking long-term growth exposure to technology innovation."],whoItsNotFor:["Investors needing low volatility or short time horizons."],lastUpdated:"2025-05"},
+    {id:"dividend_income",name:"Dividend Income",description:"High dividend yield companies and dividend-focused equity strategies.",category:"income",megaTheme:"Income",tags:["dividends","yield","income","value"],representativeAssets:["VYM"],benchmarks:["SPY"],methodology:"Tracked via Vanguard High Dividend Yield ETF (VYM).",limitations:["Focuses on current yield and may miss dividend growth opportunities."],overview:"Dividend strategies focus on mature companies with stable cash flows.",risks:["Can lag during strong growth-led markets."],whoItsFor:["Investors prioritizing income and downside resilience."],whoItsNotFor:["Investors seeking aggressive capital appreciation."],lastUpdated:"2025-05"}
 ];
+const THEME_DIAGNOSTICS = {
+    loaded:false,
+    usingFallback:false,
+    source:"",
+    invalidThemes:[],
+    lastLoadTimestamp:""
+};
+
+function validateTheme(t, seenIds){
+    const errors=[];
+    if(!t || typeof t!== 'object') return {ok:false, errors:["Theme entry must be an object"]};
+    const reqString=['id','name','description','megaTheme','methodology'];
+    reqString.forEach(k=>{ if(typeof t[k]!== 'string' || !t[k].trim()) errors.push(`${k} must be a non-empty string`); });
+    if(typeof t.category!=='string' || !THEME_CATEGORIES.has(t.category)) errors.push('category must be one of growth|defensive|income|alternative');
+    if(!Array.isArray(t.tags)) errors.push('tags must be an array');
+    if(!Array.isArray(t.representativeAssets) || t.representativeAssets.length===0) errors.push('representativeAssets must be a non-empty array');
+    if(Array.isArray(t.representativeAssets) && !t.representativeAssets.every(v=>typeof v==='string'&&v.trim())) errors.push('representativeAssets must contain non-empty strings');
+    if(t.benchmarks!=null && !Array.isArray(t.benchmarks)) errors.push('benchmarks must be an array when provided');
+    if(t.risks!=null && !Array.isArray(t.risks)) errors.push('risks must be an array when provided');
+    if(t.whoItsFor!=null && !Array.isArray(t.whoItsFor)) errors.push('whoItsFor must be an array when provided');
+    if(t.whoItsNotFor!=null && !Array.isArray(t.whoItsNotFor)) errors.push('whoItsNotFor must be an array when provided');
+    if(t.limitations!=null && !(typeof t.limitations==='string' || Array.isArray(t.limitations))) errors.push('limitations must be a string or array');
+    if(typeof t.id==='string'){
+        if(!/^[a-z0-9_-]+$/.test(t.id.trim())) errors.push('id must be slug-like (lowercase letters, numbers, _ or -)');
+        if(seenIds.has(t.id.trim())) errors.push('id must be unique');
+    }
+    return {ok:errors.length===0, errors};
+}
+
+function normalizeTheme(t){
+    const toStringArray=(arr)=>Array.isArray(arr)?arr.filter(v=>typeof v==='string').map(v=>v.trim()).filter(Boolean):[];
+    const limitationsRaw=t.limitations;
+    const limitations=Array.isArray(limitationsRaw)?toStringArray(limitationsRaw):(typeof limitationsRaw==='string'&&limitationsRaw.trim()?[limitationsRaw.trim()]:[]);
+    return {
+        ...t,
+        id:(t.id||'').trim(),
+        name:(t.name||'').trim(),
+        description:(t.description||'').trim(),
+        category:(t.category||'').trim(),
+        megaTheme:(t.megaTheme||'').trim(),
+        methodology:(t.methodology||'').trim(),
+        overview:typeof t.overview==='string'?t.overview.trim():'',
+        tags:toStringArray(t.tags).map(v=>v.toLowerCase()),
+        representativeAssets:toStringArray(t.representativeAssets),
+        benchmarks:toStringArray(t.benchmarks).length?toStringArray(t.benchmarks):['SPY'],
+        risks:toStringArray(t.risks),
+        whoItsFor:toStringArray(t.whoItsFor),
+        whoItsNotFor:toStringArray(t.whoItsNotFor),
+        limitations,
+        lastUpdated:typeof t.lastUpdated==='string'?t.lastUpdated.trim():'',
+        suitableFor:toStringArray(t.suitableFor),
+        notSuitableFor:toStringArray(t.notSuitableFor)
+    };
+}
+
+function updateLoadState(state, message){
+    const loadBar=document.getElementById('load-bar');
+    const loadMsg=document.getElementById('load-msg');
+    const retryBtn=document.getElementById('retry-load-btn');
+    if(loadMsg) loadMsg.textContent=message||'';
+    if(loadBar) loadBar.style.display=state==='hidden'?'none':'block';
+    if(retryBtn) retryBtn.style.display=state==='error'?'inline-flex':'none';
+}
+
+function renderDiagnostics(){
+    const panel=document.getElementById('diag-panel');
+    if(!panel)return;
+    const invalid=THEME_DIAGNOSTICS.invalidThemes;
+    const invalidHtml=invalid.length?`<ul style="margin:6px 0 0 16px">${invalid.map(i=>`<li><strong>${i.id||'unknown'}</strong>: ${i.errors.join('; ')}</li>`).join('')}</ul>`:'None';
+    panel.innerHTML=`
+        <div><strong>Theme JSON loaded:</strong> ${THEME_DIAGNOSTICS.loaded?'Yes':'No'}</div>
+        <div><strong>Loaded theme count:</strong> ${THEMES.length}</div>
+        <div><strong>Invalid theme count:</strong> ${invalid.length}</div>
+        <div><strong>Invalid themes:</strong> ${invalidHtml}</div>
+        <div><strong>Last load timestamp:</strong> ${THEME_DIAGNOSTICS.lastLoadTimestamp||'N/A'}</div>
+        <div><strong>Source:</strong> ${THEME_DIAGNOSTICS.source||'N/A'}</div>
+    `;
+}
+
+function toggleDiagnostics(){
+    const panel=document.getElementById('diag-panel');
+    if(!panel)return;
+    panel.style.display=panel.style.display==='none'?'block':'none';
+    renderDiagnostics();
+}
+
+async function loadThemes(){
+    THEMES_READY=false;
+    updateLoadState('loading','Loading themes...');
+    THEME_DIAGNOSTICS.invalidThemes=[];
+    const seenIds=new Set();
+    let attempts=0;
+    let payload=null;
+    while(attempts<3 && !payload){
+        attempts+=1;
+        try{
+            const res=await fetch('/data/themes.json',{cache:'no-store'});
+            if(!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data=await res.json();
+            if(!Array.isArray(data)) throw new Error('themes.json must contain an array');
+            payload=data;
+        }catch(err){
+            if(attempts<3){
+                updateLoadState('loading',`Loading themes... retry ${attempts}/3`);
+                await new Promise(r=>setTimeout(r,attempts*400));
+            }
+        }
+    }
+
+    let loaded=[];
+    if(payload){
+        payload.forEach((raw,idx)=>{
+            const normalized=normalizeTheme(raw||{});
+            const check=validateTheme(normalized,seenIds);
+            if(check.ok){
+                seenIds.add(normalized.id);
+                loaded.push(normalized);
+            }else{
+                THEME_DIAGNOSTICS.invalidThemes.push({id:normalized.id||`index-${idx}`,errors:check.errors});
+                console.warn('Invalid theme excluded',normalized.id,check.errors);
+            }
+        });
+    }
+
+    const usingFallback=loaded.length===0;
+    THEMES=usingFallback?FALLBACK_THEMES.map(t=>normalizeTheme(t)):loaded;
+    THEMES_READY=true;
+    THEME_DIAGNOSTICS.loaded=!!payload;
+    THEME_DIAGNOSTICS.usingFallback=usingFallback;
+    THEME_DIAGNOSTICS.source=usingFallback?'fallback':'/data/themes.json';
+    THEME_DIAGNOSTICS.lastLoadTimestamp=new Date().toISOString();
+    const offlineBadge=document.getElementById('offline-badge');
+    const offlineMsg=document.getElementById('offline-msg');
+    if(offlineBadge){
+        offlineBadge.style.display=usingFallback?'block':'none';
+        if(offlineMsg){
+            offlineMsg.textContent=payload?'Using offline theme list':'Could not load themes. Check connection or try again. Using offline theme list.';
+        }
+    }
+    if(!payload){
+        updateLoadState('error','Could not load themes. Check connection or try again.');
+    }else{
+        updateLoadState('hidden','');
+    }
+    renderDiagnostics();
+    return THEMES;
+}
+
+async function retryThemeLoad(){
+    cache={};
+    await loadThemes();
+    renderGrid();
+    await fetchAll();
+    renderGrid();
+}
 
 // Stress test periods (fixed windows)
 const STRESS_PERIODS = [
@@ -767,9 +920,13 @@ let watchlist = JSON.parse(localStorage.getItem('themeWatchlist')||'[]');
 // INIT
 // ============================================================================
 document.addEventListener('DOMContentLoaded', async () => {
-    loadDark(); loadPortfolio(); showOnboarding(); renderGrid();
+    loadDark();
+    loadPortfolio();
+    showOnboarding();
+    renderGrid();
+    await loadThemes();
+    renderGrid();
     await fetchAll();
-    document.getElementById('load-bar').style.display = 'none';
     renderGrid();
 });
 
@@ -800,23 +957,32 @@ function loadPortfolio(){
 // DATA FETCHING (with caching)
 // ============================================================================
 async function fetchAll(){
+    if(!THEMES_READY || !THEMES.length) return;
     const bProms=[
         fetchHist('^GSPC').then(h=>{benchCache.SP500={hist:h,...computeBenchReturns(h)}}),
         fetchHist('AGG').then(h=>{benchCache.AGG={hist:h,...computeBenchReturns(h)}})
     ];
-    const tProms=THEMES.map(async t=>{
-        const tk=t.representativeAssets[0];
-        try{
-            const[h,q]=await Promise.all([fetchHist(tk),fetchQuote(tk)]);
-            const comp=computeMetrics(h,q);
-            const trend=computeTrendScore(comp);
-            cache[t.id]={hist:h,quote:q,computed:comp,trend};
-        }catch(e){
-            console.error(`Err ${tk}:`,e);
-            cache[t.id]={hist:{},quote:0,computed:emptyM(),trend:emptyTrend()};
-        }
-    });
-    await Promise.allSettled([...bProms,...tProms]);
+    await Promise.allSettled(bProms);
+
+    const queue=THEMES.filter(t=>!cache[t.id]);
+    const batchSize=4;
+    for(let i=0;i<queue.length;i+=batchSize){
+        const batch=queue.slice(i,i+batchSize);
+        await Promise.allSettled(batch.map(async t=>{
+            const tk=t.representativeAssets?.[0];
+            try{
+                const[h,q]=await Promise.all([fetchHist(tk),fetchQuote(tk)]);
+                const comp=computeMetrics(h,q);
+                const trend=computeTrendScore(comp);
+                cache[t.id]={hist:h,quote:q,computed:comp,trend};
+            }catch(e){
+                console.error(`Err ${tk}:`,e);
+                cache[t.id]={hist:{},quote:0,computed:emptyM(),trend:emptyTrend()};
+            }
+        }));
+        renderGrid();
+        await new Promise(r=>setTimeout(r,0));
+    }
 }
 
 function computeBenchReturns(h){
