@@ -157,6 +157,24 @@
         .scmp-label{font-weight:600;color:var(--text2);font-size:12px}
         /* Compare summary */
         .cmp-summary{padding:20px;background:var(--input-bg);border-radius:12px;font-size:14px;line-height:1.8;margin-bottom:20px}
+        /* Core/Satellite pill */
+        .cs-pill{display:inline-block;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;margin-left:4px;cursor:help;position:relative}
+        .cs-pill:hover::after{content:attr(data-tip);position:absolute;bottom:120%;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:6px 10px;border-radius:6px;font-size:11px;z-index:100;min-width:200px;white-space:normal;font-weight:400}
+        .cs-core{background:rgba(39,174,96,.12);color:var(--green)}
+        .cs-sat{background:rgba(94,84,142,.12);color:var(--accent)}
+        /* How-it-feels meter */
+        .feel-meter{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;padding:6px 12px;border-radius:8px;background:var(--input-bg);margin-top:6px}
+        .feel-meter .feel-icon{font-size:18px}
+        /* Guide confidence */
+        .guide-conf{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;margin-bottom:12px}
+        .gc-high{background:rgba(39,174,96,.12);color:var(--green)}
+        .gc-med{background:rgba(241,143,1,.12);color:var(--orange)}
+        .gc-low{background:rgba(231,76,60,.12);color:var(--red)}
+        /* Anti-chasing */
+        .chase-warn{padding:10px 14px;background:rgba(241,143,1,.06);border:1px solid rgba(241,143,1,.15);border-radius:8px;font-size:12px;line-height:1.5;margin-top:8px;color:var(--text2)}
+        /* Data checklist */
+        .data-check{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:12px;margin-top:10px}
+        .data-check .dc-label{font-weight:600;color:var(--text)}.data-check .dc-val{color:var(--text2)}
         /* Guided mode */
         .guide-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
         .guide-box{background:var(--container);border-radius:20px;max-width:540px;width:100%;padding:32px;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:90vh;overflow-y:auto}
@@ -264,7 +282,8 @@
                     <h2 style="font-size:20px">Explore Themes</h2>
                     <div style="display:flex;gap:8px;flex-wrap:wrap">
                         <button class="cbtn" onclick="startGuide()" data-testid="help-choose-btn">🧭 Help Me Choose</button>
-                        <button class="xbtn" onclick="exportThemesCSV()" data-testid="export-csv-btn">📥 Download Data</button>
+                        <button class="xbtn" onclick="exportBeginnerCSV()" data-testid="beginner-csv-btn">📥 Beginner CSV</button>
+                        <button class="xbtn" onclick="exportThemesCSV()" data-testid="export-csv-btn">📥 Pro CSV</button>
                     </div>
                 </div>
                 <div class="ctrls" data-testid="controls-bar">
@@ -492,23 +511,26 @@ function overlapHTML(overlaps){
     if(highOnes.length>0){
         const pairs=highOnes.map(o=>`<strong>${o.name1}</strong> and <strong>${o.name2}</strong>`).join(', ');
         html+=`<div class="overlap-box overlap-high" data-testid="overlap-high">
-            <strong>⚠️ High Overlap Detected</strong><br>
-            ${pairs} move very similarly (correlation above 85%).<br>
-            <span style="color:var(--text2)">You might be less diversified than you think. Owning both is like doubling down on the same idea.</span>
+            <strong>⚠️ High Overlap</strong><br>
+            ${pairs} are quite similar — they move together most of the time.<br>
+            <span style="color:var(--text2)">You may be less diversified than you think. Owning both is like doubling down on the same idea.</span><br>
+            <span style="font-size:12px;color:var(--accent);font-weight:600">💡 If your goal is diversification, try comparing one of these with a different type — for example, a defensive or income theme.</span><br>
+            <span style="font-size:11px;color:var(--text2);font-style:italic">Overlap is estimated using how similarly prices move (correlation proxy).</span>
         </div>`;
     }
     if(modOnes.length>0){
         const pairs=modOnes.map(o=>`<strong>${o.name1}</strong> & <strong>${o.name2}</strong>`).join(', ');
         html+=`<div class="overlap-box overlap-mod" data-testid="overlap-mod">
             <strong>ℹ️ Some Overlap</strong><br>
-            ${pairs} share some similarities (correlation 60-85%).<br>
-            <span style="color:var(--text2)">These themes share some common drivers. You still get some diversification, but less than you might expect.</span>
+            ${pairs} share some similarities. That can be fine — just be aware.<br>
+            <span style="font-size:11px;color:var(--text2);font-style:italic">Overlap is estimated using how similarly prices move (correlation proxy).</span>
         </div>`;
     }
     if(highOnes.length===0&&modOnes.length===0){
         html+=`<div class="overlap-box overlap-low" data-testid="overlap-low">
-            <strong>✅ Good Diversification</strong><br>
-            <span style="color:var(--text2)">These themes tend to move independently. Owning them together may spread your risk well.</span>
+            <strong>✅ Low Overlap</strong><br>
+            <span style="color:var(--text2)">These likely behave differently, which can help diversification.</span><br>
+            <span style="font-size:11px;color:var(--text2);font-style:italic">Overlap is estimated using how similarly prices move (correlation proxy).</span>
         </div>`;
     }
     return html;
@@ -614,41 +636,45 @@ function guideNext(){if(guideAnswers[GUIDE_QS[guideStep].key]!=null){guideStep++
 
 function renderGuideResults(el){
     const h=guideAnswers.horizon||0,r=guideAnswers.risk||0,g=guideAnswers.goal||0;
-    // Score each theme for suitability
     const scored=THEMES.map(t=>{
         const c=cache[t.id]?.computed||emptyM();const ux=THEME_UX[t.id]||{riskLevel:'medium'};
         let score=0;
-        // Horizon: longer = more tolerance for growth themes
         if(h>=2&&t.category==='growth')score+=2;
         if(h<=1&&(t.category==='defensive'||t.category==='income'))score+=3;
         if(h>=3&&(ux.riskLevel==='high'||ux.riskLevel==='very-high'))score+=1;
-        // Risk tolerance
         if(r===0&&c.vol!=null&&c.vol<18)score+=3;
         if(r===0&&c.vol!=null&&c.vol>25)score-=2;
         if(r===2&&c.vol!=null&&c.vol>20)score+=1;
         if(r===1)score+=1;
-        // Goal
         if(g===0&&t.category==='growth')score+=3;
         if(g===1&&(t.category==='defensive'||c.vol<16))score+=3;
         if(g===2&&t.category==='income')score+=4;
-        return{theme:t,score,ux};
+        return{theme:t,score,ux,c};
     }).sort((a,b)=>b.score-a.score).slice(0,3);
 
+    const conf=guideConfidence(h,r,g);
     const horizonText=['short-term (under 3 years)','medium-term (3–5 years)','long-term (5–10 years)','very long-term (10+ years)'][h];
     const goalText=['fast growth','stability','regular income'][g];
     el.innerHTML=`
         <div style="display:flex;justify-content:space-between;align-items:center"><h3>🧭 Themes to Explore</h3><button onclick="closeGuide()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text2)">✕</button></div>
-        <p>Based on your answers (${horizonText}, prefer ${goalText}), these themes may be worth exploring:</p>
-        <p style="font-size:11px;color:var(--text2);font-style:italic;margin-bottom:12px">These are starting points for learning — not investment recommendations.</p>
-        <div class="guide-results" data-testid="guide-results">${scored.map(s=>`
-            <div class="guide-result" onclick="closeGuide();showDetail('${s.theme.id}')">
+        <p>Based on your answers (${horizonText}, prefer ${goalText}):</p>
+        <div style="margin:10px 0"><span class="guide-conf ${conf.cls}">Confidence: ${conf.level}</span></div>
+        <p style="font-size:11px;color:var(--text2);margin-bottom:12px">${conf.msg} <em>Confidence means how closely your answers matched — it's not a prediction.</em></p>
+        <div class="guide-results" data-testid="guide-results">${scored.map(s=>{
+            const wm=guideWhyMatch(s.theme,s.c,h,r,g);
+            return`<div class="guide-result" onclick="closeGuide();showDetail('${s.theme.id}')">
                 <div style="display:flex;justify-content:space-between;align-items:center">
-                    <strong>${s.theme.name}</strong> ${riskPill(s.ux.riskLevel)}
+                    <strong>${s.theme.name}</strong> ${riskPill(s.ux.riskLevel)} ${csPill(s.c)}
                 </div>
                 <div style="font-size:13px;color:var(--text2);margin-top:6px">${s.ux.simpleDesc||s.theme.description}</div>
-            </div>`).join('')}
+                <div style="margin-top:8px;font-size:12px;line-height:1.6">
+                    <strong style="color:var(--green)">Why this matches you:</strong><br>
+                    ${wm.bullets.map(b=>'• '+b).join('<br>')}
+                </div>
+                <div style="margin-top:4px;font-size:12px;color:var(--orange)">⚠️ What could go wrong: ${wm.caveat}</div>
+            </div>`}).join('')}
         </div>
-        <button class="guide-back" onclick="closeGuide()" style="width:100%;margin-top:14px;padding:12px;border-radius:10px">Close & Browse All Themes</button>`;
+        <button class="guide-back" onclick="closeGuide()" style="width:100%;margin-top:14px;padding:12px;border-radius:10px">Close & Browse All Themes</button>`
 }
 
 // ============================================================================
@@ -991,6 +1017,67 @@ function pc(v){if(v==null||isNaN(v))return'var(--text2)';return v>=0?'var(--gree
 function cc(v){if(v==null)return'var(--text2)';return v>.6?'var(--green)':v>.3?'var(--orange)':'var(--blue)'}
 function catCls(c){return c==='growth'?'c-gr':c==='defensive'?'c-df':c==='alternative'?'c-al':'c-in'}
 
+// Feature E: Core vs Satellite classification
+function coreSatellite(c){
+    if(c.corrSP!=null&&c.corrSP>.75&&(c.vol==null||c.vol<22)&&(c.maxDD==null||c.maxDD<35))return'core';
+    return'satellite';
+}
+function csPill(c){
+    const cs=coreSatellite(c);
+    return cs==='core'?
+        '<span class="cs-pill cs-core" data-tip="More broad and diversified; often used as a foundation." data-testid="cs-core">🏗️ Core</span>':
+        '<span class="cs-pill cs-sat" data-tip="More focused; can be bumpier; often used in smaller amounts as an extra." data-testid="cs-sat">🎯 Satellite</span>';
+}
+
+// Feature F: "How it feels" meter
+function howItFeels(c){
+    if(c.vol==null)return{emoji:'😐',label:'Medium',cls:''};
+    if((c.vol<14&&(c.maxDD==null||c.maxDD<25)))return{emoji:'🙂',label:'Calm',cls:'color:var(--green)'};
+    if(c.vol>25||(c.maxDD!=null&&c.maxDD>50))return{emoji:'😬',label:'Wild',cls:'color:var(--red)'};
+    return{emoji:'😐',label:'Medium',cls:'color:var(--orange)'};
+}
+function feelMeter(c){
+    const f=howItFeels(c);
+    return`<div class="feel-meter"><span class="feel-icon">${f.emoji}</span><span style="${f.cls}">${f.label}</span></div>`;
+}
+
+// Feature C: Trend heat label for cards/CSV
+function trendHeat(score){
+    if(score>=65)return'🔥 Hot';if(score<=25)return'🧊 Cold';return'🙂 Normal';
+}
+
+// Feature H: Data coverage tooltip for cards
+function dataCoverageShort(t){
+    return'Prices: ✅ | Holdings: ⚠️ proxy | ETF: '+t.representativeAssets[0];
+}
+
+// Feature B: Guide confidence + why-match
+function guideConfidence(h,r,g){
+    // Consistent: long+aggressive OR short+conservative
+    const longAggressive=(h>=2&&r>=1&&g===0);
+    const shortConservative=(h<=1&&r===0&&(g===1||g===2));
+    const conflicting=(h<=1&&r>=2)||(h<=1&&g===0&&r===0);
+    if(longAggressive||shortConservative)return{level:'High',cls:'gc-high',msg:'Your answers are consistent — these suggestions fit well.'};
+    if(conflicting)return{level:'Low',cls:'gc-low',msg:'Your answers pull in different directions — explore carefully.'};
+    return{level:'Medium',cls:'gc-med',msg:'Your answers are mixed — these are reasonable starting points.'};
+}
+
+function guideWhyMatch(theme,c,h,r,g){
+    const bullets=[];const ux=THEME_UX[theme.id]||{};
+    if(g===0&&c.cagr5y!=null&&c.cagr5y>8)bullets.push('You said you want growth — this theme has shown stronger long-term growth historically.');
+    if(g===1&&c.vol!=null&&c.vol<18)bullets.push('You said you want stability — this theme swings less than most.');
+    if(g===2&&theme.category==='income')bullets.push('You said you want income — this theme focuses on companies that pay you regularly.');
+    if(r===0&&c.maxDD!=null&&c.maxDD<30)bullets.push('You said big drops bother you — this theme has historically fallen less than most.');
+    if(h>=2&&(ux.riskLevel==='high'||ux.riskLevel==='very-high'))bullets.push('You have a long time horizon — that gives more time to ride out this theme\'s bumpiness.');
+    if(bullets.length===0)bullets.push('This theme is a reasonable match for your overall profile.');
+    // Risk caveat
+    let caveat='It can still drop during broad market selloffs.';
+    if(c.vol!=null&&c.vol>25)caveat='It swings a lot — big gains and big losses are common.';
+    if(c.corrSP!=null&&c.corrSP>.85)caveat='It moves very similarly to the overall market, so it may not diversify much.';
+    if(c.maxDD!=null&&c.maxDD>50)caveat='It has experienced very large drops in the past (over 50%).';
+    return{bullets,caveat};
+}
+
 // ============================================================================
 // SEARCH, FILTER, SORT
 // ============================================================================
@@ -1077,6 +1164,22 @@ function exportDetailCSV(themeId){
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`theme_${themeId}_data.csv`;a.click();
 }
 
+function exportBeginnerCSV(){
+    const rows=[['Theme Name','Category','Core or Satellite','How It Feels','Biggest Drop (%)','Moves Like Market?','Trend Heat','Last Updated']];
+    THEMES.forEach(t=>{
+        const c=cache[t.id]?.computed||emptyM(),tr=cache[t.id]?.trend||emptyTrend();
+        const cs=coreSatellite(c)==='core'?'Core':'Satellite';
+        const feel=howItFeels(c).label;
+        const drop=c.maxDD!=null?'-'+Math.round(c.maxDD)+'%':'—';
+        const mkt=c.corrSP!=null?(c.corrSP>.8?'Moves like market':c.corrSP>.5?'Some diversification':'Good diversifier'):'Unknown';
+        const heat=trendHeat(tr.score);
+        rows.push([t.name,t.category,cs,feel,drop,mkt,heat,t.lastUpdated||'']);
+    });
+    const csv=rows.map(r=>r.map(v=>'"'+(v+'').replace(/"/g,'""')+'"').join(',')).join('\n');
+    const blob=new Blob([csv],{type:'text/csv'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='theme_explorer_beginner.csv';a.click();
+}
+
 // ============================================================================
 // RENDER: THEME GRID (LIST VIEW)
 // ============================================================================
@@ -1105,7 +1208,11 @@ function renderGridFiltered(themes){
             </div>
             <div class="tcard-name" style="margin-top:6px">${t.name}</div>
             <div class="tcard-desc">${ux.simpleDesc}</div>
-            ${riskPill(ux.riskLevel)}
+            <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center">
+                ${riskPill(ux.riskLevel)}
+                ${csPill(c)}
+                ${feelMeter(c)}
+            </div>
             <div class="tmets" style="margin-top:10px">
                 <div class="tmet"><div class="tmet-l">5-Year Growth</div><div class="tmet-v" style="color:${pc(c.cagr5y)}">${fp(c.cagr5y)}</div><div class="mexp">${c.cagr5y!=null?'per year avg':'no data'}</div></div>
                 <div class="tmet"><div class="tmet-l">How Bumpy</div><div class="tmet-v">${volLabel(c.vol)}</div><div class="mexp">${c.vol!=null?fa(c.vol)+' swing':'—'}</div></div>
@@ -1165,8 +1272,10 @@ function showDetail(id){
             <div>
                 <div class="ctag ${catCls(t.category)}">${t.category.toUpperCase()}</div>
                 ${riskPill(ux.riskLevel)}
+                ${csPill(c)}
                 ${hypeBadge(tr.score,tr.lifecycle)}
                 ${freshBadge(t.lastUpdated)}
+                ${feelMeter(c)}
                 <span class="mtag">${t.megaTheme}</span>
                 ${t.tags.map(tg=>'<span class="mtag">'+tg+'</span>').join('')}
                 <h2 style="font-size:24px;font-weight:700;margin-top:6px">${t.name}</h2>
@@ -1196,6 +1305,7 @@ function showDetail(id){
             <h3>${tl.icon} Trend Strength: <span style="color:${trendColor(tr.score)};font-size:22px">${tl.label}</span> <span style="font-size:14px;font-weight:400;color:var(--text2)">(${tr.score}/100)</span></h3>
             <p style="font-size:13px;color:var(--text2);margin-bottom:6px">${tl.note}</p>
             <p style="font-size:13px;color:var(--text2);margin-bottom:6px">${lch.label} — ${lch.desc}</p>
+            ${tr.score>=80||tr.lifecycle.includes('Crowded')?'<div class="chase-warn" data-testid="anti-chase-warn">⚠️ <strong>Popular recently.</strong> One risk: when something rises fast, it can cool off quickly. Consider learning more before jumping in.</div>':''}
             <p style="font-size:11px;color:var(--text2);font-style:italic;margin-bottom:12px">⏱ Short-term trends can reverse quickly. This does not predict the future.</p>
             <details style="cursor:pointer;font-size:13px;color:var(--accent);font-weight:600">
                 <summary>How is this calculated? (click to see breakdown)</summary>
@@ -1265,11 +1375,19 @@ function showDetail(id){
         <div class="sbox" data-testid="methodology-section">
             <h3>📋 How We Track This Theme</h3>
             <div class="mpanel">
-                <strong>What ETF do we use?</strong> ${tk} — ${t.methodology}<br>
-                <strong>Data source:</strong> Historical price database (ETF proxy) | Holdings: approximate only<br>
-                <strong>Last data check:</strong> ${t.lastUpdated}<br>
-                <strong>Compared against:</strong> ${t.benchmarks.join(', ')}<br>
-                <strong>⚠️ Limitations:</strong> We track this theme using a single ETF, which may not capture the full picture. Holdings data is approximate, not exact.<br><br>
+                <strong>What ETF do we use?</strong> ${tk} — ${t.methodology}<br><br>
+                <strong>📊 Data Coverage</strong>
+                <div class="data-check" data-testid="data-checklist">
+                    <span class="dc-label">Prices:</span><span class="dc-val">✅ Daily historical</span>
+                    <span class="dc-label">Holdings:</span><span class="dc-val">⚠️ Proxy (approximate)</span>
+                    <span class="dc-label">Trend score:</span><span class="dc-val">✅ Calculated from price data</span>
+                    <span class="dc-label">Last updated:</span><span class="dc-val">${t.lastUpdated||'Unknown'}</span>
+                    <span class="dc-label">ETF proxy:</span><span class="dc-val">${tk}</span>
+                    <span class="dc-label">Benchmarks:</span><span class="dc-val">${t.benchmarks.join(', ')}</span>
+                </div><br>
+                <strong>⚠️ Limitations:</strong><br>
+                • We track this theme using a single ETF, which may not capture the full picture.<br>
+                • Holdings data is approximate, not exact company-by-company.<br><br>
                 <strong>🔄 What could cause this data to change?</strong><br>
                 • The ETF provider may update their selection rules or add/remove companies<br>
                 • Market shifts could change which companies are included<br>
