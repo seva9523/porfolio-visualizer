@@ -20,11 +20,11 @@
     "methodology": "Tracked via Global X Robotics & AI ETF (BOTZ). Holdings include companies with significant AI revenue exposure. Limitations: ETF may include robotics firms not purely AI-focused.",
     "overview": "AI theme returns are driven by corporate spending on AI infrastructure, semiconductor demand, and software adoption. Returns can be volatile due to hype cycles, regulatory shifts, and rapid technology changes.",
     "risks": [
-      "\ud83c\udfaf <strong>Sector Concentration:</strong> Heavily weighted toward a few mega-cap technology companies",
-      "\ud83d\udcc9 <strong>Valuation Risk:</strong> High growth expectations already priced in \u2014 vulnerable to compression",
-      "\u2696\ufe0f <strong>Regulatory Risk:</strong> Increasing government scrutiny of AI development and deployment",
-      "\ud83d\udd04 <strong>Technology Disruption:</strong> Rapid innovation can quickly shift competitive advantages",
-      "\ud83d\udcca <strong>High Volatility:</strong> Theme has historically exhibited above-average price swings"
+      "🎯 <strong>Sector Concentration:</strong> Heavily weighted toward a few mega-cap technology companies",
+      "📉 <strong>Valuation Risk:</strong> High growth expectations already priced in — vulnerable to compression",
+      "⚖️ <strong>Regulatory Risk:</strong> Increasing government scrutiny of AI development and deployment",
+      "🔄 <strong>Technology Disruption:</strong> Rapid innovation can quickly shift competitive advantages",
+      "📊 <strong>High Volatility:</strong> Theme has historically exhibited above-average price swings"
     ],
     "lastUpdated": "2025-05",
     "limitations": [
@@ -62,11 +62,11 @@
     "methodology": "Tracked via iShares Global Clean Energy ETF (ICLN). Covers solar, wind, and other renewable energy companies globally. Limitations: Includes utilities that may have mixed energy sources.",
     "overview": "Clean energy returns are influenced by government policy (subsidies, mandates), commodity prices, interest rates (capital-intensive projects), and technological efficiency gains.",
     "risks": [
-      "\u2696\ufe0f <strong>Policy Dependence:</strong> Returns highly sensitive to government subsidies and regulations",
-      "\ud83d\udcb0 <strong>Interest Rate Sensitivity:</strong> Capital-intensive sector hurt by rising rates",
-      "\ud83d\udcc9 <strong>Cyclical Downturns:</strong> Commodity price swings impact profitability",
-      "\ud83c\udf0d <strong>Geopolitical Risk:</strong> Supply chain concentration in specific regions",
-      "\ud83d\udcca <strong>High Volatility:</strong> Historically more volatile than broad market indices"
+      "⚖️ <strong>Policy Dependence:</strong> Returns highly sensitive to government subsidies and regulations",
+      "💰 <strong>Interest Rate Sensitivity:</strong> Capital-intensive sector hurt by rising rates",
+      "📉 <strong>Cyclical Downturns:</strong> Commodity price swings impact profitability",
+      "🌍 <strong>Geopolitical Risk:</strong> Supply chain concentration in specific regions",
+      "📊 <strong>High Volatility:</strong> Historically more volatile than broad market indices"
     ],
     "lastUpdated": "2025-05",
     "limitations": [
@@ -102,18 +102,18 @@
     "benchmarks": [
       "SPY"
     ],
-    "methodology": "Tracked via VanEck Semiconductor ETF (SMH). Concentrated portfolio of ~25 major semiconductor companies. Limitations: Top-heavy \u2014 top 5 holdings often exceed 40% weight.",
+    "methodology": "Tracked via VanEck Semiconductor ETF (SMH). Concentrated portfolio of ~25 major semiconductor companies. Limitations: Top-heavy — top 5 holdings often exceed 40% weight.",
     "overview": "Semiconductor returns are driven by cyclical demand patterns, AI infrastructure buildout, consumer electronics, and automotive chip demand. The sector is capital-intensive with long production cycles.",
     "risks": [
-      "\ud83d\udd04 <strong>Cyclicality:</strong> Semiconductor demand follows boom-bust cycles",
-      "\ud83c\udf0d <strong>Geopolitical Risk:</strong> Manufacturing concentrated in Taiwan and South Korea",
-      "\ud83d\udcb0 <strong>Capital Intensity:</strong> Massive investment required for new fabrication plants",
-      "\ud83c\udfaf <strong>Customer Concentration:</strong> Revenue often dependent on a few large buyers",
-      "\ud83d\udcca <strong>High Volatility:</strong> Amplified market moves due to operating leverage"
+      "🔄 <strong>Cyclicality:</strong> Semiconductor demand follows boom-bust cycles",
+      "🌍 <strong>Geopolitical Risk:</strong> Manufacturing concentrated in Taiwan and South Korea",
+      "💰 <strong>Capital Intensity:</strong> Massive investment required for new fabrication plants",
+      "🎯 <strong>Customer Concentration:</strong> Revenue often dependent on a few large buyers",
+      "📊 <strong>High Volatility:</strong> Amplified market moves due to operating leverage"
     ],
     "lastUpdated": "2025-05",
     "limitations": [
-      "Top-heavy \u2014 top 5 holdings often exceed 40% weight."
+      "Top-heavy — top 5 holdings often exceed 40% weight."
     ],
     "whoItsFor": [
       "You want exposure to a critical technology sector",
@@ -147,11 +147,11 @@
     "methodology": "Tracked via First Trust NASDAQ Cybersecurity ETF (CIBR). Limitations: Some holdings derive cybersecurity revenue as secondary business line.",
     "overview": "Cybersecurity spending is driven by increasing digital threats, regulatory compliance, and enterprise cloud migration. The sector tends to be resilient during downturns as security spending is non-discretionary.",
     "risks": [
-      "\ud83d\udcc9 <strong>Valuation Risk:</strong> Many cybersecurity firms trade at premium multiples",
-      "\ud83d\udd04 <strong>Competition:</strong> Low barriers create constant competitive pressure",
-      "\ud83c\udfaf <strong>Acquisition Risk:</strong> Smaller firms frequently acquired, changing composition",
-      "\ud83d\udcb0 <strong>Profitability Concerns:</strong> Many firms prioritize growth over profits",
-      "\ud83d\udcca <strong>Moderate-High Volatility:</strong> Growth stock characteristics amplify market moves"
+      "📉 <strong>Valuation Risk:</strong> Many cybersecurity firms trade at premium multiples",
+      "🔄 <strong>Competition:</strong> Low barriers create constant competitive pressure",
+      "🎯 <strong>Acquisition Risk:</strong> Smaller firms frequently acquired, changing composition",
+      "💰 <strong>Profitability Concerns:</strong> Many firms prioritize growth over profits",
+      "📊 <strong>Moderate-High Volatility:</strong> Growth stock characteristics amplify market moves"
     ],
     "lastUpdated": "2025-05",
     "limitations": [
@@ -189,11 +189,11 @@
     "methodology": "Tracked via iShares Biotechnology ETF (IBB). Covers NASDAQ-listed biotech firms. Limitations: Excludes many medtech and digital health companies.",
     "overview": "Healthcare innovation is driven by demographic trends (aging populations), technological breakthroughs (gene therapy, mRNA), and regulatory approvals. Binary outcomes from drug trials create unique risk profiles.",
     "risks": [
-      "\u2696\ufe0f <strong>Regulatory Risk:</strong> FDA approvals/rejections create binary outcomes",
-      "\ud83d\udcc9 <strong>Clinical Trial Risk:</strong> Drug failures can cause significant losses",
-      "\ud83d\udcb0 <strong>Pricing Pressure:</strong> Political scrutiny of drug pricing",
-      "\ud83d\udd04 <strong>Patent Cliffs:</strong> Revenue drops when key patents expire",
-      "\ud83d\udcca <strong>High Volatility:</strong> Individual stock moves can be extreme"
+      "⚖️ <strong>Regulatory Risk:</strong> FDA approvals/rejections create binary outcomes",
+      "📉 <strong>Clinical Trial Risk:</strong> Drug failures can cause significant losses",
+      "💰 <strong>Pricing Pressure:</strong> Political scrutiny of drug pricing",
+      "🔄 <strong>Patent Cliffs:</strong> Revenue drops when key patents expire",
+      "📊 <strong>High Volatility:</strong> Individual stock moves can be extreme"
     ],
     "lastUpdated": "2025-05",
     "limitations": [
@@ -231,11 +231,11 @@
     "methodology": "Tracked via iShares MSCI Emerging Markets ETF (EEM). Broad diversified EM exposure. Limitations: China often >30% weight; may not represent all EM equally.",
     "overview": "Emerging market returns are driven by GDP growth differentials, commodity cycles, currency movements, and capital flows. They offer diversification but with additional political and currency risks.",
     "risks": [
-      "\ud83c\udf0d <strong>Political Risk:</strong> Governance and policy instability in developing nations",
-      "\ud83d\udcb1 <strong>Currency Risk:</strong> Local currency depreciation erodes returns",
-      "\ud83d\udcc9 <strong>Capital Flow Risk:</strong> Vulnerable to sudden foreign capital withdrawal",
-      "\u2696\ufe0f <strong>Regulatory Uncertainty:</strong> Changing rules can impact foreign investors",
-      "\ud83d\udcca <strong>Higher Volatility:</strong> Typically more volatile than developed market equities"
+      "🌍 <strong>Political Risk:</strong> Governance and policy instability in developing nations",
+      "💱 <strong>Currency Risk:</strong> Local currency depreciation erodes returns",
+      "📉 <strong>Capital Flow Risk:</strong> Vulnerable to sudden foreign capital withdrawal",
+      "⚖️ <strong>Regulatory Uncertainty:</strong> Changing rules can impact foreign investors",
+      "📊 <strong>Higher Volatility:</strong> Typically more volatile than developed market equities"
     ],
     "lastUpdated": "2025-05",
     "limitations": [
@@ -273,11 +273,11 @@
     "methodology": "Tracked via Vanguard High Dividend Yield ETF (VYM). ~400+ stocks screened for above-average dividend yield. Limitations: Focuses on yield, not dividend growth.",
     "overview": "Dividend strategies focus on mature companies with stable cash flows. Returns come from both payments and moderate capital appreciation. They tend to underperform in strong growth markets but provide downside cushion.",
     "risks": [
-      "\ud83d\udcc9 <strong>Interest Rate Sensitivity:</strong> Dividend stocks compete with bonds; rising rates reduce appeal",
-      "\ud83d\udd04 <strong>Dividend Cuts:</strong> Companies may reduce dividends during economic stress",
-      "\ud83c\udfaf <strong>Sector Concentration:</strong> Often heavy in utilities, financials, and real estate",
-      "\ud83d\udcb0 <strong>Growth Lag:</strong> May underperform growth-oriented strategies in bull markets",
-      "\ud83d\udcca <strong>Moderate Volatility:</strong> Generally lower than broad market but not immune"
+      "📉 <strong>Interest Rate Sensitivity:</strong> Dividend stocks compete with bonds; rising rates reduce appeal",
+      "🔄 <strong>Dividend Cuts:</strong> Companies may reduce dividends during economic stress",
+      "🎯 <strong>Sector Concentration:</strong> Often heavy in utilities, financials, and real estate",
+      "💰 <strong>Growth Lag:</strong> May underperform growth-oriented strategies in bull markets",
+      "📊 <strong>Moderate Volatility:</strong> Generally lower than broad market but not immune"
     ],
     "lastUpdated": "2025-05",
     "limitations": [
@@ -312,18 +312,18 @@
     "benchmarks": [
       "AGG"
     ],
-    "methodology": "Tracked via iShares TIPS Bond ETF (TIP). US Treasury Inflation-Protected Securities. Limitations: Pure TIPS exposure \u2014 does not include commodities or real estate.",
+    "methodology": "Tracked via iShares TIPS Bond ETF (TIP). US Treasury Inflation-Protected Securities. Limitations: Pure TIPS exposure — does not include commodities or real estate.",
     "overview": "Inflation-protected strategies aim to preserve purchasing power. TIPS adjust principal with CPI. Returns are modest in low-inflation environments but provide insurance during inflationary periods.",
     "risks": [
-      "\ud83d\udcc9 <strong>Low Real Returns:</strong> May underperform equities significantly over long periods",
-      "\ud83d\udcb0 <strong>Deflation Risk:</strong> TIPS can lose value in deflationary environments",
-      "\ud83d\udd04 <strong>Interest Rate Risk:</strong> Duration exposure means price declines when real rates rise",
-      "\ud83c\udfaf <strong>Limited Upside:</strong> Designed for protection, not wealth accumulation",
-      "\ud83d\udcca <strong>Low Volatility:</strong> Generally stable but with lower expected returns"
+      "📉 <strong>Low Real Returns:</strong> May underperform equities significantly over long periods",
+      "💰 <strong>Deflation Risk:</strong> TIPS can lose value in deflationary environments",
+      "🔄 <strong>Interest Rate Risk:</strong> Duration exposure means price declines when real rates rise",
+      "🎯 <strong>Limited Upside:</strong> Designed for protection, not wealth accumulation",
+      "📊 <strong>Low Volatility:</strong> Generally stable but with lower expected returns"
     ],
     "lastUpdated": "2025-05",
     "limitations": [
-      "Pure TIPS exposure \u2014 does not include commodities or real estate."
+      "Pure TIPS exposure — does not include commodities or real estate."
     ],
     "whoItsFor": [
       "You worry about rising prices eating into your savings",
@@ -354,18 +354,18 @@
     "benchmarks": [
       "SPY"
     ],
-    "methodology": "Tracked via iPath Bloomberg Commodity Index ETN (DJP). Broad commodity futures basket. Limitations: Futures-based \u2014 subject to contango drag; ETN structure has credit risk.",
+    "methodology": "Tracked via iPath Bloomberg Commodity Index ETN (DJP). Broad commodity futures basket. Limitations: Futures-based — subject to contango drag; ETN structure has credit risk.",
     "overview": "Commodity returns are driven by supply-demand dynamics, geopolitical events, weather, and inflation expectations. They often have low correlation with equities, providing diversification benefits.",
     "risks": [
-      "\ud83d\udcc9 <strong>Contango Drag:</strong> Futures-based products may lose value from roll costs",
-      "\ud83c\udf0d <strong>Geopolitical Sensitivity:</strong> Prices heavily influenced by political events",
-      "\ud83d\udd04 <strong>Cyclicality:</strong> Commodity prices follow boom-bust super-cycles",
-      "\ud83d\udcb0 <strong>No Income:</strong> Commodities don't generate dividends or interest",
-      "\ud83d\udcca <strong>High Volatility:</strong> Individual commodity swings can be extreme"
+      "📉 <strong>Contango Drag:</strong> Futures-based products may lose value from roll costs",
+      "🌍 <strong>Geopolitical Sensitivity:</strong> Prices heavily influenced by political events",
+      "🔄 <strong>Cyclicality:</strong> Commodity prices follow boom-bust super-cycles",
+      "💰 <strong>No Income:</strong> Commodities don't generate dividends or interest",
+      "📊 <strong>High Volatility:</strong> Individual commodity swings can be extreme"
     ],
     "lastUpdated": "2025-05",
     "limitations": [
-      "Futures-based \u2014 subject to contango drag; ETN structure has credit risk."
+      "Futures-based — subject to contango drag; ETN structure has credit risk."
     ],
     "whoItsFor": [
       "You want something that doesn't move with stocks",
@@ -396,18 +396,18 @@
     "benchmarks": [
       "SPY"
     ],
-    "methodology": "Tracked via Invesco QQQ Trust (QQQ). NASDAQ-100 index \u2014 top 100 non-financial NASDAQ stocks. Limitations: Not purely tech \u2014 includes consumer, healthcare, and telecom names.",
+    "methodology": "Tracked via Invesco QQQ Trust (QQQ). NASDAQ-100 index — top 100 non-financial NASDAQ stocks. Limitations: Not purely tech — includes consumer, healthcare, and telecom names.",
     "overview": "Mega cap tech returns are driven by digital advertising, cloud computing, consumer electronics, and platform economics. These companies have dominant market positions but face increasing regulatory scrutiny.",
     "risks": [
-      "\ud83c\udfaf <strong>Concentration Risk:</strong> A few companies dominate index returns",
-      "\u2696\ufe0f <strong>Antitrust Risk:</strong> Regulatory actions could force breakups or limit growth",
-      "\ud83d\udcc9 <strong>Valuation Risk:</strong> Premium valuations leave little margin for disappointment",
-      "\ud83d\udd04 <strong>Market Rotation:</strong> Growth-to-value rotations can cause sharp underperformance",
-      "\ud83d\udcca <strong>Moderate-High Volatility:</strong> Tech-heavy exposure amplifies market drawdowns"
+      "🎯 <strong>Concentration Risk:</strong> A few companies dominate index returns",
+      "⚖️ <strong>Antitrust Risk:</strong> Regulatory actions could force breakups or limit growth",
+      "📉 <strong>Valuation Risk:</strong> Premium valuations leave little margin for disappointment",
+      "🔄 <strong>Market Rotation:</strong> Growth-to-value rotations can cause sharp underperformance",
+      "📊 <strong>Moderate-High Volatility:</strong> Tech-heavy exposure amplifies market drawdowns"
     ],
     "lastUpdated": "2025-05",
     "limitations": [
-      "Not purely tech \u2014 includes consumer, healthcare, and telecom names."
+      "Not purely tech — includes consumer, healthcare, and telecom names."
     ],
     "whoItsFor": [
       "You want exposure to dominant technology platforms",
@@ -438,18 +438,18 @@
     "benchmarks": [
       "SPY"
     ],
-    "methodology": "Tracked via iShares Bitcoin Trust ETF (IBIT). Spot Bitcoin ETF. Limitations: Launched Jan 2024 \u2014 limited history; uses BTC price for extended backtest.",
+    "methodology": "Tracked via iShares Bitcoin Trust ETF (IBIT). Spot Bitcoin ETF. Limitations: Launched Jan 2024 — limited history; uses BTC price for extended backtest.",
     "overview": "Bitcoin returns are driven by adoption trends, monetary policy expectations, regulatory developments, and speculative sentiment. It exhibits very high volatility and low correlation with traditional assets.",
     "risks": [
-      "\ud83d\udcca <strong>Extreme Volatility:</strong> Drawdowns of 50-80% have occurred historically",
-      "\u2696\ufe0f <strong>Regulatory Risk:</strong> Government bans or restrictions remain possible",
-      "\ud83d\udd04 <strong>Market Manipulation:</strong> Less regulated markets may be subject to manipulation",
-      "\ud83d\udcb0 <strong>No Intrinsic Cash Flow:</strong> Value based on supply scarcity and demand, not earnings",
-      "\ud83c\udf0d <strong>Custody/Security Risk:</strong> Unique risks around digital asset security"
+      "📊 <strong>Extreme Volatility:</strong> Drawdowns of 50-80% have occurred historically",
+      "⚖️ <strong>Regulatory Risk:</strong> Government bans or restrictions remain possible",
+      "🔄 <strong>Market Manipulation:</strong> Less regulated markets may be subject to manipulation",
+      "💰 <strong>No Intrinsic Cash Flow:</strong> Value based on supply scarcity and demand, not earnings",
+      "🌍 <strong>Custody/Security Risk:</strong> Unique risks around digital asset security"
     ],
     "lastUpdated": "2025-05",
     "limitations": [
-      "Launched Jan 2024 \u2014 limited history; uses BTC price for extended backtest."
+      "Launched Jan 2024 — limited history; uses BTC price for extended backtest."
     ],
     "whoItsFor": [
       "You can handle losing 50%+ and not panicking",
@@ -460,6 +460,1296 @@
       "You can't stomach seeing your money halve in value",
       "You need stability or income",
       "You're new to investing"
+    ]
+  },
+  {
+    "id": "us_total_market",
+    "name": "US Total Market",
+    "description": "Broad exposure to thousands of US companies — large, mid, and small — in a single fund.",
+    "category": "growth",
+    "megaTheme": "Core Building Blocks",
+    "tags": [
+      "core",
+      "us stocks",
+      "broad market",
+      "diversified",
+      "total market",
+      "etf"
+    ],
+    "representativeAssets": [
+      "VTI",
+      "ITOT"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked using Vanguard Total Stock Market ETF (VTI) and iShares Core S&P Total US Stock Market ETF (ITOT). These funds hold essentially every publicly traded US company. An ETF (exchange-traded fund) is a basket of stocks you can buy in one trade.",
+    "overview": "The US Total Market captures the performance of nearly all publicly traded US companies, from the largest corporations to smaller businesses. Because it's so broad, it tends to reflect the health of the overall US economy.",
+    "risks": [
+      "📉 <strong>Market Risk:</strong> When the US economy struggles, this theme falls — there's no hiding place within it",
+      "🏛️ <strong>Home-Country Concentration:</strong> All exposure is in one country — the US — so global downturns may hit differently",
+      "📊 <strong>Large-Cap Dominance:</strong> A handful of very large companies make up a big share of the fund's value",
+      "🔄 <strong>No Downside Protection:</strong> This theme does not avoid sectors during downturns — it holds everything"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US ETF proxies only — does not represent non-US markets.",
+      "Past performance isn't a guarantee of future results.",
+      "Large companies (mega caps) have outsized influence on returns."
+    ],
+    "whoItsFor": [
+      "You want the simplest possible exposure to US stocks",
+      "You're comfortable with the ups and downs of the stock market",
+      "You're investing for the long term (5+ years)",
+      "You want broad diversification without picking individual stocks or sectors"
+    ],
+    "whoItsNotFor": [
+      "You want to avoid any single country's market risk",
+      "You need steady income from your investments",
+      "You're looking for protection when markets fall"
+    ]
+  },
+  {
+    "id": "global_stocks",
+    "name": "Global Stocks",
+    "description": "A single fund that covers stocks from both the US and the rest of the world.",
+    "category": "growth",
+    "megaTheme": "Core Building Blocks",
+    "tags": [
+      "core",
+      "global",
+      "world",
+      "diversified",
+      "international",
+      "etf"
+    ],
+    "representativeAssets": [
+      "VT",
+      "ACWI"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked using Vanguard Total World Stock ETF (VT) and iShares MSCI ACWI ETF (ACWI). These funds hold thousands of companies from over 40 countries. An ETF (exchange-traded fund) is a basket of stocks you can buy in one trade.",
+    "overview": "Global stocks blend US companies with businesses from Europe, Asia, and other parts of the world. This mix means performance is shaped by growth and events in many countries, not just one.",
+    "risks": [
+      "🌍 <strong>Currency Risk:</strong> Returns are affected by changes in exchange rates between currencies",
+      "📉 <strong>Global Downturns:</strong> When a worldwide crisis hits, most markets fall together",
+      "🏛️ <strong>Political and Regulatory Risk:</strong> Events in foreign countries — elections, trade disputes — can affect returns",
+      "🔄 <strong>US Dominance:</strong> US stocks still make up over half of this fund, so it moves a lot like US markets"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US ETF proxies only — UCITS equivalents exist for EU/UK investors but are not listed here.",
+      "Past performance isn't a guarantee of future results.",
+      "Currency movements add an extra layer of variability not present in pure US funds."
+    ],
+    "whoItsFor": [
+      "You want to invest in companies all over the world, not just the US",
+      "You believe growth will come from multiple countries over time",
+      "You prefer a simple one-fund approach to global investing",
+      "You're comfortable with some extra complexity from different countries and currencies"
+    ],
+    "whoItsNotFor": [
+      "You want to avoid currency exchange risk",
+      "You prefer to focus only on US or only on non-US markets",
+      "You need regular income from your investments"
+    ]
+  },
+  {
+    "id": "developed_ex_us",
+    "name": "Developed Markets (ex-US)",
+    "description": "Stocks from wealthy countries outside the US — like Japan, Germany, the UK, and Australia.",
+    "category": "growth",
+    "megaTheme": "Core Building Blocks",
+    "tags": [
+      "core",
+      "international",
+      "developed markets",
+      "europe",
+      "japan",
+      "ex-us",
+      "etf"
+    ],
+    "representativeAssets": [
+      "VEA",
+      "EFA"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked using Vanguard FTSE Developed Markets ETF (VEA) and iShares MSCI EAFE ETF (EFA). These funds hold large companies from wealthy non-US countries across Europe, Asia-Pacific, and Canada. An ETF is a basket of stocks bought in one trade.",
+    "overview": "Developed ex-US stocks provide exposure to large companies in stable, well-regulated economies outside the United States. Returns often behave differently from US stocks, which can help spread risk across a portfolio.",
+    "risks": [
+      "💱 <strong>Currency Risk:</strong> Exchange rate changes between the US dollar and local currencies affect returns",
+      "📉 <strong>Slower Growth:</strong> Some developed economies have grown more slowly than the US in recent years",
+      "🏛️ <strong>Political Risk:</strong> Elections, trade policies, and regional tensions in Europe or Asia can affect prices",
+      "🔄 <strong>Correlation During Crises:</strong> When global markets panic, most countries fall together"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US ETF proxies — UCITS equivalents exist for EU/UK investors.",
+      "Past performance isn't a guarantee of future results.",
+      "Excludes emerging markets and the US."
+    ],
+    "whoItsFor": [
+      "You want international diversification beyond US stocks",
+      "You believe non-US developed markets offer good long-term value",
+      "You're comfortable with currency fluctuations",
+      "You want to reduce your portfolio's dependence on the US economy"
+    ],
+    "whoItsNotFor": [
+      "You want to avoid foreign currency exposure",
+      "You're focused only on the US market",
+      "You need regular income payments"
+    ]
+  },
+  {
+    "id": "us_total_bond_market",
+    "name": "US Investment Grade Bonds",
+    "description": "A broad mix of high-quality US bonds — from government to corporate — that pay regular interest.",
+    "category": "defensive",
+    "megaTheme": "Core Building Blocks",
+    "tags": [
+      "core",
+      "bonds",
+      "fixed income",
+      "defensive",
+      "investment grade",
+      "etf"
+    ],
+    "representativeAssets": [
+      "BND",
+      "AGG"
+    ],
+    "benchmarks": [
+      "AGG"
+    ],
+    "methodology": "Tracked using Vanguard Total Bond Market ETF (BND) and iShares Core US Aggregate Bond ETF (AGG). These funds hold thousands of US bonds from governments, companies, and mortgage agencies. An ETF is a basket of investments bought in one trade.",
+    "overview": "Investment-grade US bonds are considered relatively lower risk than stocks. They pay regular interest and return the original amount at the end of the bond's life. They often hold their value or rise when stock markets fall, making them a popular balancing tool.",
+    "risks": [
+      "📈 <strong>Interest Rate Risk:</strong> When interest rates rise, bond prices fall — even high-quality bonds",
+      "💸 <strong>Inflation Risk:</strong> If prices rise faster than bond interest payments, your purchasing power shrinks",
+      "📉 <strong>Lower Returns:</strong> Over the long run, bonds typically grow less than stocks",
+      "🔄 <strong>Credit Risk:</strong> Corporate bonds can lose value if companies run into financial trouble"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US ETF proxies only — does not include international bonds.",
+      "Past performance isn't a guarantee of future results.",
+      "Focuses on US investment-grade bonds and may miss global bond moves."
+    ],
+    "whoItsFor": [
+      "You want a calmer core holding to balance out stocks",
+      "You prefer broad bond diversification over picking individual bonds",
+      "You're approaching or in retirement and want more stability",
+      "You want regular interest income from your investments"
+    ],
+    "whoItsNotFor": [
+      "You're seeking high long-term growth",
+      "You want protection specifically from inflation spikes",
+      "You expect bond prices to never drop"
+    ]
+  },
+  {
+    "id": "short_term_bonds",
+    "name": "Short-Term Bonds",
+    "description": "Bonds that mature quickly — usually in 1 to 3 years — making them less sensitive to interest rate changes.",
+    "category": "defensive",
+    "megaTheme": "Core Building Blocks",
+    "tags": [
+      "core",
+      "short term",
+      "bonds",
+      "cash like",
+      "defensive",
+      "low volatility",
+      "etf"
+    ],
+    "representativeAssets": [
+      "BSV",
+      "VGSH",
+      "SHY"
+    ],
+    "benchmarks": [
+      "AGG"
+    ],
+    "methodology": "Tracked using Vanguard Short-Term Bond ETF (BSV), Vanguard Short-Term Government Bond ETF (VGSH), and iShares 1-3 Year Treasury Bond ETF (SHY). These hold US bonds that mature in 1 to 3 years. An ETF is a basket of investments bought in one trade.",
+    "overview": "Short-term bonds are often used as a way to park money with some yield while keeping it relatively stable. Because they mature sooner, they're less affected by rising interest rates compared to longer-dated bonds.",
+    "risks": [
+      "💸 <strong>Inflation Risk:</strong> Returns may not keep pace with rising prices over time",
+      "📉 <strong>Low Return Potential:</strong> Short-term bonds typically offer lower returns than stocks or longer bonds",
+      "📈 <strong>Reinvestment Risk:</strong> When bonds mature, you may reinvest at lower rates if interest rates fall",
+      "🔄 <strong>Not Equivalent to Cash:</strong> Still has some price movement — not as stable as a savings account"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US ETF proxies only — local cash equivalents may be better for non-US investors.",
+      "Past performance isn't a guarantee of future results.",
+      "Returns are modest; typically used for stability, not growth."
+    ],
+    "whoItsFor": [
+      "You want somewhere relatively stable to hold money while waiting to invest",
+      "You prefer lower day-to-day price swings than longer-term bonds",
+      "You're building a defensive layer in your portfolio",
+      "You want some return above a savings account with minimal risk"
+    ],
+    "whoItsNotFor": [
+      "You're seeking strong long-term growth",
+      "You want income that keeps up with high inflation",
+      "You expect your investment to never move in value"
+    ]
+  },
+  {
+    "id": "gold",
+    "name": "Gold",
+    "description": "An investment in physical gold — the precious metal often used as a safe haven in uncertain times.",
+    "category": "alternative",
+    "megaTheme": "Core Building Blocks",
+    "tags": [
+      "core",
+      "gold",
+      "alternative",
+      "inflation",
+      "safe haven",
+      "precious metals",
+      "etf"
+    ],
+    "representativeAssets": [
+      "GLD",
+      "IAU"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked using SPDR Gold Shares (GLD) and iShares Gold Trust (IAU). These ETFs hold physical gold in secure vaults — buying a share gives you economic exposure to gold's price. An ETF is a basket of investments bought in one trade.",
+    "overview": "Gold has historically been seen as a store of value over very long periods and tends to behave differently from stocks and bonds. It often attracts investors during times of economic stress or rising inflation fears.",
+    "risks": [
+      "📉 <strong>No Income:</strong> Gold does not pay dividends or interest — all return comes from price movement",
+      "🎢 <strong>Price Swings:</strong> Gold can be quite bumpy — its price has dropped significantly over multi-year periods",
+      "💸 <strong>Inflation Hedge Uncertainty:</strong> Gold doesn't always protect against inflation in the short term",
+      "🌍 <strong>Macro Sensitivity:</strong> Gold's price is heavily influenced by global economic sentiment and the US dollar",
+      "🔄 <strong>Long Flat Periods:</strong> Gold can go years without meaningful gains"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US ETF proxies only — physical gold or futures also exist as alternatives.",
+      "Past performance isn't a guarantee of future results.",
+      "Storage costs are embedded in ETF expense ratios."
+    ],
+    "whoItsFor": [
+      "You want an alternative that behaves differently from stocks and bonds",
+      "You're concerned about inflation or global instability over the long term",
+      "You want to add a small diversifying element to your portfolio",
+      "You're comfortable holding something that may not grow for long stretches"
+    ],
+    "whoItsNotFor": [
+      "You want regular income from your investments",
+      "You prefer simple stock-and-bond portfolios",
+      "You need consistent year-over-year growth"
+    ]
+  },
+  {
+    "id": "value_stocks",
+    "name": "Value Stocks",
+    "description": "Companies whose share prices look low relative to their earnings, sales, or assets — often overlooked or out of fashion.",
+    "category": "growth",
+    "megaTheme": "Simple Styles",
+    "tags": [
+      "style",
+      "value",
+      "cheap stocks",
+      "us stocks",
+      "broad",
+      "etf"
+    ],
+    "representativeAssets": [
+      "VTV",
+      "IWD"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked using Vanguard Value ETF (VTV) and iShares Russell 1000 Value ETF (IWD). These funds hold large US companies that appear underpriced by common financial measures. An ETF is a basket of stocks bought in one trade.",
+    "overview": "Value investing focuses on finding companies that appear to be priced below what they might be worth. Historically, value stocks have had long stretches of outperforming growth stocks, followed by equally long stretches of underperforming.",
+    "risks": [
+      "⏳ <strong>Long Underperformance Cycles:</strong> Value stocks can lag growth stocks for many years",
+      "🪤 <strong>Value Traps:</strong> Some cheap stocks are cheap for a reason — the business may be struggling",
+      "📉 <strong>Sector Concentration:</strong> Value funds often hold more financials, energy, and utilities companies",
+      "🔄 <strong>Style Risk:</strong> What counts as 'value' can shift over time as markets change"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US ETF proxy — may not represent global value styles.",
+      "Past performance isn't a guarantee of future results.",
+      "Value definitions vary by fund provider."
+    ],
+    "whoItsFor": [
+      "You like the idea of buying companies that seem underpriced",
+      "You're comfortable with long periods where this style lags",
+      "You want a different flavour of stock exposure beyond just large-cap growth",
+      "You're investing for the long term and can wait patiently"
+    ],
+    "whoItsNotFor": [
+      "You want recent high-performers or fast-growing companies",
+      "You're uncomfortable with multi-year underperformance",
+      "You need consistent short-term returns"
+    ]
+  },
+  {
+    "id": "growth_stocks",
+    "name": "Growth Stocks",
+    "description": "Companies expected to grow their earnings faster than average — often technology and innovation-led businesses.",
+    "category": "growth",
+    "megaTheme": "Simple Styles",
+    "tags": [
+      "style",
+      "growth",
+      "fast growing",
+      "us stocks",
+      "broad",
+      "etf"
+    ],
+    "representativeAssets": [
+      "VUG",
+      "IWF"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked using Vanguard Growth ETF (VUG) and iShares Russell 1000 Growth ETF (IWF). These funds hold large US companies with strong expected earnings growth. An ETF is a basket of stocks bought in one trade.",
+    "overview": "Growth stocks are companies where investors expect earnings and revenue to grow faster than the broader market. They often trade at higher prices relative to current earnings because investors are paying for future potential.",
+    "risks": [
+      "📈 <strong>Valuation Sensitivity:</strong> When interest rates rise, high-priced growth stocks can fall sharply",
+      "🎢 <strong>Bigger Drops:</strong> Growth stocks can fall more than the market when expectations disappoint",
+      "🏢 <strong>Concentration Risk:</strong> A handful of large tech companies often dominate these funds",
+      "🔄 <strong>Style Rotation:</strong> Markets can shift strongly toward value, leaving growth behind for years"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US ETF proxy — may differ from global growth exposure.",
+      "Past performance isn't a guarantee of future results.",
+      "Can be concentrated in a few very large technology companies."
+    ],
+    "whoItsFor": [
+      "You want exposure to fast-growing, innovative companies",
+      "You're comfortable with bigger price swings",
+      "You're investing over a long time horizon (5+ years)",
+      "You believe technology and innovation will drive future returns"
+    ],
+    "whoItsNotFor": [
+      "You want steady, low-volatility returns",
+      "You prefer consistent dividend income",
+      "You're uncomfortable when valuations look stretched"
+    ]
+  },
+  {
+    "id": "quality_stocks",
+    "name": "Quality Stocks",
+    "description": "Companies with strong, stable finances — high profitability, low debt, and consistent earnings.",
+    "category": "growth",
+    "megaTheme": "Simple Styles",
+    "tags": [
+      "style",
+      "quality",
+      "profitability",
+      "us stocks",
+      "stable",
+      "etf"
+    ],
+    "representativeAssets": [
+      "QUAL",
+      "DGRW"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked using iShares MSCI USA Quality Factor ETF (QUAL). This fund selects US companies scoring high on profitability, earnings stability, and debt levels. An ETF is a basket of stocks bought in one trade.",
+    "overview": "Quality investing focuses on financially healthy companies that tend to be more resilient during economic downturns. They may not be the fastest growers, but they often hold up better when markets get rough.",
+    "risks": [
+      "💰 <strong>Valuation Premiums:</strong> Quality companies are widely liked, so they often trade at higher prices",
+      "📉 <strong>Underperformance in Rallies:</strong> During strong bull markets, quality can lag more aggressive styles",
+      "🔄 <strong>Definition Risk:</strong> Different providers define 'quality' differently — funds may hold different stocks",
+      "🏢 <strong>Concentration:</strong> Can still be heavily weighted toward a few large, popular sectors"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US ETF proxy only — global quality ETFs also exist.",
+      "Past performance isn't a guarantee of future results.",
+      "Quality definitions vary across fund providers."
+    ],
+    "whoItsFor": [
+      "You want more stable, financially healthy companies in your portfolio",
+      "You're comfortable accepting slightly lower returns for more resilience",
+      "You want stock exposure but with a bit more defensiveness built in",
+      "You're investing for the medium to long term"
+    ],
+    "whoItsNotFor": [
+      "You want the highest possible returns and are willing to take big risks",
+      "You prefer dividend income as your primary goal",
+      "You want exposure to smaller or more speculative companies"
+    ]
+  },
+  {
+    "id": "low_volatility_stocks",
+    "name": "Low Volatility Stocks",
+    "description": "US stocks that have historically had smaller price swings — companies with calmer, more predictable share prices.",
+    "category": "defensive",
+    "megaTheme": "Simple Styles",
+    "tags": [
+      "style",
+      "low volatility",
+      "defensive",
+      "calm",
+      "us stocks",
+      "etf"
+    ],
+    "representativeAssets": [
+      "USMV",
+      "SPLV"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked using iShares MSCI USA Min Vol Factor ETF (USMV) and Invesco S&P 500 Low Volatility ETF (SPLV). These funds hold US stocks that have shown smaller-than-average price movements. An ETF is a basket of stocks bought in one trade.",
+    "overview": "Low-volatility strategies aim to capture most of the stock market's long-term returns while experiencing smaller drops along the way. They tend to hold sectors like utilities, consumer staples, and healthcare that are seen as more stable.",
+    "risks": [
+      "📉 <strong>Lag in Strong Markets:</strong> When markets rise sharply, low-volatility funds often rise less",
+      "📈 <strong>Interest Rate Sensitivity:</strong> Low-vol sectors like utilities and staples can fall when rates rise",
+      "🔄 <strong>Defensive Crowding:</strong> When many investors pile into these same calm stocks, they can become expensive",
+      "🏢 <strong>Sector Tilts:</strong> Often heavy in utilities, real estate, and consumer staples — less tech"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US ETF proxy — past low volatility does not guarantee future low volatility.",
+      "Past performance isn't a guarantee of future results.",
+      "Low volatility in the past doesn't protect against all types of market stress."
+    ],
+    "whoItsFor": [
+      "You want stock exposure but dislike large swings in your portfolio value",
+      "You're closer to retirement or have a shorter time horizon",
+      "You prefer to ride out markets with fewer dramatic drops",
+      "You're comfortable with potentially missing out on strong market rallies"
+    ],
+    "whoItsNotFor": [
+      "You want to capture the full upside of strong bull markets",
+      "You're seeking aggressive long-term growth",
+      "You want tech or growth-heavy exposure"
+    ]
+  },
+  {
+    "id": "small_caps",
+    "name": "Small Cap Stocks",
+    "description": "Smaller US companies that are often younger, faster-growing, and more nimble than the large corporations you hear about every day.",
+    "category": "growth",
+    "megaTheme": "Simple Styles",
+    "tags": [
+      "style",
+      "small caps",
+      "small companies",
+      "us stocks",
+      "growth",
+      "etf"
+    ],
+    "representativeAssets": [
+      "IWM",
+      "VB"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked using iShares Russell 2000 ETF (IWM) and Vanguard Small-Cap ETF (VB). These funds hold hundreds of smaller US companies. An ETF is a basket of stocks bought in one trade.",
+    "overview": "Small-cap stocks are shares in smaller companies. Historically, smaller companies have sometimes grown faster than larger ones over very long periods, but they also tend to be bumpier and fall more during downturns.",
+    "risks": [
+      "🎢 <strong>Higher Volatility:</strong> Small companies have bigger price swings — both up and down",
+      "📉 <strong>Recession Sensitivity:</strong> Smaller firms often struggle more when the economy slows",
+      "💧 <strong>Lower Liquidity:</strong> Some small-cap stocks trade less frequently, making them harder to sell quickly",
+      "🏢 <strong>Profitability Risk:</strong> Many small caps are not yet reliably profitable",
+      "🔄 <strong>Long Underperformance:</strong> Small caps can lag large caps for extended periods"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US ETF proxy only — international small caps also exist.",
+      "Past performance isn't a guarantee of future results.",
+      "Smaller companies carry higher business risk than established large-cap firms."
+    ],
+    "whoItsFor": [
+      "You want exposure to smaller, potentially faster-growing companies",
+      "You have a long time horizon and can ride out bigger swings",
+      "You want to diversify beyond the largest US corporations",
+      "You're comfortable with higher price volatility"
+    ],
+    "whoItsNotFor": [
+      "You're investing for less than 5 years",
+      "You want calm, steady price movements",
+      "You need consistent income from your investments"
+    ]
+  },
+  {
+    "id": "momentum",
+    "name": "Momentum — Recent Winners",
+    "description": "A strategy that focuses on stocks that have been rising recently — the idea that recent winners sometimes keep winning for a while.",
+    "category": "growth",
+    "megaTheme": "Simple Styles",
+    "tags": [
+      "style",
+      "momentum",
+      "trend following",
+      "recent winners",
+      "us stocks",
+      "etf"
+    ],
+    "representativeAssets": [
+      "MTUM",
+      "QMOM"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked using iShares MSCI USA Momentum Factor ETF (MTUM). This fund selects US stocks that have risen the most over recent months. Holdings rotate regularly as the 'winners' change. An ETF is a basket of stocks bought in one trade.",
+    "overview": "Momentum investing bets that stocks which have done well recently will continue doing well in the near term. The fund regularly replaces its holdings to track the current 'rising stars'. When the trend reverses, momentum strategies can fall sharply and quickly.",
+    "risks": [
+      "🔄 <strong>Reversal Risk:</strong> When markets shift direction, recent winners can become sharp losers very quickly",
+      "💰 <strong>High Turnover:</strong> Frequent buying and selling of holdings can create tax drag and trading costs",
+      "🎢 <strong>Crash Risk:</strong> Momentum funds can fall severely and fast when market sentiment flips",
+      "📊 <strong>Crowding Risk:</strong> If many funds chase the same winners, prices can become inflated",
+      "🔮 <strong>No Guarantee:</strong> Past winners don't always keep winning — the strategy can fail in choppy markets"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US ETF proxy only — momentum strategies exist globally but can vary widely.",
+      "Past performance isn't a guarantee of future results.",
+      "This strategy can behave very differently from a simple index fund."
+    ],
+    "whoItsFor": [
+      "You understand that this strategy chases recent trends — not fundamental value",
+      "You're comfortable with potentially sharp reversals",
+      "You want to try a rules-based, systematic investment style",
+      "You have a medium to long time horizon"
+    ],
+    "whoItsNotFor": [
+      "You want a calm, predictable investment",
+      "You're uncomfortable holding whatever happened to be popular recently",
+      "You're new to investing and still learning the basics"
+    ]
+  },
+  {
+    "id": "dividend_growth",
+    "name": "Dividend Growth",
+    "description": "Companies that don't just pay dividends today — they've consistently grown those payments year after year.",
+    "category": "income",
+    "megaTheme": "Simple Styles",
+    "tags": [
+      "style",
+      "dividends",
+      "dividend growth",
+      "income",
+      "quality",
+      "etf"
+    ],
+    "representativeAssets": [
+      "VIG",
+      "DGRO"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked using Vanguard Dividend Appreciation ETF (VIG) and iShares Core Dividend Growth ETF (DGRO). These funds hold companies with a multi-year track record of growing their dividend payments. An ETF is a basket of stocks bought in one trade.",
+    "overview": "Dividend growth companies have not only paid regular dividends but have raised them consistently. This often signals financial strength and disciplined management. Returns come from both rising dividends over time and share price appreciation.",
+    "risks": [
+      "📉 <strong>Lower Yield Today:</strong> These companies grow dividends over time but may pay less today than high-yield funds",
+      "🔄 <strong>Dividend Cuts:</strong> Even strong companies can cut dividends during severe economic stress",
+      "📊 <strong>Style Lag:</strong> Can underperform during strong growth-driven bull markets",
+      "🏢 <strong>Sector Concentration:</strong> Often holds more consumer staples, healthcare, and industrials"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US ETF proxy — international dividend growth funds also exist.",
+      "Past performance isn't a guarantee of future results.",
+      "Historical dividend growth does not guarantee future increases."
+    ],
+    "whoItsFor": [
+      "You want income that grows over time, not just a fixed payment today",
+      "You prefer financially healthy, well-managed companies",
+      "You're building toward retirement and want growing income streams",
+      "You want a blend of income and long-term growth potential"
+    ],
+    "whoItsNotFor": [
+      "You want the highest possible yield right now",
+      "You're seeking aggressive capital growth",
+      "You're investing for a very short time horizon"
+    ]
+  },
+  {
+    "id": "healthcare_sector",
+    "name": "Healthcare",
+    "description": "A broad range of healthcare companies — hospitals, drug makers, medical device firms, and health insurers.",
+    "category": "defensive",
+    "megaTheme": "Easy Sectors",
+    "tags": [
+      "sector",
+      "healthcare",
+      "pharma",
+      "medical",
+      "defensive",
+      "etf"
+    ],
+    "representativeAssets": [
+      "XLV",
+      "VHT"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked using Health Care Select Sector SPDR Fund (XLV) and Vanguard Health Care ETF (VHT). These hold large US healthcare companies across multiple sub-industries. An ETF is a basket of stocks bought in one trade.",
+    "overview": "Healthcare is one of the larger sectors in the US stock market. Demand for healthcare tends to stay relatively stable even in recessions — people still need medicines and treatments. However, policy changes and drug trial outcomes can create sharp surprises.",
+    "risks": [
+      "⚖️ <strong>Regulatory Risk:</strong> Government drug pricing rules and healthcare policy changes can hit company profits",
+      "🔬 <strong>Drug Trial Risk:</strong> A failed clinical trial can cause a company's stock to fall sharply",
+      "📉 <strong>Sector Concentration:</strong> All exposure is within one sector — no diversification across the economy",
+      "💰 <strong>Patent Cliffs:</strong> When key drug patents expire, generic competition can sharply reduce revenue"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US sector ETF proxy — does not include non-US healthcare companies.",
+      "Past performance isn't a guarantee of future results.",
+      "Individual company news (drug approvals, lawsuits) can cause large moves."
+    ],
+    "whoItsFor": [
+      "You want exposure to a sector with relatively stable demand",
+      "You believe healthcare and aging populations are long-term growth drivers",
+      "You want to tilt your portfolio toward a specific sector",
+      "You're comfortable with some regulatory and clinical risk"
+    ],
+    "whoItsNotFor": [
+      "You want full diversification across the economy",
+      "You're uncomfortable with sudden, news-driven price drops",
+      "You need a reliable income stream"
+    ]
+  },
+  {
+    "id": "financials_sector",
+    "name": "Financials",
+    "description": "Banks, insurance companies, investment firms, and payment networks — the companies that handle money for everyone else.",
+    "category": "growth",
+    "megaTheme": "Easy Sectors",
+    "tags": [
+      "sector",
+      "financials",
+      "banks",
+      "insurance",
+      "etf"
+    ],
+    "representativeAssets": [
+      "XLF",
+      "VFH"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked using Financial Select Sector SPDR Fund (XLF) and Vanguard Financials ETF (VFH). These hold large US financial companies from banking to insurance to asset management. An ETF is a basket of stocks bought in one trade.",
+    "overview": "The financials sector includes the companies that lend money, insure risks, process payments, and manage wealth. Their performance is closely tied to interest rates and the health of the broader economy.",
+    "risks": [
+      "📈 <strong>Interest Rate Sensitivity:</strong> Bank profits are directly affected by how high or low interest rates are",
+      "🏦 <strong>Recession Risk:</strong> When economies slow, loan defaults rise and financial companies can suffer",
+      "⚖️ <strong>Regulatory Changes:</strong> New rules on lending, capital requirements, or fees can hurt profitability",
+      "🔄 <strong>Crisis Amplification:</strong> Financial companies can fall very sharply during market crises (e.g. 2008)"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US sector ETF proxy only.",
+      "Past performance isn't a guarantee of future results.",
+      "Banks can be highly sensitive to economic conditions and carry unique risks."
+    ],
+    "whoItsFor": [
+      "You believe rising interest rates or a strong economy will benefit banks",
+      "You want targeted exposure to financial services companies",
+      "You're comfortable with above-average swings tied to economic cycles",
+      "You have a medium to long investment horizon"
+    ],
+    "whoItsNotFor": [
+      "You're uncomfortable with large drops during recessions or crises",
+      "You prefer more economically stable sectors",
+      "You need predictable, steady income"
+    ]
+  },
+  {
+    "id": "industrials_sector",
+    "name": "Industrials",
+    "description": "Companies that build things, move things, and keep the economy running — from aerospace to logistics to construction.",
+    "category": "growth",
+    "megaTheme": "Easy Sectors",
+    "tags": [
+      "sector",
+      "industrials",
+      "manufacturing",
+      "infrastructure",
+      "logistics",
+      "etf"
+    ],
+    "representativeAssets": [
+      "XLI",
+      "VIS"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked using Industrial Select Sector SPDR Fund (XLI) and Vanguard Industrials ETF (VIS). These hold large US industrial companies across aerospace, defense, machinery, transport, and construction. An ETF is a basket of stocks bought in one trade.",
+    "overview": "The industrials sector covers companies that make physical goods and provide services that run the economy — planes, trains, machines, and more. It tends to do well when the economy is growing and manufacturing activity is strong.",
+    "risks": [
+      "🔄 <strong>Economic Cycle Risk:</strong> Industrial companies are highly sensitive to economic slowdowns",
+      "💱 <strong>Trade and Tariff Risk:</strong> Global trade disputes can raise costs or reduce demand for industrial goods",
+      "⛽ <strong>Energy and Input Costs:</strong> Rising energy or raw material prices can squeeze margins",
+      "📉 <strong>Sector Concentration:</strong> All exposure within one part of the economy"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US sector ETF proxy only.",
+      "Past performance isn't a guarantee of future results.",
+      "Returns are closely linked to manufacturing and economic growth cycles."
+    ],
+    "whoItsFor": [
+      "You believe the economy will grow and manufacturing activity will increase",
+      "You want exposure to infrastructure spending trends",
+      "You're comfortable with economic-cycle driven swings",
+      "You want targeted sector exposure beyond broad market funds"
+    ],
+    "whoItsNotFor": [
+      "You want to avoid sectors that move sharply with the economic cycle",
+      "You prefer more defensive, recession-resistant companies",
+      "You need consistent dividend income"
+    ]
+  },
+  {
+    "id": "energy_sector",
+    "name": "Energy",
+    "description": "Oil companies, gas producers, pipelines, and increasingly some renewable energy businesses.",
+    "category": "alternative",
+    "megaTheme": "Easy Sectors",
+    "tags": [
+      "sector",
+      "energy",
+      "oil",
+      "gas",
+      "fossil fuels",
+      "etf"
+    ],
+    "representativeAssets": [
+      "XLE",
+      "VDE"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked using Energy Select Sector SPDR Fund (XLE) and Vanguard Energy ETF (VDE). These hold large US energy companies primarily in oil and natural gas exploration, production, and refining. An ETF is a basket of stocks bought in one trade.",
+    "overview": "The energy sector is heavily influenced by the price of oil and natural gas, which can swing dramatically based on supply decisions, geopolitical events, and global demand. Energy stocks can be great inflation hedges — but also deeply cyclical.",
+    "risks": [
+      "⛽ <strong>Oil Price Risk:</strong> The sector's returns are closely tied to volatile global oil and gas prices",
+      "🌍 <strong>Geopolitical Risk:</strong> Conflicts, sanctions, and OPEC decisions can cause rapid price swings",
+      "♻️ <strong>Energy Transition Risk:</strong> Long-term shift away from fossil fuels may reduce demand over decades",
+      "🎢 <strong>High Cyclicality:</strong> Energy stocks have boom-and-bust cycles more extreme than most sectors",
+      "⚖️ <strong>Regulatory Risk:</strong> Environmental regulations and carbon pricing could affect profitability"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US sector ETF proxy — heavily weighted toward large oil and gas companies.",
+      "Past performance isn't a guarantee of future results.",
+      "Does not focus on renewable energy — that's a separate theme."
+    ],
+    "whoItsFor": [
+      "You want inflation hedge exposure through energy commodities",
+      "You believe oil and gas remain important for decades",
+      "You're comfortable with sharp swings tied to commodity prices",
+      "You want sector diversification within a broader portfolio"
+    ],
+    "whoItsNotFor": [
+      "You want a calm, low-volatility investment",
+      "You prefer to avoid fossil fuel exposure for ethical reasons",
+      "You're investing for a short time horizon"
+    ]
+  },
+  {
+    "id": "utilities_sector",
+    "name": "Utilities",
+    "description": "Companies that provide electricity, water, and gas to homes and businesses — essential services that people need every day.",
+    "category": "defensive",
+    "megaTheme": "Easy Sectors",
+    "tags": [
+      "sector",
+      "utilities",
+      "electricity",
+      "water",
+      "defensive",
+      "income",
+      "etf"
+    ],
+    "representativeAssets": [
+      "XLU",
+      "VPU"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked using Utilities Select Sector SPDR Fund (XLU) and Vanguard Utilities ETF (VPU). These hold large US electric, gas, and multi-utility companies. An ETF is a basket of stocks bought in one trade.",
+    "overview": "Utility companies supply essential services and are typically regulated by governments. They tend to be more stable than other sectors since demand doesn't disappear in recessions. They also often pay higher dividends than average.",
+    "risks": [
+      "📈 <strong>Interest Rate Risk:</strong> Utilities are often compared to bonds — when rates rise, utilities can fall",
+      "⚖️ <strong>Regulatory Risk:</strong> Government-set rates and rules limit how much utilities can charge",
+      "💸 <strong>Debt Levels:</strong> Utility companies often carry significant debt to fund infrastructure",
+      "📉 <strong>Limited Growth:</strong> Regulated revenues mean slower growth potential than other sectors"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US sector ETF proxy only.",
+      "Past performance isn't a guarantee of future results.",
+      "Higher interest rates have historically been a headwind for utility stock prices."
+    ],
+    "whoItsFor": [
+      "You want a defensive sector with more stable revenues",
+      "You like higher-than-average dividend income",
+      "You want to balance a growth-heavy portfolio with something calmer",
+      "You believe in the long-term demand for electricity, including from AI data centers and EVs"
+    ],
+    "whoItsNotFor": [
+      "You're expecting high capital growth",
+      "You're uncomfortable in a rising-interest-rate environment",
+      "You want exposure to faster-growing industries"
+    ]
+  },
+  {
+    "id": "consumer_staples_sector",
+    "name": "Consumer Staples",
+    "description": "Companies that make things people buy regardless of the economy — food, beverages, household goods, and personal care products.",
+    "category": "defensive",
+    "megaTheme": "Easy Sectors",
+    "tags": [
+      "sector",
+      "consumer staples",
+      "food",
+      "household goods",
+      "defensive",
+      "etf"
+    ],
+    "representativeAssets": [
+      "XLP",
+      "VDC"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked using Consumer Staples Select Sector SPDR Fund (XLP) and Vanguard Consumer Staples ETF (VDC). These hold large companies selling everyday essentials. An ETF is a basket of stocks bought in one trade.",
+    "overview": "Consumer staples companies sell products people need regardless of economic conditions — groceries, toothpaste, cleaning supplies. This makes them one of the most defensive sectors: demand doesn't evaporate in recessions.",
+    "risks": [
+      "📉 <strong>Slow Growth:</strong> Stable businesses often grow slowly — these aren't high-octane growth stocks",
+      "💰 <strong>Pricing Power Limits:</strong> Companies may struggle to raise prices faster than costs in inflationary periods",
+      "🔄 <strong>Competition and Disruption:</strong> Retail and brand disruption from private labels and e-commerce",
+      "📊 <strong>Valuation Risk:</strong> Investors often pay a premium for stability, making these stocks expensive"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US sector ETF proxy only.",
+      "Past performance isn't a guarantee of future results.",
+      "Defensive character doesn't mean immune to market drops."
+    ],
+    "whoItsFor": [
+      "You want a defensive sector that tends to hold up in economic downturns",
+      "You like steady companies with predictable revenues",
+      "You want some income from dividends alongside stability",
+      "You're balancing a more aggressive portfolio with something calmer"
+    ],
+    "whoItsNotFor": [
+      "You want fast-growing, exciting companies",
+      "You're focused only on maximising long-term growth",
+      "You want exposure to technology or innovation"
+    ]
+  },
+  {
+    "id": "technology_sector",
+    "name": "Technology (Broad Sector)",
+    "description": "A wide slice of the technology industry — software, hardware, chip makers, and IT services — not just the biggest names.",
+    "category": "growth",
+    "megaTheme": "Easy Sectors",
+    "tags": [
+      "sector",
+      "technology",
+      "software",
+      "hardware",
+      "chips",
+      "it",
+      "etf"
+    ],
+    "representativeAssets": [
+      "XLK",
+      "VGT"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked using Technology Select Sector SPDR Fund (XLK) and Vanguard Information Technology ETF (VGT). These hold large US technology companies across software, semiconductors, hardware, and IT services. An ETF is a basket of stocks bought in one trade.",
+    "overview": "The technology sector is one of the largest in the US stock market. It covers the companies building software, hardware, and infrastructure that power modern businesses and daily life. It has been a strong long-term performer but can have large swings.",
+    "risks": [
+      "🎢 <strong>High Volatility:</strong> Technology stocks can rise and fall sharply — sometimes 30-50% in a year",
+      "📈 <strong>Valuation Risk:</strong> Tech stocks often trade at high prices relative to current earnings",
+      "⚖️ <strong>Regulatory Risk:</strong> Governments worldwide are scrutinising large technology companies",
+      "🏢 <strong>Concentration:</strong> A few very large companies dominate the index",
+      "🔄 <strong>Disruption Risk:</strong> Rapid technological change means today's leaders can become tomorrow's laggards"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US sector ETF proxy — concentrated in US large-cap tech.",
+      "Past performance isn't a guarantee of future results.",
+      "Overlaps significantly with broad US market funds due to large tech weights."
+    ],
+    "whoItsFor": [
+      "You want focused exposure to the technology sector",
+      "You believe technology will continue driving economic growth",
+      "You're comfortable with higher price swings",
+      "You have a long investment horizon"
+    ],
+    "whoItsNotFor": [
+      "You want broad diversification across the economy",
+      "You dislike large price swings",
+      "You want income-generating investments"
+    ]
+  },
+  {
+    "id": "real_estate_reits",
+    "name": "Real Estate (REITs)",
+    "description": "Companies that own and operate real estate — shopping centres, office buildings, warehouses, apartments, and data centres.",
+    "category": "income",
+    "megaTheme": "Easy Sectors",
+    "tags": [
+      "sector",
+      "real estate",
+      "reits",
+      "property",
+      "income",
+      "etf"
+    ],
+    "representativeAssets": [
+      "VNQ",
+      "SCHH"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked using Vanguard Real Estate ETF (VNQ) and Schwab US REIT ETF (SCHH). REITs (Real Estate Investment Trusts) are companies that own income-producing real estate and are required to distribute most profits as dividends. An ETF is a basket of investments bought in one trade.",
+    "overview": "REITs let investors access the real estate market without buying property directly. They cover many types of property — from warehouses and data centres to apartment buildings and hospitals. They often pay higher dividends due to legal distribution requirements.",
+    "risks": [
+      "📈 <strong>Interest Rate Sensitivity:</strong> Higher interest rates make REITs' dividends less attractive and can push prices down",
+      "🏢 <strong>Property Type Risk:</strong> Some real estate types (e.g. offices) can struggle structurally for extended periods",
+      "🔄 <strong>Economic Sensitivity:</strong> Commercial real estate can be hit hard in recessions",
+      "💸 <strong>Debt Levels:</strong> Many REITs carry significant debt, amplifying both gains and losses"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US ETF proxy only — international real estate ETFs also exist.",
+      "Past performance isn't a guarantee of future results.",
+      "REIT tax treatment can be complex — consider consulting a tax adviser."
+    ],
+    "whoItsFor": [
+      "You want real estate exposure without buying physical property",
+      "You like higher-than-average income from dividends",
+      "You want a different asset type alongside stocks and bonds",
+      "You're comfortable with sensitivity to interest rate changes"
+    ],
+    "whoItsNotFor": [
+      "You want to avoid interest rate sensitivity",
+      "You're focused purely on capital growth",
+      "You prefer a low-maintenance, all-in-one fund"
+    ]
+  },
+  {
+    "id": "cloud_computing",
+    "name": "Cloud Computing",
+    "description": "Companies that deliver software, data storage, and computing power over the internet — so businesses don't need to manage their own servers.",
+    "category": "growth",
+    "megaTheme": "Technology",
+    "tags": [
+      "cloud",
+      "software",
+      "saas",
+      "tech",
+      "satellite",
+      "etf"
+    ],
+    "representativeAssets": [
+      "SKYY",
+      "CLOU"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked using First Trust Cloud Computing ETF (SKYY) and Global X Cloud Computing ETF (CLOU). These hold companies whose primary business involves cloud infrastructure, platforms, or software services. An ETF is a basket of stocks bought in one trade.",
+    "overview": "Cloud computing is the delivery of technology services — from storage and computing to software — via the internet. Businesses and governments increasingly rely on cloud services, driving consistent demand growth. The theme can be popular and attract significant attention during technology booms.",
+    "risks": [
+      "🎢 <strong>High Volatility:</strong> Cloud stocks are often priced for rapid future growth — they can fall very hard when sentiment shifts",
+      "📊 <strong>Crowding Risk:</strong> This theme has been very popular; crowded trades can reverse sharply",
+      "💰 <strong>Valuation Stretch:</strong> Many cloud companies trade at very high prices relative to current profits",
+      "🔄 <strong>Competition:</strong> Dominated by a few giants (Amazon, Microsoft, Google) who can squeeze smaller players",
+      "⚖️ <strong>Regulatory Scrutiny:</strong> Data privacy rules and antitrust concerns could create headwinds"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US ETF proxy — theme can overlap heavily with broad technology funds.",
+      "Past performance isn't a guarantee of future results.",
+      "Shorter ETF history than broad market funds — treat with extra caution.",
+      "Hype and popularity can inflate valuations — be cautious chasing recent strong returns."
+    ],
+    "whoItsFor": [
+      "You believe cloud adoption will continue growing long term",
+      "You're comfortable with high price swings",
+      "You want targeted technology exposure beyond just the largest companies",
+      "You have a long time horizon and can hold through sharp drawdowns"
+    ],
+    "whoItsNotFor": [
+      "You dislike large price drops",
+      "You want stable, income-generating investments",
+      "You're new to investing and still building your foundation"
+    ]
+  },
+  {
+    "id": "robotics_automation",
+    "name": "Robotics & Automation",
+    "description": "Companies building robots, factory automation systems, and the industrial machines that do repetitive work faster and cheaper than people.",
+    "category": "growth",
+    "megaTheme": "Technology",
+    "tags": [
+      "robotics",
+      "automation",
+      "manufacturing",
+      "ai",
+      "satellite",
+      "etf"
+    ],
+    "representativeAssets": [
+      "BOTZ",
+      "ROBO"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked using Global X Robotics & Artificial Intelligence ETF (BOTZ) and ROBO Global Robotics & Automation Index ETF (ROBO). These hold companies involved in industrial robots, automation, and related technology. An ETF is a basket of stocks bought in one trade.",
+    "overview": "Robotics and automation companies build systems that help factories, warehouses, and service industries operate with fewer human workers. Long-term demand is driven by labour costs, manufacturing trends, and aging workforces in developed countries.",
+    "risks": [
+      "🎢 <strong>Cyclical Risk:</strong> Industrial automation spending can drop sharply when companies cut capital budgets",
+      "🏭 <strong>Manufacturing Slowdowns:</strong> Demand for robots falls when factories cut production",
+      "📊 <strong>Overlap with AI Theme:</strong> Many holdings may overlap with other technology themes",
+      "💰 <strong>Concentration Risk:</strong> A few large companies often dominate these funds",
+      "🔄 <strong>Technology Obsolescence:</strong> Rapid innovation means today's leaders may not be tomorrow's"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US ETF proxy — some holdings include Japanese and European robotics firms.",
+      "Past performance isn't a guarantee of future results.",
+      "Significant overlap with AI and semiconductor themes — watch total tech exposure.",
+      "Niche theme with more concentrated holdings than broad market funds."
+    ],
+    "whoItsFor": [
+      "You believe automation will reshape manufacturing and logistics long term",
+      "You're comfortable with concentrated, volatile sector exposure",
+      "You want targeted technology exposure within a diversified portfolio",
+      "You have a long time horizon"
+    ],
+    "whoItsNotFor": [
+      "You want broad diversification",
+      "You need stable returns or regular income",
+      "You're uncomfortable with the concentration of a niche theme"
+    ]
+  },
+  {
+    "id": "defense_aerospace",
+    "name": "Defense & Aerospace",
+    "description": "Companies that build military equipment, aircraft, satellites, and national security technology.",
+    "category": "growth",
+    "megaTheme": "Global",
+    "tags": [
+      "defense",
+      "aerospace",
+      "military",
+      "satellite",
+      "government",
+      "etf"
+    ],
+    "representativeAssets": [
+      "ITA",
+      "XAR"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked using iShares U.S. Aerospace & Defense ETF (ITA) and SPDR S&P Aerospace & Defense ETF (XAR). These hold US companies that earn significant revenue from government defense contracts and aerospace manufacturing. An ETF is a basket of stocks bought in one trade.",
+    "overview": "Defense and aerospace companies primarily sell to governments, which provides some revenue stability. Government defense budgets tend to be relatively protected during recessions. Geopolitical tensions often increase defense spending.",
+    "risks": [
+      "⚖️ <strong>Government Budget Dependency:</strong> These companies rely heavily on government contracts that can change",
+      "🌍 <strong>Geopolitical Sensitivity:</strong> While conflicts can boost demand, sudden peace or budget cuts can hurt",
+      "🔄 <strong>Contract Risk:</strong> Losing a large government contract can sharply affect a company's revenues",
+      "📉 <strong>Sector Concentration:</strong> A small number of very large firms dominate the sector",
+      "💸 <strong>Ethical Considerations:</strong> Some investors choose to avoid this sector for personal reasons"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US ETF proxy — focuses primarily on US defense contractors.",
+      "Past performance isn't a guarantee of future results.",
+      "Niche theme — concentrated in a small number of large companies.",
+      "Some investors may have ethical objections to defense sector investment."
+    ],
+    "whoItsFor": [
+      "You believe rising global tensions support long-term defense spending growth",
+      "You want exposure to a sector with government-backed revenue streams",
+      "You're comfortable with the ethical dimensions of defense investing",
+      "You want sector diversification within a broader portfolio"
+    ],
+    "whoItsNotFor": [
+      "You prefer to avoid companies that make weapons or military technology",
+      "You want broad market diversification",
+      "You need income or low-volatility exposure"
+    ]
+  },
+  {
+    "id": "infrastructure",
+    "name": "Infrastructure",
+    "description": "Companies that own and operate the physical backbone of the economy — toll roads, pipelines, airports, utilities, and communications towers.",
+    "category": "defensive",
+    "megaTheme": "Global",
+    "tags": [
+      "infrastructure",
+      "utilities",
+      "real assets",
+      "defensive",
+      "satellite",
+      "etf"
+    ],
+    "representativeAssets": [
+      "PAVE",
+      "IFRA"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked using Global X U.S. Infrastructure Development ETF (PAVE) and iShares U.S. Infrastructure ETF (IFRA). These hold companies involved in building or operating physical infrastructure. An ETF is a basket of stocks bought in one trade.",
+    "overview": "Infrastructure companies own long-lived physical assets — roads, bridges, pipelines, and towers — that generate steady revenues over many years. Many have regulated or contracted income streams, which can provide some protection in downturns.",
+    "risks": [
+      "📈 <strong>Interest Rate Sensitivity:</strong> Like bonds, infrastructure assets can lose appeal when rates rise",
+      "🏗️ <strong>Construction Risk:</strong> Large projects can overrun costs or face delays",
+      "⚖️ <strong>Regulatory Risk:</strong> Governments set the rules for roads, utilities, and pipelines",
+      "🌍 <strong>Political Risk:</strong> Infrastructure projects can be nationalised or regulated away from private investors",
+      "📉 <strong>Illiquidity of Underlying Assets:</strong> Physical infrastructure is hard to sell quickly — funds smooth this but don't eliminate it"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US ETF proxy — focuses on US infrastructure development companies.",
+      "Past performance isn't a guarantee of future results.",
+      "Some funds emphasise building new infrastructure; others focus on operating existing assets — returns can differ."
+    ],
+    "whoItsFor": [
+      "You want exposure to essential physical assets with steady revenues",
+      "You believe government infrastructure spending will grow",
+      "You want something different from pure technology or financial exposure",
+      "You're comfortable with long-term, relatively lower-volatility investing"
+    ],
+    "whoItsNotFor": [
+      "You want fast-growing technology companies",
+      "You're uncomfortable with interest rate sensitivity",
+      "You need short-term liquidity or quick gains"
+    ]
+  },
+  {
+    "id": "water",
+    "name": "Water",
+    "description": "Companies involved in water — treating it, delivering it, testing its quality, and building the infrastructure to manage it.",
+    "category": "defensive",
+    "megaTheme": "Sustainability",
+    "tags": [
+      "water",
+      "environment",
+      "utilities",
+      "sustainability",
+      "satellite",
+      "etf"
+    ],
+    "representativeAssets": [
+      "PHO",
+      "FIW"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked using Invesco Water Resources ETF (PHO) and First Trust Water ETF (FIW). These hold companies that make money from water treatment, delivery, infrastructure, and testing. An ETF is a basket of stocks bought in one trade.",
+    "overview": "Clean water is a finite and increasingly scarce resource globally. Companies that manage, treat, and deliver water tend to have stable, essential revenues. The theme sits at the intersection of infrastructure, environmental sustainability, and basic human needs.",
+    "risks": [
+      "💧 <strong>Regulatory Risk:</strong> Water companies are often regulated by governments, limiting how much they can charge",
+      "🎢 <strong>Small Theme Volatility:</strong> Relatively small ETFs can have larger price swings",
+      "📊 <strong>Concentration Risk:</strong> Water funds hold a small number of companies compared to broad market funds",
+      "🌍 <strong>Climate and Supply Risk:</strong> Drought, flooding, and climate events can disrupt operations",
+      "📉 <strong>Niche Popularity Risk:</strong> Hype cycles can inflate prices when the theme becomes fashionable"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US ETF proxy — overlaps with utilities and industrials sectors.",
+      "Past performance isn't a guarantee of future results.",
+      "Smaller funds may have less liquidity than large-cap broad market ETFs.",
+      "Hype around environmental themes can inflate valuations temporarily."
+    ],
+    "whoItsFor": [
+      "You care about environmental and sustainability themes",
+      "You want a defensive sector linked to an essential global resource",
+      "You're looking for something different from mainstream technology or financial exposure",
+      "You have a long time horizon and understand this is a small, niche theme"
+    ],
+    "whoItsNotFor": [
+      "You want a highly liquid, widely diversified investment",
+      "You're uncomfortable with niche, concentrated funds",
+      "You need high growth or significant income"
+    ]
+  },
+  {
+    "id": "india_equity",
+    "name": "India",
+    "description": "Stocks from India — one of the world's largest and fastest-growing emerging economies.",
+    "category": "growth",
+    "megaTheme": "Global",
+    "tags": [
+      "india",
+      "emerging markets",
+      "single country",
+      "growth",
+      "satellite",
+      "etf"
+    ],
+    "representativeAssets": [
+      "INDA",
+      "FLIN"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked using iShares MSCI India ETF (INDA) and Franklin FTSE India ETF (FLIN). These hold large Indian companies across many sectors. An ETF is a basket of stocks bought in one trade.",
+    "overview": "India has one of the world's youngest and fastest-growing large populations. Its economy has been expanding rapidly, driven by technology services, consumer growth, infrastructure investment, and a rising middle class. Single-country investing concentrates all risk in one market.",
+    "risks": [
+      "🌍 <strong>Single Country Concentration:</strong> All exposure in one country — political or economic events there hit the whole investment",
+      "💱 <strong>Currency Risk:</strong> Returns are affected by movements between the Indian rupee and the US dollar",
+      "⚖️ <strong>Regulatory and Political Risk:</strong> Government policies, elections, and legal changes in India can affect markets",
+      "🎢 <strong>High Volatility:</strong> Emerging market stocks tend to be bumpier than developed market equivalents",
+      "📊 <strong>Valuation Risk:</strong> India has become popular — its market now trades at high prices relative to earnings"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US ETF proxy — limited US trading hours for Indian market exposure.",
+      "Past performance isn't a guarantee of future results.",
+      "Single-country funds are inherently more concentrated and riskier than global or regional funds.",
+      "Strong recent performance has attracted significant investor interest — this can inflate current valuations."
+    ],
+    "whoItsFor": [
+      "You believe India's long-term economic growth story is compelling",
+      "You want emerging market exposure with a specific country focus",
+      "You're comfortable with higher volatility and a long time horizon (10+ years)",
+      "You want to diversify beyond US and European markets"
+    ],
+    "whoItsNotFor": [
+      "You're uncomfortable with political or currency risk in a single country",
+      "You want a calm, stable investment",
+      "You're investing for less than 5 years"
     ]
   }
 ]
