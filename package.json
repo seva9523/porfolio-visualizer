@@ -1,12 +1,12 @@
 {
-  "name": "portfolio-visualizer",
-  "version": "1.0.0",
-  "private": true,
   "scripts": {
-    "test": "echo \"No unit tests yet\"",
-    "cypress:run": "cypress run"
+    "cypress:run": "cypress run",
+    "qa:themes": "node scripts/validate-themes-json.cjs",
+    "qa:api": "node scripts/api-smoke.cjs",
+    "test": "jest"
   },
   "devDependencies": {
-    "cypress": "^15.10.0"
+    "cypress": "^15.10.0",
+    "jest": "^29.7.0"
   }
 }
