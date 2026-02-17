@@ -1282,7 +1282,11 @@ function renderGridFiltered(themes){
                     ${hypeBadge(tr.score,tr.lifecycle)}
                     ${freshBadge(t.lastUpdated)}
                 </div>
-                ${compareMode?`<input type="checkbox" ${compareSet.has(t.id)?'checked':''} style="width:18px;height:18px;accent-color:var(--accent)" onclick="event.stopPropagation();toggleCompareItem('${t.id}',event)">`:''}
+<input
+  type="checkbox"
+  data-testid="compare-checkbox-${t.id}"
+  onclick="event.stopPropagation(); toggleCompareItem('${t.id}', this.checked)"
+>
             </div>
             <div class="tcard-name" style="margin-top:6px">${t.name}</div>
             <div class="tcard-desc">${ux.simpleDesc}</div>
@@ -1367,8 +1371,19 @@ function showDetail(id){
 
         <!-- Feature 8: View Toggle -->
         <div class="vtoggle" data-testid="view-toggle">
-            <button class="vt-on" data-mode="simple" onclick="toggleViewMode('simple')">🟢 Simple View</button>
-            <button data-mode="detailed" onclick="toggleViewMode('detailed')">📊 Detailed View</button>
+            <button
+  class="vt-on"
+  data-mode="simple"
+  onclick="toggleViewMode('simple')"
+  data-testid="view-simple"
+>
+
+ <button
+  data-mode="detailed"
+  onclick="toggleViewMode('detailed')"
+  data-testid="view-detailed"
+>
+
         </div>
 
         <div class="disc"><strong>🎓 Learning Tool:</strong> This page helps you understand this theme. It is not telling you to invest. Data via representative ETF (${tk}).</div>
