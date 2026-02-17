@@ -391,13 +391,17 @@ function toggleDiagnostics(){ const p=document.getElementById('diag-panel'); if(
 async function loadThemes(){
     THEMES_READY=false; updateLoadState('loading','Loading themes...'); THEME_DIAGNOSTICS.invalidThemes=[];
     const seen=new Set(); let attempts=0,payload=null;
+    const themeUrls=['/data/themes.json','./data/themes.json','data/themes.json'];
     while(attempts<3 && !payload){
         attempts++;
-        try{
-            const r=await fetch('/data/themes.json',{cache:'no-store'}); if(!r.ok) throw new Error(`HTTP ${r.status}`);
-            const d=await r.json(); if(!Array.isArray(d)) throw new Error('themes.json must contain an array');
-            payload=d;
-        }catch(e){ if(attempts<3){ updateLoadState('loading',`Loading themes... retry ${attempts}/3`); await new Promise(res=>setTimeout(res,attempts*400)); } }
+        for(const url of themeUrls){
+            try{
+                const r=await fetch(url,{cache:'no-store'}); if(!r.ok) throw new Error(`HTTP ${r.status}`);
+                const d=await r.json(); if(!Array.isArray(d)) throw new Error('themes.json must contain an array');
+                payload=d; THEME_DIAGNOSTICS.source=url; break;
+            }catch(e){ /* try next URL */ }
+        }
+        if(!payload && attempts<3){ updateLoadState('loading',`Loading themes... retry ${attempts}/3`); await new Promise(res=>setTimeout(res,attempts*400)); }
     }
     let loaded=[];
     if(payload){
@@ -405,7 +409,7 @@ async function loadThemes(){
     }
     const usingFallback=loaded.length===0;
     THEMES=usingFallback?FALLBACK_THEMES.map(normalizeTheme):loaded;
-    THEMES_READY=true; THEME_DIAGNOSTICS.loaded=!!payload; THEME_DIAGNOSTICS.usingFallback=usingFallback; THEME_DIAGNOSTICS.source=usingFallback?'fallback':'/data/themes.json'; THEME_DIAGNOSTICS.lastLoadTimestamp=new Date().toISOString();
+    THEMES_READY=true; THEME_DIAGNOSTICS.loaded=!!payload; THEME_DIAGNOSTICS.usingFallback=usingFallback; THEME_DIAGNOSTICS.source=usingFallback?'fallback':(THEME_DIAGNOSTICS.source||'/data/themes.json'); THEME_DIAGNOSTICS.lastLoadTimestamp=new Date().toISOString();
     const ob=document.getElementById('offline-badge'), om=document.getElementById('offline-msg');
     if(ob){ ob.style.display=usingFallback?'block':'none'; if(om){ om.textContent=payload?'Using offline theme list':'Could not load themes. Check connection or try again. Using offline theme list.'; } }
     if(!payload) updateLoadState('error','Could not load themes. Check connection or try again.'); else updateLoadState('hidden','');

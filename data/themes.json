@@ -461,5 +461,1188 @@
       "You need stability or income",
       "You're new to investing"
     ]
+  },
+  {
+    "id": "us_total_market",
+    "name": "US Total Market",
+    "description": "Broad exposure to large, mid, and small US companies in one fund.",
+    "category": "growth",
+    "megaTheme": "Core Building Blocks",
+    "tags": [
+      "core",
+      "us stocks",
+      "broad market",
+      "diversified",
+      "etf"
+    ],
+    "representativeAssets": [
+      "VTI",
+      "ITOT"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked with broad US stock ETFs (ETF means exchange-traded fund, a basket that trades like a stock), mainly VTI with ITOT as a close backup.",
+    "overview": "This theme follows the full US stock market, so it usually moves with the market and gives broad company exposure.",
+    "risks": [
+      "Can still have large drops during market stress",
+      "Heavily tied to the US economy",
+      "Large companies can drive most returns",
+      "Can feel bumpy in shorter time periods"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "Uses US ETF proxies; regional versions may track differently.",
+      "Past performance isn’t a guarantee of future results."
+    ],
+    "whoItsFor": [
+      "People who want one simple stock building block",
+      "Long-term investors who can handle market swings",
+      "People who want broad diversification across company sizes"
+    ],
+    "whoItsNotFor": [
+      "People who need very stable short-term value",
+      "People who want only non-US exposure",
+      "People who want to avoid stock market drawdowns"
+    ]
+  },
+  {
+    "id": "global_stocks",
+    "name": "Global Stocks",
+    "description": "One-fund stock exposure across the US and international markets.",
+    "category": "growth",
+    "megaTheme": "Core Building Blocks",
+    "tags": [
+      "core",
+      "global",
+      "all world",
+      "diversified",
+      "etf"
+    ],
+    "representativeAssets": [
+      "VT",
+      "ACWI"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked with global stock ETFs (ETF means exchange-traded fund), using VT as a broad proxy and ACWI as a close alternative.",
+    "overview": "This theme spreads stock exposure across many countries, which can reduce single-country concentration.",
+    "risks": [
+      "Global stocks can drop together in major downturns",
+      "Currency moves can affect results",
+      "US market leadership may make global funds lag at times",
+      "Emerging markets can add extra bumps"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "Uses US ETF proxies; UCITS equivalents are not listed here.",
+      "Past performance isn’t a guarantee of future results."
+    ],
+    "whoItsFor": [
+      "People who want broad stock exposure in one theme",
+      "People who prefer global diversification",
+      "Long-term investors comfortable with normal market volatility"
+    ],
+    "whoItsNotFor": [
+      "People who want only US stocks",
+      "People who need low-volatility holdings",
+      "People who want predictable short-term returns"
+    ]
+  },
+  {
+    "id": "developed_ex_us",
+    "name": "Developed ex-US",
+    "description": "Stocks from developed markets outside the United States.",
+    "category": "growth",
+    "megaTheme": "Core Building Blocks",
+    "tags": [
+      "core",
+      "international",
+      "developed markets",
+      "diversified",
+      "etf"
+    ],
+    "representativeAssets": [
+      "VEA"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked with VEA, a broad ETF (exchange-traded fund) for developed markets outside the US.",
+    "overview": "This theme gives exposure to major international markets like Europe and Japan, without US stocks.",
+    "risks": [
+      "Can underperform US stocks for long periods",
+      "Currency changes can impact returns",
+      "Economic slowdowns abroad can weigh on results",
+      "Financials and industrials may have higher weights"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "Single US ETF proxy used for simplicity.",
+      "Past performance isn’t a guarantee of future results."
+    ],
+    "whoItsFor": [
+      "People who want to diversify away from the US",
+      "People building a global portfolio in separate pieces",
+      "Investors with a long time horizon"
+    ],
+    "whoItsNotFor": [
+      "People who want an all-in-one global fund",
+      "People who want only fast-growing sectors",
+      "People uncomfortable with currency effects"
+    ]
+  },
+  {
+    "id": "us_total_bond_market",
+    "name": "US Investment Grade Bonds (Total)",
+    "description": "Broad mix of higher-quality US government and corporate bonds.",
+    "category": "defensive",
+    "megaTheme": "Core Building Blocks",
+    "tags": [
+      "core",
+      "bonds",
+      "investment grade",
+      "income",
+      "etf"
+    ],
+    "representativeAssets": [
+      "BND",
+      "AGG"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked with broad bond ETFs (exchange-traded funds), mainly BND with AGG as a close proxy.",
+    "overview": "This theme is designed to be steadier than stocks and may help balance a stock-heavy portfolio.",
+    "risks": [
+      "Bond prices can fall when interest rates rise",
+      "Returns are usually lower than stocks over long periods",
+      "Inflation can reduce real purchasing power",
+      "Credit events can hurt corporate bond holdings"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "Focuses on US investment-grade bonds and may miss global bond moves.",
+      "Past performance isn’t a guarantee of future results."
+    ],
+    "whoItsFor": [
+      "People who want a calmer core holding",
+      "People balancing stock risk with bonds",
+      "People who prefer broad bond diversification"
+    ],
+    "whoItsNotFor": [
+      "People seeking high growth",
+      "People who want protection from every inflation spike",
+      "People expecting no drawdowns at all"
+    ]
+  },
+  {
+    "id": "short_term_bonds",
+    "name": "Short-Term Bonds / Cash-like",
+    "description": "Short-maturity bonds that are usually less bumpy than longer bonds.",
+    "category": "defensive",
+    "megaTheme": "Core Building Blocks",
+    "tags": [
+      "core",
+      "short term",
+      "cash like",
+      "bonds",
+      "etf"
+    ],
+    "representativeAssets": [
+      "BSV",
+      "VGSH"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked with short-duration bond ETFs (exchange-traded funds), using BSV and VGSH as practical proxies.",
+    "overview": "This theme aims for stability and smaller price swings, though returns are typically modest.",
+    "risks": [
+      "Yields can fall when rates decline",
+      "Still not the same as insured cash",
+      "Inflation can outpace returns",
+      "Lower long-term return potential than stocks"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "Uses US ETF proxies and may differ from local cash products.",
+      "Past performance isn’t a guarantee of future results."
+    ],
+    "whoItsFor": [
+      "People who want lower day-to-day volatility",
+      "People parking money with some yield potential",
+      "People building a defensive portfolio layer"
+    ],
+    "whoItsNotFor": [
+      "People seeking strong long-term growth",
+      "People expecting zero price movement",
+      "People who want inflation-beating returns every year"
+    ]
+  },
+  {
+    "id": "gold",
+    "name": "Gold",
+    "description": "Gold exposure often used as a portfolio diversifier and inflation hedge.",
+    "category": "alternative",
+    "megaTheme": "Core Building Blocks",
+    "tags": [
+      "core",
+      "gold",
+      "alternative",
+      "inflation",
+      "etf"
+    ],
+    "representativeAssets": [
+      "GLD",
+      "IAU"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked with physical gold ETFs (exchange-traded funds), mainly GLD and IAU.",
+    "overview": "Gold may behave differently from stocks and bonds, which can help diversification in some periods.",
+    "risks": [
+      "No dividends or bond income",
+      "Can have long periods of weak returns",
+      "Price moves can be sharp around macro news",
+      "May not hedge inflation in every period"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US ETF proxies only; storage costs are reflected in fund expenses.",
+      "Past performance isn’t a guarantee of future results."
+    ],
+    "whoItsFor": [
+      "People wanting an alternative diversifier",
+      "People concerned about inflation shocks",
+      "People building a multi-asset portfolio"
+    ],
+    "whoItsNotFor": [
+      "People who want income from holdings",
+      "People who prefer simple stock-bond portfolios only",
+      "People expecting steady upward returns"
+    ]
+  },
+  {
+    "id": "value_stocks",
+    "name": "Value (Broad)",
+    "description": "Stocks that look cheaper relative to earnings, sales, or book value.",
+    "category": "growth",
+    "megaTheme": "Simple Styles",
+    "tags": [
+      "style",
+      "value",
+      "broad",
+      "us stocks",
+      "etf"
+    ],
+    "representativeAssets": [
+      "VTV",
+      "IWD"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked with broad value ETFs (exchange-traded funds), using VTV with IWD as a secondary proxy.",
+    "overview": "Value stocks have historically gone through long cycles of outperformance and underperformance versus growth stocks.",
+    "risks": [
+      "Can lag growth stocks for years",
+      "Sector tilts can increase concentration",
+      "Cheaper stocks are not always better businesses",
+      "Still falls in broad market sell-offs"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US style ETF proxy may not represent global value styles.",
+      "Past performance isn’t a guarantee of future results."
+    ],
+    "whoItsFor": [
+      "People who want a lower-valuation style tilt",
+      "People comfortable with style cycles",
+      "Long-term investors who can stay patient"
+    ],
+    "whoItsNotFor": [
+      "People seeking recent high-flyer exposure",
+      "People uncomfortable with long underperformance periods",
+      "People needing very stable short-term returns"
+    ]
+  },
+  {
+    "id": "growth_stocks",
+    "name": "Growth (Broad)",
+    "description": "Stocks with higher expected earnings growth, often in technology and communication sectors.",
+    "category": "growth",
+    "megaTheme": "Simple Styles",
+    "tags": [
+      "style",
+      "growth",
+      "broad",
+      "us stocks",
+      "etf"
+    ],
+    "representativeAssets": [
+      "VUG",
+      "IWF"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked with broad growth ETFs (exchange-traded funds), primarily VUG with IWF as an alternative.",
+    "overview": "Growth stocks can rise strongly in good periods but may see deeper drops when expectations reset.",
+    "risks": [
+      "Valuations can be sensitive to interest-rate changes",
+      "Can be concentrated in a few large companies",
+      "Sharp pullbacks can happen after strong runs",
+      "May underperform during value-led periods"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US style ETF proxy may differ from global growth markets.",
+      "Past performance isn’t a guarantee of future results."
+    ],
+    "whoItsFor": [
+      "People who want a growth-oriented stock tilt",
+      "People who can handle bigger swings",
+      "People investing with a long horizon"
+    ],
+    "whoItsNotFor": [
+      "People wanting low volatility",
+      "People seeking consistent income",
+      "People uncomfortable with valuation-driven drawdowns"
+    ]
+  },
+  {
+    "id": "quality_stocks",
+    "name": "Quality",
+    "description": "Companies with stronger balance sheets and more stable profitability.",
+    "category": "growth",
+    "megaTheme": "Simple Styles",
+    "tags": [
+      "style",
+      "quality",
+      "profitability",
+      "stability",
+      "etf"
+    ],
+    "representativeAssets": [
+      "QUAL"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked with QUAL, an ETF (exchange-traded fund) focused on higher-quality company fundamentals.",
+    "overview": "Quality strategies aim to hold financially stronger firms, which may help during difficult market periods.",
+    "risks": [
+      "Can still fall meaningfully in broad sell-offs",
+      "Rules-based quality definitions can change holdings",
+      "May lag in speculative rallies",
+      "Sector concentration can appear at times"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "Single US ETF proxy used for this theme.",
+      "Past performance isn’t a guarantee of future results."
+    ],
+    "whoItsFor": [
+      "People wanting a quality tilt within equities",
+      "People preferring financially stronger companies",
+      "People with a medium-to-long time horizon"
+    ],
+    "whoItsNotFor": [
+      "People expecting bond-like stability",
+      "People chasing very high-risk momentum moves",
+      "People needing short-term certainty"
+    ]
+  },
+  {
+    "id": "low_volatility_stocks",
+    "name": "Low Volatility",
+    "description": "Stocks selected for historically smaller price swings than the broad market.",
+    "category": "defensive",
+    "megaTheme": "Simple Styles",
+    "tags": [
+      "style",
+      "low volatility",
+      "defensive",
+      "us stocks",
+      "etf"
+    ],
+    "representativeAssets": [
+      "USMV",
+      "SPLV"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked with low-volatility ETFs (exchange-traded funds), using USMV and SPLV as common proxies.",
+    "overview": "This style targets steadier stock behavior, though it is still equity risk and can decline in sell-offs.",
+    "risks": [
+      "Can lag in strong bull markets",
+      "Sector tilts may create hidden concentration",
+      "Not guaranteed to stay low volatility",
+      "Still exposed to stock market drawdowns"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US ETF proxies only; low-volatility methods vary by provider.",
+      "Past performance isn’t a guarantee of future results."
+    ],
+    "whoItsFor": [
+      "People wanting a calmer stock style",
+      "People reducing equity bumps without leaving stocks",
+      "People with moderate risk tolerance"
+    ],
+    "whoItsNotFor": [
+      "People seeking maximum upside in rallies",
+      "People expecting no drawdowns",
+      "People wanting non-equity protection"
+    ]
+  },
+  {
+    "id": "small_caps",
+    "name": "Small Caps",
+    "description": "Smaller US companies that can offer higher growth potential with higher volatility.",
+    "category": "growth",
+    "megaTheme": "Simple Styles",
+    "tags": [
+      "style",
+      "small cap",
+      "us stocks",
+      "higher risk",
+      "etf"
+    ],
+    "representativeAssets": [
+      "IWM",
+      "VB"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked with small-cap ETFs (exchange-traded funds), mainly IWM with VB as a broad alternative.",
+    "overview": "Small caps can be more sensitive to economic cycles and often move more than large caps.",
+    "risks": [
+      "Usually more volatile than large caps",
+      "Can lag for long stretches",
+      "Liquidity can be thinner in stress periods",
+      "Earnings can be less stable"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US small-cap ETF proxy only.",
+      "Past performance isn’t a guarantee of future results."
+    ],
+    "whoItsFor": [
+      "People comfortable with extra bumps for potential growth",
+      "People diversifying beyond mega-cap stocks",
+      "Long-term investors who can stay patient"
+    ],
+    "whoItsNotFor": [
+      "People needing stable short-term results",
+      "People sensitive to deeper drawdowns",
+      "People wanting only large established companies"
+    ]
+  },
+  {
+    "id": "momentum",
+    "name": "Momentum",
+    "description": "Stocks that have been recent winners, updated by rules over time.",
+    "category": "growth",
+    "megaTheme": "Simple Styles",
+    "tags": [
+      "style",
+      "momentum",
+      "recent winners",
+      "rules based",
+      "etf"
+    ],
+    "representativeAssets": [
+      "MTUM"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked with MTUM, an ETF (exchange-traded fund) that tilts toward stocks with stronger recent performance.",
+    "overview": "Momentum can perform well in persistent trends, but trend reversals can cause quick setbacks.",
+    "risks": [
+      "Recent winners can reverse quickly",
+      "Turnover can be higher than broad indexes",
+      "Can become concentrated in a few themes",
+      "Performance can be cyclical"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "Single US ETF proxy; methodology rebalances can change exposures quickly.",
+      "Past performance isn’t a guarantee of future results."
+    ],
+    "whoItsFor": [
+      "People who understand trend-following behavior",
+      "People comfortable with style rotation risk",
+      "Investors with a long-term, rules-based mindset"
+    ],
+    "whoItsNotFor": [
+      "People who dislike rapid shifts in holdings",
+      "People expecting stable year-to-year behavior",
+      "People new to style-based investing"
+    ]
+  },
+  {
+    "id": "dividend_growth",
+    "name": "Dividend Growth",
+    "description": "Companies with a history of growing dividends over time.",
+    "category": "income",
+    "megaTheme": "Simple Styles",
+    "tags": [
+      "style",
+      "dividends",
+      "dividend growth",
+      "income",
+      "etf"
+    ],
+    "representativeAssets": [
+      "VIG",
+      "DGRO"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked with dividend-growth ETFs (exchange-traded funds), using VIG and DGRO as common proxies.",
+    "overview": "This style focuses on firms that have raised dividends, often with an emphasis on business stability.",
+    "risks": [
+      "Dividend growth can slow during weak economies",
+      "Can underperform pure growth markets",
+      "Sector tilts may reduce diversification",
+      "Still carries stock market risk"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "US ETF proxies only; excludes some high-yield stocks by design.",
+      "Past performance isn’t a guarantee of future results."
+    ],
+    "whoItsFor": [
+      "People who want equity income with a quality tilt",
+      "People preferring companies with dividend discipline",
+      "Long-term investors building around income growth"
+    ],
+    "whoItsNotFor": [
+      "People seeking the highest current yield",
+      "People wanting no volatility",
+      "People focused only on aggressive growth"
+    ]
+  },
+  {
+    "id": "healthcare_sector",
+    "name": "Healthcare",
+    "description": "Broad healthcare exposure including pharmaceuticals, equipment, and services.",
+    "category": "growth",
+    "megaTheme": "Easy Sectors",
+    "tags": [
+      "sector",
+      "healthcare",
+      "pharma",
+      "medical",
+      "etf"
+    ],
+    "representativeAssets": [
+      "XLV"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked with XLV, a sector ETF (exchange-traded fund) covering major US healthcare companies.",
+    "overview": "Healthcare can be relatively resilient, but policy and pricing headlines can move the sector quickly.",
+    "risks": [
+      "Policy changes can impact profits",
+      "Patent expirations can hurt drug revenues",
+      "Regulatory decisions can create sharp moves",
+      "Sector concentration risk"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "Single US ETF proxy focused on large caps.",
+      "Past performance isn’t a guarantee of future results."
+    ],
+    "whoItsFor": [
+      "People wanting targeted healthcare exposure",
+      "People who understand sector concentration",
+      "People adding a satellite sector position"
+    ],
+    "whoItsNotFor": [
+      "People wanting broad market diversification only",
+      "People uneasy with policy-driven volatility",
+      "People seeking very stable returns"
+    ]
+  },
+  {
+    "id": "financials_sector",
+    "name": "Financials",
+    "description": "Banks, insurers, and diversified financial service firms.",
+    "category": "growth",
+    "megaTheme": "Easy Sectors",
+    "tags": [
+      "sector",
+      "financials",
+      "banks",
+      "insurance",
+      "etf"
+    ],
+    "representativeAssets": [
+      "XLF"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked with XLF, a sector ETF (exchange-traded fund) for major US financial companies.",
+    "overview": "Financials are tied to credit conditions, loan growth, and the overall economic cycle.",
+    "risks": [
+      "Economic slowdowns can increase credit losses",
+      "Rate changes can pressure margins",
+      "Regulatory changes can affect profitability",
+      "Concentration in large banks"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "Single US ETF proxy used.",
+      "Past performance isn’t a guarantee of future results."
+    ],
+    "whoItsFor": [
+      "People who want a cyclical sector tilt",
+      "People comfortable with economic sensitivity",
+      "People adding targeted exposure around a core portfolio"
+    ],
+    "whoItsNotFor": [
+      "People wanting defensive-only exposure",
+      "People uncomfortable with banking stress headlines",
+      "People needing low volatility"
+    ]
+  },
+  {
+    "id": "industrials_sector",
+    "name": "Industrials",
+    "description": "Companies in manufacturing, transportation, and industrial services.",
+    "category": "growth",
+    "megaTheme": "Easy Sectors",
+    "tags": [
+      "sector",
+      "industrials",
+      "manufacturing",
+      "transport",
+      "etf"
+    ],
+    "representativeAssets": [
+      "XLI"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked with XLI, a sector ETF (exchange-traded fund) for broad US industrial exposure.",
+    "overview": "Industrials often reflect economic activity, business spending, and infrastructure demand.",
+    "risks": [
+      "Economic downturns can reduce demand",
+      "Input costs can pressure margins",
+      "Global trade disruptions can hurt operations",
+      "Sector-specific concentration"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "Single US ETF proxy used.",
+      "Past performance isn’t a guarantee of future results."
+    ],
+    "whoItsFor": [
+      "People wanting cyclical sector exposure",
+      "People who follow economic activity trends",
+      "People using sectors as small satellite positions"
+    ],
+    "whoItsNotFor": [
+      "People needing all-weather stability",
+      "People who prefer very broad diversification",
+      "People uncomfortable with cycle-driven volatility"
+    ]
+  },
+  {
+    "id": "energy_sector",
+    "name": "Energy",
+    "description": "Oil, gas, and related energy production companies.",
+    "category": "growth",
+    "megaTheme": "Easy Sectors",
+    "tags": [
+      "sector",
+      "energy",
+      "oil",
+      "gas",
+      "etf"
+    ],
+    "representativeAssets": [
+      "XLE"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked with XLE, a sector ETF (exchange-traded fund) focused on US energy companies.",
+    "overview": "Energy performance is heavily linked to oil and gas prices and can be very cyclical.",
+    "risks": [
+      "Commodity price swings can be large",
+      "Geopolitical events can move prices quickly",
+      "Sector can be concentrated in a few firms",
+      "Earnings can change sharply across cycles"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "Single US ETF proxy used.",
+      "Past performance isn’t a guarantee of future results."
+    ],
+    "whoItsFor": [
+      "People who understand commodity-driven cycles",
+      "People comfortable with higher volatility",
+      "People adding a small tactical sector tilt"
+    ],
+    "whoItsNotFor": [
+      "People wanting smooth returns",
+      "People avoiding commodity exposure",
+      "People who need predictable income"
+    ]
+  },
+  {
+    "id": "utilities_sector",
+    "name": "Utilities",
+    "description": "Electric, gas, and water utility companies, often seen as a steadier sector.",
+    "category": "defensive",
+    "megaTheme": "Easy Sectors",
+    "tags": [
+      "sector",
+      "utilities",
+      "defensive",
+      "income",
+      "etf"
+    ],
+    "representativeAssets": [
+      "XLU"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked with XLU, a sector ETF (exchange-traded fund) for US utility companies.",
+    "overview": "Utilities can be less bumpy than many sectors, but interest-rate changes still matter.",
+    "risks": [
+      "Rising rates can pressure valuations",
+      "Regulatory decisions can impact allowed returns",
+      "Growth is often slower than broad market",
+      "Sector concentration risk"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "Single US ETF proxy used.",
+      "Past performance isn’t a guarantee of future results."
+    ],
+    "whoItsFor": [
+      "People looking for a defensive sector tilt",
+      "People comfortable with slower growth profiles",
+      "People adding stability inside equity exposure"
+    ],
+    "whoItsNotFor": [
+      "People seeking high-growth sectors",
+      "People expecting no volatility",
+      "People wanting broad market exposure only"
+    ]
+  },
+  {
+    "id": "consumer_staples_sector",
+    "name": "Consumer Staples",
+    "description": "Everyday goods companies such as food, beverages, and household products.",
+    "category": "defensive",
+    "megaTheme": "Easy Sectors",
+    "tags": [
+      "sector",
+      "consumer staples",
+      "defensive",
+      "household",
+      "etf"
+    ],
+    "representativeAssets": [
+      "XLP"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked with XLP, a sector ETF (exchange-traded fund) for US consumer staples companies.",
+    "overview": "Staples can hold up better in weak economies, though they still move with the market.",
+    "risks": [
+      "Can lag during strong risk-on rallies",
+      "Input cost inflation can pressure margins",
+      "Competition from private labels can hurt sales",
+      "Sector concentration risk"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "Single US ETF proxy used.",
+      "Past performance isn’t a guarantee of future results."
+    ],
+    "whoItsFor": [
+      "People who want a steadier equity sector",
+      "People seeking exposure to everyday demand",
+      "People building balanced sector satellites"
+    ],
+    "whoItsNotFor": [
+      "People targeting aggressive growth",
+      "People expecting cash-like stability",
+      "People wanting broad sector diversification in one fund"
+    ]
+  },
+  {
+    "id": "technology_sector",
+    "name": "Technology",
+    "description": "Broad US technology sector exposure beyond only the very largest companies.",
+    "category": "growth",
+    "megaTheme": "Easy Sectors",
+    "tags": [
+      "sector",
+      "technology",
+      "software",
+      "hardware",
+      "etf"
+    ],
+    "representativeAssets": [
+      "XLK"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked with XLK, a sector ETF (exchange-traded fund) for large US technology firms.",
+    "overview": "Technology can lead during innovation waves but may be more volatile when expectations reset.",
+    "risks": [
+      "Valuations can be sensitive to interest rates",
+      "Sector can be concentrated in mega caps",
+      "Rapid innovation can shift leaders quickly",
+      "Regulatory pressure can affect large platforms"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "Single US ETF proxy; some tech businesses appear in other sectors.",
+      "Past performance isn’t a guarantee of future results."
+    ],
+    "whoItsFor": [
+      "People wanting broad tech-sector exposure",
+      "People comfortable with faster-moving sectors",
+      "People adding a growth satellite to a core portfolio"
+    ],
+    "whoItsNotFor": [
+      "People avoiding sector concentration",
+      "People needing low-volatility holdings",
+      "People preferring non-technology exposure"
+    ]
+  },
+  {
+    "id": "real_estate_reits",
+    "name": "Real Estate (REITs)",
+    "description": "Real estate investment trusts focused on income-producing properties.",
+    "category": "income",
+    "megaTheme": "Easy Sectors",
+    "tags": [
+      "sector",
+      "real estate",
+      "reits",
+      "income",
+      "etf"
+    ],
+    "representativeAssets": [
+      "VNQ"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked with VNQ, a REIT ETF (exchange-traded fund) with broad US property-sector coverage.",
+    "overview": "REITs provide property exposure through listed companies and can react to interest-rate changes.",
+    "risks": [
+      "Rising rates can pressure valuations",
+      "Property cycles can hurt occupancy and rents",
+      "Sector concentration in specific property types",
+      "Can still have equity-like drawdowns"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "Single US ETF proxy used.",
+      "Past performance isn’t a guarantee of future results."
+    ],
+    "whoItsFor": [
+      "People wanting listed real estate exposure",
+      "People interested in income-oriented equities",
+      "People diversifying beyond traditional sectors"
+    ],
+    "whoItsNotFor": [
+      "People expecting bond-like stability",
+      "People avoiding interest-rate sensitivity",
+      "People wanting global property exposure only"
+    ]
+  },
+  {
+    "id": "cloud_computing",
+    "name": "Cloud Computing",
+    "description": "Companies providing cloud software, infrastructure, and platforms.",
+    "category": "growth",
+    "megaTheme": "Fun Themes",
+    "tags": [
+      "satellite",
+      "cloud",
+      "software",
+      "technology",
+      "etf"
+    ],
+    "representativeAssets": [
+      "SKYY",
+      "CLOU"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked with cloud-focused ETFs (exchange-traded funds), using SKYY and CLOU as practical proxies.",
+    "overview": "Cloud themes follow enterprise software and infrastructure spending trends and can move sharply with sentiment.",
+    "risks": [
+      "Theme can be crowded when popular recently",
+      "High valuations can reset quickly",
+      "Concentration in a narrow slice of tech",
+      "Can drop more than broad market in risk-off periods"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "Satellite theme only: narrower exposure, crowding risk, and hype cycles can be significant.",
+      "Some funds have shorter history than core index ETFs.",
+      "Past performance isn’t a guarantee of future results."
+    ],
+    "whoItsFor": [
+      "People using a small satellite sleeve",
+      "People comfortable with higher volatility",
+      "People who understand theme concentration"
+    ],
+    "whoItsNotFor": [
+      "People building only core diversified portfolios",
+      "People needing stable returns",
+      "People uncomfortable with hype-driven swings"
+    ]
+  },
+  {
+    "id": "robotics_automation",
+    "name": "Robotics & Automation",
+    "description": "Companies involved in industrial automation, robotics hardware, and enabling components.",
+    "category": "growth",
+    "megaTheme": "Fun Themes",
+    "tags": [
+      "satellite",
+      "robotics",
+      "automation",
+      "innovation",
+      "etf"
+    ],
+    "representativeAssets": [
+      "BOTZ",
+      "ROBO"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked with robotics-focused ETFs (exchange-traded funds), mainly BOTZ and ROBO.",
+    "overview": "This theme targets automation adoption across industries, with returns often tied to manufacturing and tech cycles.",
+    "risks": [
+      "Theme can be concentrated in a limited set of firms",
+      "Economic slowdowns can reduce automation spending",
+      "Popular themes can become crowded",
+      "Price swings can be larger than broad indexes"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "Satellite theme only: concentrated exposure can increase drawdowns.",
+      "Some holdings overlap with broader technology funds.",
+      "Past performance isn’t a guarantee of future results."
+    ],
+    "whoItsFor": [
+      "People adding a small innovation satellite",
+      "People comfortable with cyclical demand swings",
+      "People with a long horizon"
+    ],
+    "whoItsNotFor": [
+      "People seeking broad diversification from one fund",
+      "People who dislike sharp drawdowns",
+      "People needing predictable income"
+    ]
+  },
+  {
+    "id": "defense_aerospace",
+    "name": "Defense & Aerospace",
+    "description": "Companies in defense systems, aerospace manufacturing, and related services.",
+    "category": "growth",
+    "megaTheme": "Fun Themes",
+    "tags": [
+      "satellite",
+      "defense",
+      "aerospace",
+      "industry",
+      "etf"
+    ],
+    "representativeAssets": [
+      "ITA",
+      "XAR"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked with aerospace and defense ETFs (exchange-traded funds), using ITA and XAR as proxies.",
+    "overview": "Performance is linked to government budgets, global tensions, and aircraft demand cycles.",
+    "risks": [
+      "Can be sensitive to geopolitical headlines",
+      "Government spending shifts can change outlook quickly",
+      "Theme concentration increases single-sector risk",
+      "Can become crowded during news-driven periods"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "Satellite theme only: concentrated and event-driven.",
+      "US ETF proxies may not fully capture non-US defense companies.",
+      "Past performance isn’t a guarantee of future results."
+    ],
+    "whoItsFor": [
+      "People using targeted sector satellites",
+      "People comfortable with policy-driven volatility",
+      "People who understand concentrated exposure"
+    ],
+    "whoItsNotFor": [
+      "People wanting broad market exposure only",
+      "People uneasy with headline risk",
+      "People needing low-volatility allocations"
+    ]
+  },
+  {
+    "id": "infrastructure",
+    "name": "Infrastructure",
+    "description": "Companies tied to transport, utilities support, and civil infrastructure projects.",
+    "category": "growth",
+    "megaTheme": "Fun Themes",
+    "tags": [
+      "satellite",
+      "infrastructure",
+      "transport",
+      "construction",
+      "etf"
+    ],
+    "representativeAssets": [
+      "IFRA",
+      "PAVE"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked with infrastructure ETFs (exchange-traded funds), mainly IFRA and PAVE.",
+    "overview": "This theme follows public and private investment in roads, utilities, and industrial facilities.",
+    "risks": [
+      "Project cycles can create uneven returns",
+      "Policy and spending changes can affect demand",
+      "Theme concentration can increase bumps",
+      "Popular narratives can lead to crowding"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "Satellite theme only: narrower than total market funds.",
+      "Some ETFs have shorter history than core broad-market ETFs.",
+      "Past performance isn’t a guarantee of future results."
+    ],
+    "whoItsFor": [
+      "People adding a small real-economy satellite",
+      "People comfortable with cyclical exposure",
+      "People diversifying beyond pure tech themes"
+    ],
+    "whoItsNotFor": [
+      "People expecting steady year-to-year results",
+      "People wanting very broad diversification",
+      "People avoiding policy-sensitive themes"
+    ]
+  },
+  {
+    "id": "water",
+    "name": "Water",
+    "description": "Companies involved in water infrastructure, treatment, and efficiency.",
+    "category": "growth",
+    "megaTheme": "Fun Themes",
+    "tags": [
+      "satellite",
+      "water",
+      "infrastructure",
+      "utilities",
+      "etf"
+    ],
+    "representativeAssets": [
+      "PHO",
+      "FIW"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked with water-focused ETFs (exchange-traded funds), using PHO and FIW as common proxies.",
+    "overview": "Water themes target long-term infrastructure needs but can still move like broader equities.",
+    "risks": [
+      "Narrow theme can be concentrated",
+      "Can underperform broad markets for long periods",
+      "Valuations may rise when theme is popular recently",
+      "Liquidity can be lower than very large broad ETFs"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "Satellite theme only: concentrated exposure and crowding risk.",
+      "US ETF proxies used for simplicity.",
+      "Past performance isn’t a guarantee of future results."
+    ],
+    "whoItsFor": [
+      "People using small thematic satellites",
+      "People with long horizons and patience",
+      "People wanting infrastructure-related exposure"
+    ],
+    "whoItsNotFor": [
+      "People seeking broad stock market coverage",
+      "People uncomfortable with narrow themes",
+      "People needing low-risk allocations"
+    ]
+  },
+  {
+    "id": "india_equity",
+    "name": "India",
+    "description": "Broad exposure to publicly listed Indian companies.",
+    "category": "growth",
+    "megaTheme": "Fun Themes",
+    "tags": [
+      "satellite",
+      "india",
+      "emerging markets",
+      "country",
+      "etf"
+    ],
+    "representativeAssets": [
+      "INDA",
+      "FLIN"
+    ],
+    "benchmarks": [
+      "SPY"
+    ],
+    "methodology": "Tracked with India-focused ETFs (exchange-traded funds), mainly INDA with FLIN as an alternative.",
+    "overview": "India exposure reflects one country’s economy and currency, so results can diverge from global markets.",
+    "risks": [
+      "Single-country concentration can increase volatility",
+      "Currency moves can affect returns",
+      "Policy or regulation changes can shift outcomes quickly",
+      "Popular country themes can become crowded"
+    ],
+    "lastUpdated": "2026-02",
+    "limitations": [
+      "Satellite theme only: single-country concentration risk is high.",
+      "US ETF proxies used; local market access may differ.",
+      "Past performance isn’t a guarantee of future results."
+    ],
+    "whoItsFor": [
+      "People wanting a small country-specific satellite",
+      "People comfortable with emerging-market volatility",
+      "People already holding diversified core funds"
+    ],
+    "whoItsNotFor": [
+      "People seeking broad global diversification in one holding",
+      "People needing low-volatility allocations",
+      "People uncomfortable with currency and policy risk"
+    ]
   }
 ]
