@@ -2,7 +2,7 @@ name: Nightly QA
 
 on:
   schedule:
-    - cron: '0 0 * * *' # every night at midnight UTC
+    - cron: '0 0 * * *'
   workflow_dispatch:
 
 jobs:
@@ -10,10 +10,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
+
       - run: npm install
+
+      # ✅ NEW: validate themes.json (fast fail)
+      - name: Validate themes.json schema
+        run: npm run qa:themes
+
+      # ✅ NEW: smoke test production endpoints
+      # You can override BASE_URL in repo secrets or env if you want wealthview.pro
+      - name: API smoke tests
+        env:
+          BASE_URL: ${{ secrets.NIGHTLY_BASE_URL }}
+        run: npm run qa:api
+
+      # ✅ EXISTING: Cypress (keep)
       - run: npx cypress run
+
+      # ✅ EXISTING (but now meaningful): unit tests
       - run: npm test
