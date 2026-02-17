@@ -1,8 +1,3 @@
- (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
-diff --git a/data/themes.json b/data/themes.json
-index a3c5dc74f67d87f8bed63268724304b9c1c8552a..7234c8a8040b66939372178c0e0e37b46e07c7a2 100644
---- a/data/themes.json
-+++ b/data/themes.json
 @@ -439,27 +439,1210 @@
        "SPY"
      ],
