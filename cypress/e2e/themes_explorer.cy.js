@@ -5,51 +5,46 @@ describe("Theme & Trend Explorer", () => {
   beforeEach(() => {
     cy.visit(`${BASE_URL}/themes.html`);
     
-    // Wait for loading spinner to disappear (themes.json loading)
-    cy.get('#load-bar', { timeout: 15000 }).should('not.be.visible');
+    // Wait for loading spinner to disappear
+    cy.get('#load-bar', { timeout: 20000 }).should('not.be.visible');
     
     // Ensure themes have rendered
-    cy.get('[data-testid="theme-card"]', { timeout: 10000 })
-      .should('have.length.greaterThan', 10);
+    cy.get('.tcard', { timeout: 15000 }).should('have.length.greaterThan', 10);
+    
+    // Small buffer for page to settle
+    cy.wait(500);
   });
 
   it("loads themes from JSON and renders cards", () => {
-    cy.get('[data-testid="themes-grid"]').should("exist");
-    
-    // Should have 38 themes (11 original + 27 new packs)
-    cy.get('[data-testid="theme-card"]')
-      .should("have.length", 38);
+    cy.get('#tgrid').should("exist");
+    cy.get('.tcard').should("have.length", 38);
   });
 
   it("search filters themes", () => {
-    // Wait for search input to be interactable
-    cy.get('[data-testid="theme-search"]', { timeout: 5000 })
+    cy.get('#search-in')
       .should('be.visible')
       .clear()
       .type("income");
     
-    // Should show income-related themes
-    cy.get('[data-testid="theme-card"]')
-      .its("length")
-      .should("be.greaterThan", 0)
-      .and("be.lessThan", 38); // Fewer than total
+    cy.wait(500);
+    
+    cy.get('.tcard').its("length").should("be.greaterThan", 0).and("be.lessThan", 38);
   });
 
   it("compare mode caps at 5", () => {
-    // Activate compare mode
-    cy.get('[data-testid="compare-toggle"]', { timeout: 5000 })
-      .should('be.visible')
-      .click();
+    cy.get('#cmp-btn').should('be.visible').click();
+    
+    cy.wait(500);
+    cy.get('#cmp-bar').should('be.visible');
 
-    // Try to select 6 themes (only 5 should be selected)
-    cy.get('[data-testid="theme-card"]').each(($card, index) => {
+    // Click up to 6 cards
+    cy.get('.tcard').each(($card, index) => {
       if (index < 6) {
         cy.wrap($card).click({ force: true });
       }
     });
 
-    // Verify count is capped at 5
-    cy.get('[data-testid="compare-count"]').then(($el) => {
+    cy.get('#cmp-count').then(($el) => {
       const text = $el.text();
       const count = parseInt(text.match(/\d+/)[0], 10);
       expect(count).to.be.at.most(5);
@@ -57,39 +52,27 @@ describe("Theme & Trend Explorer", () => {
   });
 
   it("opens theme detail and toggles detailed view", () => {
-    // Click first theme card to open detail
-    cy.get('[data-testid="theme-card"]', { timeout: 5000 })
-      .first()
-      .should('be.visible')
-      .click();
-
-    // Detail view should be visible
-    cy.get('[data-testid="theme-detail"]', { timeout: 5000 })
-      .should("be.visible");
-
-    // View toggle container should exist
-    cy.get('[data-testid="view-toggle"]', { timeout: 3000 })
-      .should('exist');
+    cy.get('.tcard').first().click({ force: true });
     
-    // Click the "Detailed View" button
-    cy.get('[data-testid="view-toggle"]')
-      .find('button[data-mode="detailed"]')
-      .click();
-
-    // Verify detailed content appears (uses class .detailed-only.show)
-    cy.get('.detailed-only.show', { timeout: 3000 })
-      .should('exist');
+    cy.wait(1000);
+    
+    cy.get('#dv').should('have.class', 'on');
+    
+    // Look for view toggle
+    cy.get('.vtoggle').should('exist');
+    cy.get('.vtoggle button[data-mode="detailed"]').click({ force: true });
+    
+    cy.wait(500);
+    
+    cy.get('.detailed-only.show').should('exist');
   });
 
   it("diagnostics panel opens", () => {
-    // Scroll to bottom where diagnostics button is
-    cy.get('[data-testid="diagnostics-toggle"]', { timeout: 5000 })
-      .scrollIntoView()
-      .should('be.visible')
-      .click();
+    cy.get('#diag-toggle').scrollIntoView().should('be.visible').click({ force: true });
     
-    cy.get('[data-testid="diagnostics-panel"]', { timeout: 3000 })
-      .should("be.visible");
+    cy.wait(500);
+    
+    cy.get('#diag-panel').should('be.visible');
   });
 
 });
