@@ -3,10 +3,11 @@ describe("Theme & Trend Explorer", () => {
   const BASE_URL = Cypress.env("baseUrl") || "https://porfolio-visualizer-taca.vercel.app";
 
   function waitForPageReady() {
-    cy.get('#load-bar', { timeout: 25000 }).should('not.exist');
+    // CRITICAL: Use 'not.be.visible' NOT 'not.exist' - element stays in DOM!
+    cy.get('#load-bar', { timeout: 25000 }).should('not.be.visible');
     cy.get('[data-testid="theme-card"]', { timeout: 20000 })
       .should('have.length.greaterThan', 10);
-    cy.wait(2000); // Extra settling
+    cy.wait(2000);
   }
 
   beforeEach(() => {
@@ -20,12 +21,9 @@ describe("Theme & Trend Explorer", () => {
   });
 
   it("search filters themes", () => {
-    cy.get('[data-testid="theme-search"]', { timeout: 10000 })
-      .should('exist');
-    
+    cy.get('[data-testid="theme-search"]', { timeout: 10000 }).should('exist');
     cy.wait(1000);
     
-    // Use force to bypass visibility issues
     cy.get('[data-testid="theme-search"]')
       .clear({ force: true })
       .type("income", { force: true, delay: 100 });
@@ -42,13 +40,11 @@ describe("Theme & Trend Explorer", () => {
     cy.get('[data-testid="compare-toggle"]', { timeout: 10000 }).should('exist');
     cy.wait(1000);
     
-    // Force click
     cy.get('[data-testid="compare-toggle"]').click({ force: true });
     cy.wait(1500);
     
     cy.get('#cmp-bar', { timeout: 5000 }).should('exist');
 
-    // Force click on all cards
     cy.get('[data-testid="theme-card"]').each(($card, index) => {
       if (index < 6) {
         cy.wrap($card).click({ force: true });
@@ -64,22 +60,16 @@ describe("Theme & Trend Explorer", () => {
   });
 
   it("opens theme detail and toggles detailed view", () => {
-    cy.get('[data-testid="theme-card"]', { timeout: 10000 })
-      .first()
-      .should('exist');
-    
+    cy.get('[data-testid="theme-card"]', { timeout: 10000 }).first().should('exist');
     cy.wait(1000);
     
-    // Force click
     cy.get('[data-testid="theme-card"]').first().click({ force: true });
     cy.wait(2500);
 
     cy.get('[data-testid="theme-detail"]', { timeout: 10000 }).should("exist");
-
     cy.get('[data-testid="view-toggle"]', { timeout: 5000 }).should('exist');
     cy.wait(1000);
     
-    // Force click on detailed view button
     cy.get('[data-testid="view-toggle"]')
       .find('button[data-mode="detailed"]')
       .click({ force: true });
@@ -89,12 +79,9 @@ describe("Theme & Trend Explorer", () => {
   });
 
   it("diagnostics panel opens", () => {
-    cy.get('[data-testid="diagnostics-toggle"]', { timeout: 10000 })
-      .should('exist');
-    
+    cy.get('[data-testid="diagnostics-toggle"]', { timeout: 10000 }).should('exist');
     cy.wait(1000);
     
-    // Force click (bypasses visibility)
     cy.get('[data-testid="diagnostics-toggle"]').click({ force: true });
     cy.wait(1500);
     
