@@ -3,10 +3,21 @@ describe("Theme & Trend Explorer", () => {
   const BASE_URL = Cypress.env("baseUrl") || "https://porfolio-visualizer-taca.vercel.app";
 
   function waitForPageReady() {
-    // CRITICAL: Use 'not.be.visible' NOT 'not.exist' - element stays in DOM!
     cy.get('#load-bar', { timeout: 25000 }).should('not.be.visible');
     cy.get('[data-testid="theme-card"]', { timeout: 20000 })
       .should('have.length.greaterThan', 10);
+    
+    // Dismiss onboarding modal if it appears
+    cy.get('body').then(($body) => {
+      if ($body.find('[data-testid="onboarding-modal"]').length > 0) {
+        cy.get('[data-testid="onboarding-modal"]').then(($modal) => {
+          if ($modal.is(':visible')) {
+            cy.get('[data-testid="onboarding-modal"]').find('button').first().click({ force: true });
+          }
+        });
+      }
+    });
+    
     cy.wait(2000);
   }
 
@@ -45,12 +56,11 @@ describe("Theme & Trend Explorer", () => {
     
     cy.get('#cmp-bar', { timeout: 5000 }).should('exist');
 
-    cy.get('[data-testid="theme-card"]').each(($card, index) => {
-      if (index < 6) {
-        cy.wrap($card).click({ force: true });
-        cy.wait(300);
-      }
-    });
+    // Click 6 cards individually (not using .each to avoid DOM detachment)
+    for (let i = 0; i < 6; i++) {
+      cy.get('[data-testid="theme-card"]').eq(i).click({ force: true });
+      cy.wait(300);
+    }
 
     cy.get('[data-testid="compare-count"]').then(($el) => {
       const text = $el.text();
