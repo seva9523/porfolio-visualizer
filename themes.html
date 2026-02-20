@@ -824,6 +824,24 @@ let cache = {};        // themeId -> {hist, quote, computed, trend}
 let benchCache = {};   // "SP500"|"AGG" -> {hist, monthly, daily}
 let portfolio = null;  // user portfolio from localStorage
 let charts = [];       // active Chart.js instances
+
+// Debounce chart destruction to prevent rapid destroy/recreate cycles
+let chartDestroyTimer = null;
+function safeDestroyCharts() {
+    if (chartDestroyTimer) clearTimeout(chartDestroyTimer);
+    chartDestroyTimer = setTimeout(() => {
+        charts.forEach(c => {
+            if (c && typeof c.destroy === 'function') {
+                try {
+                    c.destroy();
+                } catch(e) {
+                    console.warn('Chart destroy error:', e);
+                }
+            }
+        });
+        charts = [];
+    }, 100);
+}
 let compareMode = false;
 let compareSet = new Set();
 let watchlist = JSON.parse(localStorage.getItem('themeWatchlist')||'[]');
@@ -1311,7 +1329,7 @@ function renderGridFiltered(themes){
 // RENDER: DETAIL VIEW
 // ============================================================================
 function showDetail(id){
-    charts.forEach(c=>c.destroy());charts=[];
+    safeDestroyCharts();
     document.getElementById('lv').style.display='none';
     document.getElementById('cv').classList.remove('on');
     document.getElementById('dv').classList.add('on');
@@ -1523,7 +1541,7 @@ function showDetail(id){
 }
 
 function showList(){
-    charts.forEach(c=>c.destroy());charts=[];
+    safeDestroyCharts();
     document.getElementById('dv').classList.remove('on');
     document.getElementById('cv').classList.remove('on');
     document.getElementById('lv').style.display='block';
@@ -1547,14 +1565,14 @@ function drawPerf(c){
     const{t,g}=chCol();const base=c.closes[0];
     const norm=c.closes.map(v=>(v/base)*100);
     const{d,ix}=sample(norm,500);const labels=ix.map(i=>c.dates[i]);
-    charts.push(new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'Growth of $100',data:d,borderColor:'#5E548E',backgroundColor:'rgba(94,84,142,.1)',fill:true,pointRadius:0,borderWidth:2,tension:.1}]},options:{responsive:true,plugins:{legend:{labels:{color:t}},tooltip:{mode:'index',intersect:false}},scales:{x:{ticks:{color:t,maxTicksLimit:8},grid:{color:g}},y:{ticks:{color:t},grid:{color:g}}}}}));
+    charts.push(new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'Growth of $100',data:d,borderColor:'#5E548E',backgroundColor:'rgba(94,84,142,.1)',fill:true,pointRadius:0,borderWidth:2,tension:.1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:t}},tooltip:{mode:'index',intersect:false}},scales:{x:{ticks:{color:t,maxTicksLimit:8},grid:{color:g}},y:{ticks:{color:t},grid:{color:g}}}}}));
 }
 
 function drawDD(c){
     const ctx=document.getElementById('dd-ch');if(!ctx)return;
     const{t,g}=chCol();
     const{d,ix}=sample(c.ddSeries,500);const labels=ix.map(i=>c.dates[i]);
-    charts.push(new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'Drawdown %',data:d,borderColor:'var(--red)',backgroundColor:'rgba(231,76,60,.1)',fill:true,pointRadius:0,borderWidth:1.5,tension:.1}]},options:{responsive:true,plugins:{legend:{labels:{color:t}}},scales:{x:{ticks:{color:t,maxTicksLimit:8},grid:{color:g}},y:{ticks:{color:t,callback:v=>v.toFixed(0)+'%'},grid:{color:g}}}}}));
+    charts.push(new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'Drawdown %',data:d,borderColor:'var(--red)',backgroundColor:'rgba(231,76,60,.1)',fill:true,pointRadius:0,borderWidth:1.5,tension:.1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:t}}},scales:{x:{ticks:{color:t,maxTicksLimit:8},grid:{color:g}},y:{ticks:{color:t,callback:v=>v.toFixed(0)+'%'},grid:{color:g}}}}}));
 }
 
 function drawVol(c){
@@ -1566,7 +1584,7 @@ function drawVol(c){
         vd.push(c.dates[i+1]||'');
     }
     const{d,ix}=sample(rv,500);const labels=ix.map(i=>vd[i]);
-    charts.push(new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'30-Day Rolling Vol (Ann.)',data:d,borderColor:'var(--orange)',backgroundColor:'rgba(241,143,1,.1)',fill:true,pointRadius:0,borderWidth:1.5,tension:.1}]},options:{responsive:true,plugins:{legend:{labels:{color:t}}},scales:{x:{ticks:{color:t,maxTicksLimit:8},grid:{color:g}},y:{ticks:{color:t,callback:v=>v.toFixed(0)+'%'},grid:{color:g}}}}}));
+    charts.push(new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'30-Day Rolling Vol (Ann.)',data:d,borderColor:'var(--orange)',backgroundColor:'rgba(241,143,1,.1)',fill:true,pointRadius:0,borderWidth:1.5,tension:.1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:t}}},scales:{x:{ticks:{color:t,maxTicksLimit:8},grid:{color:g}},y:{ticks:{color:t,callback:v=>v.toFixed(0)+'%'},grid:{color:g}}}}}));
 }
 
 function drawRollingCorr(c){
@@ -1582,7 +1600,7 @@ function drawRollingCorr(c){
         rd.push(c.dates[c.dates.length-len+i]||'');
     }
     const{d,ix}=sample(rc,500);const labels=ix.map(i=>rd[i]);
-    charts.push(new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'60-Day Rolling Corr vs S&P 500',data:d,borderColor:'var(--blue)',backgroundColor:'rgba(46,134,171,.1)',fill:true,pointRadius:0,borderWidth:1.5,tension:.1}]},options:{responsive:true,plugins:{legend:{labels:{color:t}}},scales:{x:{ticks:{color:t,maxTicksLimit:8},grid:{color:g}},y:{min:-1,max:1,ticks:{color:t},grid:{color:g}}}}}));
+    charts.push(new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'60-Day Rolling Corr vs S&P 500',data:d,borderColor:'var(--blue)',backgroundColor:'rgba(46,134,171,.1)',fill:true,pointRadius:0,borderWidth:1.5,tension:.1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:t}}},scales:{x:{ticks:{color:t,maxTicksLimit:8},grid:{color:g}},y:{min:-1,max:1,ticks:{color:t},grid:{color:g}}}}}));
 }
 
 // ============================================================================
@@ -1590,7 +1608,7 @@ function drawRollingCorr(c){
 // ============================================================================
 function showCompare(){
     if(compareSet.size<2){alert('Pick at least 2 themes to compare.');return}
-    charts.forEach(c=>c.destroy());charts=[];
+    safeDestroyCharts();
     document.getElementById('lv').style.display='none';
     document.getElementById('dv').classList.remove('on');
     document.getElementById('cv').classList.add('on');
@@ -1734,7 +1752,7 @@ function drawComparePerf(themes){
 
     // Use longest date array for labels
     const longest=datasets.reduce((a,b)=>a._dates.length>b._dates.length?a:b);
-    charts.push(new Chart(ctx,{type:'line',data:{labels:longest._dates,datasets:datasets.map(d=>({label:d.label,data:d.data,borderColor:d.borderColor,pointRadius:0,borderWidth:2,tension:.1,fill:false}))},options:{responsive:true,plugins:{legend:{labels:{color:t}},tooltip:{mode:'index',intersect:false}},scales:{x:{ticks:{color:t,maxTicksLimit:8},grid:{color:g}},y:{ticks:{color:t},grid:{color:g}}}}}));
+    charts.push(new Chart(ctx,{type:'line',data:{labels:longest._dates,datasets:datasets.map(d=>({label:d.label,data:d.data,borderColor:d.borderColor,pointRadius:0,borderWidth:2,tension:.1,fill:false}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:t}},tooltip:{mode:'index',intersect:false}},scales:{x:{ticks:{color:t,maxTicksLimit:8},grid:{color:g}},y:{ticks:{color:t},grid:{color:g}}}}}));
 }
 
 function exportCompareCSV(){
@@ -1841,7 +1859,7 @@ function drawMCHist(cf,bf,tn,pct){
     if(bw<=0)return;
     function hist(a){const c=new Array(bins).fill(0);a.forEach(v=>{const i=Math.min(Math.floor((v-mn)/bw),bins-1);c[i]++});return c.map(x=>x/a.length*100)}
     const labels=Array.from({length:bins},(_,i)=>'$'+Math.round(mn+i*bw).toLocaleString('en-US'));
-    charts.push(new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Current',data:hist(cf),backgroundColor:'rgba(46,134,171,.5)',borderRadius:2},{label:`+${pct}% ${tn}`,data:hist(bf),backgroundColor:'rgba(94,84,142,.5)',borderRadius:2}]},options:{responsive:true,plugins:{legend:{labels:{color:t}}},scales:{x:{ticks:{color:t,maxTicksLimit:6},grid:{display:false}},y:{ticks:{color:t,callback:v=>v.toFixed(0)+'%'},grid:{color:chCol().g}}}}}));
+    charts.push(new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Current',data:hist(cf),backgroundColor:'rgba(46,134,171,.5)',borderRadius:2},{label:`+${pct}% ${tn}`,data:hist(bf),backgroundColor:'rgba(94,84,142,.5)',borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:t}}},scales:{x:{ticks:{color:t,maxTicksLimit:6},grid:{display:false}},y:{ticks:{color:t,callback:v=>v.toFixed(0)+'%'},grid:{color:chCol().g}}}}}));
 }
 
 </script>
