@@ -256,6 +256,17 @@ function calculatePerformanceMetrics(portfolioHistory, tradingDates) {
     }
     
     const startValue = portfolioHistory[0].value;
+    // Safety guard: avoid divide-by-zero / Infinity metrics
+if (!startValue || startValue <= 0) {
+  return {
+    cagr: 0,
+    volatility: 0,
+    maxDrawdown: 0,
+    totalReturn: 0,
+    startValue: startValue,
+    endValue: portfolioHistory[portfolioHistory.length - 1]?.value ?? 0
+  };
+}
     const endValue = portfolioHistory[portfolioHistory.length - 1].value;
     const years = portfolioHistory.length / 252; // Approximate trading days per year
     
