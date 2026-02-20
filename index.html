@@ -1279,6 +1279,77 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
             saveAllPortfolios();
         }
 
+        // Generate historical snapshots from price data
+        function generateHistoricalSnapshots() {
+            const portfolio = portfolios[currentPortfolio];
+            
+            if (!portfolio.holdings || portfolio.holdings.length === 0) {
+                portfolio.snapshots = [];
+                return;
+            }
+            
+            console.log('Generating historical snapshots from price data...');
+            
+            // Collect all dates from all holdings' historical data
+            const allDates = new Set();
+            
+            portfolio.holdings.forEach(h => {
+                if (h.historicalData && typeof h.historicalData === 'object') {
+                    Object.keys(h.historicalData).forEach(date => {
+                        allDates.add(date);
+                    });
+                }
+            });
+            
+            if (allDates.size === 0) {
+                console.warn('No historical data available - snapshots will be empty');
+                portfolio.snapshots = [];
+                return;
+            }
+            
+            // Sort dates chronologically
+            const sortedDates = Array.from(allDates).sort();
+            
+            // Create snapshot for each date
+            const snapshots = [];
+            
+            sortedDates.forEach(date => {
+                let totalValue = 0;
+                let hasDataForThisDate = false;
+                
+                portfolio.holdings.forEach(h => {
+                    if (h.historicalData && h.historicalData[date]) {
+                        const closePrice = h.historicalData[date].close;
+                        if (closePrice && h.shares) {
+                            totalValue += h.shares * closePrice;
+                            hasDataForThisDate = true;
+                        }
+                    }
+                });
+                
+                // Only add snapshot if we have data for at least one holding
+                if (hasDataForThisDate && totalValue > 0) {
+                    snapshots.push({
+                        date: date,
+                        value: totalValue,
+                        holdings: portfolio.holdings.length
+                    });
+                }
+            });
+            
+            portfolio.snapshots = snapshots;
+            console.log(`Generated ${snapshots.length} historical snapshots`);
+            
+            // Save to localStorage
+            saveAllPortfolios();
+            
+            // Refresh the performance chart with current time range
+            const filteredSnapshots = getFilteredSnapshots(currentTimeRange || '90D');
+            if (filteredSnapshots.length > 0) {
+                createPerformanceChart(filteredSnapshots);
+            }
+        }
+
         function getFilteredSnapshots(range) {
             if (!portfolios[currentPortfolio].snapshots) return [];
             
@@ -2708,6 +2779,8 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
                 
                 if (hasHistoricalData) {
                     createHistoricalPerformanceChart(holdings, earliestDate);
+                    // Generate snapshots from historical data for time range buttons
+                    generateHistoricalSnapshots();
                 } else {
                     // Create estimated chart based on purchase vs current
                     console.log('Creating estimated performance chart (linear interpolation)');
