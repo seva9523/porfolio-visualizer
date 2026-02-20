@@ -354,3 +354,20 @@ if (typeof window !== 'undefined') {
         calculateCurrentWeights: calculateCurrentWeights
     };
 }
+// ========================================
+// EXPORT MODULE (for Jest / Node tests)
+// ========================================
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = {
+    REBALANCING_STRATEGIES,
+    calculatePortfolioValue,
+    calculateCurrentWeights,
+    needsRebalancing,
+    rebalancePortfolio,
+    getAllTradingDates,
+    runRebalancingBacktest,
+    calculatePerformanceMetrics,
+    calculateAllocationDrift,
+    compareRebalancingStrategies
+  };
+}
