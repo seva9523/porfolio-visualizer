@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -83,18 +84,18 @@ function fmtInt(n) {
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         :root {
-            --bg-gradient-start: #f8f9fa;
-            --bg-gradient-end: #e9ecef;
-            --container-bg: #ffffff;
-            --header-gradient-start: #2E86AB;
-            --header-gradient-end: #1a8cbc;
-            --text-primary: #2c3e50;
-            --text-secondary: #7f8c8d;
-            --input-bg: #f8f9fa;
-            --input-border: #ddd;
-            --border-color: #e0e0e0;
+            --bg-gradient-start: #F8FAFC;
+            --bg-gradient-end: #EEF2F7;
+            --container-bg: #FFFFFF;
+            --header-gradient-start: #0F172A;
+            --header-gradient-end: #14B8A6;
+            --text-primary: #0F172A;
+            --text-secondary: #475569;
+            --input-bg: #F1F5F9;
+            --input-border: #CBD5E1;
+            --border-color: #E2E8F0;
             --chart-bg: #ffffff;
-            --table-header: #34495e;
+            --table-header: #0F172A;
             --table-hover: #f8f9fa;
             --card-bg: #ffffff;
         }
@@ -480,6 +481,25 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
         }
 
         /* ── WealthView UX Revamp Styles ────────────────── */
+        .wv-view-tab{
+            padding: 8px 14px;
+            border-radius: 10px;
+            border: 1.5px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .wv-view-tab:hover{ transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,0,0,0.06); }
+        .wv-view-tab.active{
+            border-color: #14B8A6;
+            background: rgba(20,184,166,0.10);
+            color: #0F172A;
+        }
+        .wv-hidden{ display:none !important; }
+
         .wv-tool-card {
             background: var(--card-bg);
             border: 1.5px solid var(--border-color);
@@ -597,14 +617,14 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
         <!-- Tool Cards Grid -->
         <div id="tool-cards-section" style="padding: 24px 30px 8px; background: var(--container-bg);">
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;">
-                <div class="wv-tool-card" onclick="document.getElementById('portfolio-builder-section').scrollIntoView({behavior:'smooth'})">
+                <div class="wv-tool-card" onclick="setWVView('overview'); document.getElementById('portfolio-builder-section').scrollIntoView({behavior:'smooth'})">
                     <div style="font-size: 28px; margin-bottom: 8px;">📊</div>
                     <h3 style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">Portfolio Visualizer</h3>
                     <p style="font-size: 13px; font-weight: 600; color: #2E86AB; margin-bottom: 4px;">See your full picture at a glance</p>
                     <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 10px;">Charts, allocations, performance trends, and diversification analysis.</p>
                     <span style="font-size: 13px; font-weight: 600; color: #14B8A6;">Visualize →</span>
                 </div>
-                <div class="wv-tool-card" onclick="document.getElementById('rebalancing-section').scrollIntoView({behavior:'smooth'})">
+                <div class="wv-tool-card" onclick="setWVView('drift'); document.getElementById('portfolio-builder-section').scrollIntoView({behavior:'smooth'})">
                     <div style="font-size: 28px; margin-bottom: 8px;">⚖️</div>
                     <h3 style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">Rebalancing Simulator</h3>
                     <p style="font-size: 13px; font-weight: 600; color: #2E86AB; margin-bottom: 4px;">Understand how balance shifts</p>
@@ -673,6 +693,20 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
             </div>
             
             <div class="visualization-section">
+
+                <!-- Tool Switch Bar (UX Revamp) -->
+                <div id="wv-tool-switch" style="position: sticky; top: 0; z-index: 50; background: var(--container-bg); padding: 10px 0 14px; margin: -10px 0 16px; border-bottom: 1px solid var(--border-color);">
+                  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button class="wv-view-tab active" data-view="overview" onclick="setWVView('overview')">Overview</button>
+                    <button class="wv-view-tab" data-view="drift" onclick="setWVView('drift')">Balance & Drift</button>
+                    <button class="wv-view-tab" data-view="sim" onclick="setWVView('sim')">Simulations</button>
+                    <button class="wv-view-tab" data-view="advanced" onclick="setWVView('advanced')">Advanced</button>
+                  </div>
+                  <div id="wv-view-help" style="margin-top:8px; font-size:12px; color: var(--text-secondary); line-height:1.5;">
+                    Start with <strong>Overview</strong>. Use <strong>Balance & Drift</strong> to understand how your portfolio mix shifted over time.
+                  </div>
+                </div>
+
                 <!-- Empty State (shown when no portfolio) -->
                 <div id="empty-state-panel" class="wv-empty-state">
                     <div style="font-size: 48px; margin-bottom: 4px;">📊</div>
@@ -684,7 +718,7 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
 
                 <div id="summary-section"></div>
                 
-                <div class="chart-wrapper">
+                <div class="chart-wrapper" id="performance-wrapper">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                         <div class="chart-title">Performance Over Time</div>
                         <div id="performanceModeBadge" data-testid="performance-mode" style="font-size:12px; font-weight:600; opacity:0.85; margin-top:4px;">Historical Performance</div>
@@ -706,11 +740,11 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
                     </div>
                 </div>
                 
-                <div class="chart-wrapper">
+                <div class="chart-wrapper" id="allocation-wrapper">
                     <div class="chart-title">Portfolio Allocation</div>
                     <canvas id="pieChart"></canvas>
                 </div>
-                <div class="chart-wrapper">
+                <div class="chart-wrapper" id="holdings-wrapper">
                     <div class="chart-title">Holdings by Value</div>
                     <canvas id="barChart"></canvas>
                 </div>
@@ -3348,6 +3382,9 @@ updatePortfolioSnapshot();
 
 // Hide empty state
 document.getElementById('empty-state-panel').style.display = 'none';
+
+// Switch to Overview view (UX revamp)
+try { setWVView('overview'); } catch (e) {}
         }
 
 // ============================================================================
@@ -4155,6 +4192,64 @@ function updatePortfolioSnapshot() {
   </script>
     <script src="goals-engine.js"></script>
   
+
+
+<script>
+/* ============================================================
+   WealthView View Switch (UX Revamp)
+   Purpose: reduce cognitive load by turning the long page into
+   four “views” (Overview / Balance & Drift / Simulations / Advanced)
+   ============================================================ */
+function setWVView(view) {
+  const views = ['overview','drift','sim','advanced'];
+  // Tabs
+  document.querySelectorAll('.wv-view-tab').forEach(btn => {
+    const isActive = btn.getAttribute('data-view') === view;
+    btn.classList.toggle('active', isActive);
+  });
+
+  // Help text
+  const help = document.getElementById('wv-view-help');
+  if (help) {
+    const map = {
+      overview: "Start here. This view shows performance, allocation, and holdings in plain language.",
+      drift: "Balance & Drift explains how your portfolio mix shifted over time (educational, not advice).",
+      sim: "Simulations show historical 'what-if' scenarios (hypothetical; not predictive).",
+      advanced: "Advanced analytics for deeper exploration (optional)."
+    };
+    help.textContent = map[view] || map.overview;
+  }
+
+  // Elements by view
+  const overviewIds = [
+    'empty-state-panel','summary-section','performance-wrapper','allocation-wrapper','holdings-wrapper','table-section'
+  ];
+  const driftIds = ['drift-analytics-section'];
+  const simIds = ['rebalancing-section','benchmark-section','montecarlo-section','optimization-section'];
+  const advIds = ['correlation-section'];
+
+  function show(ids, yes) {
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle('wv-hidden', !yes);
+    });
+  }
+
+  show(overviewIds, view === 'overview');
+  show(driftIds, view === 'drift');
+  show(simIds, view === 'sim');
+  show(advIds, view === 'advanced');
+
+  // Scroll to top of visualization panel for clarity
+  const vs = document.querySelector('.visualization-section');
+  if (vs) vs.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// Default view on load
+document.addEventListener('DOMContentLoaded', () => {
+  try { setWVView('overview'); } catch(e) {}
+});
+</script>
 
 <!-- ================= QA STABILITY PATCH v13 ================= -->
 <div id="qa-metrics" style="display:none;">
