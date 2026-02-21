@@ -1990,6 +1990,20 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
             }
             
             selectedIndex = -1;
+            maybeAddRowIfLastFilled();
+        }
+
+        function maybeAddRowIfLastFilled() {
+            const rows = document.querySelectorAll('.holding-input');
+            if (rows.length === 0) return;
+            const lastRow = rows[rows.length - 1];
+            const tickerInput = lastRow.querySelector('.autocomplete-wrapper input') || lastRow.querySelectorAll('input[type="text"]')[0];
+            const sharesInput = lastRow.querySelectorAll('input[type="number"]')[0];
+            const ticker = (tickerInput?.value || '').trim().toUpperCase();
+            const shares = parseFloat(sharesInput?.value) || 0;
+            if (ticker && shares > 0) {
+                addHolding();
+            }
         }
 
         function addHolding(ticker = '', value = '', name = '', purchasePrice = '', purchaseDate = '') {
@@ -3537,6 +3551,11 @@ initRebalancingSimulator();
             } else {
                 addHolding(); addHolding(); addHolding();
             }
+
+            // Auto-add new row when user fills the last holding line (ticker + shares)
+            const container = document.getElementById('holdings-container');
+            container.addEventListener('input', () => maybeAddRowIfLastFilled());
+            container.addEventListener('blur', () => maybeAddRowIfLastFilled(), true);
         };
   </script>
     <script src="goals-engine.js"></script>
