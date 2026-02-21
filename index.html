@@ -512,8 +512,9 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
                         <option value="default">Default Portfolio</option>
                     </select>
                     
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px;">
                         <button onclick="createNewPortfolio()" style="padding: 8px; background: #27ae60; color: white; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 600;">➕ New</button>
+                        <button onclick="saveCurrentPortfolio()" id="save-portfolio-btn" style="padding: 8px; background: #16a085; color: white; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 600;">💾 Save</button>
                         <button onclick="renamePortfolio()" style="padding: 8px; background: #3498db; color: white; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 600;">✏️ Rename</button>
                         <button onclick="deletePortfolio()" style="padding: 8px; background: #e74c3c; color: white; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 600;">🗑️ Delete</button>
                     </div>
@@ -1730,6 +1731,21 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
             localStorage.setItem('currentPortfolio', currentPortfolio);
         }
 
+        function saveCurrentPortfolio() {
+            updateHoldingsArray();
+            if (portfolios[currentPortfolio]) {
+                portfolios[currentPortfolio].holdings = holdings;
+            }
+            saveAllPortfolios();
+            const btn = document.getElementById('save-portfolio-btn');
+            if (btn) {
+                const orig = btn.textContent;
+                btn.textContent = '✓ Saved';
+                btn.disabled = true;
+                setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1500);
+            }
+        }
+
         function loadAllPortfolios() {
             const saved = localStorage.getItem('portfolios');
             if (saved) {
@@ -2698,6 +2714,10 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
 
         async function visualizePortfolio() {
             updateHoldingsArray();
+            if (portfolios[currentPortfolio]) {
+                portfolios[currentPortfolio].holdings = holdings;
+                saveAllPortfolios();
+            }
             
             if (holdings.length === 0) { 
                 alert('Please add at least one holding!'); 
