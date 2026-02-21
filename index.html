@@ -683,7 +683,653 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
         </div>
     </div>
 </div>
+<!-- ====================================================================
+     PORTFOLIO DRIFT ANALYTICS PANEL
+     Drop-in addition for WealthView.pro / Portfolio Visualizer
+     
+     INTEGRATION: Paste this entire block into index.html
+     LOCATION: Right AFTER the closing </div> of rebalancing-section
+                (around line 685 in your index.html)
+     ==================================================================== -->
 
+<div id="drift-analytics-section" style="margin-top: 30px; display: none;">
+  <div class="summary-box">
+    
+    <!-- ── HEADER ────────────────────────────────── -->
+    <h2 style="font-size: 22px; margin-bottom: 4px;">📊 Portfolio Drift Analytics</h2>
+    <p style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
+      Educational tool for understanding how market movements shift your portfolio's balance.
+      <br><span style="font-size: 11px; opacity: 0.7;">Not financial advice — for informational purposes only.</span>
+    </p>
+
+    <!-- ── TAB NAVIGATION ────────────────────────── -->
+    <div id="drift-tabs" style="display: flex; gap: 4px; margin: 20px 0 24px; background: var(--input-bg); border-radius: 10px; padding: 4px; width: fit-content;">
+      <button class="drift-tab active" data-tab="overview" onclick="switchDriftTab('overview')">Overview</button>
+      <button class="drift-tab" data-tab="simulation" onclick="switchDriftTab('simulation')">Simulation</button>
+      <button class="drift-tab" data-tab="learn" onclick="switchDriftTab('learn')">Learn</button>
+    </div>
+
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- OVERVIEW TAB                                   -->
+    <!-- ══════════════════════════════════════════════ -->
+    <div id="drift-tab-overview" class="drift-tab-content">
+
+      <!-- 1️⃣ BALANCE STATUS PANEL -->
+      <div id="drift-status-panel" style="padding: 20px 24px; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; border: 1.5px solid transparent;">
+        <!-- Gauge -->
+        <svg id="drift-gauge" width="130" height="75" viewBox="0 0 130 75">
+          <defs>
+            <linearGradient id="driftGaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#22c55e"/>
+              <stop offset="50%" stop-color="#f59e0b"/>
+              <stop offset="100%" stop-color="#ef4444"/>
+            </linearGradient>
+          </defs>
+          <path d="M 12 65 A 53 53 0 0 1 118 65" fill="none" stroke="#e2e8f0" stroke-width="9" stroke-linecap="round"/>
+          <path d="M 12 65 A 53 53 0 0 1 118 65" fill="none" stroke="url(#driftGaugeGrad)" stroke-width="9" stroke-linecap="round" opacity="0.7"/>
+          <line id="drift-gauge-needle" x1="65" y1="65" x2="25" y2="35" stroke="var(--text-primary)" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="65" cy="65" r="3.5" fill="var(--text-primary)"/>
+          <text x="8" y="74" style="font-size:7px;fill:var(--text-secondary)">Balanced</text>
+          <text x="96" y="74" style="font-size:7px;fill:var(--text-secondary)">Drift</text>
+        </svg>
+        <!-- Status text -->
+        <div style="flex: 1; min-width: 240px;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+            <span id="drift-status-dot" style="font-size: 20px;">●</span>
+            <h3 id="drift-status-label" style="font-size: 18px; font-weight: 700; color: var(--text-primary); margin: 0;">Portfolio Balance: —</h3>
+          </div>
+          <p id="drift-status-desc" style="font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin: 0;"></p>
+        </div>
+      </div>
+
+      <!-- EXPOSURE HEAT INDICATOR -->
+      <div style="margin-bottom: 20px; padding: 14px 20px; background: var(--card-bg); border-radius: 10px; border: 1px solid var(--border-color);">
+        <p style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">Concentration Exposure</p>
+        <div id="drift-heat-bar" style="display: flex; gap: 3px; height: 10px; border-radius: 6px; overflow: hidden; width: 100%;"></div>
+        <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+          <span style="font-size: 10px; color: var(--text-secondary); opacity: 0.7;">Green = close to target</span>
+          <span style="font-size: 10px; color: var(--text-secondary); opacity: 0.7;">Red = furthest from target</span>
+        </div>
+      </div>
+
+      <!-- 2️⃣ DRIFT SUMMARY TABLE -->
+      <div style="margin-bottom: 20px; padding: 20px; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color);">
+        <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 14px; color: var(--text-primary);">Allocation Drift Summary</h3>
+        <div style="overflow-x: auto;">
+          <table id="drift-summary-table" style="width: 100%; border-collapse: separate; border-spacing: 0 4px; font-size: 13px;">
+            <thead>
+              <tr style="text-align: left; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;">
+                <th style="padding: 8px 12px;">Asset</th>
+                <th style="padding: 8px 12px;">Target Weight</th>
+                <th style="padding: 8px 12px;">Current Weight</th>
+                <th style="padding: 8px 12px;">Difference</th>
+                <th style="padding: 8px 12px;">Status</th>
+              </tr>
+            </thead>
+            <tbody id="drift-summary-body">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 4️⃣ BEFORE vs AFTER VISUALIZATION -->
+      <div style="margin-bottom: 20px; padding: 20px; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color);">
+        <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 18px; color: var(--text-primary);">Allocation Comparison</h3>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;">
+          <div style="text-align: center;">
+            <canvas id="drift-donut-original" width="160" height="160"></canvas>
+            <p style="font-size: 11px; color: var(--text-secondary); margin-top: 6px; font-weight: 600;">Original</p>
+          </div>
+          <span style="font-size: 24px; color: var(--border-color);">→</span>
+          <div style="text-align: center;">
+            <canvas id="drift-donut-current" width="160" height="160"></canvas>
+            <p style="font-size: 11px; color: var(--text-secondary); margin-top: 6px; font-weight: 600;">Current</p>
+          </div>
+          <span style="font-size: 24px; color: var(--border-color);">→</span>
+          <div style="text-align: center;">
+            <canvas id="drift-donut-restored" width="160" height="160"></canvas>
+            <p style="font-size: 11px; color: var(--text-secondary); margin-top: 6px; font-weight: 600;">Restored (Simulation)</p>
+          </div>
+        </div>
+        <p style="text-align: center; font-size: 11px; color: var(--text-secondary); margin-top: 12px; opacity: 0.7;">
+          Left: Original target allocation · Center: Current allocation after drift · Right: Simulated restored allocation
+        </p>
+      </div>
+
+      <!-- 3️⃣ HYPOTHETICAL REBALANCE ILLUSTRATION -->
+      <div id="drift-rebalance-illustration" style="margin-bottom: 20px; padding: 20px; background: var(--card-bg); border-radius: 12px; border: 1.5px dashed var(--border-color); display: none;">
+        <h3 style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px;">Illustrative Rebalance Example</h3>
+        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px; opacity: 0.7;">Educational simulation — not a recommendation</p>
+        
+        <div id="drift-above-target" style="margin-bottom: 14px;"></div>
+        <div id="drift-below-target" style="margin-bottom: 14px;"></div>
+
+        <div style="background: var(--input-bg); border-radius: 10px; padding: 14px 18px; border-left: 3px solid #94a5b8;">
+          <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.7; margin: 0;">
+            <strong>Hypothetical Adjustment Concept:</strong> In a rebalance scenario, investors sometimes reduce positions that have grown beyond target levels and increase positions that have fallen below target levels to restore the original allocation mix.
+          </p>
+        </div>
+        <p style="font-size: 11px; color: var(--text-secondary); margin-top: 12px; opacity: 0.7; font-style: italic;">
+          This is an illustrative scenario. No specific trade amounts or instructions are implied.
+        </p>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- SIMULATION TAB                                 -->
+    <!-- ══════════════════════════════════════════════ -->
+    <div id="drift-tab-simulation" class="drift-tab-content" style="display: none;">
+
+      <!-- 6️⃣ REBALANCE FREQUENCY SIMULATION -->
+      <div style="margin-bottom: 20px; padding: 20px; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color);">
+        <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 2px; color: var(--text-primary);">Rebalance Frequency Simulation</h3>
+        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px; opacity: 0.7;">Historical simulation — does not predict future outcomes</p>
+
+        <div style="display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap;">
+          <button class="drift-freq-btn active" data-freq="quarterly" onclick="switchDriftFreq('quarterly')">Quarterly</button>
+          <button class="drift-freq-btn" data-freq="annual" onclick="switchDriftFreq('annual')">Annual</button>
+          <button class="drift-freq-btn" data-freq="threshold" onclick="switchDriftFreq('threshold')">Threshold (5%)</button>
+        </div>
+
+        <!-- Timeline -->
+        <div id="drift-timeline" style="position: relative; padding: 0 0 0 24px; margin-bottom: 18px;"></div>
+
+        <div style="background: rgba(46,134,171,0.08); border-radius: 10px; padding: 14px 18px; border-left: 3px solid #2E86AB;">
+          <p style="font-size: 12px; font-weight: 700; color: #2E86AB; margin-bottom: 4px;">Simulation Insight</p>
+          <p id="drift-sim-insight" style="font-size: 13px; color: var(--text-secondary); line-height: 1.7; margin: 0;"></p>
+        </div>
+      </div>
+
+      <!-- 7️⃣ WHEN INVESTORS SOMETIMES DELAY -->
+      <div style="margin-bottom: 20px; padding: 20px; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color);">
+        <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 10px; color: var(--text-primary);">When Investors Sometimes Delay Restoring Balance</h3>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.6;">
+          Some investors may choose to wait before restoring their original allocation mix. Common reasons include:
+        </p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px;">
+          <div class="drift-delay-card">
+            <p style="font-size: 16px; margin-bottom: 4px;">📏</p>
+            <p style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px;">Minimal drift</p>
+            <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5;">When the allocation shift is small and diversification remains largely intact.</p>
+          </div>
+          <div class="drift-delay-card">
+            <p style="font-size: 16px; margin-bottom: 4px;">💰</p>
+            <p style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px;">Transaction costs</p>
+            <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5;">When the cost of trades may outweigh the benefits of precise alignment.</p>
+          </div>
+          <div class="drift-delay-card">
+            <p style="font-size: 16px; margin-bottom: 4px;">📋</p>
+            <p style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px;">Tax considerations</p>
+            <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5;">When selling positions could trigger taxable events in certain account types.</p>
+          </div>
+          <div class="drift-delay-card">
+            <p style="font-size: 16px; margin-bottom: 4px;">💵</p>
+            <p style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px;">New contributions</p>
+            <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5;">When future deposits or investments may naturally restore balance over time.</p>
+          </div>
+        </div>
+        <p style="font-size: 11px; color: var(--text-secondary); margin-top: 12px; opacity: 0.7; font-style: italic;">
+          These are educational considerations, not instructions. Decisions depend on individual circumstances.
+        </p>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- LEARN TAB                                      -->
+    <!-- ══════════════════════════════════════════════ -->
+    <div id="drift-tab-learn" class="drift-tab-content" style="display: none;">
+
+      <!-- 5️⃣ WHY DRIFT MATTERS -->
+      <div style="margin-bottom: 20px; padding: 20px; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color);">
+        <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 18px; color: var(--text-primary);">Why Allocation Drift Matters</h3>
+        <div id="drift-education-steps">
+          <div class="drift-edu-step"><span class="drift-edu-num">01</span><div><p class="drift-edu-title">Market Movements Shift Weights</p><p class="drift-edu-body">When some investments grow faster than others, they naturally become a larger portion of a portfolio. Over time, the original balance changes — even without buying or selling anything.</p></div></div>
+          <div class="drift-edu-step"><span class="drift-edu-num">02</span><div><p class="drift-edu-title">Concentration May Increase</p><p class="drift-edu-body">If one asset or sector grows significantly, your portfolio may become more concentrated in that area. This could increase exposure to that sector's specific risks.</p></div></div>
+          <div class="drift-edu-step"><span class="drift-edu-num">03</span><div><p class="drift-edu-title">Diversification May Decrease</p><p class="drift-edu-body">The original allocation was structured to spread risk across different asset types. As weights drift, the diversification characteristics of the portfolio may change.</p></div></div>
+          <div class="drift-edu-step"><span class="drift-edu-num">04</span><div><p class="drift-edu-title">Restoring Balance</p><p class="drift-edu-body">Periodically bringing weights back to their original targets is one way investors maintain their intended diversification. This process is often called rebalancing.</p></div></div>
+        </div>
+      </div>
+
+      <!-- GLOSSARY -->
+      <div style="margin-bottom: 20px; padding: 20px; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color);">
+        <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 14px; color: var(--text-primary);">Key Terms — Plain Language</h3>
+        <div class="drift-glossary-item"><span class="drift-glossary-term">Allocation</span><span class="drift-glossary-def">How your investments are divided — for example, 40% stocks, 25% bonds, etc.</span></div>
+        <div class="drift-glossary-item"><span class="drift-glossary-term">Drift</span><span class="drift-glossary-def">When your actual percentages move away from where you originally set them, due to market movements.</span></div>
+        <div class="drift-glossary-item"><span class="drift-glossary-term">Diversification</span><span class="drift-glossary-def">Spreading investments across different types to avoid depending too much on any single one.</span></div>
+        <div class="drift-glossary-item"><span class="drift-glossary-term">Rebalancing</span><span class="drift-glossary-def">The process of restoring your portfolio's original percentage mix.</span></div>
+        <div class="drift-glossary-item" style="border-bottom: none;"><span class="drift-glossary-term">Target Weight</span><span class="drift-glossary-def">The percentage you originally intended for each investment in your portfolio.</span></div>
+      </div>
+
+      <!-- VISUAL EXAMPLE -->
+      <div style="margin-bottom: 20px; padding: 20px; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color);">
+        <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 14px; color: var(--text-primary);">How Drift Happens — A Visual Example</h3>
+        <div style="display: flex; gap: 16px; align-items: flex-end; justify-content: center; flex-wrap: wrap;">
+          <div style="text-align: center;">
+            <div id="drift-visual-before" style="display: flex; gap: 3px; height: 110px; align-items: flex-end; justify-content: center;"></div>
+            <p style="font-size: 11px; color: var(--text-secondary); margin-top: 6px; font-weight: 600;">Day 1 — Balanced</p>
+          </div>
+          <span style="font-size: 28px; color: var(--border-color); margin-bottom: 20px;">→</span>
+          <div style="text-align: center;">
+            <div id="drift-visual-after" style="display: flex; gap: 3px; height: 110px; align-items: flex-end; justify-content: center;"></div>
+            <p style="font-size: 11px; color: var(--text-secondary); margin-top: 6px; font-weight: 600;">Later — Drifted</p>
+          </div>
+          <span style="font-size: 28px; color: var(--border-color); margin-bottom: 20px;">→</span>
+          <div style="text-align: center;">
+            <div id="drift-visual-restored" style="display: flex; gap: 3px; height: 110px; align-items: flex-end; justify-content: center;"></div>
+            <p style="font-size: 11px; color: var(--text-secondary); margin-top: 6px; font-weight: 600;">Restored (Sim)</p>
+          </div>
+        </div>
+        <p style="font-size: 11px; color: var(--text-secondary); text-align: center; margin-top: 10px; opacity: 0.7;">
+          Illustrative example showing how assets can shift in proportion after differing performance.
+        </p>
+      </div>
+    </div>
+
+    <!-- 🔟 REQUIRED DISCLAIMER FOOTER -->
+    <div style="background: var(--input-bg); border-radius: 10px; padding: 14px 20px; border: 1px solid var(--border-color); margin-top: 8px;">
+      <p style="font-size: 11px; color: var(--text-secondary); line-height: 1.7; text-align: center; margin: 0; opacity: 0.8;">
+        This analysis is provided for <strong>educational and informational purposes only</strong>.
+        It does not constitute financial, investment, tax, or legal advice.
+        Historical simulations are hypothetical and do not guarantee future results.
+        Users should consult qualified professionals before making financial decisions.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- DRIFT ANALYTICS — STYLES                          -->
+<!-- ══════════════════════════════════════════════════ -->
+<style>
+/* Tab buttons */
+.drift-tab {
+  padding: 7px 18px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.drift-tab.active {
+  background: var(--table-header);
+  color: #fff;
+}
+.drift-tab:hover:not(.active) {
+  background: var(--border-color);
+}
+
+/* Frequency buttons */
+.drift-freq-btn {
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.drift-freq-btn.active {
+  border-color: #2E86AB;
+  background: rgba(46,134,171,0.08);
+  color: #2E86AB;
+}
+
+/* Delay cards */
+.drift-delay-card {
+  background: var(--input-bg);
+  border-radius: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-color);
+}
+
+/* Education steps */
+.drift-edu-step {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+.drift-edu-num {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--border-color);
+  line-height: 1;
+  min-width: 38px;
+}
+.drift-edu-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 3px;
+}
+.drift-edu-body {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+/* Glossary */
+.drift-glossary-item {
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+.drift-glossary-term {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.drift-glossary-def {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-left: 12px;
+}
+
+/* Drift status badges */
+.drift-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.drift-badge-green { background: #f0fdf4; color: #22c55e; }
+.drift-badge-yellow { background: #fffbeb; color: #f59e0b; }
+.drift-badge-red { background: #fef2f2; color: #ef4444; }
+
+/* Timeline */
+.drift-timeline-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  position: absolute;
+  left: -18px;
+  top: 4px;
+  border: 2px solid var(--card-bg);
+}
+.drift-timeline-item {
+  position: relative;
+  margin-bottom: 14px;
+}
+</style>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- DRIFT ANALYTICS — JAVASCRIPT                      -->
+<!-- ══════════════════════════════════════════════════ -->
+<script>
+// ── Global state ──────────────────────────────────
+let driftDonutCharts = { original: null, current: null, restored: null };
+let currentDriftFreq = 'quarterly';
+
+// ── Colors for chart slices ───────────────────────
+const DRIFT_COLORS = ['#2E86AB','#A23B72','#F18F01','#C73E1D','#6A994E','#BC4B51','#4C956C','#D4A373','#5C946E','#7768AE'];
+
+// ── Initialize Drift Analytics ────────────────────
+// This is called from your existing visualizePortfolio() function
+function initDriftAnalytics() {
+  const section = document.getElementById('drift-analytics-section');
+  if (!section) return;
+
+  // Only show if holdings exist
+  if (!holdings || holdings.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = 'block';
+  updateDriftAnalytics();
+}
+
+// ── Core: Compute drift data from holdings ────────
+function computeDriftData() {
+  const totalValue = holdings.reduce((sum, h) => sum + (h.value || 0), 0);
+  if (totalValue <= 0) return [];
+
+  return holdings.map(h => {
+    // Target weight = initial weight when portfolio was first set up
+    // Since we don't store original targets, we use equal weight or cost-basis weight as proxy
+    // Best approach: use the cost-basis proportion as the "intended" target
+    const costBasis = (h.costBasis || h.value || 0);
+    const totalCost = holdings.reduce((s, x) => s + (x.costBasis || x.value || 0), 0);
+    const targetWeight = totalCost > 0 ? (costBasis / totalCost) * 100 : (100 / holdings.length);
+    const currentWeight = (h.value / totalValue) * 100;
+    const diff = currentWeight - targetWeight;
+
+    return {
+      ticker: h.ticker,
+      targetWeight: targetWeight,
+      currentWeight: currentWeight,
+      diff: diff
+    };
+  });
+}
+
+// ── Drift status helpers ──────────────────────────
+function getDriftStatusInfo(diff) {
+  const abs = Math.abs(diff);
+  if (abs <= 2) return { label: 'Balanced', cls: 'drift-badge-green', color: '#22c55e' };
+  if (abs <= 5) return { label: 'Moderate drift', cls: 'drift-badge-yellow', color: '#f59e0b' };
+  return { label: 'Significant drift', cls: 'drift-badge-red', color: '#ef4444' };
+}
+
+function getOverallDriftStatus(data) {
+  const maxDrift = Math.max(...data.map(d => Math.abs(d.diff)));
+  if (maxDrift <= 2) return {
+    status: 'Balanced', color: '#22c55e', bg: 'rgba(34,197,94,0.06)', border: 'rgba(34,197,94,0.15)', level: 0,
+    desc: 'Your portfolio allocation closely matches its original structure.'
+  };
+  if (maxDrift <= 5) return {
+    status: 'Drift developing', color: '#f59e0b', bg: 'rgba(245,158,11,0.06)', border: 'rgba(245,158,11,0.15)', level: 1,
+    desc: 'Portfolio weights have shifted due to market movements. This may change diversification and risk exposure.'
+  };
+  return {
+    status: 'Significant drift detected', color: '#ef4444', bg: 'rgba(239,68,68,0.06)', border: 'rgba(239,68,68,0.15)', level: 2,
+    desc: 'Portfolio weights have shifted materially from their original targets. Diversification characteristics may have changed.'
+  };
+}
+
+// ── Update all panels ─────────────────────────────
+function updateDriftAnalytics() {
+  const data = computeDriftData();
+  if (data.length === 0) return;
+
+  const overall = getOverallDriftStatus(data);
+
+  // 1. Status panel
+  const panel = document.getElementById('drift-status-panel');
+  panel.style.background = overall.bg;
+  panel.style.borderColor = overall.border;
+  document.getElementById('drift-status-dot').style.color = overall.color;
+  document.getElementById('drift-status-label').textContent = 'Portfolio Balance: ' + overall.status;
+  document.getElementById('drift-status-desc').textContent = overall.desc;
+
+  // Gauge needle
+  const angle = -90 + overall.level * 90;
+  const rad = (angle * Math.PI) / 180;
+  const nx = 65 + 38 * Math.cos(rad);
+  const ny = 65 + 38 * Math.sin(rad);
+  const needle = document.getElementById('drift-gauge-needle');
+  needle.setAttribute('x2', nx);
+  needle.setAttribute('y2', ny);
+
+  // 2. Heat bar
+  const heatBar = document.getElementById('drift-heat-bar');
+  const maxDrift = Math.max(...data.map(d => Math.abs(d.diff)), 1);
+  heatBar.innerHTML = data.map(d => {
+    const intensity = Math.abs(d.diff) / maxDrift;
+    const hue = 120 - intensity * 120;
+    return `<div style="flex:${d.currentWeight};background:hsl(${hue},70%,55%);min-width:10px;border-radius:2px;" title="${d.ticker}: ${d.diff > 0 ? '+' : ''}${d.diff.toFixed(1)}% from target"></div>`;
+  }).join('');
+
+  // 3. Drift summary table
+  const tbody = document.getElementById('drift-summary-body');
+  tbody.innerHTML = data.map((d, i) => {
+    const s = getDriftStatusInfo(d.diff);
+    const sign = d.diff > 0 ? '+' : '';
+    const diffColor = d.diff > 0 ? '#f59e0b' : d.diff < -0 ? '#3b82f6' : '#22c55e';
+    const label = d.diff > 2 ? ' above target' : d.diff < -2 ? ' below target' : '';
+    return `<tr style="background:${i % 2 === 0 ? 'var(--input-bg)' : 'var(--card-bg)'};">
+      <td style="padding:9px 12px;font-weight:600;">${d.ticker}</td>
+      <td style="padding:9px 12px;">${d.targetWeight.toFixed(1)}%</td>
+      <td style="padding:9px 12px;font-weight:500;">${d.currentWeight.toFixed(1)}%</td>
+      <td style="padding:9px 12px;font-weight:600;color:${diffColor};">${sign}${d.diff.toFixed(1)}%<span style="font-size:11px;font-weight:400;color:var(--text-secondary);margin-left:4px;">${label}</span></td>
+      <td style="padding:9px 12px;"><span class="drift-badge ${s.cls}">● ${s.label}</span></td>
+    </tr>`;
+  }).join('');
+
+  // 4. Donut charts
+  drawDriftDonut('drift-donut-original', data.map(d => ({ ticker: d.ticker, weight: d.targetWeight })));
+  drawDriftDonut('drift-donut-current', data.map(d => ({ ticker: d.ticker, weight: d.currentWeight })));
+  drawDriftDonut('drift-donut-restored', data.map(d => ({ ticker: d.ticker, weight: d.targetWeight })));
+
+  // 5. Rebalance illustration
+  const above = data.filter(d => d.diff > 2);
+  const below = data.filter(d => d.diff < -2);
+  const illustrationPanel = document.getElementById('drift-rebalance-illustration');
+
+  if (above.length > 0 || below.length > 0) {
+    illustrationPanel.style.display = 'block';
+
+    document.getElementById('drift-above-target').innerHTML = above.length > 0 ? `
+      <p style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:8px;">Assets that have grown beyond their original allocation:</p>
+      ${above.map(d => `<div style="display:flex;align-items:center;gap:10px;padding:7px 12px;background:rgba(245,158,11,0.06);border-radius:8px;margin-bottom:4px;">
+        <span style="font-weight:600;font-size:13px;min-width:50px;">${d.ticker}</span>
+        <div style="flex:1;background:rgba(245,158,11,0.15);border-radius:4px;height:7px;"><div style="width:${Math.min(d.diff * 12, 100)}%;background:#f59e0b;height:100%;border-radius:4px;"></div></div>
+        <span style="font-size:12px;font-weight:600;color:#d97706;">+${d.diff.toFixed(1)}% above target</span>
+      </div>`).join('')}` : '';
+
+    document.getElementById('drift-below-target').innerHTML = below.length > 0 ? `
+      <p style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:8px;">Assets that represent a smaller share than originally allocated:</p>
+      ${below.map(d => `<div style="display:flex;align-items:center;gap:10px;padding:7px 12px;background:rgba(59,130,246,0.06);border-radius:8px;margin-bottom:4px;">
+        <span style="font-weight:600;font-size:13px;min-width:50px;">${d.ticker}</span>
+        <div style="flex:1;background:rgba(59,130,246,0.15);border-radius:4px;height:7px;"><div style="width:${Math.min(Math.abs(d.diff) * 12, 100)}%;background:#3b82f6;height:100%;border-radius:4px;"></div></div>
+        <span style="font-size:12px;font-weight:600;color:#2563eb;">−${Math.abs(d.diff).toFixed(1)}% below target</span>
+      </div>`).join('')}` : '';
+  } else {
+    illustrationPanel.style.display = 'none';
+  }
+
+  // 6. Bar visuals on Learn tab
+  buildBarVisual('drift-visual-before', data.map(d => d.targetWeight));
+  buildBarVisual('drift-visual-after', data.map(d => d.currentWeight));
+  buildBarVisual('drift-visual-restored', data.map(d => d.targetWeight));
+
+  // 7. Simulation timeline
+  updateDriftTimeline(currentDriftFreq);
+}
+
+// ── Draw simple donut chart (using Chart.js) ──────
+function drawDriftDonut(canvasId, items) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+
+  // Destroy existing chart
+  const key = canvasId.replace('drift-donut-', '');
+  if (driftDonutCharts[key]) driftDonutCharts[key].destroy();
+
+  const ctx = canvas.getContext('2d');
+  driftDonutCharts[key] = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: items.map(i => i.ticker),
+      datasets: [{
+        data: items.map(i => i.weight),
+        backgroundColor: items.map((_, i) => DRIFT_COLORS[i % DRIFT_COLORS.length]),
+        borderWidth: 1,
+        borderColor: getComputedStyle(document.documentElement).getPropertyValue('--card-bg').trim() || '#fff'
+      }]
+    },
+    options: {
+      responsive: false,
+      cutout: '58%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.label}: ${ctx.parsed.toFixed(1)}%`
+          }
+        }
+      }
+    }
+  });
+}
+
+// ── Build bar visual for Learn tab ────────────────
+function buildBarVisual(containerId, weights) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const maxW = Math.max(...weights, 1);
+  container.innerHTML = weights.map((w, i) =>
+    `<div style="width:28px;height:${(w / maxW) * 100}%;min-height:6px;background:${DRIFT_COLORS[i % DRIFT_COLORS.length]};border-radius:3px 3px 0 0;opacity:0.85;" title="${w.toFixed(1)}%"></div>`
+  ).join('');
+}
+
+// ── Tab switching ─────────────────────────────────
+function switchDriftTab(tab) {
+  document.querySelectorAll('.drift-tab-content').forEach(el => el.style.display = 'none');
+  document.querySelectorAll('.drift-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('drift-tab-' + tab).style.display = 'block';
+  document.querySelector(`.drift-tab[data-tab="${tab}"]`).classList.add('active');
+}
+
+// ── Frequency switching (Simulation tab) ──────────
+function switchDriftFreq(freq) {
+  currentDriftFreq = freq;
+  document.querySelectorAll('.drift-freq-btn').forEach(el => el.classList.remove('active'));
+  document.querySelector(`.drift-freq-btn[data-freq="${freq}"]`).classList.add('active');
+  updateDriftTimeline(freq);
+}
+
+// ── Simulation timeline ───────────────────────────
+function updateDriftTimeline(freq) {
+  const timelines = {
+    quarterly: [
+      { month: 'Jan', drift: 0.8, event: 'Portfolio initialized at target weights' },
+      { month: 'Apr', drift: 2.1, event: 'Periodic check — minor drift observed' },
+      { month: 'Jul', drift: 3.9, event: 'Weights restored to target mix' },
+      { month: 'Oct', drift: 1.2, event: 'Minor drift after restore' },
+      { month: 'Dec', drift: 1.8, event: 'Period end' },
+    ],
+    annual: [
+      { month: 'Jan', drift: 0.8, event: 'Portfolio initialized at target weights' },
+      { month: 'Apr', drift: 2.1, event: 'Drift developing' },
+      { month: 'Jul', drift: 3.9, event: 'Drift continues' },
+      { month: 'Oct', drift: 4.8, event: 'Drift accumulating' },
+      { month: 'Dec', drift: 0.9, event: 'Annual reset — weights restored' },
+    ],
+    threshold: [
+      { month: 'Jan', drift: 0.8, event: 'Portfolio initialized at target weights' },
+      { month: 'Apr', drift: 2.1, event: 'Drift developing' },
+      { month: 'Jul', drift: 3.9, event: 'Approaching threshold' },
+      { month: 'Oct', drift: 5.2, event: 'Threshold crossed — illustrative restore' },
+      { month: 'Dec', drift: 1.5, event: 'Period end' },
+    ]
+  };
+
+  const items = timelines[freq] || timelines.quarterly;
+  const container = document.getElementById('drift-timeline');
+  container.innerHTML = `<div style="position:absolute;left:10px;top:0;bottom:0;width:2px;background:var(--border-color);"></div>` +
+    items.map(p => {
+      const s = getDriftStatusInfo(p.drift > 5 ? 6 : p.drift > 2 ? 3 : 1);
+      return `<div class="drift-timeline-item" style="padding-left:6px;">
+        <div class="drift-timeline-dot" style="background:${s.color};box-shadow:0 0 0 2px ${s.color}33;"></div>
+        <p style="font-size:12px;font-weight:700;color:var(--text-primary);margin:0;">${p.month} — Max drift: ±${p.drift.toFixed(1)}%</p>
+        <p style="font-size:12px;color:var(--text-secondary);margin:2px 0 0;">${p.event}</p>
+      </div>`;
+    }).join('');
+
+  const freqLabel = freq === 'quarterly' ? 'every quarter' : freq === 'annual' ? 'once per year' : 'when drift exceeded 5%';
+  document.getElementById('drift-sim-insight').innerHTML =
+    `Over the illustrated period, restoring original weights ${freqLabel} resulted in allocation stability. <strong>This is a historical simulation and does not predict future outcomes.</strong>`;
+}
+</script>
 <style>
 #rebalancing-metrics-table tbody tr {
     border-bottom: 1px solid var(--border-color);
@@ -2880,6 +3526,7 @@ saveAllPortfolios();
 
 // Initialize rebalancing simulator
 initRebalancingSimulator();
+          initDriftAnalytics();
         }
 
         function createSummary(total, totalCostBasis, totalGainLoss, totalGainLossPercent) {
