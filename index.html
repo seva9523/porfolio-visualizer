@@ -126,7 +126,6 @@ function fmtInt(n) {
             transition: background 0.3s ease;
         }
         
-        
         .container {
             width: 100%;
             max-width: none;
@@ -138,8 +137,8 @@ function fmtInt(n) {
             transition: background 0.3s ease;
             min-height: 100vh;
         }
-
-.header {
+        
+        .header {
             background: linear-gradient(135deg, var(--header-gradient-start) 0%, var(--header-gradient-end) 100%);
             color: white;
             padding: 30px;
@@ -175,16 +174,16 @@ function fmtInt(n) {
         
         .content {
             display: grid;
-            grid-template-columns: 380px 1fr 340px;
+            grid-template-columns: 360px 1fr 320px;
             gap: 0;
-            min-height: calc(100vh - 180px);
+            min-height: calc(100vh - 220px);
         }
         
         .input-section {
             background: var(--input-bg);
             padding: 30px;
             border-right: 1px solid var(--border-color);
-            max-height: calc(100vh - 220px);
+            max-height: calc(100vh - 260px);
             overflow-y: auto;
             transition: background 0.3s ease;
         }
@@ -355,7 +354,7 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
         
         .chart-wrapper {
             background: var(--chart-bg);
-            padding: 20px;
+            padding: 0;
             border-radius: 12px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             margin-bottom: 20px;
@@ -509,7 +508,7 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
             background: var(--card-bg);
             border: 1.5px solid var(--border-color);
             border-radius: 12px;
-            padding: 20px;
+            padding: 0;
             cursor: pointer;
             transition: all 0.25s ease;
         }
@@ -558,10 +557,10 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
         .wv-empty-state p { font-size: 14px; line-height: 1.6; max-width: 360px; margin: 0 auto 16px; }
 
         
-        /* ── Right Rail (Wide-screen dashboard) ───────────────────────────── */
+        /* ── Right Rail (wide-screen sidebar) ────────────────── */
         .right-rail {
-            background: var(--input-bg);
             border-left: 1px solid var(--border-color);
+            background: var(--input-bg);
             padding: 18px;
             overflow-y: auto;
             transition: background 0.3s ease;
@@ -585,7 +584,7 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
             color: var(--text-secondary);
             line-height: 1.45;
         }
-        .rail-list { margin-top: 10px; display: grid; gap: 8px; }
+        .rail-list { margin-top: 8px; display: grid; gap: 8px; }
         .rail-item {
             padding: 10px;
             border-radius: 10px;
@@ -594,23 +593,12 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
             font-size: 12px;
             color: var(--text-secondary);
         }
-        .rail-kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .rail-kpi {
-            background: var(--chart-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 10px 12px;
-        }
-        .rail-kpi .k { font-size: 10px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .05em; font-weight: 800; }
-        .rail-kpi .v { font-size: 16px; color: var(--text-primary); font-weight: 900; margin-top: 4px; }
-        .rail-kpi .s { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
-
         @media (max-width: 1200px) {
-            .content { grid-template-columns: 380px 1fr; }
+            .content { grid-template-columns: 360px 1fr; }
             .right-rail { display: none; }
         }
 
-        @media (max-width: 1024px) {
+@media (max-width: 1024px) {
             .content { grid-template-columns: 1fr; }
             .input-section {
                 border-right: none;
@@ -650,7 +638,7 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
         </div>
 
         <!-- How It Works Modal -->
-        <div id="how-it-works-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center; padding: 20px;" onclick="if(event.target===this)this.style.display='none'">
+        <div id="how-it-works-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center; padding: 0;" onclick="if(event.target===this)this.style.display='none'">
             <div style="background: var(--container-bg); border-radius: 16px; padding: 36px; max-width: 520px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); position: relative;">
                 <button onclick="document.getElementById('how-it-works-modal').style.display='none'" style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-secondary);">✕</button>
                 <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 24px; color: var(--text-primary);">How WealthView Works</h3>
@@ -750,6 +738,8 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
                 <div id="last-updated" style="text-align: center; margin-top: 10px; font-size: 0.85em; color: var(--text-secondary);"></div>
             </div>
             
+            </div>
+            
             <div class="visualization-section">
 
                 <!-- Tool Switch Bar (UX Revamp) -->
@@ -825,7 +815,7 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
         </p>
         
         <!-- Configuration Panel -->
-        <div style="margin-top: 20px; padding: 20px; background: var(--card-bg); border-radius: 12px; border: 2px solid var(--border-color);">
+        <div style="margin-top: 20px; padding: 0; background: var(--card-bg); border-radius: 12px; border: 2px solid var(--border-color);">
             <h3 style="font-size: 16px; margin-bottom: 15px;">Simulation Settings</h3>
             
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
@@ -1572,7 +1562,37 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
 // This gets called from your existing visualizePortfolio() function
 </script>
             </div>
-        </div>
+        
+            <aside class="right-rail" id="wv-right-rail" aria-label="Insights">
+                <div class="rail-card">
+                    <div class="rail-title">Quick Read</div>
+                    <div class="rail-sub">Educational summary of your portfolio (not financial advice).</div>
+                </div>
+
+                <div class="rail-card">
+                    <div class="rail-title">Next Steps</div>
+                    <div class="rail-list">
+                        <div class="rail-item">1) Click <strong>Visualize Portfolio</strong></div>
+                        <div class="rail-item">2) Check <strong>Balance & Drift</strong></div>
+                        <div class="rail-item">3) Explore <strong>Simulations</strong> (hypothetical)</div>
+                    </div>
+                </div>
+
+                <div class="rail-card">
+                    <div class="rail-title">Glossary</div>
+                    <div class="rail-list">
+                        <div class="rail-item"><strong>Allocation</strong>: how money is split.</div>
+                        <div class="rail-item"><strong>Drift</strong>: that split changes as prices move.</div>
+                        <div class="rail-item"><strong>Rebalance</strong>: hypothetical reset to the original mix.</div>
+                    </div>
+                </div>
+
+                <div class="rail-card">
+                    <div class="rail-title">Disclosure</div>
+                    <div class="rail-sub">Educational use only. Simulations are hypothetical and not predictive.</div>
+                </div>
+            </aside>
+</div>
     </div>
 
     <!-- Why This Matters Education Strip -->
@@ -1581,60 +1601,6 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
             <div><span style="font-size: 24px; display: block; margin-bottom: 4px;">📈</span><p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;"><strong style="color: var(--text-primary);">Performance:</strong> See how your investments have moved over time.</p></div>
             <div><span style="font-size: 24px; display: block; margin-bottom: 4px;">⚖️</span><p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;"><strong style="color: var(--text-primary);">Balance:</strong> Understand if your portfolio has drifted from its original mix.</p></div>
             <div><span style="font-size: 24px; display: block; margin-bottom: 4px;">🎯</span><p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;"><strong style="color: var(--text-primary);">Planning:</strong> Explore whether your current path supports your goals.</p></div>
-
-            <aside class="right-rail" id="wv-right-rail" aria-label="Portfolio sidebar">
-                <div class="rail-card">
-                    <div class="rail-title">At a glance</div>
-                    <div class="rail-sub">Educational summary of your portfolio (not financial advice).</div>
-                    <div class="rail-kpi-grid">
-                        <div class="rail-kpi">
-                            <div class="k">Portfolio value</div>
-                            <div class="v" id="rail-total-value">—</div>
-                            <div class="s" id="rail-total-value-sub">Run “Visualize”</div>
-                        </div>
-                        <div class="rail-kpi">
-                            <div class="k">Holdings</div>
-                            <div class="v" id="rail-holdings-count">—</div>
-                            <div class="s" id="rail-holdings-sub">—</div>
-                        </div>
-                        <div class="rail-kpi">
-                            <div class="k">Top holding</div>
-                            <div class="v" id="rail-top-pos">—</div>
-                            <div class="s" id="rail-top-pos-sub">—</div>
-                        </div>
-                        <div class="rail-kpi">
-                            <div class="k">Balance status</div>
-                            <div class="v" id="rail-drift-status">—</div>
-                            <div class="s" id="rail-drift-sub">—</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="rail-card">
-                    <div class="rail-title">Next steps</div>
-                    <div class="rail-list">
-                        <div class="rail-item">1) Click <strong>📈 Visualize Portfolio</strong> to generate charts.</div>
-                        <div class="rail-item">2) Open <strong>Balance & Drift</strong> to see how weights changed over time.</div>
-                        <div class="rail-item">3) Use <strong>Simulations</strong> for historical “what-if” comparisons (not predictions).</div>
-                    </div>
-                </div>
-
-                <div class="rail-card">
-                    <div class="rail-title">Glossary</div>
-                    <div class="rail-list">
-                        <div class="rail-item"><strong>Allocation</strong>: how your money is split across holdings.</div>
-                        <div class="rail-item"><strong>Drift</strong>: that split changed because prices moved.</div>
-                        <div class="rail-item"><strong>Restore balance</strong>: a hypothetical reset to the original split (simulation).</div>
-                    </div>
-                </div>
-
-                <div class="rail-card">
-                    <div class="rail-title">Disclosure</div>
-                    <div class="rail-sub">
-                        Educational analysis only. No investment, tax, or legal advice. Historical simulations are hypothetical and not predictive.
-                    </div>
-                </div>
-            </aside>
         </div>
     </div>
 
@@ -3491,7 +3457,7 @@ initRebalancingSimulator();
 // Initialize drift analytics panel
 initDriftAnalytics();
 updatePortfolioSnapshot();
-        try { updateRightRail(); } catch(e) {}
+    updateRightRail();
 
 // Hide empty state
 document.getElementById('empty-state-panel').style.display = 'none';
@@ -3501,55 +3467,6 @@ try { setWVView('overview'); } catch (e) {}
         }
 
 // ============================================================================
-// ============================================================================
-// RIGHT RAIL UPDATER (Wide-screen sidebar summary)
-// ============================================================================
-function updateRightRail() {
-    try {
-        const total = (holdings || []).reduce((sum, h) => sum + (h.value || 0), 0);
-        const totalCost = (holdings || []).reduce((sum, h) => sum + (h.costBasis || 0), 0);
-        const retPct = totalCost > 0 ? ((total - totalCost) / totalCost) * 100 : 0;
-
-        const count = (holdings || []).filter(h => (h.ticker || '').trim()).length;
-
-        const allocs = (holdings || []).map(h => ({ ticker: h.ticker, v: (h.value || 0) }));
-        allocs.sort((a,b)=>b.v-a.v);
-        const top = allocs[0];
-        const topPct = total > 0 && top ? (top.v / total) * 100 : 0;
-
-        // Pull drift status text if available
-        let driftLabel = '—';
-        let driftSub = 'Run “Visualize Portfolio” to compute.';
-        const lbl = document.getElementById('drift-status-label');
-        const desc = document.getElementById('drift-status-desc');
-        if (lbl && lbl.textContent) {
-            const parts = lbl.textContent.split(':');
-            driftLabel = parts.length > 1 ? parts.slice(1).join(':').trim() : lbl.textContent.trim();
-        }
-        if (desc && desc.textContent) driftSub = desc.textContent.trim();
-
-        const tv = document.getElementById('rail-total-value');
-        const tvs = document.getElementById('rail-total-value-sub');
-        if (tv) tv.textContent = fmtCurrency(total, 0);
-        if (tvs) tvs.textContent = (totalCost > 0) ? `${fmtPercent(retPct, 1, true)} vs cost basis` : 'Cost basis not set';
-
-        const hc = document.getElementById('rail-holdings-count');
-        const hcs = document.getElementById('rail-holdings-sub');
-        if (hc) hc.textContent = String(count);
-        if (hcs) hcs.textContent = count === 1 ? '1 holding' : `${count} holdings`;
-
-        const tp = document.getElementById('rail-top-pos');
-        const tps = document.getElementById('rail-top-pos-sub');
-        if (tp) tp.textContent = top ? (top.ticker || '—') : '—';
-        if (tps) tps.textContent = top ? `${topPct.toFixed(1)}% of portfolio` : '—';
-
-        const ds = document.getElementById('rail-drift-status');
-        const dss = document.getElementById('rail-drift-sub');
-        if (ds) ds.textContent = driftLabel || '—';
-        if (dss) dss.textContent = driftSub || '—';
-    } catch(e) { console.warn('Right rail update failed', e); }
-}
-
 // SAMPLE PORTFOLIO LOADER
 // ============================================================================
 function loadSamplePortfolio() {
@@ -3630,6 +3547,39 @@ function updatePortfolioSnapshot() {
     document.getElementById('snap-drift').innerHTML = `<div class="snap-label">Allocation drift</div><div class="snap-value" style="color:${driftColor}">${driftLabel}</div>`;
 }
 
+
+
+// ============================================================================
+// RIGHT RAIL (layout fill) — updates quick-read cards after visualization
+// ============================================================================
+function updateRightRail() {
+    try {
+        const rail = document.getElementById('wv-right-rail');
+        if (!rail) return;
+
+        // If snapshot bar exists, clone it into the first card for quick scan
+        const snap = document.getElementById('portfolio-snapshot-bar');
+        const firstCard = rail.querySelector('.rail-card');
+        if (snap && firstCard) {
+            // Keep title, replace body with snapshot metrics
+            const title = firstCard.querySelector('.rail-title');
+            const body = firstCard.querySelector('.rail-sub');
+            if (body) body.remove();
+            const existing = firstCard.querySelector('#rail-snapshot-inline');
+            if (existing) existing.remove();
+
+            const wrap = document.createElement('div');
+            wrap.id = 'rail-snapshot-inline';
+            wrap.style.marginTop = '10px';
+            wrap.innerHTML = snap.innerHTML;
+            firstCard.appendChild(wrap);
+
+            if (title) title.textContent = 'Portfolio Health';
+        }
+    } catch (e) {
+        console.warn('updateRightRail failed', e);
+    }
+}
         function createSummary(total, totalCostBasis, totalGainLoss, totalGainLossPercent) {
   // Coerce inputs to finite numbers for stable UI + tests
   total = safeNum(total, 0);
@@ -4150,19 +4100,19 @@ function updatePortfolioSnapshot() {
                     <h2>Portfolio Composition Analysis</h2>
                     
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 20px;">
-                        <div style="padding: 20px; background: ${cardBg}; border-radius: 8px; text-align: center; border: 1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#eee'};">
+                        <div style="padding: 0; background: ${cardBg}; border-radius: 8px; text-align: center; border: 1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#eee'};">
                             <div style="font-size: 12px; color: ${labelColor}; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Risk Level</div>
                             <div style="font-size: 28px; font-weight: 700; color: ${riskColor};">
                                 ${riskLevel}
                             </div>
                         </div>
-                        <div style="padding: 20px; background: ${cardBg}; border-radius: 8px; text-align: center; border: 1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#eee'};">
+                        <div style="padding: 0; background: ${cardBg}; border-radius: 8px; text-align: center; border: 1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#eee'};">
                             <div style="font-size: 12px; color: ${labelColor}; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Diversification Score</div>
                             <div style="font-size: 28px; font-weight: 700; color: ${scoreColor};">
                                 ${diversificationScore}/10
                             </div>
                         </div>
-                        <div style="padding: 20px; background: ${cardBg}; border-radius: 8px; text-align: center; border: 1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#eee'};">
+                        <div style="padding: 0; background: ${cardBg}; border-radius: 8px; text-align: center; border: 1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#eee'};">
                             <div style="font-size: 12px; color: ${labelColor}; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Largest Position</div>
                             <div style="font-size: 28px; font-weight: 700; color: ${textColor};">
                                 ${maxPosition.toFixed(1)}%
