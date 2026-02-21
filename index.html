@@ -1054,7 +1054,8 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
         let searchTimeouts = {};
         let selectedIndex = -1;
         let currentTimeRange = '7D';
-        
+        let autoVisualizeTimeout = null;
+
         // Portfolio management
         let currentPortfolio = 'default';
         let portfolios = {
@@ -1993,6 +1994,25 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
             maybeAddRowIfLastFilled();
         }
 
+        function scheduleAutoVisualize(delayMs) {
+            if (autoVisualizeTimeout) clearTimeout(autoVisualizeTimeout);
+            autoVisualizeTimeout = setTimeout(() => {
+                autoVisualizeTimeout = null;
+                updateHoldingsArray();
+                if (holdings.length === 0) {
+                    document.getElementById('summary-section').innerHTML = '';
+                    document.getElementById('table-section').innerHTML = '';
+                    if (pieChart) { pieChart.destroy(); pieChart = null; }
+                    if (barChart) { barChart.destroy(); barChart = null; }
+                    if (performanceChart) { performanceChart.destroy(); performanceChart = null; }
+                    return;
+                }
+                const visualizeBtn = document.querySelector('.visualize-btn');
+                if (visualizeBtn && visualizeBtn.disabled) return; // already fetching
+                visualizePortfolio();
+            }, delayMs);
+        }
+
         function maybeAddRowIfLastFilled() {
             const rows = document.querySelectorAll('.holding-input');
             if (rows.length === 0) return;
@@ -2003,6 +2023,7 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
             const shares = parseFloat(sharesInput?.value) || 0;
             if (ticker && shares > 0) {
                 addHolding();
+                scheduleAutoVisualize(400); // visualize shortly after auto-adding row
             }
         }
 
@@ -2210,7 +2231,10 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
             });
         }
 
-        function removeHolding(btn) { btn.parentElement.remove(); }
+        function removeHolding(btn) {
+            btn.parentElement.remove();
+            scheduleAutoVisualize(800);
+        }
 
         function updateHoldingsArray() {
             holdings = [];
@@ -3554,8 +3578,14 @@ initRebalancingSimulator();
 
             // Auto-add new row when user fills the last holding line (ticker + shares)
             const container = document.getElementById('holdings-container');
-            container.addEventListener('input', () => maybeAddRowIfLastFilled());
-            container.addEventListener('blur', () => maybeAddRowIfLastFilled(), true);
+            container.addEventListener('input', () => {
+                maybeAddRowIfLastFilled();
+                scheduleAutoVisualize(1200); // update visualization after user stops typing
+            });
+            container.addEventListener('blur', () => {
+                maybeAddRowIfLastFilled();
+                scheduleAutoVisualize(1200);
+            }, true);
         };
   </script>
     <script src="goals-engine.js"></script>
