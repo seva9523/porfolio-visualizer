@@ -174,7 +174,7 @@ function fmtInt(n) {
         
         .content {
             display: grid;
-            grid-template-columns: 360px 1fr 320px;
+            grid-template-columns: 540px 1fr 320px;
             gap: 0;
             min-height: calc(100vh - 220px);
         }
@@ -183,8 +183,10 @@ function fmtInt(n) {
             background: var(--input-bg);
             padding: 30px;
             border-right: 1px solid var(--border-color);
-            max-height: calc(100vh - 260px);
-            overflow-y: auto;
+            /* Remove internal scrolling — show full sidebar content */
+            max-height: none;
+            overflow: visible;
+            overflow-x: hidden;
             transition: background 0.3s ease;
         }
         
@@ -504,6 +506,18 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
         }
         .wv-hidden{ display:none !important; }
 
+        /* Two-up chart grid (Allocation + Holdings) */
+        .wv-two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            align-items: start;
+        }
+        @media (max-width: 1100px) {
+            .wv-two-col { grid-template-columns: 1fr; }
+        }
+
+
         .wv-tool-card {
             background: var(--card-bg);
             border: 1.5px solid var(--border-color);
@@ -594,7 +608,7 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
             color: var(--text-secondary);
         }
         @media (max-width: 1200px) {
-            .content { grid-template-columns: 360px 1fr; }
+            .content { grid-template-columns: 540px 1fr;}
             .right-rail { display: none; }
         }
 
@@ -788,7 +802,8 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
                     </div>
                 </div>
                 
-                <div class="chart-wrapper" id="allocation-wrapper">
+                <div class="wv-two-col">
+<div class="chart-wrapper" id="allocation-wrapper">
                     <div class="chart-title">Portfolio Allocation</div>
                     <canvas id="pieChart"></canvas>
                 </div>
@@ -796,7 +811,9 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
                     <div class="chart-title">Holdings by Value</div>
                     <canvas id="barChart"></canvas>
                 </div>
-                <div id="table-section"></div>
+                
+</div>
+<div id="table-section"></div>
                 <div id="correlation-section" style="margin-top: 30px;"></div>
                 <div id="benchmark-section" style="margin-top: 30px;"></div>
                 <div id="montecarlo-section" style="margin-top: 30px;"></div>
