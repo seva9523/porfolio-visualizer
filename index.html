@@ -122,21 +122,24 @@ function fmtInt(n) {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 0;
             transition: background 0.3s ease;
         }
+        
         
         .container {
-            max-width: 1400px;
-            margin: 0 auto;
+            width: 100%;
+            max-width: none;
+            margin: 0;
             background: var(--container-bg);
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            border-radius: 0;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.18);
             overflow: hidden;
             transition: background 0.3s ease;
+            min-height: 100vh;
         }
-        
-        .header {
+
+.header {
             background: linear-gradient(135deg, var(--header-gradient-start) 0%, var(--header-gradient-end) 100%);
             color: white;
             padding: 30px;
@@ -172,15 +175,16 @@ function fmtInt(n) {
         
         .content {
             display: grid;
-            grid-template-columns: 400px 1fr;
+            grid-template-columns: 380px 1fr 340px;
             gap: 0;
+            min-height: calc(100vh - 180px);
         }
         
         .input-section {
             background: var(--input-bg);
             padding: 30px;
             border-right: 1px solid var(--border-color);
-            max-height: 800px;
+            max-height: calc(100vh - 220px);
             overflow-y: auto;
             transition: background 0.3s ease;
         }
@@ -553,6 +557,59 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
         .wv-empty-state h3 { font-size: 18px; font-weight: 600; color: var(--text-primary); margin: 12px 0 8px; }
         .wv-empty-state p { font-size: 14px; line-height: 1.6; max-width: 360px; margin: 0 auto 16px; }
 
+        
+        /* ── Right Rail (Wide-screen dashboard) ───────────────────────────── */
+        .right-rail {
+            background: var(--input-bg);
+            border-left: 1px solid var(--border-color);
+            padding: 18px;
+            overflow-y: auto;
+            transition: background 0.3s ease;
+        }
+        .rail-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+        .rail-title {
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            letter-spacing: 0.02em;
+        }
+        .rail-sub {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.45;
+        }
+        .rail-list { margin-top: 10px; display: grid; gap: 8px; }
+        .rail-item {
+            padding: 10px;
+            border-radius: 10px;
+            background: rgba(15, 23, 42, 0.03);
+            border: 1px dashed rgba(15, 23, 42, 0.12);
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .rail-kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .rail-kpi {
+            background: var(--chart-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 10px 12px;
+        }
+        .rail-kpi .k { font-size: 10px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .05em; font-weight: 800; }
+        .rail-kpi .v { font-size: 16px; color: var(--text-primary); font-weight: 900; margin-top: 4px; }
+        .rail-kpi .s { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+
+        @media (max-width: 1200px) {
+            .content { grid-template-columns: 380px 1fr; }
+            .right-rail { display: none; }
+        }
+
         @media (max-width: 1024px) {
             .content { grid-template-columns: 1fr; }
             .input-section {
@@ -675,8 +732,13 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
                         <button onclick="deletePortfolio()" style="padding: 8px; background: #e74c3c; color: white; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 600;">🗑️ Delete</button>
                     </div>
                 </div>
-
-<div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+                
+                <div class="section-title">Portfolio Holdings</div>
+                <div id="holdings-container"></div>
+                <button class="add-btn" onclick="addHolding()">+ Add Holding</button>
+                <button class="visualize-btn" onclick="visualizePortfolio()">📈 Visualize Portfolio</button>
+                
+                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color);">
                     <p style="font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Quick Actions</p>
                     <button class="add-btn" onclick="loadSamplePortfolio()" style="background: #14B8A6; font-size: 14px; padding: 10px;">🧪 Try Sample Portfolio</button>
                     <button class="add-btn" onclick="refreshPrices(this)" style="background: #3498db; font-size: 14px; padding: 10px;">🔄 Refresh Prices</button>
@@ -702,26 +764,6 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
                     Start with <strong>Overview</strong>. Use <strong>Balance & Drift</strong> to understand how your portfolio mix shifted over time.
                   </div>
                 </div>
-
-
-                <!-- Holdings Editor (moved from left rail for better UX) -->
-                <div class="chart-wrapper" id="holdings-editor-wrapper">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
-                        <div>
-                            <h3 style="margin:0; font-size:16px; font-weight:800; color:var(--text-primary);">Holdings</h3>
-                            <p style="margin:6px 0 0; font-size:12px; color:var(--text-secondary); line-height:1.4;">
-                                Add or edit your holdings here, then click <strong>Visualize Portfolio</strong> to update charts and insights.
-                            </p>
-                        </div>
-                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                            <button class="add-btn" onclick="addHolding()" style="min-width:160px;">+ Add Holding</button>
-                            <button class="visualize-btn" onclick="visualizePortfolio()" style="min-width:200px;">📈 Visualize Portfolio</button>
-                        </div>
-                    </div>
-
-                    <div id="holdings-container" style="margin-top:14px;"></div>
-                </div>
-
 
                 <!-- Empty State (shown when no portfolio) -->
                 <div id="empty-state-panel" class="wv-empty-state">
@@ -1539,6 +1581,60 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
             <div><span style="font-size: 24px; display: block; margin-bottom: 4px;">📈</span><p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;"><strong style="color: var(--text-primary);">Performance:</strong> See how your investments have moved over time.</p></div>
             <div><span style="font-size: 24px; display: block; margin-bottom: 4px;">⚖️</span><p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;"><strong style="color: var(--text-primary);">Balance:</strong> Understand if your portfolio has drifted from its original mix.</p></div>
             <div><span style="font-size: 24px; display: block; margin-bottom: 4px;">🎯</span><p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;"><strong style="color: var(--text-primary);">Planning:</strong> Explore whether your current path supports your goals.</p></div>
+
+            <aside class="right-rail" id="wv-right-rail" aria-label="Portfolio sidebar">
+                <div class="rail-card">
+                    <div class="rail-title">At a glance</div>
+                    <div class="rail-sub">Educational summary of your portfolio (not financial advice).</div>
+                    <div class="rail-kpi-grid">
+                        <div class="rail-kpi">
+                            <div class="k">Portfolio value</div>
+                            <div class="v" id="rail-total-value">—</div>
+                            <div class="s" id="rail-total-value-sub">Run “Visualize”</div>
+                        </div>
+                        <div class="rail-kpi">
+                            <div class="k">Holdings</div>
+                            <div class="v" id="rail-holdings-count">—</div>
+                            <div class="s" id="rail-holdings-sub">—</div>
+                        </div>
+                        <div class="rail-kpi">
+                            <div class="k">Top holding</div>
+                            <div class="v" id="rail-top-pos">—</div>
+                            <div class="s" id="rail-top-pos-sub">—</div>
+                        </div>
+                        <div class="rail-kpi">
+                            <div class="k">Balance status</div>
+                            <div class="v" id="rail-drift-status">—</div>
+                            <div class="s" id="rail-drift-sub">—</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rail-card">
+                    <div class="rail-title">Next steps</div>
+                    <div class="rail-list">
+                        <div class="rail-item">1) Click <strong>📈 Visualize Portfolio</strong> to generate charts.</div>
+                        <div class="rail-item">2) Open <strong>Balance & Drift</strong> to see how weights changed over time.</div>
+                        <div class="rail-item">3) Use <strong>Simulations</strong> for historical “what-if” comparisons (not predictions).</div>
+                    </div>
+                </div>
+
+                <div class="rail-card">
+                    <div class="rail-title">Glossary</div>
+                    <div class="rail-list">
+                        <div class="rail-item"><strong>Allocation</strong>: how your money is split across holdings.</div>
+                        <div class="rail-item"><strong>Drift</strong>: that split changed because prices moved.</div>
+                        <div class="rail-item"><strong>Restore balance</strong>: a hypothetical reset to the original split (simulation).</div>
+                    </div>
+                </div>
+
+                <div class="rail-card">
+                    <div class="rail-title">Disclosure</div>
+                    <div class="rail-sub">
+                        Educational analysis only. No investment, tax, or legal advice. Historical simulations are hypothetical and not predictive.
+                    </div>
+                </div>
+            </aside>
         </div>
     </div>
 
@@ -3395,6 +3491,7 @@ initRebalancingSimulator();
 // Initialize drift analytics panel
 initDriftAnalytics();
 updatePortfolioSnapshot();
+        try { updateRightRail(); } catch(e) {}
 
 // Hide empty state
 document.getElementById('empty-state-panel').style.display = 'none';
@@ -3404,6 +3501,55 @@ try { setWVView('overview'); } catch (e) {}
         }
 
 // ============================================================================
+// ============================================================================
+// RIGHT RAIL UPDATER (Wide-screen sidebar summary)
+// ============================================================================
+function updateRightRail() {
+    try {
+        const total = (holdings || []).reduce((sum, h) => sum + (h.value || 0), 0);
+        const totalCost = (holdings || []).reduce((sum, h) => sum + (h.costBasis || 0), 0);
+        const retPct = totalCost > 0 ? ((total - totalCost) / totalCost) * 100 : 0;
+
+        const count = (holdings || []).filter(h => (h.ticker || '').trim()).length;
+
+        const allocs = (holdings || []).map(h => ({ ticker: h.ticker, v: (h.value || 0) }));
+        allocs.sort((a,b)=>b.v-a.v);
+        const top = allocs[0];
+        const topPct = total > 0 && top ? (top.v / total) * 100 : 0;
+
+        // Pull drift status text if available
+        let driftLabel = '—';
+        let driftSub = 'Run “Visualize Portfolio” to compute.';
+        const lbl = document.getElementById('drift-status-label');
+        const desc = document.getElementById('drift-status-desc');
+        if (lbl && lbl.textContent) {
+            const parts = lbl.textContent.split(':');
+            driftLabel = parts.length > 1 ? parts.slice(1).join(':').trim() : lbl.textContent.trim();
+        }
+        if (desc && desc.textContent) driftSub = desc.textContent.trim();
+
+        const tv = document.getElementById('rail-total-value');
+        const tvs = document.getElementById('rail-total-value-sub');
+        if (tv) tv.textContent = fmtCurrency(total, 0);
+        if (tvs) tvs.textContent = (totalCost > 0) ? `${fmtPercent(retPct, 1, true)} vs cost basis` : 'Cost basis not set';
+
+        const hc = document.getElementById('rail-holdings-count');
+        const hcs = document.getElementById('rail-holdings-sub');
+        if (hc) hc.textContent = String(count);
+        if (hcs) hcs.textContent = count === 1 ? '1 holding' : `${count} holdings`;
+
+        const tp = document.getElementById('rail-top-pos');
+        const tps = document.getElementById('rail-top-pos-sub');
+        if (tp) tp.textContent = top ? (top.ticker || '—') : '—';
+        if (tps) tps.textContent = top ? `${topPct.toFixed(1)}% of portfolio` : '—';
+
+        const ds = document.getElementById('rail-drift-status');
+        const dss = document.getElementById('rail-drift-sub');
+        if (ds) ds.textContent = driftLabel || '—';
+        if (dss) dss.textContent = driftSub || '—';
+    } catch(e) { console.warn('Right rail update failed', e); }
+}
+
 // SAMPLE PORTFOLIO LOADER
 // ============================================================================
 function loadSamplePortfolio() {
@@ -4238,7 +4384,7 @@ function setWVView(view) {
 
   // Elements by view
   const overviewIds = [
-    'empty-state-panel','holdings-editor-wrapper','summary-section','performance-wrapper','allocation-wrapper','holdings-wrapper','table-section'
+    'empty-state-panel','summary-section','performance-wrapper','allocation-wrapper','holdings-wrapper','table-section'
   ];
   const driftIds = ['drift-analytics-section'];
   const simIds = ['rebalancing-section','benchmark-section','montecarlo-section','optimization-section'];
