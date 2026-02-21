@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -674,13 +675,8 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
                         <button onclick="deletePortfolio()" style="padding: 8px; background: #e74c3c; color: white; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 600;">🗑️ Delete</button>
                     </div>
                 </div>
-                
-                <div class="section-title">Portfolio Holdings</div>
-                <div id="holdings-container"></div>
-                <button class="add-btn" onclick="addHolding()">+ Add Holding</button>
-                <button class="visualize-btn" onclick="visualizePortfolio()">📈 Visualize Portfolio</button>
-                
-                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+
+<div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color);">
                     <p style="font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Quick Actions</p>
                     <button class="add-btn" onclick="loadSamplePortfolio()" style="background: #14B8A6; font-size: 14px; padding: 10px;">🧪 Try Sample Portfolio</button>
                     <button class="add-btn" onclick="refreshPrices(this)" style="background: #3498db; font-size: 14px; padding: 10px;">🔄 Refresh Prices</button>
@@ -706,6 +702,26 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
                     Start with <strong>Overview</strong>. Use <strong>Balance & Drift</strong> to understand how your portfolio mix shifted over time.
                   </div>
                 </div>
+
+
+                <!-- Holdings Editor (moved from left rail for better UX) -->
+                <div class="chart-wrapper" id="holdings-editor-wrapper">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+                        <div>
+                            <h3 style="margin:0; font-size:16px; font-weight:800; color:var(--text-primary);">Holdings</h3>
+                            <p style="margin:6px 0 0; font-size:12px; color:var(--text-secondary); line-height:1.4;">
+                                Add or edit your holdings here, then click <strong>Visualize Portfolio</strong> to update charts and insights.
+                            </p>
+                        </div>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <button class="add-btn" onclick="addHolding()" style="min-width:160px;">+ Add Holding</button>
+                            <button class="visualize-btn" onclick="visualizePortfolio()" style="min-width:200px;">📈 Visualize Portfolio</button>
+                        </div>
+                    </div>
+
+                    <div id="holdings-container" style="margin-top:14px;"></div>
+                </div>
+
 
                 <!-- Empty State (shown when no portfolio) -->
                 <div id="empty-state-panel" class="wv-empty-state">
@@ -4222,7 +4238,7 @@ function setWVView(view) {
 
   // Elements by view
   const overviewIds = [
-    'empty-state-panel','summary-section','performance-wrapper','allocation-wrapper','holdings-wrapper','table-section'
+    'empty-state-panel','holdings-editor-wrapper','summary-section','performance-wrapper','allocation-wrapper','holdings-wrapper','table-section'
   ];
   const driftIds = ['drift-analytics-section'];
   const simIds = ['rebalancing-section','benchmark-section','montecarlo-section','optimization-section'];
