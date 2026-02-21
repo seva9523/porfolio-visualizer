@@ -22,3 +22,6 @@ jobs:
 
       - name: Run tests
         run: npm test
+
+      - name: ABB portfolio verification
+        run: npm test -- tests/abb_portfolio_verification.test.js
