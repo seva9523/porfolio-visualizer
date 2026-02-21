@@ -1055,6 +1055,7 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
         let selectedIndex = -1;
         let currentTimeRange = '7D';
         let autoVisualizeTimeout = null;
+        let removeVisualizeTimeout = null;
 
         // Portfolio management
         let currentPortfolio = 'default';
@@ -2233,7 +2234,22 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
 
         function removeHolding(btn) {
             btn.parentElement.remove();
-            scheduleAutoVisualize(800);
+            // Use a dedicated timeout so blur/input don't cancel the update
+            if (removeVisualizeTimeout) clearTimeout(removeVisualizeTimeout);
+            removeVisualizeTimeout = setTimeout(() => {
+                removeVisualizeTimeout = null;
+                updateHoldingsArray();
+                if (holdings.length === 0) {
+                    document.getElementById('summary-section').innerHTML = '';
+                    document.getElementById('table-section').innerHTML = '';
+                    if (pieChart) { pieChart.destroy(); pieChart = null; }
+                    if (barChart) { barChart.destroy(); barChart = null; }
+                    if (performanceChart) { performanceChart.destroy(); performanceChart = null; }
+                } else {
+                    const visualizeBtn = document.querySelector('.visualize-btn');
+                    if (!visualizeBtn || !visualizeBtn.disabled) visualizePortfolio();
+                }
+            }, 400);
         }
 
         function updateHoldingsArray() {
