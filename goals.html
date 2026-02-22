@@ -594,6 +594,8 @@
             <main class="main-content">
             <button class="add-goal-btn" onclick="openGoalModal()" data-testid="add-goal-btn">➕ Add Financial Goal Simulation</button>
 
+            <button type="button" class="btn-secondary" id="download-pdf" data-testid="download-pdf" style="display:none; margin-left:10px;">Download PDF</button>
+
             <div class="disclaimer-box">
                 <strong>⚠️ Important:</strong> This tool illustrates possible outcomes based on historical data and simulations.
                 It is <strong>NOT financial advice</strong> and does not recommend investments. Past performance does not guarantee future results.
@@ -704,8 +706,7 @@
 
                 <div class="form-actions">
                     <button type="submit" class="btn-primary" data-testid="run-simulation">Run Simulation</button>
-                    <button type="button" class="btn-secondary" id="download-pdf" data-testid="download-pdf">Download PDF</button>
-                </div>
+</div>
             </form>
         </div>
     </div>
@@ -1289,6 +1290,10 @@
         function renderGoals() {
             const container = document.getElementById('goals-container');
             const noGoals = document.getElementById('no-goals');
+
+            const pdfBtn = document.getElementById('download-pdf');
+
+            if (pdfBtn) pdfBtn.style.display = goals.length ? 'inline-flex' : 'none';
 
             if (goals.length === 0) {
                 container.innerHTML = '';
