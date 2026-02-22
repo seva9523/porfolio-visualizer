@@ -1,6 +1,3 @@
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -849,22 +846,54 @@
             const btn = document.getElementById('download-pdf');
             if (!btn) return;
 
+            // Export only the goal report area (from goal name downward)
+            const goalsContainer = document.getElementById('goals-container');
+            if (!goalsContainer || goalsContainer.children.length === 0) {
+                alert('Create a goal first, then download the report.');
+                return;
+            }
+
             const originalText = btn.textContent;
             btn.textContent = 'Preparing PDF…';
             btn.disabled = true;
 
-            try {
-                // Capture just the main app container (keeps the report clean)
-                const element = document.querySelector('.container');
-                if (!element) throw new Error('Container not found');
+            // Build an off-screen export surface so we can expand scenarios without changing the UI
+            const temp = document.createElement('div');
+            temp.setAttribute('data-pdf-export', 'true');
+            temp.style.position = 'fixed';
+            temp.style.left = '-100000px';
+            temp.style.top = '0';
+            temp.style.width = Math.min(980, goalsContainer.getBoundingClientRect().width || 980) + 'px';
+            temp.style.background = '#ffffff';
+            temp.style.padding = '18px';
+            temp.style.boxSizing = 'border-box';
 
-                // Ensure gradients render nicely
-                const canvas = await html2canvas(element, {
+            // Clone report content (goal cards)
+            const clone = goalsContainer.cloneNode(true);
+
+            // Expand all "What-if Scenarios" sections in the clone
+            clone.querySelectorAll('.plan-section').forEach(sec => {
+                sec.style.display = 'block';
+            });
+
+            // Hide UI-only controls in the clone (buttons/inputs are noise in a PDF)
+            clone.querySelectorAll('button, input, select, textarea').forEach(el => {
+                el.style.display = 'none';
+            });
+
+            // Optional: remove empty margins from hidden buttons
+            clone.querySelectorAll('[style*="display: none"]').forEach(el => {
+                el.style.margin = '0';
+            });
+
+            temp.appendChild(clone);
+            document.body.appendChild(temp);
+
+            try {
+                const canvas = await html2canvas(temp, {
                     scale: 2,
                     useCORS: true,
-                    backgroundColor: '#ffffff',
-                    scrollX: 0,
-                    scrollY: -window.scrollY
+                    backgroundColor: '#ffffff'
                 });
 
                 const imgData = canvas.toDataURL('image/png');
@@ -875,7 +904,6 @@
                 const pageWidth = pdf.internal.pageSize.getWidth();
                 const pageHeight = pdf.internal.pageSize.getHeight();
 
-                // Fit image to page width, paginate vertically if needed
                 const imgWidth = pageWidth;
                 const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
@@ -893,15 +921,18 @@
                 }
 
                 const stamp = new Date().toISOString().slice(0,10);
-                pdf.save(`wealthview-goals-simulator-${stamp}.pdf`);
+                pdf.save(`wealthview-goals-report-${stamp}.pdf`);
             } catch (err) {
                 console.error(err);
                 alert('Sorry — PDF export failed in this browser. Please try Chrome or Edge.');
             } finally {
+                // Cleanup
+                try { document.body.removeChild(temp); } catch(e) {}
                 btn.textContent = originalText;
                 btn.disabled = false;
             }
         }
+
 
 
         // --- Simulation settings (kept explicit for clarity/testing) ---
