@@ -1,3 +1,6 @@
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -840,60 +843,72 @@
         let editingGoalId = null; // when set, modal edits an existing goal
 
         let forecastCharts = {}; // Store chart instances
+        window.forecastCharts = forecastCharts;
 
         // ---- PDF Export (Educational report) ----
+
+        // Convert canvas charts to images for reliable PDF capture (html2canvas can miss Chart.js canvases)
+        function _wv_snapshotCanvases(rootEl){
+            const swaps = [];
+            if (!rootEl) return () => {};
+            const canvases = rootEl.querySelectorAll('canvas');
+            canvases.forEach((c) => {
+                try{
+                    const rect = c.getBoundingClientRect();
+                    const img = document.createElement('img');
+                    img.src = c.toDataURL('image/png', 1.0);
+                    img.alt = 'chart';
+                    img.style.width = rect.width + 'px';
+                    img.style.height = rect.height + 'px';
+                    img.style.display = 'block';
+                    img.style.maxWidth = '100%';
+                    c.style.display = 'none';
+                    c.parentNode.insertBefore(img, c);
+                    swaps.push({ canvas: c, img });
+                }catch(e){
+                    // ignore (tainted canvas or unsupported)
+                }
+            });
+            return () => {
+                swaps.forEach(({canvas, img}) => {
+                    try{ img.remove(); }catch(e){}
+                    try{ canvas.style.display = ''; }catch(e){}
+                });
+            };
+        }
         async function downloadGoalsPDF() {
             const btn = document.getElementById('download-pdf');
             if (!btn) return;
-
-            // Export only the goal report area (from goal name downward)
-            const goalsContainer = document.getElementById('goals-container');
-            if (!goalsContainer || goalsContainer.children.length === 0) {
-                alert('Create a goal first, then download the report.');
-                return;
-            }
 
             const originalText = btn.textContent;
             btn.textContent = 'Preparing PDF…';
             btn.disabled = true;
 
-            // Build an off-screen export surface so we can expand scenarios without changing the UI
-            const temp = document.createElement('div');
-            temp.setAttribute('data-pdf-export', 'true');
-            temp.style.position = 'fixed';
-            temp.style.left = '-100000px';
-            temp.style.top = '0';
-            temp.style.width = Math.min(980, goalsContainer.getBoundingClientRect().width || 980) + 'px';
-            temp.style.background = '#ffffff';
-            temp.style.padding = '18px';
-            temp.style.boxSizing = 'border-box';
-
-            // Clone report content (goal cards)
-            const clone = goalsContainer.cloneNode(true);
-
-            // Expand all "What-if Scenarios" sections in the clone
-            clone.querySelectorAll('.plan-section').forEach(sec => {
-                sec.style.display = 'block';
-            });
-
-            // Hide UI-only controls in the clone (buttons/inputs are noise in a PDF)
-            clone.querySelectorAll('button, input, select, textarea').forEach(el => {
-                el.style.display = 'none';
-            });
-
-            // Optional: remove empty margins from hidden buttons
-            clone.querySelectorAll('[style*="display: none"]').forEach(el => {
-                el.style.margin = '0';
-            });
-
-            temp.appendChild(clone);
-            document.body.appendChild(temp);
-
             try {
-                const canvas = await html2canvas(temp, {
+                // Capture just the main app container (keeps the report clean)
+                const element = document.querySelector('.container');
+                if (!element) throw new Error('Container not found');
+
+                
+                // Ensure Chart.js charts are fully rendered before capture
+                try{
+                    if (window.forecastCharts) {
+                        Object.values(window.forecastCharts).forEach(ch => { try{ ch.update('none'); }catch(e){} });
+                    }
+                }catch(e){}
+
+                // Snapshot canvases as images (fixes missing charts like Growth Forecast in PDF)
+                const _restoreCanvases = _wv_snapshotCanvases(element);
+
+                // Give the browser a beat to paint snapshots
+                await new Promise(r => setTimeout(r, 80));
+// Ensure gradients render nicely
+                const canvas = await html2canvas(element, {
                     scale: 2,
                     useCORS: true,
-                    backgroundColor: '#ffffff'
+                    backgroundColor: '#ffffff',
+                    scrollX: 0,
+                    scrollY: -window.scrollY
                 });
 
                 const imgData = canvas.toDataURL('image/png');
@@ -904,6 +919,7 @@
                 const pageWidth = pdf.internal.pageSize.getWidth();
                 const pageHeight = pdf.internal.pageSize.getHeight();
 
+                // Fit image to page width, paginate vertically if needed
                 const imgWidth = pageWidth;
                 const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
@@ -921,18 +937,17 @@
                 }
 
                 const stamp = new Date().toISOString().slice(0,10);
-                pdf.save(`wealthview-goals-report-${stamp}.pdf`);
+                pdf.save(`wealthview-goals-simulator-${stamp}.pdf`);
             } catch (err) {
                 console.error(err);
                 alert('Sorry — PDF export failed in this browser. Please try Chrome or Edge.');
             } finally {
-                // Cleanup
-                try { document.body.removeChild(temp); } catch(e) {}
-                btn.textContent = originalText;
+                
+                try{ if (typeof _restoreCanvases === 'function') _restoreCanvases(); }catch(e){}
+btn.textContent = originalText;
                 btn.disabled = false;
             }
         }
-
 
 
         // --- Simulation settings (kept explicit for clarity/testing) ---
