@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Financial Goals Simulator - Portfolio Visualizer</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -421,6 +423,30 @@
             margin-top: 10px;
         }
 
+        .btn-secondary {
+            width: 100%;
+            padding: 12px;
+            background: rgba(20,184,166,0.10);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent);
+            background: rgba(20,184,166,0.16);
+        }
+
+        .form-actions {
+            display: grid;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
         .btn-primary:hover { background: #1a5276; }
 
         .btn-danger {
@@ -676,15 +702,84 @@
                     <input type="number" id="goal-volatility" min="0" max="100" step="0.1" placeholder="15" value="15" required data-testid="goal-volatility">
                 </div>
 
-                <button type="submit" class="btn-primary" data-testid="run-simulation">Run Simulation</button>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary" data-testid="run-simulation">Run Simulation</button>
+                    <button type="button" class="btn-secondary" id="download-pdf" data-testid="download-pdf">Download PDF</button>
+                </div>
             </form>
         </div>
     </div>
 
     <script>
+        // Wire up PDF button
+        document.addEventListener('DOMContentLoaded', () => {
+            const pdfBtn = document.getElementById('download-pdf');
+            if (pdfBtn) pdfBtn.addEventListener('click', downloadGoalsPDF);
+        });
+
         // Goals data
         let goals = [];
         let forecastCharts = {}; // Store chart instances
+
+        // ---- PDF Export (Educational report) ----
+        async function downloadGoalsPDF() {
+            const btn = document.getElementById('download-pdf');
+            if (!btn) return;
+
+            const originalText = btn.textContent;
+            btn.textContent = 'Preparing PDF…';
+            btn.disabled = true;
+
+            try {
+                // Capture just the main app container (keeps the report clean)
+                const element = document.querySelector('.container');
+                if (!element) throw new Error('Container not found');
+
+                // Ensure gradients render nicely
+                const canvas = await html2canvas(element, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    scrollX: 0,
+                    scrollY: -window.scrollY
+                });
+
+                const imgData = canvas.toDataURL('image/png');
+
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'pt', 'a4');
+
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+
+                // Fit image to page width, paginate vertically if needed
+                const imgWidth = pageWidth;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                let heightLeft = imgHeight;
+                let position = 0;
+
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+
+                while (heightLeft > 0) {
+                    position = position - pageHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+
+                const stamp = new Date().toISOString().slice(0,10);
+                pdf.save(`wealthview-goals-simulator-${stamp}.pdf`);
+            } catch (err) {
+                console.error(err);
+                alert('Sorry — PDF export failed in this browser. Please try Chrome or Edge.');
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
 
         // --- Simulation settings (kept explicit for clarity/testing) ---
         const MC_NUM_SIMULATIONS = 10000;   // used for probability + percentiles
