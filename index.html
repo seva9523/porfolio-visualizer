@@ -1,6 +1,3 @@
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -517,14 +514,6 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
         @media (max-width: 1100px) {
             .wv-two-col { grid-template-columns: 1fr; }
         }
-        /* Bigger donuts ONLY in Allocation Comparison (Drift Analytics) */
-        #drift-analytics-section #drift-tab-overview #drift-donut-original,
-        #drift-analytics-section #drift-tab-overview #drift-donut-current,
-        #drift-analytics-section #drift-tab-overview #drift-donut-restored {
-            width: 220px !important;
-            height: 220px !important;
-        }
-
 
 
         .wv-tool-card {
@@ -634,7 +623,10 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
                 display: inline-flex;
             }
         }
-    </style>
+    
+/* Larger Allocation Comparison donuts (canvas is larger; card unchanged) */
+#drift-donut-original,#drift-donut-current,#drift-donut-restored{display:block;}
+</style>
 </head>
 <body>
     <div class="container">
@@ -1188,6 +1180,57 @@ function updateDriftAnalytics() {
   updateDriftTimeline(currentDriftFreq);
 }
 
+
+// --- Donut Ticker Labels Plugin (no external deps) ---
+// Draws ticker symbols on larger slices so the donuts are readable at a glance.
+const DriftTickerLabelsPlugin = {
+  id: 'driftTickerLabels',
+  afterDatasetsDraw(chart, args, pluginOptions) {
+    const opts = pluginOptions || {};
+    const minPct = typeof opts.minPct === 'number' ? opts.minPct : 6; // hide tiny slices
+    const fontSize = typeof opts.fontSize === 'number' ? opts.fontSize : 11;
+    const fontWeight = opts.fontWeight || 700;
+
+    const ctx = chart.ctx;
+    const dataset = chart.data.datasets?.[0];
+    const labels = chart.data.labels || [];
+    if (!dataset) return;
+
+    const meta = chart.getDatasetMeta(0);
+    if (!meta || !meta.data) return;
+
+    ctx.save();
+    ctx.font = `${fontWeight} ${fontSize}px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    meta.data.forEach((arc, i) => {
+      const v = Number(dataset.data?.[i] ?? 0);
+      if (!isFinite(v) || v < minPct) return;
+
+      const label = String(labels[i] ?? '').trim();
+      if (!label) return;
+
+      const { x, y, startAngle, endAngle, innerRadius, outerRadius } = arc;
+      const angle = (startAngle + endAngle) / 2;
+      const r = (innerRadius + outerRadius) / 2;
+
+      const tx = x + Math.cos(angle) * r;
+      const ty = y + Math.sin(angle) * r;
+
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = 'rgba(0,0,0,0.35)';
+      ctx.shadowBlur = 6;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 1;
+
+      ctx.fillText(label, tx, ty);
+    });
+
+    ctx.restore();
+  }
+};
+
 function drawDriftDonut(canvasId, items) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
@@ -1195,8 +1238,9 @@ function drawDriftDonut(canvasId, items) {
   if (driftDonutCharts[key]) driftDonutCharts[key].destroy();
   driftDonutCharts[key] = new Chart(canvas.getContext('2d'), {
     type: 'doughnut',
+    plugins: [DriftTickerLabelsPlugin],
     data: { labels: items.map(i => i.ticker), datasets: [{ data: items.map(i => i.weight), backgroundColor: items.map((_, i) => DRIFT_COLORS[i % DRIFT_COLORS.length]), borderWidth: 1, borderColor: getComputedStyle(document.documentElement).getPropertyValue('--card-bg').trim() || '#fff' }] },
-    options: { responsive: false, cutout: '55%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.parsed.toFixed(1)}%` } } } }
+    options: { responsive: false, cutout: '55%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.parsed.toFixed(1)}%` } }, driftTickerLabels: { minPct: 6, fontSize: 11 } } }
   });
 }
 
