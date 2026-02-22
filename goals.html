@@ -20,37 +20,46 @@
             --input-bg: #F1F5F9;
             --input-border: #CBD5E1;
             --border-color: #E2E8F0;
-            --chart-bg: #ffffff;
-            --card-bg: #ffffff;
+            --chart-bg: #FFFFFF;
+            --card-bg: #FFFFFF;
+
+            --accent: #14B8A6;
+            --accent-2: #0F172A;
+            --success: #16A34A;
+            --warning: #F59E0B;
+            --danger: #DC2626;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 0;
+            color: var(--text-primary);
         }
 
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
+            width: 100%;
+            max-width: none;
+            margin: 0;
             background: var(--container-bg);
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            border-radius: 0;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
             overflow: hidden;
+            min-height: 100vh;
         }
 
         .header {
             background: linear-gradient(135deg, var(--header-gradient-start) 0%, var(--header-gradient-end) 100%);
             color: white;
-            padding: 30px;
+            padding: 34px 28px 28px;
             text-align: center;
         }
 
         .header h1 { font-size: 2.5em; margin-bottom: 10px; }
         .header p { opacity: 0.9; font-size: 1.1em; }
 
-        .content { padding: 30px; }
+        .content { padding: 0; }
 
         .add-goal-btn {
             background: #27ae60;
@@ -430,22 +439,133 @@
             padding: 60px;
             color: #999;
         }
+    
+        /* ── Goals page layout (match Portfolio Visualizer) ───────────────── */
+        .top-nav{
+            display:flex;
+            gap:10px;
+            padding:12px 18px;
+            background: var(--input-bg);
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap:wrap;
+            align-items:center;
+        }
+        .top-nav a, .top-nav .active-tab{
+            padding:8px 16px;
+            border:1.5px solid var(--border-color);
+            border-radius:10px;
+            background: var(--card-bg);
+            color: var(--text-primary);
+            font-size:13px;
+            font-weight:700;
+            text-decoration:none;
+            display:inline-flex;
+            gap:8px;
+            align-items:center;
+        }
+        .top-nav .active-tab{
+            border-color: var(--accent);
+            background: rgba(20,184,166,0.10);
+        }
+
+        .page-shell{
+            display:grid;
+            grid-template-columns: 1fr 320px;
+            gap: 0;
+            min-height: calc(100vh - 140px);
+        }
+        .main-content{
+            padding: 22px 22px 28px;
+        }
+        .right-rail{
+            border-left: 1px solid var(--border-color);
+            background: var(--input-bg);
+            padding: 18px;
+        }
+        .rail-card{
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+        .rail-title{
+            font-size: 13px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+        .rail-sub{
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+        .rail-list{ margin-top: 10px; display:grid; gap:8px; }
+        .rail-item{
+            padding: 10px;
+            border-radius: 10px;
+            background: rgba(15,23,42,0.03);
+            border: 1px dashed rgba(15,23,42,0.12);
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Buttons */
+        .add-goal-btn{
+            background: linear-gradient(135deg, var(--accent) 0%, #0EA5A3 100%);
+            color: white;
+            border: none;
+            padding: 14px 18px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            margin-bottom: 16px;
+            transition: all 0.2s ease;
+            box-shadow: 0 10px 24px rgba(20,184,166,0.22);
+        }
+        .add-goal-btn:hover{ transform: translateY(-1px); }
+
+        .disclaimer-box{
+            background: rgba(245,158,11,0.12);
+            border-left: 4px solid var(--warning);
+            padding: 14px;
+            border-radius: 10px;
+            margin: 14px 0 18px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text-primary);
+        }
+
+        /* Cards match */
+        .goal-card, .forecast-chart-container{
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+        }
+
+        @media (max-width: 1200px){
+            .page-shell{ grid-template-columns: 1fr; }
+            .right-rail{ display:none; }
+            .main-content{ padding: 18px; }
+        }
+
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>💰 Financial Goals Simulator</h1>
-            <p>Plan your future with probabilistic simulations</p>
+            <h1>🎯 Financial Goals Simulator</h1>
+            <p>Explore hypothetical goal outcomes with simple inputs and plain-language results.</p>
         </div>
 
-        <div style="display:flex; gap:10px; padding:15px 30px; background:var(--input-bg, #f8f9fa); border-bottom:1px solid var(--border-color, #e0e0e0); flex-wrap:wrap;">
-            <a href="/" style="padding:8px 18px; border:2px solid var(--border-color, #e0e0e0); border-radius:8px; background:var(--card-bg, #fff); color:var(--text-primary, #2c3e50); font-size:13px; font-weight:600; text-decoration:none;">📊 Portfolio Visualizer</a>
-            <span style="padding:8px 18px; border:2px solid #F18F01; border-radius:8px; background:rgba(241,143,1,0.08); color:#F18F01; font-size:13px; font-weight:600;">🎯 Goals Simulator</span>
-            <a href="/themes.html" style="padding:8px 18px; border:2px solid var(--border-color, #e0e0e0); border-radius:8px; background:var(--card-bg, #fff); color:var(--text-primary, #2c3e50); font-size:13px; font-weight:600; text-decoration:none;">🔭 Market Themes</a>
+        <div class="top-nav">
+            <a href="/">📊 Portfolio Visualizer</a>
+            <span class="active-tab">🎯 Goals Simulator</span>
+            <a href="/themes.html">🔭 Market Themes</a>
         </div>
 
-        <div class="content">
+        <div class="page-shell">
+            <main class="main-content">
             <button class="add-goal-btn" onclick="openGoalModal()" data-testid="add-goal-btn">➕ Add Financial Goal Simulation</button>
 
             <div class="disclaimer-box">
@@ -459,6 +579,45 @@
                 <div style="font-size: 48px; margin-bottom: 10px;">🎯</div>
                 <div style="font-size: 16px;">No financial goal simulations yet. Click "Add Goal Simulation" to get started!</div>
             </div>
+        
+            </main>
+
+            <aside class="right-rail" aria-label="Goals sidebar">
+                <div class="rail-card">
+                    <div class="rail-title">Quick Read</div>
+                    <div class="rail-sub">
+                        This tool runs hypothetical goal scenarios using the inputs you provide.
+                        It is educational only and does not provide financial advice.
+                    </div>
+                </div>
+
+                <div class="rail-card">
+                    <div class="rail-title">How to use</div>
+                    <div class="rail-list">
+                        <div class="rail-item">1) Click <strong>Add Financial Goal Simulation</strong></div>
+                        <div class="rail-item">2) Enter goal amount, timeline, savings, and contributions</div>
+                        <div class="rail-item">3) Review the probability meter and forecast chart (hypothetical)</div>
+                    </div>
+                </div>
+
+                <div class="rail-card">
+                    <div class="rail-title">Inputs (plain language)</div>
+                    <div class="rail-list">
+                        <div class="rail-item"><strong>Target Amount</strong>: the number you want to reach</div>
+                        <div class="rail-item"><strong>Time Horizon</strong>: how many years you have</div>
+                        <div class="rail-item"><strong>Monthly Contribution</strong>: what you add each month</div>
+                        <div class="rail-item"><strong>Return / Volatility</strong>: scenario assumptions (not predictions)</div>
+                    </div>
+                </div>
+
+                <div class="rail-card">
+                    <div class="rail-title">Disclosure</div>
+                    <div class="rail-sub">
+                        Educational use only. Simulations are hypothetical and not predictive. Past performance does not guarantee future results.
+                        This is not investment, tax, or legal advice.
+                    </div>
+                </div>
+            </aside>
         </div>
     </div>
 
