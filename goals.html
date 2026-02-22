@@ -652,42 +652,6 @@
 .roadmap-row .lhs{ font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
 .roadmap-row .rhs{ font-size: 12px; font-weight: 900; color: var(--text-primary); white-space: nowrap; }
 
-
-        /* Top actions bar: Add (left) + Download (right) */
-        .actions-bar{
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-            gap:16px;
-            flex-wrap:wrap;
-            margin: 0 0 14px 0;
-        }
-        .actions-left, .actions-right{
-            display:flex;
-            align-items:center;
-            gap:12px;
-        }
-        .actions-bar .add-goal-btn{ margin: 0 !important; }
-
-        /* Download PDF: same size/shape as Add, different color aligned with theme */
-        #download-pdf{
-            display:none; /* toggled visible after results */
-            padding: 14px 18px;
-            border-radius: 12px;
-            font-size: 15px;
-            font-weight: 800;
-            cursor: pointer;
-            border: none;
-            color: white;
-            background: linear-gradient(135deg, #0F766E 0%, #0B3B5A 100%);
-            box-shadow: 0 10px 24px rgba(2, 132, 199, 0.10);
-            transition: all 0.2s ease;
-        }
-        #download-pdf:hover{
-            transform: translateY(-1px);
-            opacity: 0.98;
-        }
-
 </style>
 </head>
 <body>
@@ -705,16 +669,9 @@
 
         <div class="page-shell">
             <main class="main-content">
-            
-            <div class="actions-bar">
-                <div class="actions-left">
-                    <button class="add-goal-btn" onclick="openGoalModal()" data-testid="add-goal-btn">➕ Add Financial Goal Simulation</button>
-                </div>
-                <div class="actions-right">
-                    <button type="button" class="btn-secondary" id="download-pdf" data-testid="download-pdf">Download PDF</button>
-                </div>
-            </div>
+            <button class="add-goal-btn" onclick="openGoalModal()" data-testid="add-goal-btn">➕ Add Financial Goal Simulation</button>
 
+            <button type="button" class="btn-secondary" id="download-pdf" data-testid="download-pdf" style="display:none; margin-left:10px;">Download PDF</button>
 
             <div class="disclaimer-box">
                 <strong>⚠️ Important:</strong> This tool illustrates possible outcomes based on historical data and simulations.
@@ -843,39 +800,9 @@
         let editingGoalId = null; // when set, modal edits an existing goal
 
         let forecastCharts = {}; // Store chart instances
-        window.forecastCharts = forecastCharts;
 
         // ---- PDF Export (Educational report) ----
-
-        // Convert canvas charts to images for reliable PDF capture (html2canvas can miss Chart.js canvases)
-        function _wv_snapshotCanvases(rootEl){
-            const swaps = [];
-            if (!rootEl) return () => {};
-            const canvases = rootEl.querySelectorAll('canvas');
-            canvases.forEach((c) => {
-                try{
-                    const rect = c.getBoundingClientRect();
-                    const img = document.createElement('img');
-                    img.src = c.toDataURL('image/png', 1.0);
-                    img.alt = 'chart';
-                    img.style.width = rect.width + 'px';
-                    img.style.height = rect.height + 'px';
-                    img.style.display = 'block';
-                    img.style.maxWidth = '100%';
-                    c.style.display = 'none';
-                    c.parentNode.insertBefore(img, c);
-                    swaps.push({ canvas: c, img });
-                }catch(e){
-                    // ignore (tainted canvas or unsupported)
-                }
-            });
-            return () => {
-                swaps.forEach(({canvas, img}) => {
-                    try{ img.remove(); }catch(e){}
-                    try{ canvas.style.display = ''; }catch(e){}
-                });
-            };
-        }
+        async 
         async function downloadGoalsPDF() {
             const btn = document.getElementById('download-pdf');
             if (!btn) return;
@@ -884,25 +811,46 @@
             btn.textContent = 'Preparing PDF…';
             btn.disabled = true;
 
+            // --- Temporarily expand all What-if scenario sections for the export ---
+            const planSections = Array.from(document.querySelectorAll('.plan-section'));
+            const planPrevDisplay = planSections.map(el => el.style.display);
+            planSections.forEach(el => { el.style.display = 'block'; });
+
+            // Hide the "Show What-if Scenarios" buttons in the PDF (content will be visible)
+            const toggleBtns = Array.from(document.querySelectorAll('.show-plans-btn'));
+            const togglePrevDisplay = toggleBtns.map(el => el.style.display);
+            toggleBtns.forEach(el => { el.style.display = 'none'; });
+
+            // --- Convert charts (canvas) to images so they render reliably in PDFs ---
+            const canvases = Array.from(document.querySelectorAll('#goals-container canvas, .goal-card canvas, canvas'));
+            const canvasReplacements = [];
             try {
-                // Capture just the main app container (keeps the report clean)
-                const element = document.querySelector('.container');
-                if (!element) throw new Error('Container not found');
+                // If Chart.js instances exist, ask them to render immediately before snapshot
+                if (window.Chart && Chart.instances) {
+                    try { Object.values(Chart.instances).forEach(ch => ch && ch.update && ch.update('none')); } catch(e) {}
+                }
 
-                
-                // Ensure Chart.js charts are fully rendered before capture
-                try{
-                    if (window.forecastCharts) {
-                        Object.values(window.forecastCharts).forEach(ch => { try{ ch.update('none'); }catch(e){} });
+                canvases.forEach(cv => {
+                    try {
+                        const dataUrl = cv.toDataURL('image/png');
+                        const img = document.createElement('img');
+                        img.src = dataUrl;
+                        img.style.width = cv.style.width || (cv.getAttribute('width') ? (cv.getAttribute('width') + 'px') : (cv.clientWidth + 'px'));
+                        img.style.height = cv.style.height || (cv.getAttribute('height') ? (cv.getAttribute('height') + 'px') : (cv.clientHeight + 'px'));
+                        img.style.display = 'block';
+                        img.className = 'pdf-canvas-image';
+                        cv.style.display = 'none';
+                        cv.parentNode.insertBefore(img, cv.nextSibling);
+                        canvasReplacements.push({ canvas: cv, img });
+                    } catch (e) {
+                        // If toDataURL fails, ignore and let html2canvas try.
                     }
-                }catch(e){}
+                });
 
-                // Snapshot canvases as images (fixes missing charts like Growth Forecast in PDF)
-                const _restoreCanvases = _wv_snapshotCanvases(element);
+                // Capture ONLY the report content (from goal name down)
+                const element = document.getElementById('goals-container') || document.querySelector('.container');
+                if (!element) throw new Error('Report container not found');
 
-                // Give the browser a beat to paint snapshots
-                await new Promise(r => setTimeout(r, 80));
-// Ensure gradients render nicely
                 const canvas = await html2canvas(element, {
                     scale: 2,
                     useCORS: true,
@@ -919,7 +867,6 @@
                 const pageWidth = pdf.internal.pageSize.getWidth();
                 const pageHeight = pdf.internal.pageSize.getHeight();
 
-                // Fit image to page width, paginate vertically if needed
                 const imgWidth = pageWidth;
                 const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
@@ -937,14 +884,35 @@
                 }
 
                 const stamp = new Date().toISOString().slice(0,10);
+                pdf.save(`wealthview-goals-report-${stamp}.pdf`);
+            } catch (err) {
+                console.error(err);
+                alert('Sorry — PDF export failed in this browser. Please try Chrome or Edge.');
+            } finally {
+                // Restore canvases
+                canvasReplacements.forEach(({canvas, img}) => {
+                    try {
+                        canvas.style.display = '';
+                        img.remove();
+                    } catch(e) {}
+                });
+
+                // Restore What-if scenario sections and buttons to previous state
+                planSections.forEach((el, i) => { el.style.display = planPrevDisplay[i] || ''; });
+                toggleBtns.forEach((el, i) => { el.style.display = togglePrevDisplay[i] || ''; });
+
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+                const stamp = new Date().toISOString().slice(0,10);
                 pdf.save(`wealthview-goals-simulator-${stamp}.pdf`);
             } catch (err) {
                 console.error(err);
                 alert('Sorry — PDF export failed in this browser. Please try Chrome or Edge.');
             } finally {
-                
-                try{ if (typeof _restoreCanvases === 'function') _restoreCanvases(); }catch(e){}
-btn.textContent = originalText;
+                btn.textContent = originalText;
                 btn.disabled = false;
             }
         }
