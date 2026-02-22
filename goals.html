@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -969,6 +970,18 @@
             return '$' + Math.round(x).toLocaleString();
         }
 
+
+function formatCompactCurrency(value) {
+            if (value === null || value === undefined || isNaN(value)) return '—';
+            const abs = Math.abs(value);
+            const sign = value < 0 ? '-' : '';
+            if (abs >= 1_000_000_000) return sign + '$' + (abs / 1_000_000_000).toFixed(1) + 'B';
+            if (abs >= 1_000_000) return sign + '$' + (abs / 1_000_000).toFixed(1) + 'M';
+            if (abs >= 1_000) return sign + '$' + Math.round(abs / 1_000) + 'K';
+            return sign + '$' + Math.round(abs).toLocaleString();
+        }
+
+
 function getConfidenceLabel(prob) {
             if (prob >= 90) return { label: 'Very Strong', dot: 'dot-strong' };
             if (prob >= 75) return { label: 'Strong', dot: 'dot-strong' };
@@ -1694,17 +1707,17 @@ function getConfidenceLabel(prob) {
                         <div class="outcome-stats">
                             <div class="outcome-stat-card">
                                 <div class="stat-label">Conservative</div>
-                                <div class="stat-value" data-testid="goal-p10">$${(currentSim.percentile10 / 1000).toFixed(0)}k</div>
+                                <div class="stat-value" data-testid="goal-p10">${formatCompactCurrency(currentSim.percentile10)}</div>
                                 <div style="font-size: 10px; color: #999; margin-top: 4px;">Only 10% chance you get less</div>
                             </div>
                             <div class="outcome-stat-card">
                                 <div class="stat-label">Typical</div>
-                                <div class="stat-value" data-testid="goal-median">$${(currentSim.median / 1000).toFixed(0)}k</div>
+                                <div class="stat-value" data-testid="goal-median">${formatCompactCurrency(currentSim.median)}</div>
                                 <div style="font-size: 10px; color: #999; margin-top: 4px;">50-50 chance you get this</div>
                             </div>
                             <div class="outcome-stat-card">
                                 <div class="stat-label">Strong</div>
-                                <div class="stat-value" data-testid="goal-p90">$${(currentSim.percentile90 / 1000).toFixed(0)}k</div>
+                                <div class="stat-value" data-testid="goal-p90">${formatCompactCurrency(currentSim.percentile90)}</div>
                                 <div style="font-size: 10px; color: #999; margin-top: 4px;">Only 10% chance you get more</div>
                             </div>
                         </div>
