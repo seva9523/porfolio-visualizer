@@ -648,6 +648,8 @@
 
             <button type="button" class="btn-secondary" id="download-pdf" data-testid="download-pdf" style="display:none; margin-left:10px;">Download PDF</button>
 
+            <button type="button" class="btn-secondary" id="change-goal" data-testid="change-goal" style="display:none; margin-left:10px;">Change Goal</button>
+
             <div class="disclaimer-box">
                 <strong>⚠️ Important:</strong> This tool illustrates possible outcomes based on historical data and simulations.
                 It is <strong>NOT financial advice</strong> and does not recommend investments. Past performance does not guarantee future results.
@@ -768,10 +770,15 @@
         document.addEventListener('DOMContentLoaded', () => {
             const pdfBtn = document.getElementById('download-pdf');
             if (pdfBtn) pdfBtn.addEventListener('click', downloadGoalsPDF);
+
+            const changeBtn = document.getElementById('change-goal');
+            if (changeBtn) changeBtn.addEventListener('click', () => openGoalModalForEdit());
         });
 
         // Goals data
         let goals = [];
+        let editingGoalId = null; // when set, modal edits an existing goal
+
         let forecastCharts = {}; // Store chart instances
 
         // ---- PDF Export (Educational report) ----
@@ -1365,7 +1372,49 @@ function getConfidenceLabel(prob) {
         }
 
         // Open modal
+        
+        function getMostRecentGoal() {
+            if (!goals || !goals.length) return null;
+            // Use created timestamp if available
+            return goals.slice().sort((a,b) => (b.created||'').localeCompare(a.created||''))[0];
+        }
+
+        function fillGoalForm(goal) {
+            if (!goal) return;
+            document.getElementById('goal-name').value = goal.name || '';
+            document.getElementById('goal-type').value = goal.type || 'retirement';
+            document.getElementById('goal-target').value = goal.targetAmount ?? '';
+            document.getElementById('goal-years').value = goal.timeHorizonYears ?? '';
+            document.getElementById('goal-current').value = goal.currentSavings ?? 0;
+            document.getElementById('goal-monthly').value = goal.monthlyContribution ?? 0;
+            document.getElementById('goal-return').value = goal.annualReturn ?? 7;
+            document.getElementById('goal-volatility').value = goal.annualVolatility ?? 15;
+        }
+
+        function setGoalModalMode(mode) {
+            const titleEl = document.querySelector('.modal-title');
+            const submitBtn = document.querySelector('#goal-form button[type="submit"]');
+            if (mode === 'edit') {
+                if (titleEl) titleEl.textContent = 'Change Goal Inputs';
+                if (submitBtn) submitBtn.textContent = 'Update & Re-run';
+            } else {
+                if (titleEl) titleEl.textContent = 'Add Financial Goal Simulation';
+                if (submitBtn) submitBtn.textContent = 'Run Simulation';
+            }
+        }
+
+        function openGoalModalForEdit(goalId) {
+            const goal = goalId ? goals.find(g => g.id === goalId) : getMostRecentGoal();
+            if (!goal) return;
+            editingGoalId = goal.id;
+            setGoalModalMode('edit');
+            fillGoalForm(goal);
+            document.getElementById('goal-modal').classList.add('active');
+        }
+
         function openGoalModal() {
+            editingGoalId = null;
+            setGoalModalMode('add');
             document.getElementById('goal-modal').classList.add('active');
         }
 
@@ -1373,14 +1422,19 @@ function getConfidenceLabel(prob) {
         function closeGoalModal() {
             document.getElementById('goal-modal').classList.remove('active');
             document.getElementById('goal-form').reset();
+            editingGoalId = null;
+            setGoalModalMode('add');
         }
 
         // Save goal
         function saveGoal(event) {
             event.preventDefault();
 
+            const isEdit = !!editingGoalId;
+            const existing = isEdit ? goals.find(g => g.id === editingGoalId) : null;
+
             const goal = {
-                id: 'goal_' + Date.now(),
+                id: isEdit && existing ? existing.id : ('goal_' + Date.now()),
                 name: document.getElementById('goal-name').value,
                 type: document.getElementById('goal-type').value,
                 targetAmount: parseFloat(document.getElementById('goal-target').value),
@@ -1394,8 +1448,17 @@ function getConfidenceLabel(prob) {
                 activeStrategyName: null
             };
 
+            if (isEdit && existing) {
+                // Keep original identity for comparability
+                goal.created = existing.created;
+                goal.baseSeed = existing.baseSeed;
+            }
+
+
             // Stable seed per goal (ensures consistent plans + consistent charts)
-            goal.baseSeed = `goal:${goal.id}|created:${goal.created}`;
+            if (!goal.baseSeed) {
+                goal.baseSeed = `goal:${goal.id}|created:${goal.created}`;
+            }
 
             // Run baseline simulation (seeded)
             goal.simulation = runSimulation(
@@ -1420,7 +1483,13 @@ function getConfidenceLabel(prob) {
             // Build & store action plan sims once (stable results)
             goal.plansCache = buildActionPlansCache(goal);
 
-            goals.push(goal);
+            if (isEdit && existing) {
+                // Update existing goal in place
+                const idx = goals.findIndex(g => g.id === existing.id);
+                if (idx >= 0) goals[idx] = { ...existing, ...goal };
+            } else {
+                goals.push(goal);
+            }
             saveGoals();
             closeGoalModal();
             renderGoals();
@@ -1445,8 +1514,10 @@ function getConfidenceLabel(prob) {
             const noGoals = document.getElementById('no-goals');
 
             const pdfBtn = document.getElementById('download-pdf');
+            const changeBtn = document.getElementById('change-goal');
 
             if (pdfBtn) pdfBtn.style.display = goals.length ? 'inline-flex' : 'none';
+            if (changeBtn) changeBtn.style.display = goals.length ? 'inline-flex' : 'none';
 
             if (goals.length === 0) {
                 container.innerHTML = '';
