@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -516,6 +517,14 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
         @media (max-width: 1100px) {
             .wv-two-col { grid-template-columns: 1fr; }
         }
+        /* Bigger donuts ONLY in Allocation Comparison (Drift Analytics) */
+        #drift-analytics-section #drift-tab-overview #drift-donut-original,
+        #drift-analytics-section #drift-tab-overview #drift-donut-current,
+        #drift-analytics-section #drift-tab-overview #drift-donut-restored {
+            width: 220px !important;
+            height: 220px !important;
+        }
+
 
 
         .wv-tool-card {
@@ -983,11 +992,11 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
       <div style="margin-bottom: 18px; padding: 18px; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color);">
         <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 16px; color: var(--text-primary);">Allocation Comparison</h3>
         <div style="display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;">
-          <div style="text-align: center;"><canvas id="drift-donut-original" width="150" height="150"></canvas><p style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; font-weight: 600;">Original</p></div>
+          <div style="text-align: center;"><canvas id="drift-donut-original" width="220" height="220"></canvas><p style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; font-weight: 600;">Original</p></div>
           <span style="font-size: 22px; color: var(--border-color);">→</span>
-          <div style="text-align: center;"><canvas id="drift-donut-current" width="150" height="150"></canvas><p style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; font-weight: 600;">Current</p></div>
+          <div style="text-align: center;"><canvas id="drift-donut-current" width="220" height="220"></canvas><p style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; font-weight: 600;">Current</p></div>
           <span style="font-size: 22px; color: var(--border-color);">→</span>
-          <div style="text-align: center;"><canvas id="drift-donut-restored" width="150" height="150"></canvas><p style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; font-weight: 600;">Restored (Simulation)</p></div>
+          <div style="text-align: center;"><canvas id="drift-donut-restored" width="220" height="220"></canvas><p style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; font-weight: 600;">Restored (Simulation)</p></div>
         </div>
         <p style="text-align: center; font-size: 11px; color: var(--text-secondary); margin-top: 10px; opacity: 0.6;">Left: Original target · Center: After drift · Right: Simulated restore</p>
       </div>
