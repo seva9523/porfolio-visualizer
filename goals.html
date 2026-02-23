@@ -878,7 +878,7 @@
             detailsNodes.forEach(d => { d.open = true; });
 
             // Hide UI-only controls in the report
-            const hideDuringExport = Array.from(element.querySelectorAll('.show-plans-btn'));
+            const hideDuringExport = Array.from(element.querySelectorAll('.show-plans-btn, .goal-header-actions, .reset-btn'));
             const prevHideDisplays = hideDuringExport.map(el => el.style.display);
             hideDuringExport.forEach(el => { el.style.display = 'none'; });
 
