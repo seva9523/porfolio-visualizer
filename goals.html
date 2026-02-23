@@ -1,6 +1,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -803,7 +804,9 @@
 
         // ---- PDF Export (Educational report) ----
         
-async function downloadGoalsPDF() {
+async 
+        // Download the current goal report as a PDF (educational export)
+        async function downloadGoalsPDF() {
             const btn = document.getElementById('download-pdf');
             if (!btn) return;
 
@@ -811,83 +814,100 @@ async function downloadGoalsPDF() {
             btn.textContent = 'Preparing PDF…';
             btn.disabled = true;
 
-            // Export only the goal report area (goal name and below)
-            const element = document.getElementById('goals-container') || document.querySelector('.container');
+            // Export only the goal report area (from goal name down). If multiple goals exist, export the whole container.
+            const element =
+                document.querySelector('.goal-card') ||
+                document.getElementById('goals-container') ||
+                document.querySelector('.container');
 
-            // 1) Temporarily expand all "What-if Scenarios" sections for the export
-            const planSections = Array.from(document.querySelectorAll('.plan-section'));
+            if (!element) {
+                btn.textContent = originalText;
+                btn.disabled = false;
+                return;
+            }
+
+            // Expand all "What‑if scenarios" content inside the exported element
+            const planSections = Array.from(element.querySelectorAll('.plan-section'));
             const planPrevDisplays = planSections.map(el => el.style.display);
             planSections.forEach(el => { el.style.display = 'block'; });
 
-            // 2) Hide any UI-only toggles inside the report (buttons are not useful in the PDF)
-            const hideDuringExport = Array.from(document.querySelectorAll('.show-plans-btn'));
+            // Expand any <details> blocks (some browsers won't render closed details into canvas)
+            const detailsNodes = Array.from(element.querySelectorAll('details'));
+            const detailsPrevOpen = detailsNodes.map(d => d.open);
+            detailsNodes.forEach(d => { d.open = true; });
+
+            // Hide UI-only controls in the report
+            const hideDuringExport = Array.from(element.querySelectorAll('.show-plans-btn'));
             const prevHideDisplays = hideDuringExport.map(el => el.style.display);
             hideDuringExport.forEach(el => { el.style.display = 'none'; });
 
-            // 3) Snapshot canvases (Chart.js) into images so html2canvas captures them reliably
-            const canvasNodes = element ? Array.from(element.querySelectorAll('canvas')) : [];
+            // Snapshot canvases (Chart.js) into images so html2canvas captures them reliably
+            const canvasNodes = Array.from(element.querySelectorAll('canvas'));
             const canvasSwaps = [];
+
             try {
-                // Let the browser paint expanded sections before capture
+                // Give the browser 2 frames to paint expanded content before capture
                 await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
                 canvasNodes.forEach(cv => {
                     try {
                         const img = document.createElement('img');
                         img.alt = 'chart';
-                        img.style.maxWidth = '100%';
+                        img.src = cv.toDataURL('image/png', 1.0);
+                        img.style.width = '100%';
+                        img.style.height = 'auto';
                         img.style.display = 'block';
                         img.style.borderRadius = '12px';
-                        img.src = cv.toDataURL('image/png', 1.0);
 
-                        // Keep layout identical: match canvas CSS box
-                        img.width = cv.width;
-                        img.height = cv.height;
-
+                        // Keep layout spacing near-identical
+                        img.dataset._replacesCanvas = '1';
                         cv.style.display = 'none';
                         cv.parentNode.insertBefore(img, cv.nextSibling);
                         canvasSwaps.push({ cv, img });
                     } catch (e) {
-                        // If a canvas is tainted (CORS), just leave it as-is
-                        console.warn('Canvas snapshot failed:', e);
+                        // If a canvas is tainted or fails, ignore and let html2canvas attempt it directly.
                     }
                 });
 
-                // Capture
-                if (!element) throw new Error('Export area not found');
+                await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
                 const canvas = await html2canvas(element, {
-                    scale: 2,
+                    scale: Math.min(2, window.devicePixelRatio || 1.5),
                     useCORS: true,
                     backgroundColor: '#ffffff',
                     scrollX: 0,
-                    scrollY: -window.scrollY,
-                    windowWidth: document.documentElement.clientWidth
+                    scrollY: -window.scrollY
                 });
 
-                const imgData = canvas.toDataURL('image/png');
+                const imgData = canvas.toDataURL('image/png', 1.0);
 
-                const { jsPDF } = window.jspdf;
+                const { jsPDF } = window.jspdf || {};
+                if (!jsPDF) throw new Error('jsPDF not available');
+
+                // Create a PDF sized to A4 portrait
                 const pdf = new jsPDF('p', 'pt', 'a4');
-
                 const pageWidth = pdf.internal.pageSize.getWidth();
                 const pageHeight = pdf.internal.pageSize.getHeight();
 
-                // Fit image to page width, paginate vertically if needed
-                const imgWidth = pageWidth;
+                // Fit captured width to page width; slice vertically across pages
+                const margin = 28;
+                const usableWidth = pageWidth - margin * 2;
+                const imgWidth = usableWidth;
                 const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-                let heightLeft = imgHeight;
-                let position = 0;
+                let remainingHeight = imgHeight;
+                let positionY = margin;
 
-                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                heightLeft -= pageHeight;
+                pdf.addImage(imgData, 'PNG', margin, positionY, imgWidth, imgHeight, undefined, 'FAST');
 
-                while (heightLeft > 0) {
-                    position = position - pageHeight;
+                remainingHeight -= (pageHeight - margin * 2);
+
+                // If content is taller than one page, add pages and shift the image upward each time
+                while (remainingHeight > 0) {
                     pdf.addPage();
-                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                    heightLeft -= pageHeight;
+                    positionY = margin - (imgHeight - remainingHeight) - (pageHeight - margin * 2);
+                    pdf.addImage(imgData, 'PNG', margin, positionY, imgWidth, imgHeight, undefined, 'FAST');
+                    remainingHeight -= (pageHeight - margin * 2);
                 }
 
                 const stamp = new Date().toISOString().slice(0, 10);
@@ -904,8 +924,11 @@ async function downloadGoalsPDF() {
                     } catch (e) {}
                 });
 
-                // Restore what-if section visibility
-                planSections.forEach((el, i) => { el.style.display = planPrevDisplays[i] || 'none'; });
+                // Restore what‑if sections
+                planSections.forEach((el, i) => { el.style.display = planPrevDisplays[i] || ''; });
+
+                // Restore <details>
+                detailsNodes.forEach((d, i) => { d.open = !!detailsPrevOpen[i]; });
 
                 // Restore toggles
                 hideDuringExport.forEach((el, i) => { el.style.display = prevHideDisplays[i] || ''; });
@@ -915,25 +938,7 @@ async function downloadGoalsPDF() {
             }
         }
 
-                const stamp = new Date().toISOString().slice(0,10);
-                pdf.save(`wealthview-goals-simulator-${stamp}.pdf`);
-            } catch (err) {
-                console.error(err);
-                alert('Sorry — PDF export failed in this browser. Please try Chrome or Edge.');
-            } finally {
-                btn.textContent = originalText;
-                btn.disabled = false;
-            }
-        }
-
-
-        // --- Simulation settings (kept explicit for clarity/testing) ---
-        const MC_NUM_SIMULATIONS = 10000;   // used for probability + percentiles
-        const FORECAST_NUM_SIMS  = 1000;    // used for yearly fan chart paths
-
-        // --- Deterministic RNG helpers (for stable action plans + stable charts) ---
-        // Simple FNV-1a hash to turn a string into a 32-bit seed.
-        function hashToSeed(str) {
+function hashToSeed(str) {
             let h = 2166136261;
             for (let i = 0; i < str.length; i++) {
                 h ^= str.charCodeAt(i);
