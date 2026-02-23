@@ -1,8 +1,3 @@
-
-
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -846,9 +841,11 @@
 
         let forecastCharts = {}; // Store chart instances
 
+        const MC_NUM_SIMULATIONS = 10000;   // used for probability + percentiles
+        const FORECAST_NUM_SIMS  = 1000;    // used for yearly fan chart paths
+
         // ---- PDF Export (Educational report) ----
         
-async 
         // Download the current goal report as a PDF (educational export)
         async function downloadGoalsPDF() {
             const btn = document.getElementById('download-pdf');
@@ -1739,8 +1736,8 @@ function getConfidenceLabel(prob) {
                         <div class="goal-header">
                             <div class="goal-title">${goal.name}</div>
                             <div class="goal-header-actions">
-                            <button class="btn-neutral" onclick="openGoalModalForEdit(\'${goal.id}\')">Change Goal</button>
-                            <button class="btn-danger" onclick="deleteGoal(\'${goal.id}\')">Delete</button>
+                            <button class="btn-neutral" onclick="openGoalModalForEdit('${goal.id}')">Change Goal</button>
+                            <button class="btn-danger" onclick="deleteGoal('${goal.id}')">Delete</button>
                         </div>
                         </div>
 
