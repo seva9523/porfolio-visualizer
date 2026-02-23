@@ -654,6 +654,42 @@
 .roadmap-row .lhs{ font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
 .roadmap-row .rhs{ font-size: 12px; font-weight: 900; color: var(--text-primary); white-space: nowrap; }
 
+
+        /* Top actions bar: Add (left) + Download (right) */
+        .actions-bar{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:16px;
+            flex-wrap:wrap;
+            margin: 0 0 14px 0;
+        }
+        .actions-left, .actions-right{
+            display:flex;
+            align-items:center;
+            gap:12px;
+        }
+        .actions-bar .add-goal-btn{ margin: 0 !important; }
+
+        /* Download PDF button: same size/shape as Add, different color aligned with theme */
+        #download-pdf{
+            display:none; /* shown after a goal exists */
+            padding: 14px 18px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            border: none;
+            color: white;
+            background: linear-gradient(135deg, #0F766E 0%, #0B3B5A 100%);
+            box-shadow: 0 10px 24px rgba(2, 132, 199, 0.10);
+            transition: all 0.2s ease;
+        }
+        #download-pdf:hover{
+            transform: translateY(-1px);
+            opacity: 0.98;
+        }
+
 </style>
 </head>
 <body>
@@ -671,9 +707,16 @@
 
         <div class="page-shell">
             <main class="main-content">
-            <button class="add-goal-btn" onclick="openGoalModal()" data-testid="add-goal-btn">➕ Add Financial Goal Simulation</button>
+            
+            <div class="actions-bar">
+                <div class="actions-left">
+                    <button class="add-goal-btn" onclick="openGoalModal()" data-testid="add-goal-btn">➕ Add Financial Goal Simulation</button>
+                </div>
+                <div class="actions-right">
+                    <button type="button" class="btn-secondary" id="download-pdf" data-testid="download-pdf">Download PDF</button>
+                </div>
+            </div>
 
-            <button type="button" class="btn-secondary" id="download-pdf" data-testid="download-pdf" style="display:none; margin-left:10px;">Download PDF</button>
 
             <div class="disclaimer-box">
                 <strong>⚠️ Important:</strong> This tool illustrates possible outcomes based on historical data and simulations.
@@ -802,10 +845,10 @@
         let editingGoalId = null; // when set, modal edits an existing goal
 
         let forecastCharts = {}; // Store chart instances
-        const MC_NUM_SIMULATIONS = 10000; // Monte Carlo paths (educational simulation)
 
         // ---- PDF Export (Educational report) ----
         
+async 
         // Download the current goal report as a PDF (educational export)
         async function downloadGoalsPDF() {
             const btn = document.getElementById('download-pdf');
