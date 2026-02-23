@@ -2,6 +2,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -801,10 +802,10 @@
         let editingGoalId = null; // when set, modal edits an existing goal
 
         let forecastCharts = {}; // Store chart instances
+        const MC_NUM_SIMULATIONS = 10000; // Monte Carlo paths (educational simulation)
 
         // ---- PDF Export (Educational report) ----
         
-async 
         // Download the current goal report as a PDF (educational export)
         async function downloadGoalsPDF() {
             const btn = document.getElementById('download-pdf');
