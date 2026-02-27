@@ -1,339 +1,552 @@
+
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Theme & Trend Explorer - Portfolio Visualizer</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <style>
-        *{margin:0;padding:0;box-sizing:border-box}
-        :root{--bg-start:#f8f9fa;--bg-end:#e9ecef;--container:#fff;--text:#2c3e50;--text2:#7f8c8d;--input-bg:#f8f9fa;--input-border:#ddd;--border:#e0e0e0;--chart-bg:#fff;--card:#fff;--accent:#5E548E;--accent-l:rgba(94,84,142,.08);--green:#27ae60;--red:#e74c3c;--orange:#F18F01;--blue:#2E86AB}
-        body.dark-mode{--bg-start:#1a1a2e;--bg-end:#16213e;--container:#1e1e2f;--text:#e0e0e0;--text2:#a0a0a0;--input-bg:#2a2a3e;--input-border:#404060;--border:#404060;--chart-bg:#252540;--card:#252540}
-        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,var(--bg-start),var(--bg-end));min-height:100vh;padding:20px;color:var(--text)}
-        .container{max-width:1280px;margin:0 auto;background:var(--container);border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.15);overflow:hidden}
-        .hdr{background:linear-gradient(135deg,#5E548E,#9F86C0);color:#fff;padding:30px;text-align:center;position:relative}
-        .hdr h1{font-size:28px;margin-bottom:5px}.hdr p{opacity:.9;font-size:14px}
-        .dtog{position:absolute;top:15px;right:20px;background:rgba(255,255,255,.2);border:none;color:#fff;padding:6px 14px;border-radius:20px;cursor:pointer;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
-        .dtog:hover{background:rgba(255,255,255,.3)}
-        .nav{display:flex;gap:10px;padding:15px 30px;background:var(--input-bg);border-bottom:1px solid var(--border);flex-wrap:wrap}
-        .nb{padding:8px 18px;border:2px solid var(--border);border-radius:8px;background:var(--card);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s}
-        .nb:hover{border-color:var(--accent);color:var(--accent)}
-        .nb.act{border-color:var(--accent);color:var(--accent);background:var(--accent-l)}
-        .cnt{padding:30px}
-        .disc{padding:12px 18px;background:rgba(241,143,1,.08);border-left:3px solid var(--orange);border-radius:4px;font-size:12px;margin-bottom:25px;line-height:1.6}
-        /* Controls */
-        .ctrls{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
-        .sinp{flex:1;min-width:180px;padding:10px 14px;border:2px solid var(--border);border-radius:8px;background:var(--card);color:var(--text);font-size:13px;outline:none}
-        .sinp:focus{border-color:var(--accent)}
-        .fsel{padding:10px;border:2px solid var(--border);border-radius:8px;background:var(--card);color:var(--text);font-size:13px;cursor:pointer}
-        .cbtn{padding:10px 18px;border:2px solid var(--accent);border-radius:8px;background:var(--accent-l);color:var(--accent);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s}
-        .cbtn:hover,.cbtn.on{background:var(--accent);color:#fff}
-        /* Grid */
-        .tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px}
-        .tcard{background:var(--card);border:2px solid var(--border);border-radius:14px;padding:22px;cursor:pointer;transition:all .25s;position:relative}
-        .tcard:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 25px rgba(94,84,142,.15)}
-        .tcard.cmp-sel{border-color:var(--accent);box-shadow:0 0 0 3px rgba(94,84,142,.2)}
-        .tcard-name{font-size:17px;font-weight:700;margin-bottom:4px}
-        .tcard-desc{font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.5}
-        .tmets{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-        .tmet{text-align:center;padding:6px 4px;background:var(--input-bg);border-radius:8px}
-        .tmet-l{font-size:9px;color:var(--text2);font-weight:600;text-transform:uppercase;margin-bottom:2px}
-        .tmet-v{font-size:15px;font-weight:700}
-        /* Score bar */
-        .sbar{height:6px;border-radius:3px;background:var(--border);overflow:hidden;margin-top:8px}
-        .sfill{height:100%;border-radius:3px;transition:width .5s}
-        .slbl{font-size:10px;color:var(--text2);margin-top:3px;display:flex;justify-content:space-between}
-        /* Badges */
-        .badge{display:inline-block;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;margin-right:4px}
-        .b-trend{background:linear-gradient(135deg,var(--orange),#e67e00);color:#fff}
-        .b-lc{padding:3px 8px;font-size:9px;border-radius:4px;font-weight:700}
-        .lc-em{background:rgba(46,134,171,.15);color:var(--blue)}
-        .lc-ac{background:rgba(39,174,96,.15);color:var(--green)}
-        .lc-cr{background:rgba(241,143,1,.15);color:var(--orange)}
-        .lc-ro{background:rgba(231,76,60,.15);color:var(--red)}
-        .ctag{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;margin-bottom:8px}
-        .c-gr{background:rgba(46,134,171,.15);color:var(--blue)}
-        .c-df{background:rgba(39,174,96,.15);color:var(--green)}
-        .c-al{background:rgba(241,143,1,.15);color:var(--orange)}
-        .c-in{background:rgba(142,68,173,.15);color:#8e44ad}
-        /* Detail/Compare */
-        .dview{display:none}.dview.on{display:block}
-        .cview{display:none}.cview.on{display:block}
-        .bbtn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:var(--input-bg);border:2px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-weight:600;cursor:pointer;margin-bottom:20px}
-        .bbtn:hover{border-color:var(--accent)}
-        .sbox{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px}
-        .sbox h3{font-size:16px;font-weight:700;margin-bottom:14px}
-        .sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px}
-        .sc{padding:14px;background:var(--input-bg);border-radius:10px;text-align:center}
-        .sc-l{font-size:10px;color:var(--text2);font-weight:600;text-transform:uppercase;margin-bottom:4px}
-        .sc-v{font-size:20px;font-weight:700}
-        .rlist{list-style:none;padding:0}
-        .rlist li{padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;line-height:1.5}
-        .rlist li:last-child{border-bottom:none}
-        /* Signal breakdown table */
-        .sigtbl{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
-        .sigtbl th,.sigtbl td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)}
-        .sigtbl th{font-size:10px;text-transform:uppercase;color:var(--text2);font-weight:700}
-        .sigbar{display:inline-block;height:8px;border-radius:4px;vertical-align:middle}
-        /* Comparison */
-        .ctable{width:100%;border-collapse:collapse;font-size:13px}
-        .ctable th,.ctable td{padding:12px;text-align:center;border-bottom:1px solid var(--border)}
-        .ctable th{background:var(--input-bg);font-weight:700;font-size:11px;text-transform:uppercase;color:var(--text2)}
-        .ctable td{font-weight:600}
-        /* Sim */
-        .sa-btns{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px}
-        .sa-btn{padding:8px 20px;border:2px solid var(--border);border-radius:8px;background:var(--card);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
-        .sa-btn:hover,.sa-btn.on{border-color:var(--accent);background:var(--accent-l);color:var(--accent)}
-        .vwarn{margin-top:12px;padding:10px 14px;background:rgba(231,76,60,.08);border-left:3px solid var(--red);border-radius:4px;font-size:12px}
-        .cta{padding:18px;background:var(--input-bg);border:2px dashed var(--border);border-radius:12px;text-align:center;margin-top:15px}
-        .cta a{color:var(--accent);font-weight:700;text-decoration:none}
-        /* Tooltip */
-        .tt{display:inline-block;width:16px;height:16px;background:var(--text2);color:var(--card);border-radius:50%;font-size:10px;text-align:center;line-height:16px;font-weight:700;cursor:help;margin-left:4px;position:relative}
-        .tt:hover::after{content:attr(data-tip);position:absolute;bottom:120%;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:6px 10px;border-radius:6px;font-size:11px;z-index:100;font-weight:400;max-width:280px;white-space:normal;min-width:180px}
-        /* Methodology */
-        .mpanel{background:var(--input-bg);border:1px solid var(--border);border-radius:10px;padding:16px;font-size:12px;line-height:1.7;color:var(--text2)}
-        .mpanel strong{color:var(--text)}
-        .mtag{display:inline-block;padding:2px 8px;background:var(--card);border:1px solid var(--border);border-radius:4px;font-size:10px;font-weight:600;margin-right:6px;margin-bottom:4px}
-        /* Export */
-        .xbtn{padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);font-size:11px;font-weight:600;cursor:pointer;transition:all .2s}
-        .xbtn:hover{border-color:var(--accent);color:var(--accent)}
-        /* Stress */
-        .stress-tbl{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
-        .stress-tbl th,.stress-tbl td{padding:10px;text-align:center;border-bottom:1px solid var(--border)}
-        .stress-tbl th{font-size:10px;text-transform:uppercase;color:var(--text2);font-weight:700;background:var(--input-bg)}
-        .ftr{text-align:center;padding:20px 30px;font-size:11px;color:var(--text2);border-top:1px solid var(--border)}
-        .spin{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp .8s linear infinite}
-        @keyframes sp{to{transform:rotate(360deg)}}
-        /* Welcome */
-        .welcome{padding:24px;background:var(--input-bg);border-radius:14px;margin-bottom:25px;line-height:1.7}
-        .welcome h3{font-size:18px;margin-bottom:8px}
-        .welcome p{font-size:13px;color:var(--text2)}
-        .welcome ul{margin:10px 0 0 20px;font-size:13px;color:var(--text2)}
-        .welcome li{margin-bottom:4px}
-        /* Risk pill */
-        .rpill{display:inline-block;font-size:11px;font-weight:700;padding:3px 12px;border-radius:20px;margin-top:6px}
-        .rpill-low{background:rgba(39,174,96,.12);color:var(--green)}
-        .rpill-med{background:rgba(241,143,1,.12);color:var(--orange)}
-        .rpill-high{background:rgba(231,76,60,.12);color:var(--red)}
-        .rpill-vhigh{background:rgba(231,76,60,.2);color:var(--red)}
-        /* Suitability */
-        .suit-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px}
-        .suit-box{padding:16px;border-radius:12px;font-size:13px;line-height:1.6}
-        .suit-yes{background:rgba(39,174,96,.06);border:1px solid rgba(39,174,96,.2)}
-        .suit-no{background:rgba(231,76,60,.04);border:1px solid rgba(231,76,60,.15)}
-        .suit-box h4{font-size:14px;margin-bottom:8px}
-        .suit-box li{margin-bottom:4px}
-        /* Guardrail */
-        .guardrail{padding:12px 16px;border-radius:10px;font-size:12px;line-height:1.6;margin-top:12px;background:rgba(241,143,1,.06);border:1px solid rgba(241,143,1,.2)}
-        /* Metric explanation */
-        .mexp{font-size:11px;color:var(--text2);margin-top:2px;font-weight:400;line-height:1.4}
-        /* Onboarding modal */
-        .onb-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
-        .onb-box{background:var(--container);border-radius:20px;max-width:480px;width:100%;padding:32px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
-        .onb-box h3{font-size:20px;margin-bottom:12px}.onb-box p{font-size:14px;color:var(--text2);line-height:1.7}
-        .onb-box ol{margin:14px 0 14px 22px;font-size:14px;color:var(--text2);line-height:2}
-        .onb-btn{display:block;width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:16px}
-        .onb-btn:hover{opacity:.9}
-        /* Overlap warning */
-        .overlap-box{padding:14px 18px;border-radius:10px;font-size:13px;line-height:1.6;margin-bottom:16px}
-        .overlap-high{background:rgba(231,76,60,.06);border:1px solid rgba(231,76,60,.2)}
-        .overlap-mod{background:rgba(241,143,1,.06);border:1px solid rgba(241,143,1,.2)}
-        .overlap-low{background:rgba(39,174,96,.06);border:1px solid rgba(39,174,96,.2)}
-        /* Hype badge */
-        .hype-badge{display:inline-block;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;margin-left:4px;cursor:help;position:relative}
-        .hype-badge:hover::after{content:attr(data-tip);position:absolute;bottom:120%;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:6px 10px;border-radius:6px;font-size:11px;z-index:100;min-width:200px;white-space:normal;font-weight:400}
-        .hype-hot{background:rgba(231,76,60,.1);color:var(--red)}
-        .hype-normal{background:rgba(46,134,171,.08);color:var(--blue)}
-        .hype-cold{background:rgba(100,149,237,.1);color:#4a7fb5}
-        /* Freshness */
-        .fresh-badge{display:inline-block;font-size:9px;font-weight:600;padding:2px 8px;border-radius:4px;margin-left:4px}
-        .fresh-ok{background:rgba(39,174,96,.1);color:var(--green)}
-        .fresh-old{background:rgba(241,143,1,.1);color:var(--orange)}
-        /* Simple compare grid */
-        .scmp-grid{display:grid;grid-template-columns:auto repeat(var(--cols,2),1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;font-size:13px;margin-top:12px}
-        .scmp-grid>div{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center}
-        .scmp-grid>div:nth-child(-n+var(--cols-plus)){font-weight:700;background:var(--input-bg);font-size:12px}
-        .scmp-hdr{font-weight:700;background:var(--input-bg);font-size:12px!important}
-        .scmp-label{font-weight:600;color:var(--text2);font-size:12px}
-        /* Compare summary */
-        .cmp-summary{padding:20px;background:var(--input-bg);border-radius:12px;font-size:14px;line-height:1.8;margin-bottom:20px}
-        /* Core/Satellite pill */
-        .cs-pill{display:inline-block;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;margin-left:4px;cursor:help;position:relative}
-        .cs-pill:hover::after{content:attr(data-tip);position:absolute;bottom:120%;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:6px 10px;border-radius:6px;font-size:11px;z-index:100;min-width:200px;white-space:normal;font-weight:400}
-        .cs-core{background:rgba(39,174,96,.12);color:var(--green)}
-        .cs-sat{background:rgba(94,84,142,.12);color:var(--accent)}
-        /* How-it-feels meter */
-        .feel-meter{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;padding:6px 12px;border-radius:8px;background:var(--input-bg);margin-top:6px}
-        .feel-meter .feel-icon{font-size:18px}
-        /* Guide confidence */
-        .guide-conf{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;margin-bottom:12px}
-        .gc-high{background:rgba(39,174,96,.12);color:var(--green)}
-        .gc-med{background:rgba(241,143,1,.12);color:var(--orange)}
-        .gc-low{background:rgba(231,76,60,.12);color:var(--red)}
-        /* Anti-chasing */
-        .chase-warn{padding:10px 14px;background:rgba(241,143,1,.06);border:1px solid rgba(241,143,1,.15);border-radius:8px;font-size:12px;line-height:1.5;margin-top:8px;color:var(--text2)}
-        /* Data checklist */
-        .data-check{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:12px;margin-top:10px}
-        .data-check .dc-label{font-weight:600;color:var(--text)}.data-check .dc-val{color:var(--text2)}
-        /* Guided mode */
-        .guide-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
-        .guide-box{background:var(--container);border-radius:20px;max-width:540px;width:100%;padding:32px;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:90vh;overflow-y:auto}
-        .guide-box h3{font-size:20px;margin-bottom:6px}.guide-box p{font-size:14px;color:var(--text2);line-height:1.7}
-        .guide-q{font-size:15px;font-weight:700;margin:18px 0 10px}
-        .guide-opts{display:flex;flex-direction:column;gap:8px}
-        .guide-opt{padding:14px 18px;border:2px solid var(--border);border-radius:10px;background:var(--card);cursor:pointer;font-size:14px;transition:all .2s;text-align:left}
-        .guide-opt:hover,.guide-opt.sel{border-color:var(--accent);background:var(--accent-l);color:var(--accent)}
-        .guide-nav{display:flex;gap:10px;margin-top:20px}
-        .guide-nav button{flex:1;padding:12px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer}
-        .guide-next{background:var(--accent);color:#fff}.guide-next:hover{opacity:.9}
-        .guide-back{background:var(--input-bg);color:var(--text)}.guide-back:hover{opacity:.8}
-        .guide-results{margin-top:16px}
-        .guide-result{padding:16px;border:2px solid var(--border);border-radius:12px;margin-bottom:12px;cursor:pointer;transition:all .2s}
-        .guide-result:hover{border-color:var(--accent);background:var(--accent-l)}
-        /* Confidence card */
-        .conf-card{padding:24px;background:linear-gradient(135deg,var(--input-bg),var(--card));border:2px solid var(--border);border-radius:16px;margin-bottom:20px}
-        .conf-card h3{font-size:18px;margin-bottom:8px}
-        .conf-sentence{font-size:16px;line-height:1.6;margin-bottom:16px;font-weight:500}
-        .traffic-row{display:flex;gap:16px;flex-wrap:wrap}
-        .traffic-item{flex:1;min-width:140px;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:10px;text-align:center}
-        .traffic-label{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text2);margin-bottom:6px}
-        .traffic-dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:middle}
-        .traffic-val{font-size:14px;font-weight:700}
-        /* View toggle */
-        .vtoggle{display:inline-flex;border:2px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:20px;font-size:13px}
-        .vtoggle button{padding:8px 18px;border:none;background:var(--card);color:var(--text);cursor:pointer;font-weight:600;transition:all .2s}
-        .vtoggle button.vt-on{background:var(--accent);color:#fff}
-        .detailed-only{display:none}.detailed-only.show{display:block}
-        /* Core-first banner */
-        .core-banner{padding:12px 18px;background:rgba(46,134,171,.06);border:1px solid rgba(46,134,171,.15);border-radius:10px;font-size:12px;line-height:1.6;margin-bottom:20px;color:var(--text2)}
-        /* Alloc modal */
-        .alloc-modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:1001;display:flex;align-items:center;justify-content:center;padding:20px}
-        .alloc-modal-box{background:var(--container);border-radius:16px;max-width:420px;width:100%;padding:28px;box-shadow:0 16px 50px rgba(0,0,0,.3)}
-        .alloc-modal-box h4{font-size:16px;margin-bottom:10px}.alloc-modal-box p{font-size:13px;color:var(--text2);line-height:1.6}
-        @media(max-width:768px){.tgrid{grid-template-columns:1fr}.sgrid{grid-template-columns:1fr 1fr}.hdr h1{font-size:22px}.dtog{position:static;margin-top:10px}.tmets{grid-template-columns:1fr 1fr}.ctrls{flex-direction:column}.suit-grid{grid-template-columns:1fr}}
-    </style>
-    <script defer src="/_vercel/insights/script.js"></script>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<title>Theme &amp; Trend Explorer - Portfolio Visualizer</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* WealthView UI alignment (Portfolio Visualizer + Goals Simulator)
+   Design-only changes: content + JS behavior unchanged. */
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  /* WealthView palette */
+  --bg-start:#F8FAFC;
+  --bg-end:#EEF2F7;
+  --container:#FFFFFF;
+  --text:#0F172A;
+  --text2:#475569;
+  --input-bg:#F1F5F9;
+  --input-border:#CBD5E1;
+  --border:#E2E8F0;
+  --chart-bg:#FFFFFF;
+  --card:#FFFFFF;
+
+  --accent:#14B8A6;        /* teal */
+  --accent-2:#0F172A;      /* slate */
+  --accent-l:rgba(20,184,166,.10);
+
+  --green:#16A34A;
+  --red:#DC2626;
+  --orange:#F59E0B;
+  --blue:#2E86AB;
+
+  --shadow:0 10px 35px rgba(0,0,0,.18);
+  --shadow-soft:0 8px 24px rgba(20,184,166,.12);
+}
+
+body.dark-mode{
+  /* matches index/goals dark feel */
+  --bg-start:#1a1a2e;
+  --bg-end:#16213e;
+  --container:#0f3460;
+  --text:#e8e8e8;
+  --text2:#b0b0b0;
+  --input-bg:#1a2332;
+  --input-border:#2a3f5f;
+  --border:#2a3f5f;
+  --chart-bg:#1a2332;
+  --card:rgba(255,255,255,.08);
+  --accent:#14B8A6;
+  --accent-2:#1a5276;
+  --accent-l:rgba(20,184,166,.12);
+  --shadow:0 10px 35px rgba(0,0,0,.35);
+  --shadow-soft:0 10px 28px rgba(0,0,0,.22);
+}
+
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,sans-serif;
+  background:linear-gradient(135deg,var(--bg-start) 0%,var(--bg-end) 100%);
+  min-height:100vh;
+  padding:0;
+  color:var(--text);
+}
+
+/* Layout shell: match full-width WealthView pages */
+.container{
+  width:100%;
+  max-width:none;
+  margin:0;
+  background:var(--container);
+  border-radius:0;
+  box-shadow:var(--shadow);
+  overflow:hidden;
+  min-height:100vh;
+}
+
+/* Header: match WealthView hero gradient */
+.hdr{
+  background:linear-gradient(135deg,var(--accent-2) 0%,var(--accent) 100%);
+  color:#fff;
+  padding:34px 28px 28px;
+  text-align:center;
+  position:relative;
+}
+.hdr h1{font-size:2.2em;margin-bottom:8px}
+.hdr p{opacity:.92;font-size:1.05em;max-width:760px;margin:0 auto;line-height:1.6}
+
+/* Dark mode toggle: match style */
+.dtog{
+  position:absolute;
+  top:14px;right:16px;
+  background:rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.22);
+  color:#fff;
+  padding:8px 14px;
+  border-radius:12px;
+  cursor:pointer;
+  font-size:13px;
+  font-weight:700;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  transition:all .2s ease;
+}
+.dtog:hover{background:rgba(255,255,255,.26);transform:translateY(-1px)}
+
+/* Top nav tabs */
+.nav{
+  display:flex;
+  gap:10px;
+  padding:16px 30px;
+  background:var(--container);
+  border-bottom:1px solid var(--border);
+  flex-wrap:wrap;
+  align-items:center;
+}
+.nb{
+  padding:8px 14px;
+  border:1.5px solid var(--border);
+  border-radius:10px;
+  background:var(--card);
+  color:var(--text);
+  font-size:13px;
+  font-weight:800;
+  cursor:pointer;
+  text-decoration:none;
+  transition:all .2s ease;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+}
+.nb:hover{
+  border-color:var(--accent);
+  transform:translateY(-1px);
+  box-shadow:0 6px 16px rgba(0,0,0,.06);
+  color:var(--text);
+}
+.nb.act{
+  border-color:var(--accent);
+  background:var(--accent-l);
+  color:var(--text);
+}
+
+/* Page content spacing */
+.cnt{padding:24px 30px 30px}
+
+/* Disclaimers / banners */
+.disc{
+  padding:14px 16px;
+  background:rgba(245,158,11,.10);
+  border-left:4px solid var(--orange);
+  border-radius:4px;
+  font-size:13px;
+  margin-bottom:18px;
+  line-height:1.65;
+  color:var(--text2);
+}
+.welcome{
+  padding:18px 18px;
+  background:var(--input-bg);
+  border:1px solid var(--border);
+  border-radius:12px;
+  margin-bottom:16px;
+  line-height:1.7;
+}
+.welcome h3{font-size:18px;margin-bottom:8px;color:var(--text)}
+.welcome p,.welcome li{font-size:13px;color:var(--text2)}
+.core-banner{
+  padding:12px 16px;
+  background:rgba(46,134,171,.06);
+  border:1px solid rgba(46,134,171,.15);
+  border-radius:10px;
+  font-size:12.5px;
+  line-height:1.65;
+  margin-bottom:18px;
+  color:var(--text2);
+}
+
+/* Controls */
+.ctrls{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.sinp{
+  flex:1;min-width:220px;
+  padding:11px 14px;
+  border:2px solid var(--input-border);
+  border-radius:10px;
+  background:var(--chart-bg);
+  color:var(--text);
+  font-size:13.5px;
+  font-weight:600;
+  outline:none;
+  transition:all .2s ease;
+}
+.sinp:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(20,184,166,.10)}
+.fsel{
+  padding:11px 12px;
+  border:2px solid var(--input-border);
+  border-radius:10px;
+  background:var(--chart-bg);
+  color:var(--text);
+  font-size:13.5px;
+  font-weight:700;
+  cursor:pointer;
+  transition:all .2s ease;
+}
+.fsel:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px rgba(20,184,166,.10)}
+
+/* Primary/secondary buttons */
+.cbtn{
+  padding:11px 16px;
+  border:2px solid var(--accent);
+  border-radius:10px;
+  background:rgba(20,184,166,.10);
+  color:var(--text);
+  font-size:13.5px;
+  font-weight:800;
+  cursor:pointer;
+  transition:all .2s ease;
+}
+.cbtn:hover,.cbtn.on{
+  background:var(--accent);
+  color:#fff;
+  transform:translateY(-1px);
+  box-shadow:0 6px 18px rgba(20,184,166,.22);
+}
+
+.xbtn{
+  padding:8px 12px;
+  border:1.5px solid var(--border);
+  border-radius:10px;
+  background:var(--card);
+  color:var(--text);
+  font-size:12px;
+  font-weight:800;
+  cursor:pointer;
+  transition:all .2s ease;
+}
+.xbtn:hover{
+  border-color:var(--accent);
+  box-shadow:0 6px 16px rgba(0,0,0,.06);
+  transform:translateY(-1px);
+}
+
+/* Grid + theme cards (match wv-tool-card feel) */
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.tcard{
+  background:var(--card);
+  border:1.5px solid var(--border);
+  border-radius:12px;
+  padding:18px 18px;
+  cursor:pointer;
+  transition:all .25s ease;
+  position:relative;
+}
+.tcard:hover{
+  border-color:var(--accent);
+  transform:translateY(-3px);
+  box-shadow:var(--shadow-soft);
+}
+.tcard.cmp-sel{border-color:var(--accent);box-shadow:0 0 0 4px rgba(20,184,166,.14)}
+.tcard-name{font-size:16px;font-weight:900;margin-bottom:4px;color:var(--text)}
+.tcard-desc{font-size:12.5px;color:var(--text2);margin-bottom:12px;line-height:1.55}
+.tmets{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.tmet{
+  text-align:center;
+  padding:8px 6px;
+  background:var(--input-bg);
+  border:1px solid var(--border);
+  border-radius:10px;
+}
+.tmet-l{font-size:9px;color:var(--text2);font-weight:800;text-transform:uppercase;margin-bottom:2px;letter-spacing:.04em}
+.tmet-v{font-size:15px;font-weight:900}
+
+/* Score bar */
+.sbar{height:8px;border-radius:6px;background:var(--border);overflow:hidden;margin-top:10px}
+.sfill{height:100%;border-radius:6px;transition:width .5s}
+.slbl{font-size:10.5px;color:var(--text2);margin-top:5px;display:flex;justify-content:space-between}
+
+/* Badges */
+.badge{display:inline-block;font-size:10px;font-weight:900;padding:4px 10px;border-radius:999px;margin-right:6px}
+.b-trend{background:linear-gradient(135deg,var(--orange),#f97316);color:#fff}
+.b-lc{padding:3px 8px;font-size:9px;border-radius:6px;font-weight:900}
+.lc-em{background:rgba(46,134,171,.12);color:var(--blue)}
+.lc-ac{background:rgba(22,163,74,.12);color:var(--green)}
+.lc-cr{background:rgba(245,158,11,.12);color:var(--orange)}
+.lc-ro{background:rgba(220,38,38,.12);color:var(--red)}
+.ctag{display:inline-block;font-size:10px;font-weight:800;padding:3px 8px;border-radius:6px;margin-bottom:8px;border:1px solid var(--border);background:var(--card);color:var(--text2)}
+.c-gr{border-color:rgba(46,134,171,.25);color:var(--blue)}
+.c-df{border-color:rgba(22,163,74,.25);color:var(--green)}
+.c-al{border-color:rgba(245,158,11,.25);color:var(--orange)}
+.c-in{border-color:rgba(148,163,184,.35);color:var(--text2)}
+
+/* Detail/Compare wrappers */
+.dview{display:none}.dview.on{display:block}
+.cview{display:none}.cview.on{display:block}
+.bbtn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:10px 14px;
+  background:var(--card);
+  border:1.5px solid var(--border);
+  border-radius:10px;
+  color:var(--text);
+  font-size:13px;
+  font-weight:800;
+  cursor:pointer;
+  margin-bottom:16px;
+  transition:all .2s ease;
+}
+.bbtn:hover{border-color:var(--accent);transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,0,0,.06)}
+
+/* Sections / boxes (keep existing classes, align visuals) */
+.sbox{
+  background:var(--card);
+  border:1.5px solid var(--border);
+  border-radius:12px;
+  padding:18px;
+  margin-bottom:16px;
+  box-shadow:0 2px 10px rgba(0,0,0,.06);
+}
+.sbox h3{font-size:16px;font-weight:900;margin-bottom:12px}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
+.sc{padding:14px;background:var(--input-bg);border:1px solid var(--border);border-radius:12px;text-align:center}
+.sc-l{font-size:10px;color:var(--text2);font-weight:900;text-transform:uppercase;margin-bottom:4px;letter-spacing:.04em}
+.sc-v{font-size:20px;font-weight:900}
+
+.rlist{list-style:none;padding:0}
+.rlist li{padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;line-height:1.55;color:var(--text)}
+.rlist li:last-child{border-bottom:none}
+
+/* Tables */
+.sigtbl,.ctable,.stress-tbl{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:10px}
+.sigtbl th,.sigtbl td,.ctable th,.ctable td,.stress-tbl th,.stress-tbl td{
+  padding:10px 12px;text-align:left;border-bottom:1px solid var(--border)
+}
+.ctable td,.stress-tbl td{font-weight:700}
+.sigtbl th,.ctable th,.stress-tbl th{
+  font-size:10px;text-transform:uppercase;color:var(--text2);font-weight:900;background:var(--input-bg);letter-spacing:.06em
+}
+.ctable td,.stress-tbl td{text-align:center}
+.ctable th{text-align:center}
+
+/* Compare banner */
+#cmp-bar{
+  background:rgba(20,184,166,.08) !important;
+  border:2px solid var(--accent) !important;
+  border-radius:12px !important;
+}
+
+/* Tooltip */
+.tt{
+  display:inline-block;width:16px;height:16px;
+  background:var(--text2);color:var(--container);
+  border-radius:50%;font-size:10px;text-align:center;line-height:16px;font-weight:900;
+  cursor:help;margin-left:4px;position:relative
+}
+.tt:hover::after{
+  content:attr(data-tip);
+  position:absolute;bottom:120%;left:50%;transform:translateX(-50%);
+  background:#0b1220;color:#fff;
+  padding:8px 10px;border-radius:10px;font-size:11px;z-index:100;
+  font-weight:500;max-width:320px;white-space:normal;min-width:200px;
+  box-shadow:0 10px 30px rgba(0,0,0,.25)
+}
+
+/* Modals */
+.onb-overlay,.guide-overlay,.alloc-modal{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.45);
+  z-index:1000;
+  display:flex;align-items:center;justify-content:center;
+  padding:20px
+}
+.onb-box,.guide-box,.alloc-modal-box{
+  background:var(--container);
+  border-radius:16px;
+  width:100%;
+  box-shadow:0 20px 60px rgba(0,0,0,.30)
+}
+.onb-box{max-width:520px;padding:32px}
+.onb-box h3{font-size:20px;margin-bottom:12px}
+.onb-box p,.onb-box ol{font-size:14px;color:var(--text2);line-height:1.7}
+.onb-btn{
+  display:block;width:100%;
+  padding:14px;background:var(--accent);color:#fff;border:none;border-radius:10px;
+  font-size:15px;font-weight:900;cursor:pointer;margin-top:16px
+}
+.onb-btn:hover{opacity:.92}
+
+.guide-box{max-width:560px;padding:28px;max-height:90vh;overflow-y:auto}
+.guide-opt{
+  padding:14px 16px;border:1.5px solid var(--border);border-radius:12px;background:var(--card);
+  cursor:pointer;font-size:14px;transition:all .2s;text-align:left;font-weight:700
+}
+.guide-opt:hover,.guide-opt.sel{border-color:var(--accent);background:rgba(20,184,166,.10)}
+.guide-nav button{
+  flex:1;padding:12px;border:none;border-radius:10px;font-size:14px;font-weight:900;cursor:pointer
+}
+.guide-next{background:var(--accent);color:#fff}
+.guide-back{background:var(--input-bg);color:var(--text)}
+
+/* Footer */
+.ftr{
+  text-align:center;
+  padding:16px 30px 22px;
+  font-size:11px;
+  color:var(--text2);
+  border-top:1px solid var(--border);
+  background:var(--container);
+}
+
+/* Spinner */
+.spin{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* Responsive */
+@media(max-width:768px){
+  .cnt{padding:18px 16px 22px}
+  .nav{padding:14px 16px}
+  .hdr{padding:28px 16px 22px}
+  .hdr h1{font-size:1.9em}
+  .dtog{position:static;margin:12px auto 0}
+  .tgrid{grid-template-columns:1fr}
+  .tmets{grid-template-columns:1fr 1fr}
+  .ctrls{flex-direction:column;align-items:stretch}
+  .sinp{min-width:0}
+  .sgrid{grid-template-columns:1fr 1fr}
+  .suit-grid{grid-template-columns:1fr}
+}
+</style>
+<script defer="" src="/_vercel/insights/script.js"></script>
 </head>
 <body>
-    <!-- Feature 4: Onboarding Modal -->
-    <div id="onb" class="onb-overlay" style="display:none" data-testid="onboarding-modal">
-        <div class="onb-box">
-            <h3>👋 Welcome! Here's how to use this page</h3>
-            <p>This tool helps you explore different investment themes — like AI, Clean Energy, or Dividends.</p>
-            <ol>
-                <li>🔍 Pick a theme you're curious about</li>
-                <li>📊 Check how risky it feels and how it's performed</li>
-                <li>🔥 See how it handled past crises</li>
-                <li>🧪 Try adding a small amount to your portfolio</li>
-                <li>⚖️ Compare it with another theme</li>
-            </ol>
-            <p style="font-style:italic;font-size:13px">Remember: this is for learning, not investment advice.</p>
-            <button class="onb-btn" onclick="dismissOnb()" data-testid="onboarding-dismiss">Got it, let's explore! →</button>
-        </div>
-    </div>
-    <!-- Feature 1: Guided Mode Overlay -->
-    <div id="guide-overlay" class="guide-overlay" style="display:none" data-testid="guided-mode">
-        <div class="guide-box" id="guide-content"></div>
-    </div>
-    <!-- Feature 3: Allocation Confirmation Modal -->
-    <div id="alloc-modal" class="alloc-modal" style="display:none" data-testid="alloc-modal">
-        <div class="alloc-modal-box">
-            <h4>⚠️ Just checking in...</h4>
-            <p id="alloc-modal-msg">This allocation could strongly influence your results — both positively and negatively.</p>
-            <div style="display:flex;gap:10px;margin-top:16px">
-                <button onclick="confirmAlloc()" style="flex:1;padding:12px;border:none;border-radius:10px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer">Yes, show me →</button>
-                <button onclick="cancelAlloc()" style="flex:1;padding:12px;border:none;border-radius:10px;background:var(--input-bg);color:var(--text);font-weight:600;cursor:pointer">Let me reconsider</button>
-            </div>
-        </div>
-    </div>
-    <div class="container">
-        <div class="hdr">
-            <button class="dtog" onclick="toggleDark()" id="dtog"><span id="mi">🌙</span><span id="mt">Dark Mode</span></button>
-            <h1>🔭 Theme & Trend Explorer</h1>
-            <p>Discover the big ideas shaping the market — simple, visual, and jargon-free</p>
-        </div>
-        <div class="nav">
-            <a href="/" class="nb">📊 Portfolio Visualizer</a>
-            <a href="/goals.html" class="nb">🎯 Goals Simulator</a>
-            <span class="nb act">🔭 Market Themes</span>
-        </div>
-        <div class="cnt">
-            <div class="disc"><strong>🎓 Learning Tool:</strong> This section helps you <strong>explore and understand</strong> different market themes. It does <strong>not tell you what to buy</strong>. Past performance does not guarantee future results.</div>
-
-            <!-- Welcome Explainer -->
-            <div class="welcome" id="welcome-box" data-testid="welcome-section">
-                <h3>👋 What is a Market Theme?</h3>
-                <p>A market theme is a group of companies connected by a <strong>big idea</strong> — like Artificial Intelligence, Clean Energy, or Dividend Income. Think of it like a trend or category in the economy.</p>
-                <p style="margin-top:8px"><strong>What can you do here?</strong></p>
-                <ul>
-                    <li>🔍 See which ideas have been doing well recently</li>
-                    <li>📊 Understand how risky or stable each theme is</li>
-                    <li>⚖️ Compare different themes side by side</li>
-                    <li>🧪 See what adding a theme might do to your portfolio</li>
-                </ul>
-                <p style="margin-top:8px;font-style:italic">This is for learning and exploration — not investment advice.</p>
-            </div>
-
-            <!-- Feature 6: Core-First Banner -->
-            <div class="core-banner" data-testid="core-banner">💡 <strong>Good to know:</strong> Many investors build a core portfolio first (broad stock and bond funds). Themes are often used as <strong>additional ideas to explore</strong> alongside a diversified foundation.</div>
-
-            <!-- ===== LIST VIEW ===== -->
-            <div id="lv">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
-                    <h2 style="font-size:20px">Explore Themes</h2>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap">
-                        <button class="cbtn" onclick="startGuide()" data-testid="help-choose-btn">🧭 Help Me Choose</button>
-                        <button class="xbtn" onclick="exportBeginnerCSV()" data-testid="beginner-csv-btn">📥 Beginner CSV</button>
-                        <button class="xbtn" onclick="exportThemesCSV()" data-testid="export-csv-btn">📥 Pro CSV</button>
-                    </div>
-                </div>
-                <div class="ctrls" data-testid="controls-bar">
-                    <input class="sinp" type="text" placeholder="🔍 Search by name, tag, or topic..." id="search-in" oninput="applyFilters()" data-testid="theme-search">
-                    <select class="fsel" id="cat-fil" onchange="applyFilters()" data-testid="category-filter">
-                        <option value="all">All Types</option>
-                        <option value="growth">Growth-Focused</option>
-                        <option value="defensive">Defensive / Protective</option>
-                        <option value="alternative">Alternative / Diversifier</option>
-                        <option value="income">Income-Focused</option>
-                    </select>
-                    <select class="fsel" id="sort-by" onchange="applyFilters()" data-testid="sort-select">
-                        <option value="trending">Sort: What's Hot Now</option>
-                        <option value="cagr5y">Sort: 5-Year Growth</option>
-                        <option value="volatility">Sort: Calmest First</option>
-                        <option value="sharpe">Sort: Best Reward/Risk</option>
-                        <option value="maxdd">Sort: Smallest Drops</option>
-                        <option value="name">Sort: Name A-Z</option>
-                    </select>
-                    <button class="cbtn" id="cmp-btn" onclick="toggleCompareMode()" data-testid="compare-toggle">⚡ Compare Themes</button>
-                </div>
-                <div id="cmp-bar" style="display:none;margin-bottom:15px;padding:12px 16px;background:var(--accent-l);border:2px solid var(--accent);border-radius:10px;font-size:13px">
-                    <span style="font-weight:700;color:var(--accent)">Compare Mode:</span> Pick 2-5 themes you're curious about, then click
-                    <button class="cbtn on" onclick="showCompare()" style="margin-left:8px;padding:6px 14px;font-size:12px" data-testid="compare-go-btn">See Comparison →</button>
-                    <span id="cmp-count" data-testid="compare-count" style="margin-left:8px;color:var(--text2)">0 selected</span>
-                </div>
-                <div id="load-bar" style="text-align:center;padding:40px;color:var(--text2)"><div class="spin"></div><div id="load-msg" style="margin-top:10px;font-size:13px">Loading themes...</div><button id="retry-load-btn" class="cbtn" onclick="retryThemeLoad()" style="display:none;margin-top:12px">Retry</button></div>
-                <div id="offline-badge" style="display:none;margin-bottom:12px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);font-size:12px"><span id="offline-msg">Using offline theme list</span> <button class="cbtn" style="padding:6px 10px;font-size:11px;margin-left:8px" onclick="retryThemeLoad()">Retry</button></div>
-                <div class="tgrid" id="tgrid" data-testid="themes-grid"></div>
-            </div>
-
-            <!-- ===== DETAIL VIEW ===== -->
-            <div id="dv" class="dview" data-testid="theme-detail">
-                <button class="bbtn" onclick="showList()" data-testid="back-btn">← Back to Themes</button>
-                <div id="dc"></div>
-            </div>
-
-            <!-- ===== COMPARE VIEW ===== -->
-            <div id="cv" class="cview">
-                <button class="bbtn" onclick="showList()" data-testid="compare-back-btn">← Back to Themes</button>
-                <div id="cc"></div>
-            </div>
-        </div>
-        <div style="padding:0 30px 16px;text-align:left">
-            <button id="diag-toggle" class="nb" style="font-size:11px;padding:5px 10px" onclick="toggleDiagnostics()" data-testid="diagnostics-toggle">ⓘ Diagnostics</button>
-            <div id="diag-panel" data-testid="diagnostics-panel" style="display:none;margin-top:8px;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);font-size:12px;line-height:1.6"></div>
-        </div>
-        <div class="ftr">🎓 This tool is for learning and exploration. Past performance does not guarantee future results. Nothing here is investment advice.</div>
-    </div>
+<!-- Feature 4: Onboarding Modal -->
+<div class="onb-overlay" data-testid="onboarding-modal" id="onb" style="display:none">
+<div class="onb-box">
+<h3>👋 Welcome! Here's how to use this page</h3>
+<p>This tool helps you explore different investment themes — like AI, Clean Energy, or Dividends.</p>
+<ol>
+<li>🔍 Pick a theme you're curious about</li>
+<li>📊 Check how risky it feels and how it's performed</li>
+<li>🔥 See how it handled past crises</li>
+<li>🧪 Try adding a small amount to your portfolio</li>
+<li>⚖️ Compare it with another theme</li>
+</ol>
+<p style="font-style:italic;font-size:13px">Remember: this is for learning, not investment advice.</p>
+<button class="onb-btn" data-testid="onboarding-dismiss" onclick="dismissOnb()">Got it, let's explore! →</button>
+</div>
+</div>
+<!-- Feature 1: Guided Mode Overlay -->
+<div class="guide-overlay" data-testid="guided-mode" id="guide-overlay" style="display:none">
+<div class="guide-box" id="guide-content"></div>
+</div>
+<!-- Feature 3: Allocation Confirmation Modal -->
+<div class="alloc-modal" data-testid="alloc-modal" id="alloc-modal" style="display:none">
+<div class="alloc-modal-box">
+<h4>⚠️ Just checking in...</h4>
+<p id="alloc-modal-msg">This allocation could strongly influence your results — both positively and negatively.</p>
+<div style="display:flex;gap:10px;margin-top:16px">
+<button onclick="confirmAlloc()" style="flex:1;padding:12px;border:none;border-radius:10px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer">Yes, show me →</button>
+<button onclick="cancelAlloc()" style="flex:1;padding:12px;border:none;border-radius:10px;background:var(--input-bg);color:var(--text);font-weight:600;cursor:pointer">Let me reconsider</button>
+</div>
+</div>
+</div>
+<div class="container">
+<div class="hdr">
+<button class="dtog" id="dtog" onclick="toggleDark()"><span id="mi">🌙</span><span id="mt">Dark Mode</span></button>
+<h1>🔭 Theme &amp; Trend Explorer</h1>
+<p>Discover the big ideas shaping the market — simple, visual, and jargon-free</p>
+</div>
+<div class="nav">
+<a class="nb" href="/">📊 Portfolio Visualizer</a>
+<a class="nb" href="/goals.html">🎯 Goals Simulator</a>
+<span class="nb act">🔭 Market Themes</span>
+</div>
+<div class="cnt">
+<div class="disc"><strong>🎓 Learning Tool:</strong> This section helps you <strong>explore and understand</strong> different market themes. It does <strong>not tell you what to buy</strong>. Past performance does not guarantee future results.</div>
+<!-- Welcome Explainer -->
+<div class="welcome" data-testid="welcome-section" id="welcome-box">
+<h3>👋 What is a Market Theme?</h3>
+<p>A market theme is a group of companies connected by a <strong>big idea</strong> — like Artificial Intelligence, Clean Energy, or Dividend Income. Think of it like a trend or category in the economy.</p>
+<p style="margin-top:8px"><strong>What can you do here?</strong></p>
+<ul>
+<li>🔍 See which ideas have been doing well recently</li>
+<li>📊 Understand how risky or stable each theme is</li>
+<li>⚖️ Compare different themes side by side</li>
+<li>🧪 See what adding a theme might do to your portfolio</li>
+</ul>
+<p style="margin-top:8px;font-style:italic">This is for learning and exploration — not investment advice.</p>
+</div>
+<!-- Feature 6: Core-First Banner -->
+<div class="core-banner" data-testid="core-banner">💡 <strong>Good to know:</strong> Many investors build a core portfolio first (broad stock and bond funds). Themes are often used as <strong>additional ideas to explore</strong> alongside a diversified foundation.</div>
+<!-- ===== LIST VIEW ===== -->
+<div id="lv">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+<h2 style="font-size:20px">Explore Themes</h2>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<button class="cbtn" data-testid="help-choose-btn" onclick="startGuide()">🧭 Help Me Choose</button>
+<button class="xbtn" data-testid="beginner-csv-btn" onclick="exportBeginnerCSV()">📥 Beginner CSV</button>
+<button class="xbtn" data-testid="export-csv-btn" onclick="exportThemesCSV()">📥 Pro CSV</button>
+</div>
+</div>
+<div class="ctrls" data-testid="controls-bar">
+<input class="sinp" data-testid="theme-search" id="search-in" oninput="applyFilters()" placeholder="🔍 Search by name, tag, or topic..." type="text"/>
+<select class="fsel" data-testid="category-filter" id="cat-fil" onchange="applyFilters()">
+<option value="all">All Types</option>
+<option value="growth">Growth-Focused</option>
+<option value="defensive">Defensive / Protective</option>
+<option value="alternative">Alternative / Diversifier</option>
+<option value="income">Income-Focused</option>
+</select>
+<select class="fsel" data-testid="sort-select" id="sort-by" onchange="applyFilters()">
+<option value="trending">Sort: What's Hot Now</option>
+<option value="cagr5y">Sort: 5-Year Growth</option>
+<option value="volatility">Sort: Calmest First</option>
+<option value="sharpe">Sort: Best Reward/Risk</option>
+<option value="maxdd">Sort: Smallest Drops</option>
+<option value="name">Sort: Name A-Z</option>
+</select>
+<button class="cbtn" data-testid="compare-toggle" id="cmp-btn" onclick="toggleCompareMode()">⚡ Compare Themes</button>
+</div>
+<div id="cmp-bar" style="display:none;margin-bottom:15px;padding:12px 16px;background:var(--accent-l);border:2px solid var(--accent);border-radius:10px;font-size:13px">
+<span style="font-weight:700;color:var(--accent)">Compare Mode:</span> Pick 2-5 themes you're curious about, then click
+                    <button class="cbtn on" data-testid="compare-go-btn" onclick="showCompare()" style="margin-left:8px;padding:6px 14px;font-size:12px">See Comparison →</button>
+<span data-testid="compare-count" id="cmp-count" style="margin-left:8px;color:var(--text2)">0 selected</span>
+</div>
+<div id="load-bar" style="text-align:center;padding:40px;color:var(--text2)"><div class="spin"></div><div id="load-msg" style="margin-top:10px;font-size:13px">Loading themes...</div><button class="cbtn" id="retry-load-btn" onclick="retryThemeLoad()" style="display:none;margin-top:12px">Retry</button></div>
+<div id="offline-badge" style="display:none;margin-bottom:12px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);font-size:12px"><span id="offline-msg">Using offline theme list</span> <button class="cbtn" onclick="retryThemeLoad()" style="padding:6px 10px;font-size:11px;margin-left:8px">Retry</button></div>
+<div class="tgrid" data-testid="themes-grid" id="tgrid"></div>
+</div>
+<!-- ===== DETAIL VIEW ===== -->
+<div class="dview" data-testid="theme-detail" id="dv">
+<button class="bbtn" data-testid="back-btn" onclick="showList()">← Back to Themes</button>
+<div id="dc"></div>
+</div>
+<!-- ===== COMPARE VIEW ===== -->
+<div class="cview" id="cv">
+<button class="bbtn" data-testid="compare-back-btn" onclick="showList()">← Back to Themes</button>
+<div id="cc"></div>
+</div>
+</div>
+<div style="padding:0 30px 16px;text-align:left">
+<button class="nb" data-testid="diagnostics-toggle" id="diag-toggle" onclick="toggleDiagnostics()" style="font-size:11px;padding:5px 10px">ⓘ Diagnostics</button>
+<div data-testid="diagnostics-panel" id="diag-panel" style="display:none;margin-top:8px;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);font-size:12px;line-height:1.6"></div>
+</div>
+<div class="ftr">🎓 This tool is for learning and exploration. Past performance does not guarantee future results. Nothing here is investment advice.</div>
+</div>
 <script>
 // ============================================================================
 // THEME DATA MODEL (loaded from /data/themes.json)
