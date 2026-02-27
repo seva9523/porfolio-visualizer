@@ -1231,63 +1231,6 @@ const DriftTickerLabelsPlugin = {
   }
 };
 
-
-// --- Portfolio Allocation pie: draw ticker labels on the slices (no external deps) ---
-const PortfolioPieTickerLabelsPlugin = {
-  id: 'portfolioPieTickerLabels',
-  afterDatasetsDraw(chart, args, pluginOptions) {
-    // Only run for the main allocation pie (avoid touching other charts)
-    if (!chart?.canvas?.id || chart.canvas.id !== 'pieChart') return;
-
-    const opts = pluginOptions || {};
-    const minPct = typeof opts.minPct === 'number' ? opts.minPct : 6; // hide tiny slices
-    const fontSize = typeof opts.fontSize === 'number' ? opts.fontSize : 11;
-    const fontWeight = opts.fontWeight || 700;
-
-    const ctx = chart.ctx;
-    const dataset = chart.data.datasets?.[0];
-    const labels = chart.data.labels || [];
-    if (!dataset) return;
-
-    const values = (dataset.data || []).map(v => Number(v) || 0);
-    const total = values.reduce((a, b) => a + b, 0) || 1;
-
-    const meta = chart.getDatasetMeta(0);
-    if (!meta || !meta.data) return;
-
-    ctx.save();
-    ctx.font = `${fontWeight} ${fontSize}px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    meta.data.forEach((arc, i) => {
-      const v = values[i] || 0;
-      const pct = (v / total) * 100;
-      if (pct < minPct) return;
-
-      const label = String(labels[i] ?? '').trim();
-      if (!label) return;
-
-      const { x, y, startAngle, endAngle, innerRadius, outerRadius } = arc;
-      const angle = (startAngle + endAngle) / 2;
-      const r = (innerRadius + outerRadius) / 2;
-
-      const tx = x + Math.cos(angle) * r;
-      const ty = y + Math.sin(angle) * r;
-
-      ctx.fillStyle = '#ffffff';
-      ctx.shadowColor = 'rgba(0,0,0,0.35)';
-      ctx.shadowBlur = 6;
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = 1;
-
-      ctx.fillText(label, tx, ty);
-    });
-
-    ctx.restore();
-  }
-};
-
 function drawDriftDonut(canvasId, items) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
@@ -3843,18 +3786,16 @@ function updateRightRail() {
 
         function createPieChart(data, total) {
             const isDark = document.body.classList.contains('dark-mode');
-            const textColor = isDark ? '#e8e8e8' : '#2c3e50';
+            const textColor = isDark ? '#ffffff' : '#2c3e50';
             
             if (pieChart) pieChart.destroy();
             pieChart = new Chart(document.getElementById('pieChart'), {
                 type: 'pie',
-                plugins: [PortfolioPieTickerLabelsPlugin],
                 data: { labels: data.map(h => h.ticker), datasets: [{ data: data.map(h => h.value), backgroundColor: colors.slice(0, data.length), borderWidth: 2, borderColor: isDark ? '#0f3460' : '#fff' }] },
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: true, 
-                    plugins: {
-                        portfolioPieTickerLabels: { minPct: 5, fontSize: 11, fontWeight: 700 }, 
+                    plugins: { 
                         legend: { 
                             position: 'right', 
                             labels: { 
@@ -3862,7 +3803,7 @@ function updateRightRail() {
                                 padding: 15,
                                 color: textColor,
                                 fontColor: textColor,
-                                generateLabels: (chart) => chart.data.labels.map((label, i) => ({ text: `${label}: ${((chart.data.datasets[0].data[i]/total)*100).toFixed(1)}%`, fillStyle: chart.data.datasets[0].backgroundColor[i], hidden: false, index: i })) 
+                                generateLabels: (chart) => chart.data.labels.map((label, i) => ({ text: `${label}: ${((chart.data.datasets[0].data[i]/total)*100).toFixed(1)}%`, fillStyle: chart.data.datasets[0].backgroundColor[i], fontColor: textColor, hidden: false, index: i })) 
                             } 
                         }, 
                         tooltip: { callbacks: { label: (context) => `$${context.parsed.toLocaleString('en-US', {minimumFractionDigits: 2})} (${((context.parsed/total)*100).toFixed(1)}%)` } } 
