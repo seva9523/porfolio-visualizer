@@ -3,6 +3,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -83,6 +84,9 @@ function fmtInt(n) {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="journey.css">
+    <script src="journey.js" defer></script>
+
     <script src="rebalancing-engine.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -645,6 +649,7 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
             <p style="max-width: 600px; margin: 0 auto 20px; line-height: 1.6; opacity: 0.9;">See how your investments are balanced, explore what-if scenarios, and learn how market shifts affect your mix — all in plain language.</p>
             <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px;">
                 <button onclick="loadSamplePortfolio()" style="padding: 14px 28px; background: #14B8A6; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.3s; box-shadow: 0 2px 12px rgba(20,184,166,0.3);">Start with a Sample Portfolio</button>
+                <button id="start-journey-btn" onclick="(window.WVJourney && WVJourney.openStartModal) ? WVJourney.openStartModal() : (location.href='index.html?journey=diversify&step=A1')" style="padding: 14px 22px; background: rgba(255,255,255,0.16); color: white; border: 1px solid rgba(255,255,255,0.35); border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.3s;">Start Guided Journey</button>
                 <a href="#portfolio-builder-section" style="padding: 14px 20px; color: rgba(255,255,255,0.9); text-decoration: none; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 4px;">Or build your own →</a>
             </div>
             <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; font-size: 13px; opacity: 0.8;">
@@ -656,6 +661,8 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
                 <a href="#" onclick="document.getElementById('how-it-works-modal').style.display='flex'; return false;" style="color: rgba(255,255,255,0.7); font-size: 13px; text-decoration: underline;">How does this work?</a>
             </div>
         </div>
+
+        <div id="journey-stepper"></div>
 
         <!-- How It Works Modal -->
         <div id="how-it-works-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center; padding: 0;" onclick="if(event.target===this)this.style.display='none'">
@@ -679,6 +686,42 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
                 <button onclick="document.getElementById('how-it-works-modal').style.display='none'" style="width: 100%; margin-top: 24px; padding: 12px; background: #14B8A6; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;">Got it</button>
             </div>
         </div>
+
+
+        <!-- Start Journey Modal -->
+        <div id="journey-start-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:10000; align-items:center; justify-content:center; padding: 16px;" onclick="if(event.target===this)this.style.display='none'">
+            <div style="background: var(--container-bg); border-radius: 16px; padding: 28px; max-width: 560px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.35);">
+                <div style="display:flex; align-items:flex-start; justify-content:space-between; gap: 12px; margin-bottom: 10px;">
+                    <div>
+                        <div style="font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--text-secondary);">WealthView Journey</div>
+                        <h3 style="font-size: 20px; font-weight: 800; color: var(--text-primary); margin-top: 6px;">Choose your starting point</h3>
+                    </div>
+                    <button onclick="document.getElementById('journey-start-modal').style.display='none'" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-secondary);">✕</button>
+                </div>
+
+                <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 16px;">
+                    WealthView provides educational analysis and simulations. It does not provide financial advice or recommendations.
+                    You stay in control of decisions.
+                </p>
+
+                <div style="display:grid; grid-template-columns: 1fr; gap: 12px;">
+                    <button data-testid="journey-diversify" onclick="WVJourney && WVJourney.startPath ? WVJourney.startPath('diversify') : (location.href='index.html?journey=diversify&step=A1')" style="text-align:left; padding: 14px 14px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--input-bg); cursor:pointer;">
+                        <div style="font-weight: 800; color: var(--text-primary); margin-bottom: 4px;">I already have investments</div>
+                        <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.4;">Check concentration, explore diversification patterns, and build a self-directed adjustment plan.</div>
+                    </button>
+
+                    <button data-testid="journey-starter" onclick="WVJourney && WVJourney.startPath ? WVJourney.startPath('starter') : (location.href='goals.html?journey=starter&step=B1')" style="text-align:left; padding: 14px 14px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--input-bg); cursor:pointer;">
+                        <div style="font-weight: 800; color: var(--text-primary); margin-bottom: 4px;">I’m starting from income / cash</div>
+                        <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.4;">Learn the basics through scenarios, choose a portfolio structure, and leave with a clear checklist.</div>
+                    </button>
+                </div>
+
+                <div style="display:flex; gap: 10px; justify-content:flex-end; margin-top: 16px;">
+                    <button onclick="document.getElementById('journey-start-modal').style.display='none'" style="padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-color); background: transparent; color: var(--text-primary); font-weight: 700; cursor: pointer;">Not now</button>
+                </div>
+            </div>
+        </div>
+
 
         <!-- Tool Cards Grid -->
         <div id="tool-cards-section" style="padding: 24px 30px 8px; background: var(--container-bg);">
