@@ -1,14 +1,15 @@
 
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Financial Goals Simulator - Portfolio Visualizer</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-    <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Financial Goals Simulator - Portfolio Visualizer</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
@@ -729,219 +730,216 @@ body {
             opacity: 0.98;
         }
 
+
+/* WealthView tool cards (shared header cards) */
+.wv-tool-card {
+  background: var(--card-bg);
+  border: 1.5px solid var(--border-color);
+  border-radius: 12px;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.wv-tool-card:hover {
+  border-color: #14B8A6;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(20,184,166,0.12);
+}
+
 </style>
-    <script defer src="/_vercel/insights/script.js"></script>
+<script defer="" src="/_vercel/insights/script.js"></script>
 </head>
 <body>
-    <div class="container">
-        <div class="header" id="wv-hero">
+<div class="container">
+<div class="header" id="wv-hero">
 <button class="dark-mode-toggle" onclick="toggleDarkMode()">
-                <span id="mode-icon">🌙</span>
-                <span id="mode-text">Dark Mode</span>
-            </button>
-            <div style="font-size: 14px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; opacity: 0.8; margin-bottom: 8px;">WealthView</div>
-            <h1 style="font-size: 2.2em; margin-bottom: 8px;">Understand Your Portfolio in Minutes</h1>
-            <p style="max-width: 600px; margin: 0 auto 20px; line-height: 1.6; opacity: 0.9;">See how your investments are balanced, explore what-if scenarios, and learn how market shifts affect your mix — all in plain language.</p>
-            <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px;">
-                <button onclick="window.location.href='/'" style="padding: 14px 28px; background: #14B8A6; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.3s; box-shadow: 0 2px 12px rgba(20,184,166,0.3);">Start with a Sample Portfolio</button>
-                <a href="/#portfolio-builder-section" style="padding: 14px 20px; color: rgba(255,255,255,0.9); text-decoration: none; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 4px;">Or build your own →</a>
-            </div>
-            <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; font-size: 13px; opacity: 0.8;">
-                <span>✦ No login required</span>
-                <span>✦ Educational analysis only</span>
-                <span>✦ Your data stays in your browser</span>
-            </div>
-            <div style="margin-top: 12px;">
-                <a href="#" onclick="document.getElementById('how-it-works-modal').style.display='flex'; return false;" style="color: rgba(255,255,255,0.7); font-size: 13px; text-decoration: underline;">How does this work?</a>
-            </div>
-        </div>
-
-        <!-- How It Works Modal -->
-<div id="how-it-works-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center; padding: 0;" onclick="if(event.target===this)this.style.display='none'">
-            <div style="background: var(--container-bg); border-radius: 16px; padding: 36px; max-width: 520px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); position: relative;">
-                <button onclick="document.getElementById('how-it-works-modal').style.display='none'" style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-secondary);">✕</button>
-                <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 24px; color: var(--text-primary);">How WealthView Works</h3>
-                <div style="display: flex; flex-direction: column; gap: 20px;">
-                    <div style="display: flex; gap: 14px; align-items: flex-start;">
-                        <span style="font-size: 28px;">📝</span>
-                        <div><p style="font-weight: 700; color: var(--text-primary); margin-bottom: 2px;">1. Add your holdings</p><p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">Enter ticker symbols and share counts — or start with our sample portfolio.</p></div>
-                    </div>
-                    <div style="display: flex; gap: 14px; align-items: flex-start;">
-                        <span style="font-size: 28px;">📊</span>
-                        <div><p style="font-weight: 700; color: var(--text-primary); margin-bottom: 2px;">2. See your portfolio's balance</p><p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">Instantly view allocation, diversification, drift status, and historical performance.</p></div>
-                    </div>
-                    <div style="display: flex; gap: 14px; align-items: flex-start;">
-                        <span style="font-size: 28px;">🔍</span>
-                        <div><p style="font-weight: 700; color: var(--text-primary); margin-bottom: 2px;">3. Explore scenarios</p><p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">Run simulations, check goal feasibility, and understand what allocation drift means.</p></div>
-                    </div>
-                </div>
-                <button onclick="document.getElementById('how-it-works-modal').style.display='none'" style="width: 100%; margin-top: 24px; padding: 12px; background: #14B8A6; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;">Got it</button>
-            </div>
-        </div>
-
-        <!-- Tool Cards Grid -->
-        <div id="tool-cards-section" style="padding: 24px 30px 8px; background: var(--container-bg);">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;">
-                <div class="wv-tool-card" onclick="setWVView('overview'); document.getElementById('portfolio-builder-section').scrollIntoView({behavior:'smooth'})">
-                    <div style="font-size: 28px; margin-bottom: 8px;">📊</div>
-                    <h3 style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">Portfolio Visualizer</h3>
-                    <p style="font-size: 13px; font-weight: 600; color: #2E86AB; margin-bottom: 4px;">See your full picture at a glance</p>
-                    <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 10px;">Charts, allocations, performance trends, and diversification analysis.</p>
-                    <span style="font-size: 13px; font-weight: 600; color: #14B8A6;">Visualize →</span>
-                </div>
-                
-
-                <div class="wv-tool-card" onclick="window.location.href='goals.html'">
-                    <div style="font-size: 28px; margin-bottom: 8px;">🎯</div>
-                    <h3 style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">Goals Simulator</h3>
-                    <p style="font-size: 13px; font-weight: 600; color: #2E86AB; margin-bottom: 4px;">Test if your goals are on track</p>
-                    <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 10px;">Run scenario projections for retirement, education, or any financial milestone.</p>
-                    <span style="font-size: 13px; font-weight: 600; color: #14B8A6;">Run scenario →</span>
-                </div>
-                <div class="wv-tool-card" onclick="window.location.href='themes.html'">
-                    <div style="font-size: 28px; margin-bottom: 8px;">🔭</div>
-                    <h3 style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">Theme Explorer</h3>
-                    <p style="font-size: 13px; font-weight: 600; color: #2E86AB; margin-bottom: 4px;">See what your portfolio is exposed to</p>
-                    <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 10px;">Understand which market themes and sectors your holdings are connected to.</p>
-                    <span style="font-size: 13px; font-weight: 600; color: #14B8A6;">Explore themes →</span>
-                </div>
-            </div>
-        </div>
-<div class="top-nav">
-            <a href="/">📊 Portfolio Visualizer</a>
-            <span class="active-tab">🎯 Goals Simulator</span>
-            <a href="/themes.html">🔭 Market Themes</a>
-        </div>
-
-        <div class="page-shell">
-            <main class="main-content">
-            
-            <div class="actions-bar">
-                <div class="actions-left">
-                    <button class="add-goal-btn" onclick="openGoalModal()" data-testid="add-goal-btn">➕ Add Financial Goal Simulation</button>
-                </div>
-                <div class="actions-right">
-                    <button type="button" class="btn-secondary" id="download-pdf" data-testid="download-pdf">Download PDF</button>
-                </div>
-            </div>
+<span id="mode-icon">🌙</span>
+<span id="mode-text">Dark Mode</span>
+</button>
+<div style="font-size: 14px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; opacity: 0.8; margin-bottom: 8px;">WealthView</div>
+<h1 style="font-size: 2.2em; margin-bottom: 8px;">Understand Your Portfolio in Minutes</h1>
+<p style="max-width: 600px; margin: 0 auto 20px; line-height: 1.6; opacity: 0.9;">See how your investments are balanced, explore what-if scenarios, and learn how market shifts affect your mix — all in plain language.</p>
+<div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px;">
+<button onclick="window.location.href='/'" style="padding: 14px 28px; background: #14B8A6; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.3s; box-shadow: 0 2px 12px rgba(20,184,166,0.3);">Start with a Sample Portfolio</button>
+<a href="/#portfolio-builder-section" style="padding: 14px 20px; color: rgba(255,255,255,0.9); text-decoration: none; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 4px;">Or build your own →</a>
+</div>
+<div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; font-size: 13px; opacity: 0.8;">
+<span>✦ No login required</span>
+<span>✦ Educational analysis only</span>
+<span>✦ Your data stays in your browser</span>
+</div>
+<div style="margin-top: 12px;">
+<a href="#" onclick="document.getElementById('how-it-works-modal').style.display='flex'; return false;" style="color: rgba(255,255,255,0.7); font-size: 13px; text-decoration: underline;">How does this work?</a>
+</div>
+</div>
+<!-- How It Works Modal -->
+<div id="how-it-works-modal" onclick="if(event.target===this)this.style.display='none'" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center; padding: 0;">
+<div style="background: var(--container-bg); border-radius: 16px; padding: 36px; max-width: 520px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); position: relative;">
+<button onclick="document.getElementById('how-it-works-modal').style.display='none'" style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-secondary);">✕</button>
+<h3 style="font-size: 20px; font-weight: 700; margin-bottom: 24px; color: var(--text-primary);">How WealthView Works</h3>
+<div style="display: flex; flex-direction: column; gap: 20px;">
+<div style="display: flex; gap: 14px; align-items: flex-start;">
+<span style="font-size: 28px;">📝</span>
+<div><p style="font-weight: 700; color: var(--text-primary); margin-bottom: 2px;">1. Add your holdings</p><p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">Enter ticker symbols and share counts — or start with our sample portfolio.</p></div>
+</div>
+<div style="display: flex; gap: 14px; align-items: flex-start;">
+<span style="font-size: 28px;">📊</span>
+<div><p style="font-weight: 700; color: var(--text-primary); margin-bottom: 2px;">2. See your portfolio's balance</p><p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">Instantly view allocation, diversification, drift status, and historical performance.</p></div>
+</div>
+<div style="display: flex; gap: 14px; align-items: flex-start;">
+<span style="font-size: 28px;">🔍</span>
+<div><p style="font-weight: 700; color: var(--text-primary); margin-bottom: 2px;">3. Explore scenarios</p><p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">Run simulations, check goal feasibility, and understand what allocation drift means.</p></div>
+</div>
+</div>
+<button onclick="document.getElementById('how-it-works-modal').style.display='none'" style="width: 100%; margin-top: 24px; padding: 12px; background: #14B8A6; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;">Got it</button>
+</div>
+</div>
+<!-- Tool Cards Grid -->
 
 
-            <div class="disclaimer-box">
-                <strong>⚠️ Important:</strong> This tool illustrates possible outcomes based on historical data and simulations.
+<!-- Tool Cards Grid -->
+<div id="tool-cards-section" style="padding: 24px 30px 8px; background: var(--container-bg);">
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;">
+    <div class="wv-tool-card" onclick="window.location.href='/'">
+      <div style="padding: 16px 18px;">
+        <div style="font-size: 28px; margin-bottom: 8px;">📊</div>
+        <div style="font-weight: 800; font-size: 16px; margin-bottom: 2px; color: var(--text-primary);">Portfolio Visualizer</div>
+        <div style="font-size: 12px; font-weight: 700; color: #0EA5E9; margin-bottom: 6px;">See your full picture at a glance</div>
+        <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">Charts, allocations, performance trends, and diversification analysis.</div>
+        <div style="margin-top: 10px; font-weight: 800; font-size: 13px; color: #14B8A6;">Visualize →</div>
+      </div>
+    </div>
+
+    <div class="wv-tool-card" onclick="window.location.href='/goals.html'" style="border-color:#14B8A6; box-shadow: 0 8px 24px rgba(20,184,166,0.10);">
+      <div style="padding: 16px 18px;">
+        <div style="font-size: 28px; margin-bottom: 8px;">🎯</div>
+        <div style="font-weight: 800; font-size: 16px; margin-bottom: 2px; color: var(--text-primary);">Goals Simulator</div>
+        <div style="font-size: 12px; font-weight: 700; color: #0EA5E9; margin-bottom: 6px;">Test if your goals are on track</div>
+        <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">Run scenario projections for retirement, education, or any financial milestone.</div>
+        <div style="margin-top: 10px; font-weight: 800; font-size: 13px; color: #14B8A6;">Run scenario →</div>
+      </div>
+    </div>
+
+    <div class="wv-tool-card" onclick="window.location.href='/themes.html'" style="">
+      <div style="padding: 16px 18px;">
+        <div style="font-size: 28px; margin-bottom: 8px;">🔭</div>
+        <div style="font-weight: 800; font-size: 16px; margin-bottom: 2px; color: var(--text-primary);">Theme Explorer</div>
+        <div style="font-size: 12px; font-weight: 700; color: #0EA5E9; margin-bottom: 6px;">See what your portfolio is exposed to</div>
+        <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">Understand which market themes and sectors your holdings are connected to.</div>
+        <div style="margin-top: 10px; font-weight: 800; font-size: 13px; color: #14B8A6;">Explore themes →</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-shell">
+<main class="main-content">
+<div class="actions-bar">
+<div class="actions-left">
+<button class="add-goal-btn" data-testid="add-goal-btn" onclick="openGoalModal()">➕ Add Financial Goal Simulation</button>
+</div>
+<div class="actions-right">
+<button class="btn-secondary" data-testid="download-pdf" id="download-pdf" type="button">Download PDF</button>
+</div>
+</div>
+<div class="disclaimer-box">
+<strong>⚠️ Important:</strong> This tool illustrates possible outcomes based on historical data and simulations.
                 It is <strong>NOT financial advice</strong> and does not recommend investments. Past performance does not guarantee future results.
             </div>
-
-            <div id="goals-container"></div>
-
-            <div id="no-goals" class="no-goals">
-                <div style="font-size: 48px; margin-bottom: 10px;">🎯</div>
-                <div style="font-size: 16px;">No financial goal simulations yet. Click "Add Goal Simulation" to get started!</div>
-            </div>
-        
-            </main>
-
-            <aside class="right-rail" aria-label="Goals sidebar">
-                <div class="rail-card">
-                    <div class="rail-title">Quick Read</div>
-                    <div class="rail-sub">
+<div id="goals-container"></div>
+<div class="no-goals" id="no-goals">
+<div style="font-size: 48px; margin-bottom: 10px;">🎯</div>
+<div style="font-size: 16px;">No financial goal simulations yet. Click "Add Goal Simulation" to get started!</div>
+</div>
+</main>
+<aside aria-label="Goals sidebar" class="right-rail">
+<div class="rail-card">
+<div class="rail-title">Quick Read</div>
+<div class="rail-sub">
                         This tool runs hypothetical goal scenarios using the inputs you provide.
                         It is educational only and does not provide financial advice.
                     </div>
-                </div>
-
-                <div class="rail-card">
-                    <div class="rail-title">How to use</div>
-                    <div class="rail-list">
-                        <div class="rail-item">1) Click <strong>Add Financial Goal Simulation</strong></div>
-                        <div class="rail-item">2) Enter goal amount, timeline, savings, and contributions</div>
-                        <div class="rail-item">3) Review the probability meter and forecast chart (hypothetical)</div>
-                    </div>
-                </div>
-
-                <div class="rail-card">
-                    <div class="rail-title">Inputs (plain language)</div>
-                    <div class="rail-list">
-                        <div class="rail-item"><strong>Target Amount</strong>: the number you want to reach</div>
-                        <div class="rail-item"><strong>Time Horizon</strong>: how many years you have</div>
-                        <div class="rail-item"><strong>Monthly Contribution</strong>: what you add each month</div>
-                        <div class="rail-item"><strong>Return / Volatility</strong>: scenario assumptions (not predictions)</div>
-                    </div>
-                </div>
-
-                <div class="rail-card">
-                    <div class="rail-title">Disclosure</div>
-                    <div class="rail-sub">
+</div>
+<div class="rail-card">
+<div class="rail-title">How to use</div>
+<div class="rail-list">
+<div class="rail-item">1) Click <strong>Add Financial Goal Simulation</strong></div>
+<div class="rail-item">2) Enter goal amount, timeline, savings, and contributions</div>
+<div class="rail-item">3) Review the probability meter and forecast chart (hypothetical)</div>
+</div>
+</div>
+<div class="rail-card">
+<div class="rail-title">Inputs (plain language)</div>
+<div class="rail-list">
+<div class="rail-item"><strong>Target Amount</strong>: the number you want to reach</div>
+<div class="rail-item"><strong>Time Horizon</strong>: how many years you have</div>
+<div class="rail-item"><strong>Monthly Contribution</strong>: what you add each month</div>
+<div class="rail-item"><strong>Return / Volatility</strong>: scenario assumptions (not predictions)</div>
+</div>
+</div>
+<div class="rail-card">
+<div class="rail-title">Disclosure</div>
+<div class="rail-sub">
                         Educational use only. Simulations are hypothetical and not predictive. Past performance does not guarantee future results.
                         This is not investment, tax, or legal advice.
                     </div>
-                </div>
-            </aside>
-        </div>
-    </div>
-
-    <!-- Goal Creation Modal -->
-    <div id="goal-modal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">Add Financial Goal Simulation</h2>
-                <button class="modal-close" onclick="closeGoalModal()">×</button>
-            </div>
-
-            <form id="goal-form" onsubmit="saveGoal(event)">
-                <div class="form-group">
-                    <label>Goal Name *</label>
-                    <input type="text" id="goal-name" placeholder="e.g., Retirement Fund" required data-testid="goal-name">
-                </div>
-
-                <div class="form-group">
-                    <label>Goal Type *</label>
-                    <select id="goal-type" required data-testid="goal-type">
-                        <option value="retirement">Retirement</option>
-                        <option value="home">Buy a Home</option>
-                        <option value="education">Education</option>
-                        <option value="short_term">Short-Term Goal</option>
-                        <option value="fire">FIRE / Early Retirement</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Target Amount ($) *</label>
-                    <input type="number" id="goal-target" min="0" step="1" placeholder="1000000" required data-testid="goal-target">
-                </div>
-
-                <div class="form-group">
-                    <label>Time Horizon (years) *</label>
-                    <input type="number" id="goal-years" min="1" max="50" placeholder="30" required data-testid="goal-years">
-                </div>
-
-                <div class="form-group">
-                    <label>Current Savings ($)</label>
-                    <input type="number" id="goal-current" min="0" step="1" placeholder="100000" value="0" data-testid="goal-current">
-                </div>
-
-                <div class="form-group">
-                    <label>Monthly Contribution ($)</label>
-                    <input type="number" id="goal-monthly" min="0" step="1" placeholder="1500" value="0" data-testid="goal-monthly">
-                </div>
-
-                <div class="form-group">
-                    <label>Expected Annual Return (%) *</label>
-                    <input type="number" id="goal-return" min="0" max="30" step="0.1" placeholder="7" value="7" required data-testid="goal-return">
-                </div>
-
-                <div class="form-group">
-                    <label>Expected Volatility (%) *</label>
-                    <input type="number" id="goal-volatility" min="0" max="100" step="0.1" placeholder="15" value="15" required data-testid="goal-volatility">
-                </div>
-
-                <div class="form-actions">
-                    <button type="submit" class="btn-primary" data-testid="run-simulation">Run Simulation</button>
 </div>
-            </form>
-        </div>
-    </div>
-
-    <script>
+</aside>
+</div>
+</div>
+<!-- Goal Creation Modal -->
+<div class="modal-overlay" id="goal-modal">
+<div class="modal-content">
+<div class="modal-header">
+<h2 class="modal-title">Add Financial Goal Simulation</h2>
+<button class="modal-close" onclick="closeGoalModal()">×</button>
+</div>
+<form id="goal-form" onsubmit="saveGoal(event)">
+<div class="form-group">
+<label>Goal Name *</label>
+<input data-testid="goal-name" id="goal-name" placeholder="e.g., Retirement Fund" required="" type="text"/>
+</div>
+<div class="form-group">
+<label>Goal Type *</label>
+<select data-testid="goal-type" id="goal-type" required="">
+<option value="retirement">Retirement</option>
+<option value="home">Buy a Home</option>
+<option value="education">Education</option>
+<option value="short_term">Short-Term Goal</option>
+<option value="fire">FIRE / Early Retirement</option>
+</select>
+</div>
+<div class="form-group">
+<label>Target Amount ($) *</label>
+<input data-testid="goal-target" id="goal-target" min="0" placeholder="1000000" required="" step="1" type="number"/>
+</div>
+<div class="form-group">
+<label>Time Horizon (years) *</label>
+<input data-testid="goal-years" id="goal-years" max="50" min="1" placeholder="30" required="" type="number"/>
+</div>
+<div class="form-group">
+<label>Current Savings ($)</label>
+<input data-testid="goal-current" id="goal-current" min="0" placeholder="100000" step="1" type="number" value="0"/>
+</div>
+<div class="form-group">
+<label>Monthly Contribution ($)</label>
+<input data-testid="goal-monthly" id="goal-monthly" min="0" placeholder="1500" step="1" type="number" value="0"/>
+</div>
+<div class="form-group">
+<label>Expected Annual Return (%) *</label>
+<input data-testid="goal-return" id="goal-return" max="30" min="0" placeholder="7" required="" step="0.1" type="number" value="7"/>
+</div>
+<div class="form-group">
+<label>Expected Volatility (%) *</label>
+<input data-testid="goal-volatility" id="goal-volatility" max="100" min="0" placeholder="15" required="" step="0.1" type="number" value="15"/>
+</div>
+<div class="form-actions">
+<button class="btn-primary" data-testid="run-simulation" type="submit">Run Simulation</button>
+</div>
+</form>
+</div>
+</div>
+<script>
         // Wire up PDF button
         document.addEventListener('DOMContentLoaded', () => {
             const pdfBtn = document.getElementById('download-pdf');
