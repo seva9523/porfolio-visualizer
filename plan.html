@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WealthView Plan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="journey.css">
+  <script src="journey.js" defer></script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --bg-gradient-start:#F8FAFC;
+      --bg-gradient-end:#EEF2F7;
+      --container-bg:#FFFFFF;
+      --header-gradient-start:#0F172A;
+      --header-gradient-end:#14B8A6;
+      --text-primary:#0F172A;
+      --text-secondary:#475569;
+      --input-bg:#F1F5F9;
+      --input-border:#CBD5E1;
+      --border-color:#E2E8F0;
+      --card-bg:#FFFFFF;
+    }
+    body.dark-mode{
+      --bg-gradient-start:#1a1a2e;
+      --bg-gradient-end:#16213e;
+      --container-bg:#0f3460;
+      --header-gradient-start:#1a5276;
+      --header-gradient-end:#0e3b5c;
+      --text-primary:#e8e8e8;
+      --text-secondary:#b0b0b0;
+      --input-bg:#1a2332;
+      --input-border:#2a3f5f;
+      --border-color:#2a3f5f;
+      --card-bg:#1a2332;
+    }
+    body{
+      font-family:'Inter',sans-serif;
+      background: linear-gradient(135deg,var(--bg-gradient-start),var(--bg-gradient-end));
+      min-height:100vh;
+      padding: 30px 20px;
+      color: var(--text-primary);
+    }
+    .container{
+      max-width: 1200px;
+      margin: 0 auto;
+      background: var(--container-bg);
+      border-radius: 16px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+      overflow:hidden;
+    }
+    .header{
+      background: linear-gradient(135deg,var(--header-gradient-start),var(--header-gradient-end));
+      color:#fff;
+      padding: 28px 30px;
+      text-align:center;
+      position: relative;
+    }
+    .dark-mode-toggle{
+      position:absolute;
+      top: 18px;
+      right: 18px;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 999px;
+      cursor:pointer;
+      font-weight: 700;
+      font-size: 13px;
+      display:flex;
+      align-items:center;
+      gap: 8px;
+    }
+    .content{ padding: 22px 28px 30px; }
+    .grid{ display:grid; grid-template-columns: 1.2fr .8fr; gap: 16px; }
+    @media(max-width: 980px){ .grid{ grid-template-columns: 1fr; } body{padding: 16px;} }
+    .card{
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 16px;
+    }
+    .card h3{ font-size: 15px; font-weight: 800; margin-bottom: 10px; }
+    .muted{ color: var(--text-secondary); font-size: 13px; line-height: 1.55; }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border-color);
+      background: var(--input-bg);
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+    .list{ margin-top: 8px; display:flex; flex-direction:column; gap: 8px; }
+    .row{ display:flex; justify-content:space-between; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--input-bg); border: 1px solid var(--border-color); font-size: 13px; }
+    .row b{ font-weight: 800; }
+    .btnbar{ display:flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+    .btn{
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(20,184,166,.65);
+      background: #14B8A6;
+      color:#fff;
+      font-weight: 800;
+      font-size: 13px;
+      cursor:pointer;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+    }
+    .btn.secondary{
+      background: transparent;
+      color: var(--text-primary);
+      border-color: var(--border-color);
+    }
+    .small{ font-size: 12px; }
+    .hr{ height: 1px; background: var(--border-color); margin: 14px 0; }
+    textarea{ width: 100%; min-height: 120px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--input-bg); padding: 10px 12px; color: var(--text-primary); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header" id="wv-hero">
+      <button class="dark-mode-toggle" onclick="toggleDarkMode()">
+        <span id="mode-icon">🌙</span>
+        <span id="mode-text">Dark Mode</span>
+      </button>
+
+      <div style="font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; opacity: .85;">WealthView</div>
+      <h1 style="font-size: 2.0em; margin-top: 8px;">Your WealthView Plan</h1>
+      <p style="max-width: 760px; margin: 10px auto 0; line-height: 1.6; opacity: .92; font-size: 13px;">
+        Educational summary only. No recommendations. You control decisions and execute them with your broker.
+      </p>
+    </div>
+
+    <div id="journey-stepper"></div>
+
+    <div class="content">
+      <div class="grid">
+        <div class="card" id="plan-summary">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap: 12px; flex-wrap:wrap;">
+            <h3 style="margin:0;">Summary</h3>
+            <span class="pill" id="plan-path-pill">Guided Journey</span>
+          </div>
+          <p class="muted" id="plan-summary-text" style="margin-top: 10px;"></p>
+
+          <div class="hr"></div>
+
+          <h3>What you entered</h3>
+          <div class="muted small">Holdings and/or goals you created inside WealthView (stored in your browser).</div>
+
+          <div class="list" id="plan-holdings-list"></div>
+
+          <div class="hr"></div>
+
+          <h3>Goals (if any)</h3>
+          <div class="list" id="plan-goals-list"></div>
+        </div>
+
+        <div class="card" id="plan-checklist">
+          <h3>Self-directed execution checklist (global)</h3>
+          <p class="muted">This is a generic checklist. It is not tailored advice and does not account for your personal situation.</p>
+          <div class="list" style="margin-top: 10px;">
+            <div class="row"><span><b>1.</b> Choose a brokerage platform</span><span class="muted">in your country</span></div>
+            <div class="row"><span><b>2.</b> Translate your chosen structure into instruments</span><span class="muted">funds / ETFs / stocks</span></div>
+            <div class="row"><span><b>3.</b> Set up a repeatable process</span><span class="muted">monthly contributions</span></div>
+            <div class="row"><span><b>4.</b> Pick a review cadence</span><span class="muted">e.g., quarterly</span></div>
+            <div class="row"><span><b>5.</b> Rebalance only if you choose to</span><span class="muted">mechanical alignment</span></div>
+          </div>
+
+          <div class="hr"></div>
+
+          <h3>Notes (optional)</h3>
+          <p class="muted small">Write your own rules. WealthView won’t save this unless you copy it somewhere safe.</p>
+          <textarea placeholder="Example: I will contribute X/month, review quarterly, and rebalance if my chosen targets drift by more than Y%."></textarea>
+
+          <div class="btnbar">
+            <a class="btn" href="index.html">Open Portfolio Visualizer</a>
+            <a class="btn secondary" href="themes.html">Open Theme Explorer</a>
+            <a class="btn secondary" href="goals.html">Open Goals Simulator</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="plan-export" style="margin-top: 16px;">
+        <h3>Export</h3>
+        <p class="muted">Copy the text below into a note, spreadsheet, or document. (Export is intentionally simple to avoid implying advice.)</p>
+        <div class="btnbar">
+          <button class="btn" onclick="copyPlan()">Copy plan text</button>
+          <button class="btn secondary" onclick="downloadHoldingsCsv()">Download holdings CSV</button>
+        </div>
+        <pre id="plan-export-text" style="margin-top: 12px; padding: 12px; border-radius: 12px; background: var(--input-bg); border: 1px solid var(--border-color); overflow:auto; font-size: 12px; line-height: 1.6; white-space: pre-wrap;"></pre>
+      </div>
+    </div>
+  </div>
+
+<script>
+  function toggleDarkMode() {
+    const isDark = document.body.classList.toggle('dark-mode');
+    localStorage.setItem('darkMode', isDark);
+    updateModeText();
+  }
+  function updateModeText(){
+    const isDark = document.body.classList.contains('dark-mode');
+    const icon = document.getElementById('mode-icon');
+    const text = document.getElementById('mode-text');
+    if (icon) icon.textContent = isDark ? '☀️' : '🌙';
+    if (text) text.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+  }
+  (function initDark(){
+    const isDark = localStorage.getItem('darkMode') === 'true';
+    if (isDark) document.body.classList.add('dark-mode');
+    updateModeText();
+  })();
+
+  function safeJsonParse(s, fallback){
+    try{ return JSON.parse(s); }catch(e){ return fallback; }
+  }
+
+  function getCurrentHoldings(){
+    const portfolios = safeJsonParse(localStorage.getItem('portfolios') || '{}', {});
+    const currentId = localStorage.getItem('currentPortfolio');
+    const p = portfolios[currentId];
+    const holdings = p && Array.isArray(p.holdings) ? p.holdings : [];
+    return { currentId, portfolioName: p?.name || 'Current Portfolio', holdings };
+  }
+
+  function getGoals(){
+    const g = safeJsonParse(localStorage.getItem('financialGoals') || '[]', []);
+    return Array.isArray(g) ? g : [];
+  }
+
+  function esc(s){ return String(s ?? '').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+
+  function render(){
+    const path = new URLSearchParams(location.search).get('journey') || localStorage.getItem('wv_journey_path') || 'journey';
+    const pill = document.getElementById('plan-path-pill');
+    if (pill) pill.textContent = (path === 'diversify') ? 'Diversify journey' : (path === 'starter') ? 'Starter journey' : 'Your plan';
+
+    const summary = document.getElementById('plan-summary-text');
+    if (summary) {
+      summary.textContent = (path === 'diversify')
+        ? 'You explored what you own, where concentration may exist, how drift works, and how scenarios can change outcomes. This page summarizes what you entered so you can execute your own decisions.'
+        : 'You created goal scenarios, explored themes, and reviewed how portfolio structures behave. This page summarizes what you entered so you can execute your own decisions.';
+    }
+
+    const { portfolioName, holdings } = getCurrentHoldings();
+    const list = document.getElementById('plan-holdings-list');
+    list.innerHTML = '';
+    if (!holdings.length){
+      list.innerHTML = '<div class="row"><span><b>No holdings found</b></span><span class="muted">Add holdings in Portfolio Visualizer</span></div>';
+    } else {
+      const top = holdings.slice(0, 12);
+      top.forEach(h=>{
+        const ticker = esc(h.ticker || '');
+        const shares = esc(h.shares ?? '');
+        const name = esc(h.name || '');
+        list.insertAdjacentHTML('beforeend', `<div class="row"><span><b>${ticker || name || 'Holding'}</b> <span class="muted">${name && ticker ? '— ' + name : ''}</span></span><span class="muted">${shares ? shares + ' shares' : ''}</span></div>`);
+      });
+      if (holdings.length > 12){
+        list.insertAdjacentHTML('beforeend', `<div class="row"><span class="muted">+ ${holdings.length - 12} more holdings</span><span></span></div>`);
+      }
+    }
+
+    const goals = getGoals();
+    const gList = document.getElementById('plan-goals-list');
+    gList.innerHTML = '';
+    if (!goals.length){
+      gList.innerHTML = '<div class="row"><span><b>No goals found</b></span><span class="muted">Create goals in Goals Simulator</span></div>';
+    } else {
+      const recent = goals.slice().sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+      recent.slice(0, 3).forEach(g=>{
+        const nm = esc(g.name || g.goalName || 'Goal');
+        const target = esc(g.targetAmount || g.target || '');
+        const horizon = esc(g.years || g.timeHorizonYears || '');
+        gList.insertAdjacentHTML('beforeend', `<div class="row"><span><b>${nm}</b></span><span class="muted">${target ? 'Target: ' + target : ''}${horizon ? (target ? ' · ' : '') + horizon + ' yrs' : ''}</span></div>`);
+      });
+    }
+
+    // export text
+    const exportEl = document.getElementById('plan-export-text');
+    const lines = [];
+    lines.push('WEALTHVIEW PLAN (Educational summary — not advice)');
+    lines.push('---');
+    lines.push('Journey: ' + (path === 'diversify' ? 'Diversify existing portfolio' : path === 'starter' ? 'Start from income/cash' : ''));
+    lines.push('');
+    lines.push('Portfolio: ' + portfolioName);
+    lines.push('Holdings:');
+    if (!holdings.length) lines.push('  (none found)');
+    else holdings.forEach(h=>{
+      lines.push(`  - ${(h.ticker || h.name || 'Holding')}  |  shares: ${h.shares ?? ''}`);
+    });
+    lines.push('');
+    lines.push('Goals (if any):');
+    if (!goals.length) lines.push('  (none found)');
+    else goals.forEach(g=>{
+      lines.push(`  - ${(g.name || g.goalName || 'Goal')} | target: ${(g.targetAmount || g.target || '')} | horizon: ${(g.years || g.timeHorizonYears || '')}`);
+    });
+    lines.push('');
+    lines.push('Checklist: Choose broker → map structure to instruments → automate contributions → review cadence → rebalance if you choose to.');
+    exportEl.textContent = lines.join('\n');
+  }
+
+  function copyPlan(){
+    const text = document.getElementById('plan-export-text')?.textContent || '';
+    navigator.clipboard.writeText(text).then(()=>alert('Copied.'));
+  }
+
+  function downloadHoldingsCsv(){
+    const { holdings } = getCurrentHoldings();
+    const rows = [['ticker','name','shares','purchasePrice','purchaseDate']];
+    holdings.forEach(h=>{
+      rows.push([h.ticker||'', h.name||'', h.shares??'', h.purchasePrice??'', h.purchaseDate??'']);
+    });
+    const csv = rows.map(r=>r.map(v=>String(v).replace(/"/g,'""')).map(v=>`"${v}"`).join(',')).join('\n');
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'wealthview_holdings.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  document.addEventListener('DOMContentLoaded', render);
+</script>
+</body>
+</html>
