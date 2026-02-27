@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 
 <html lang="en">
@@ -8,6 +9,9 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
 <title>Theme &amp; Trend Explorer - Portfolio Visualizer</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="journey.css"/>
+<script src="journey.js" defer></script>
+
 <style>
 /* WealthView UI alignment (Portfolio Visualizer + Goals Simulator)
    Design-only changes: content + JS behavior unchanged. */
@@ -505,6 +509,7 @@ body{
 <a href="#" onclick="document.getElementById('how-it-works-modal').style.display='flex'; return false;" style="color: rgba(255,255,255,0.7); font-size: 13px; text-decoration: underline;">How does this work?</a>
 </div>
 </div>
+<div id="journey-stepper"></div>
 <!-- How It Works Modal -->
 <div id="how-it-works-modal" onclick="if(event.target===this)this.style.display='none'" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center; padding: 0;">
 <div style="background: var(--container-bg); border-radius: 16px; padding: 36px; max-width: 520px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); position: relative;">
