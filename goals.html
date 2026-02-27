@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -31,7 +32,25 @@
             --danger: #DC2626;
         }
 
-        body {
+        
+        body.dark-mode {
+            --bg-gradient-start: #1a1a2e;
+            --bg-gradient-end: #16213e;
+            --container-bg: #0f3460;
+            --header-gradient-start: #1a5276;
+            --header-gradient-end: #0e3b5c;
+            --text-primary: #e8e8e8;
+            --text-secondary: #b0b0b0;
+            --input-bg: #1a2332;
+            --input-border: #2a3f5f;
+            --border-color: #2a3f5f;
+            --chart-bg: #1a2332;
+            --table-header: #1a2332;
+            --table-hover: #223044;
+            --card-bg: rgba(255, 255, 255, 0.08);
+        }
+
+body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
             min-height: 100vh;
@@ -51,6 +70,7 @@
         }
 
         .header {
+            position: relative;
             background: linear-gradient(135deg, var(--header-gradient-start) 0%, var(--header-gradient-end) 100%);
             color: white;
             padding: 34px 28px 28px;
@@ -60,7 +80,31 @@
         .header h1 { font-size: 2.5em; margin-bottom: 10px; }
         .header p { opacity: 0.9; font-size: 1.1em; }
 
-        .content { padding: 0; }
+        
+        .dark-mode-toggle {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .dark-mode-toggle:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+.content { padding: 0; }
 
         .add-goal-btn {
             background: #27ae60;
@@ -690,12 +734,80 @@
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>🎯 Financial Goals Simulator</h1>
-            <p>Explore hypothetical goal outcomes with simple inputs and plain-language results.</p>
+        <div class="header" id="wv-hero">
+<button class="dark-mode-toggle" onclick="toggleDarkMode()">
+                <span id="mode-icon">🌙</span>
+                <span id="mode-text">Dark Mode</span>
+            </button>
+            <div style="font-size: 14px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; opacity: 0.8; margin-bottom: 8px;">WealthView</div>
+            <h1 style="font-size: 2.2em; margin-bottom: 8px;">Understand Your Portfolio in Minutes</h1>
+            <p style="max-width: 600px; margin: 0 auto 20px; line-height: 1.6; opacity: 0.9;">See how your investments are balanced, explore what-if scenarios, and learn how market shifts affect your mix — all in plain language.</p>
+            <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px;">
+                <button onclick="window.location.href='/'" style="padding: 14px 28px; background: #14B8A6; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.3s; box-shadow: 0 2px 12px rgba(20,184,166,0.3);">Start with a Sample Portfolio</button>
+                <a href="/#portfolio-builder-section" style="padding: 14px 20px; color: rgba(255,255,255,0.9); text-decoration: none; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 4px;">Or build your own →</a>
+            </div>
+            <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; font-size: 13px; opacity: 0.8;">
+                <span>✦ No login required</span>
+                <span>✦ Educational analysis only</span>
+                <span>✦ Your data stays in your browser</span>
+            </div>
+            <div style="margin-top: 12px;">
+                <a href="#" onclick="document.getElementById('how-it-works-modal').style.display='flex'; return false;" style="color: rgba(255,255,255,0.7); font-size: 13px; text-decoration: underline;">How does this work?</a>
+            </div>
         </div>
 
-        <div class="top-nav">
+        <!-- How It Works Modal -->
+<div id="how-it-works-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center; padding: 0;" onclick="if(event.target===this)this.style.display='none'">
+            <div style="background: var(--container-bg); border-radius: 16px; padding: 36px; max-width: 520px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); position: relative;">
+                <button onclick="document.getElementById('how-it-works-modal').style.display='none'" style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-secondary);">✕</button>
+                <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 24px; color: var(--text-primary);">How WealthView Works</h3>
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <div style="display: flex; gap: 14px; align-items: flex-start;">
+                        <span style="font-size: 28px;">📝</span>
+                        <div><p style="font-weight: 700; color: var(--text-primary); margin-bottom: 2px;">1. Add your holdings</p><p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">Enter ticker symbols and share counts — or start with our sample portfolio.</p></div>
+                    </div>
+                    <div style="display: flex; gap: 14px; align-items: flex-start;">
+                        <span style="font-size: 28px;">📊</span>
+                        <div><p style="font-weight: 700; color: var(--text-primary); margin-bottom: 2px;">2. See your portfolio's balance</p><p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">Instantly view allocation, diversification, drift status, and historical performance.</p></div>
+                    </div>
+                    <div style="display: flex; gap: 14px; align-items: flex-start;">
+                        <span style="font-size: 28px;">🔍</span>
+                        <div><p style="font-weight: 700; color: var(--text-primary); margin-bottom: 2px;">3. Explore scenarios</p><p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">Run simulations, check goal feasibility, and understand what allocation drift means.</p></div>
+                    </div>
+                </div>
+                <button onclick="document.getElementById('how-it-works-modal').style.display='none'" style="width: 100%; margin-top: 24px; padding: 12px; background: #14B8A6; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;">Got it</button>
+            </div>
+        </div>
+
+        <!-- Tool Cards Grid -->
+        <div id="tool-cards-section" style="padding: 24px 30px 8px; background: var(--container-bg);">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;">
+                <div class="wv-tool-card" onclick="setWVView('overview'); document.getElementById('portfolio-builder-section').scrollIntoView({behavior:'smooth'})">
+                    <div style="font-size: 28px; margin-bottom: 8px;">📊</div>
+                    <h3 style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">Portfolio Visualizer</h3>
+                    <p style="font-size: 13px; font-weight: 600; color: #2E86AB; margin-bottom: 4px;">See your full picture at a glance</p>
+                    <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 10px;">Charts, allocations, performance trends, and diversification analysis.</p>
+                    <span style="font-size: 13px; font-weight: 600; color: #14B8A6;">Visualize →</span>
+                </div>
+                
+
+                <div class="wv-tool-card" onclick="window.location.href='goals.html'">
+                    <div style="font-size: 28px; margin-bottom: 8px;">🎯</div>
+                    <h3 style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">Goals Simulator</h3>
+                    <p style="font-size: 13px; font-weight: 600; color: #2E86AB; margin-bottom: 4px;">Test if your goals are on track</p>
+                    <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 10px;">Run scenario projections for retirement, education, or any financial milestone.</p>
+                    <span style="font-size: 13px; font-weight: 600; color: #14B8A6;">Run scenario →</span>
+                </div>
+                <div class="wv-tool-card" onclick="window.location.href='themes.html'">
+                    <div style="font-size: 28px; margin-bottom: 8px;">🔭</div>
+                    <h3 style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">Theme Explorer</h3>
+                    <p style="font-size: 13px; font-weight: 600; color: #2E86AB; margin-bottom: 4px;">See what your portfolio is exposed to</p>
+                    <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 10px;">Understand which market themes and sectors your holdings are connected to.</p>
+                    <span style="font-size: 13px; font-weight: 600; color: #14B8A6;">Explore themes →</span>
+                </div>
+            </div>
+        </div>
+<div class="top-nav">
             <a href="/">📊 Portfolio Visualizer</a>
             <span class="active-tab">🎯 Goals Simulator</span>
             <a href="/themes.html">🔭 Market Themes</a>
@@ -1906,8 +2018,31 @@ function getConfidenceLabel(prob) {
             }
         }
 
+        
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+            const icon = document.getElementById('mode-icon');
+            const text = document.getElementById('mode-text');
+            if (icon) icon.textContent = isDark ? '☀️' : '🌙';
+            if (text) text.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+        }
+
+        function loadDarkModePreference() {
+            const isDark = localStorage.getItem('darkMode') === 'true';
+            if (isDark) {
+                document.body.classList.add('dark-mode');
+                const icon = document.getElementById('mode-icon');
+                const text = document.getElementById('mode-text');
+                if (icon) icon.textContent = '☀️';
+                if (text) text.textContent = 'Light Mode';
+            }
+        }
+
         // Initialize on load
         window.onload = function() {
+            loadDarkModePreference();
             loadGoals();
             console.log('✅ Financial Goals Simulator Loaded!');
         };
