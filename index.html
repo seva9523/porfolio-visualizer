@@ -365,14 +365,6 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
             margin-bottom: 20px;
             transition: background 0.3s ease;
         }
-
-        /* Ensure the pie chart has enough vertical space (prevents clipping in Dark Mode) */
-        #allocation-wrapper { padding: 20px; }
-        #allocation-wrapper canvas { display: block; width: 100% !important; height: 340px !important; }
-        @media (max-width: 980px) {
-            #allocation-wrapper canvas { height: 300px !important; }
-        }
-
         
         .chart-title {
             font-size: 1.3em;
@@ -1215,6 +1207,63 @@ const DriftTickerLabelsPlugin = {
     meta.data.forEach((arc, i) => {
       const v = Number(dataset.data?.[i] ?? 0);
       if (!isFinite(v) || v < minPct) return;
+
+      const label = String(labels[i] ?? '').trim();
+      if (!label) return;
+
+      const { x, y, startAngle, endAngle, innerRadius, outerRadius } = arc;
+      const angle = (startAngle + endAngle) / 2;
+      const r = (innerRadius + outerRadius) / 2;
+
+      const tx = x + Math.cos(angle) * r;
+      const ty = y + Math.sin(angle) * r;
+
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = 'rgba(0,0,0,0.35)';
+      ctx.shadowBlur = 6;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 1;
+
+      ctx.fillText(label, tx, ty);
+    });
+
+    ctx.restore();
+  }
+};
+
+
+// --- Portfolio Allocation pie: draw ticker labels on the slices (no external deps) ---
+const PortfolioPieTickerLabelsPlugin = {
+  id: 'portfolioPieTickerLabels',
+  afterDatasetsDraw(chart, args, pluginOptions) {
+    // Only run for the main allocation pie (avoid touching other charts)
+    if (!chart?.canvas?.id || chart.canvas.id !== 'pieChart') return;
+
+    const opts = pluginOptions || {};
+    const minPct = typeof opts.minPct === 'number' ? opts.minPct : 6; // hide tiny slices
+    const fontSize = typeof opts.fontSize === 'number' ? opts.fontSize : 11;
+    const fontWeight = opts.fontWeight || 700;
+
+    const ctx = chart.ctx;
+    const dataset = chart.data.datasets?.[0];
+    const labels = chart.data.labels || [];
+    if (!dataset) return;
+
+    const values = (dataset.data || []).map(v => Number(v) || 0);
+    const total = values.reduce((a, b) => a + b, 0) || 1;
+
+    const meta = chart.getDatasetMeta(0);
+    if (!meta || !meta.data) return;
+
+    ctx.save();
+    ctx.font = `${fontWeight} ${fontSize}px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    meta.data.forEach((arc, i) => {
+      const v = values[i] || 0;
+      const pct = (v / total) * 100;
+      if (pct < minPct) return;
 
       const label = String(labels[i] ?? '').trim();
       if (!label) return;
@@ -3792,116 +3841,32 @@ function updateRightRail() {
 
         }
 
-        // --- Allocation Pie Labels Plugin (no external deps) ---
-        // Draws ticker symbols (and optional %) on the pie slices for quick readability.
-        const AllocationTickerLabelsPlugin = {
-            id: 'allocationTickerLabels',
-            afterDatasetsDraw(chart, args, pluginOptions) {
-                const opts = pluginOptions || {};
-                const minPct = typeof opts.minPct === 'number' ? opts.minPct : 5; // hide tiny slices
-                const fontSize = typeof opts.fontSize === 'number' ? opts.fontSize : 12;
-                const fontWeight = opts.fontWeight || 700;
-                const showPct = opts.showPct === true;
-
-                const ctx = chart.ctx;
-                const dataset = chart.data.datasets?.[0];
-                const labels = chart.data.labels || [];
-                if (!dataset) return;
-
-                const meta = chart.getDatasetMeta(0);
-                if (!meta || !meta.data) return;
-
-                const raw = (dataset.data || []).map(v => Number(v) || 0);
-                const total = raw.reduce((a, b) => a + b, 0) || 1;
-
-                ctx.save();
-                ctx.font = `${fontWeight} ${fontSize}px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-
-                meta.data.forEach((arc, i) => {
-                    const v = raw[i] || 0;
-                    const pct = (v / total) * 100;
-                    if (!isFinite(pct) || pct < minPct) return;
-
-                    const label = String(labels[i] ?? '').trim();
-                    if (!label) return;
-
-                    const { x, y, startAngle, endAngle, innerRadius, outerRadius } = arc;
-                    const angle = (startAngle + endAngle) / 2;
-
-                    // Position: slightly toward the outside so it doesn't crowd the center
-                    const r = (innerRadius + outerRadius) / 2 + (outerRadius - innerRadius) * 0.12;
-                    const tx = x + Math.cos(angle) * r;
-                    const ty = y + Math.sin(angle) * r;
-
-                    const text = showPct ? `${label} ${pct.toFixed(0)}%` : label;
-
-                    ctx.fillStyle = '#ffffff';
-                    ctx.shadowColor = 'rgba(0,0,0,0.45)';
-                    ctx.shadowBlur = 8;
-                    ctx.shadowOffsetX = 0;
-                    ctx.shadowOffsetY = 2;
-
-                    ctx.fillText(text, tx, ty);
-                });
-
-                ctx.restore();
-            }
-        };
-
         function createPieChart(data, total) {
             const isDark = document.body.classList.contains('dark-mode');
             const textColor = isDark ? '#e8e8e8' : '#2c3e50';
-
-            // Brighter palette for dark mode so slices don't look muddy/black.
-            const pieColors = isDark
-                ? ['#4cc9f0', '#f72585', '#ffd166', '#06d6a0', '#8ecae6', '#ff7b00', '#bdb2ff', '#80ed99', '#ff006e', '#3a86ff']
-                : colors;
-
+            
             if (pieChart) pieChart.destroy();
             pieChart = new Chart(document.getElementById('pieChart'), {
                 type: 'pie',
-                plugins: [AllocationTickerLabelsPlugin],
-                data: {
-                    labels: data.map(h => h.ticker),
-                    datasets: [{
-                        data: data.map(h => h.value),
-                        backgroundColor: pieColors.slice(0, data.length),
-                        borderWidth: 2,
-                        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#fff',
-                        hoverOffset: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false, // allow CSS height so chart doesn't get clipped
-                    layout: { padding: { top: 8, right: 10, bottom: 8, left: 10 } },
+                plugins: [PortfolioPieTickerLabelsPlugin],
+                data: { labels: data.map(h => h.ticker), datasets: [{ data: data.map(h => h.value), backgroundColor: colors.slice(0, data.length), borderWidth: 2, borderColor: isDark ? '#0f3460' : '#fff' }] },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: true, 
                     plugins: {
-                        legend: {
-                            position: 'right',
-                            labels: {
-                                font: { size: 13, weight: '600' },
-                                padding: 14,
+                        portfolioPieTickerLabels: { minPct: 5, fontSize: 11, fontWeight: 700 }, 
+                        legend: { 
+                            position: 'right', 
+                            labels: { 
+                                font: { size: 13, weight: '600' }, 
+                                padding: 15,
                                 color: textColor,
-                                boxWidth: 12,
-                                boxHeight: 12,
-                                generateLabels: (chart) => chart.data.labels.map((label, i) => ({
-                                    text: `${label}: ${((chart.data.datasets[0].data[i] / total) * 100).toFixed(1)}%`,
-                                    fillStyle: chart.data.datasets[0].backgroundColor[i],
-                                    hidden: false,
-                                    index: i
-                                }))
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: (context) =>
-                                    `$${context.parsed.toLocaleString('en-US', { minimumFractionDigits: 2 })} (${((context.parsed / total) * 100).toFixed(1)}%)`
-                            }
-                        },
-                        allocationTickerLabels: { minPct: 6, fontSize: 12, fontWeight: 800, showPct: false }
-                    }
+                                fontColor: textColor,
+                                generateLabels: (chart) => chart.data.labels.map((label, i) => ({ text: `${label}: ${((chart.data.datasets[0].data[i]/total)*100).toFixed(1)}%`, fillStyle: chart.data.datasets[0].backgroundColor[i], hidden: false, index: i })) 
+                            } 
+                        }, 
+                        tooltip: { callbacks: { label: (context) => `$${context.parsed.toLocaleString('en-US', {minimumFractionDigits: 2})} (${((context.parsed/total)*100).toFixed(1)}%)` } } 
+                    } 
                 }
             });
         }
