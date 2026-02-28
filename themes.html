@@ -1642,8 +1642,10 @@ function setRiskFilter(level){
 }
 
 function resetThemeFilters(){
-    const s=document.getElementById('search-in'); if(s) s.value='';    const sort=document.getElementById('sort-by'); if(sort) sort.value='trending';
+    const s=document.getElementById('search-in'); if(s) s.value='';
+    const sort=document.getElementById('sort-by'); if(sort) sort.value='trending';
 
+    const cat=document.getElementById('cat-fil-side'); if(cat) cat.value='all';
     const r=document.getElementById('region-fil'); if(r) r.value='all';
     const t=document.getElementById('tilt-fil'); if(t) t.value='all';
     const cy=document.getElementById('cycle-fil'); if(cy) cy.value='all';
@@ -1655,14 +1657,11 @@ function resetThemeFilters(){
         if(el) el.classList.toggle('on', x==='all');
     });
 
-    applyFilters
-  function syncCategoryFromSide(){ applyFilters(); }
     applyFilters();
-  }
-  applyFilters();
-  }
-();
 }
+
+// Sidebar category change handler
+function syncCategoryFromSide(){ applyFilters(); }
 
 function applyFilters(){
     const q=(document.getElementById('search-in')?.value||'').toLowerCase();
