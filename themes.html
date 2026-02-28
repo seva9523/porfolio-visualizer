@@ -1,6 +1,7 @@
 
 
 
+
 <!DOCTYPE html>
 
 <html lang="en">
@@ -268,7 +269,28 @@ body{
 
 
 /* Grid + theme cards (match wv-tool-card feel) */
-.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+/* Theme Explorer layout (below Explore Themes) */
+.tx-layout{display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start}
+.tx-filters{position:sticky;top:16px}
+.tx-panel{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:14px 14px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.tx-panel-title{font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--text2);margin-bottom:10px}
+.tx-label{font-size:12px;font-weight:800;color:var(--text);margin:10px 0 6px}
+.tx-full{width:100%}
+.tx-sep{height:1px;background:var(--border);margin:12px 0}
+.tx-subtitle{font-size:12px;font-weight:800;color:var(--text);margin:10px 0 8px}
+.tx-pills{display:flex;flex-wrap:wrap;gap:8px}
+.tx-pill{padding:8px 10px;border:1.5px solid var(--border);border-radius:999px;background:var(--container);font-size:12px;font-weight:800;color:var(--text);cursor:default;opacity:.85}
+.tx-hint{font-size:11px;color:var(--text2);line-height:1.5;margin-top:10px}
+.tx-reset{width:100%;margin-top:12px}
+.tx-results{min-width:0}
+.tx-grid-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 10px}
+.tx-count{font-size:12px;color:var(--text2);font-weight:700}
+.tx-sort-wrap{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.tx-chiprow{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 10px}
+.tx-chip{padding:8px 10px;border:1.5px solid var(--border);border-radius:999px;background:var(--card);color:var(--text);font-size:12px;font-weight:900;cursor:pointer;transition:all .2s ease}
+.tx-chip:hover{border-color:var(--accent);transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,0,0,.06)}
+
 .tcard{
   background:var(--card);
   border:1.5px solid var(--border);
@@ -286,6 +308,19 @@ body{
 .tcard.cmp-sel{border-color:var(--accent);box-shadow:0 0 0 4px rgba(20,184,166,.14)}
 .tcard-name{font-size:16px;font-weight:900;margin-bottom:4px;color:var(--text)}
 .tcard-desc{font-size:12.5px;color:var(--text2);margin-bottom:12px;line-height:1.55}
+.tx-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.tx-card-ico{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(20,184,166,.10);border:1px solid rgba(20,184,166,.18);font-size:20px;flex:0 0 auto}
+.tx-card-title{font-size:16px;font-weight:900;color:var(--text);line-height:1.2;margin-top:2px}
+.tx-card-sub{font-size:12px;color:var(--text2);font-weight:700;line-height:1.5;margin-top:6px}
+.tx-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.tx-tag{font-size:10px;font-weight:900;padding:4px 8px;border-radius:999px;border:1px solid var(--border);background:var(--card);color:var(--text2)}
+.tx-actions{display:flex;gap:10px;align-items:center;margin-top:12px}
+.tx-primary{padding:9px 12px;border:2px solid var(--accent);border-radius:10px;background:rgba(20,184,166,.10);font-size:12px;font-weight:900;cursor:pointer}
+.tx-primary:hover{background:var(--accent);color:#fff;transform:translateY(-1px);box-shadow:0 6px 18px rgba(20,184,166,.22)}
+.tx-secondary{padding:9px 10px;border:1.5px solid var(--border);border-radius:10px;background:var(--card);font-size:12px;font-weight:900;cursor:pointer;color:var(--text)}
+.tx-secondary:hover{border-color:var(--accent);transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,0,0,.06)}
+.tx-mini{font-size:11px;color:var(--text2);font-weight:700}
+
 .tmets{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .tmet{
   text-align:center;
@@ -446,6 +481,9 @@ body{
   .header h1{font-size:1.9em}
   .dark-mode-toggle{position:static;margin:12px auto 0}
   .tgrid{grid-template-columns:1fr}
+  .tx-layout{grid-template-columns:1fr}
+  .tx-filters{position:relative;top:auto}
+
   .tmets{grid-template-columns:1fr 1fr}
   .ctrls{flex-direction:column;align-items:stretch}
   .sinp{min-width:0}
@@ -580,45 +618,104 @@ body{
 </div>
 <!-- Feature 6: Core-First Banner -->
 <div class="core-banner" data-testid="core-banner">💡 <strong>Good to know:</strong> Many investors build a core portfolio first (broad stock and bond funds). Themes are often used as <strong>additional ideas to explore</strong> alongside a diversified foundation.</div>
+
 <!-- ===== LIST VIEW ===== -->
 <div id="lv">
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
-<h2 style="font-size:20px">Explore Themes</h2>
-<div style="display:flex;gap:8px;flex-wrap:wrap">
-<button class="cbtn" data-testid="help-choose-btn" onclick="startGuide()">🧭 Help Me Choose</button>
-<button class="xbtn" data-testid="beginner-csv-btn" onclick="exportBeginnerCSV()">📥 Beginner CSV</button>
-<button class="xbtn" data-testid="export-csv-btn" onclick="exportThemesCSV()">📥 Pro CSV</button>
-</div>
-</div>
-<div class="ctrls" data-testid="controls-bar">
-<input class="sinp" data-testid="theme-search" id="search-in" oninput="applyFilters()" placeholder="🔍 Search by name, tag, or topic..." type="text"/>
-<select class="fsel" data-testid="category-filter" id="cat-fil" onchange="applyFilters()">
-<option value="all">All Types</option>
-<option value="growth">Growth-Focused</option>
-<option value="defensive">Defensive / Protective</option>
-<option value="alternative">Alternative / Diversifier</option>
-<option value="income">Income-Focused</option>
-</select>
-<select class="fsel" data-testid="sort-select" id="sort-by" onchange="applyFilters()">
-<option value="trending">Sort: What's Hot Now</option>
-<option value="cagr5y">Sort: 5-Year Growth</option>
-<option value="volatility">Sort: Calmest First</option>
-<option value="sharpe">Sort: Best Reward/Risk</option>
-<option value="maxdd">Sort: Smallest Drops</option>
-<option value="name">Sort: Name A-Z</option>
-</select>
-<button class="cbtn" data-testid="compare-toggle" id="cmp-btn" onclick="toggleCompareMode()">⚡ Compare Themes</button>
-</div>
-<div id="cmp-bar" style="display:none;margin-bottom:15px;padding:12px 16px;background:var(--accent-l);border:2px solid var(--accent);border-radius:10px;font-size:13px">
-<span style="font-weight:700;color:var(--accent)">Compare Mode:</span> Pick 2-5 themes you're curious about, then click
-                    <button class="cbtn on" data-testid="compare-go-btn" onclick="showCompare()" style="margin-left:8px;padding:6px 14px;font-size:12px">See Comparison →</button>
-<span data-testid="compare-count" id="cmp-count" style="margin-left:8px;color:var(--text2)">0 selected</span>
-</div>
-<div id="load-bar" style="text-align:center;padding:40px;color:var(--text2)"><div class="spin"></div><div id="load-msg" style="margin-top:10px;font-size:13px">Loading themes...</div><button class="cbtn" id="retry-load-btn" onclick="retryThemeLoad()" style="display:none;margin-top:12px">Retry</button></div>
-<div id="offline-badge" style="display:none;margin-bottom:12px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);font-size:12px"><span id="offline-msg">Using offline theme list</span> <button class="cbtn" onclick="retryThemeLoad()" style="padding:6px 10px;font-size:11px;margin-left:8px">Retry</button></div>
-<div class="tgrid" data-testid="themes-grid" id="tgrid"></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+    <h2 style="font-size:20px">Explore Themes</h2>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="cbtn" data-testid="help-choose-btn" onclick="startGuide()">🧭 Help Me Choose</button>
+      <button class="xbtn" data-testid="beginner-csv-btn" onclick="exportBeginnerCSV()">📥 Beginner CSV</button>
+      <button class="xbtn" data-testid="export-csv-btn" onclick="exportThemesCSV()">📥 Pro CSV</button>
+    </div>
+  </div>
+
+  <!-- Search ribbon (kept) -->
+  <div class="ctrls" data-testid="controls-bar" style="margin-bottom:12px">
+    <input class="sinp" data-testid="theme-search" id="search-in" oninput="applyFilters()" placeholder="🔍 Search by name, tag, or topic..." type="text"/>
+    <div class="tx-sort-wrap">
+      <select class="fsel" data-testid="sort-select" id="sort-by" onchange="applyFilters()">
+        <option value="trending">Sort: What's Hot Now</option>
+        <option value="cagr5y">Sort: 5-Year Growth</option>
+        <option value="volatility">Sort: Calmest First</option>
+        <option value="sharpe">Sort: Best Reward/Risk</option>
+        <option value="maxdd">Sort: Smallest Drops</option>
+        <option value="name">Sort: Name A-Z</option>
+      </select>
+      <button class="cbtn" data-testid="compare-toggle" id="cmp-btn" onclick="toggleCompareMode()">⚡ Compare Themes</button>
+    </div>
+  </div>
+
+  <!-- Curated quick filters (optional, non-destructive) -->
+  <div class="tx-chiprow" aria-label="Quick filters">
+    <button class="tx-chip" type="button" onclick="quickFilter('ai')">🤖 AI</button>
+    <button class="tx-chip" type="button" onclick="quickFilter('income')">💸 Income</button>
+    <button class="tx-chip" type="button" onclick="quickFilter('defensive')">🛡️ Defensive</button>
+    <button class="tx-chip" type="button" onclick="quickFilter('clean')">🌿 Clean Energy</button>
+    <button class="tx-chip" type="button" onclick="quickFilter('emerging')">🌍 Emerging</button>
+    <button class="tx-chip" type="button" onclick="quickFilter('crypto')">🪙 Crypto</button>
+  </div>
+
+  <div class="tx-layout">
+    <!-- Left: Filters -->
+    <aside class="tx-filters" aria-label="Filters">
+      <div class="tx-panel">
+        <div class="tx-panel-title">Filters</div>
+
+        <div class="tx-label">Category</div>
+        <select class="fsel tx-full" data-testid="category-filter" id="cat-fil" onchange="applyFilters()">
+          <option value="all">All Types</option>
+          <option value="growth">Growth-Focused</option>
+          <option value="defensive">Defensive / Protective</option>
+          <option value="alternative">Alternative / Diversifier</option>
+          <option value="income">Income-Focused</option>
+        </select>
+
+        <div class="tx-sep"></div>
+
+        <div class="tx-subtitle">Risk level (informational)</div>
+        <div class="tx-pills">
+          <div class="tx-pill">🟢 Low</div>
+          <div class="tx-pill">🟡 Moderate</div>
+          <div class="tx-pill">🔴 High</div>
+        </div>
+        <div class="tx-hint">
+          These are broad labels to help you browse. This tool is educational and not investment advice.
+        </div>
+
+        <button class="xbtn tx-reset" type="button" onclick="resetThemeFilters()">Reset filters</button>
+      </div>
+    </aside>
+
+    <!-- Right: Results -->
+    <section class="tx-results" aria-label="Theme results">
+      <div id="cmp-bar" style="display:none;margin-bottom:12px;padding:12px 16px;background:var(--accent-l);border:2px solid var(--accent);border-radius:10px;font-size:13px">
+        <span style="font-weight:700;color:var(--accent)">Compare Mode:</span> Pick 2-5 themes you're curious about, then click
+        <button class="cbtn on" data-testid="compare-go-btn" onclick="showCompare()" style="margin-left:8px;padding:6px 14px;font-size:12px">See Comparison →</button>
+        <span data-testid="compare-count" id="cmp-count" style="margin-left:8px;color:var(--text2)">0 selected</span>
+      </div>
+
+      <div id="offline-badge" style="display:none;margin-bottom:12px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);font-size:12px">
+        <span id="offline-msg">Using offline theme list</span>
+        <button class="cbtn" onclick="retryThemeLoad()" style="padding:6px 10px;font-size:11px;margin-left:8px">Retry</button>
+      </div>
+
+      <div id="load-bar" style="text-align:center;padding:30px;color:var(--text2)">
+        <div class="spin"></div>
+        <div id="load-msg" style="margin-top:10px;font-size:13px">Loading themes...</div>
+        <button class="cbtn" id="retry-load-btn" onclick="retryThemeLoad()" style="display:none;margin-top:12px">Retry</button>
+      </div>
+
+      <div class="tx-grid-head">
+        <div class="tx-count" id="tx-count">Showing 0 themes</div>
+      </div>
+
+      <div class="tgrid" data-testid="themes-grid" id="tgrid"></div>
+    </section>
+  </div>
 </div>
 <!-- ===== DETAIL VIEW ===== -->
+
 <div class="dview" data-testid="theme-detail" id="dv">
 <button class="bbtn" data-testid="back-btn" onclick="showList()">← Back to Themes</button>
 <div id="dc"></div>
@@ -1476,6 +1573,40 @@ function guideWhyMatch(theme,c,h,r,g){
     return{bullets,caveat};
 }
 
+
+// ============================================================================
+// THEME EXPLORER UI HELPERS (design-only; behavior stays the same)
+// ============================================================================
+function resetThemeFilters(){
+    const s=document.getElementById('search-in');
+    const c=document.getElementById('cat-fil');
+    const so=document.getElementById('sort-by');
+    if(s) s.value='';
+    if(c) c.value='all';
+    if(so) so.value='trending';
+    applyFilters();
+}
+function quickFilter(keyword){
+    const s=document.getElementById('search-in');
+    if(!s) return;
+    s.value = keyword;
+    applyFilters();
+}
+function themeIconFor(t){
+    const k=((t.megaTheme||'')+' '+(t.name||'')+' '+(t.tags||[]).join(' ')).toLowerCase();
+    if(k.includes('ai')||k.includes('artificial')||k.includes('semiconductor')||k.includes('chip')) return '🤖';
+    if(k.includes('clean')||k.includes('renewable')||k.includes('solar')||k.includes('wind')) return '🌿';
+    if(k.includes('cyber')) return '🛡️';
+    if(k.includes('health')||k.includes('biotech')||k.includes('genom')) return '🧬';
+    if(k.includes('emerging')||k.includes('india')||k.includes('china')||k.includes('brazil')) return '🌍';
+    if(k.includes('dividend')||k.includes('income')||k.includes('yield')) return '💸';
+    if(k.includes('inflation')||k.includes('tips')) return '🧯';
+    if(k.includes('commod')||k.includes('gold')||k.includes('oil')) return '⛏️';
+    if(k.includes('crypto')||k.includes('bitcoin')) return '🪙';
+    if(k.includes('tech')) return '💻';
+    return '🔭';
+}
+
 // ============================================================================
 // SEARCH, FILTER, SORT
 // ============================================================================
@@ -1583,49 +1714,84 @@ function exportBeginnerCSV(){
 // ============================================================================
 function renderGrid(){applyFilters()}
 
+
 function renderGridFiltered(themes){
     const grid=document.getElementById('tgrid');
-    const top3=THEMES.map(t=>({id:t.id,s:cache[t.id]?.trend?.score||0})).sort((a,b)=>b.s-a.s).slice(0,3).filter(x=>x.s>50).map(x=>x.id);
+    const countEl=document.getElementById('tx-count');
+    if(countEl) countEl.textContent = `Showing ${themes.length} theme${themes.length===1?'':'s'}`;
+
+    const top3=THEMES.map(t=>({id:t.id,s:cache[t.id]?.trend?.score||0}))
+        .sort((a,b)=>b.s-a.s)
+        .slice(0,3)
+        .filter(x=>x.s>50)
+        .map(x=>x.id);
 
     grid.innerHTML=themes.map(t=>{
         const c=cache[t.id]?.computed||emptyM(),tr=cache[t.id]?.trend||emptyTrend();
         const ux=THEME_UX[t.id]||{riskLevel:'medium',simpleDesc:t.description};
         const isTrend=top3.includes(t.id);
         const tl=trendLabel(tr.score);
-        const lch=lifecycleHuman(tr.lifecycle);
+        const icon=themeIconFor(t);
+
+        // Compare checkbox: only meaningful in compare mode (keeps existing JS)
+        const cmpBox = compareMode ? `
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;font-weight:800;color:var(--text2)">
+            <input type="checkbox"
+              ${compareSet.has(t.id)?'checked':''}
+              data-testid="compare-checkbox-${t.id}"
+              onclick="event.stopPropagation(); toggleCompareItem('${t.id}', event)">
+            Compare
+          </label>` : '';
+
         return `
         <div class="tcard${compareSet.has(t.id)?' cmp-sel':''}" data-tid="${t.id}" onclick="handleCardClick('${t.id}',event)" data-testid="theme-card" data-theme-id="${t.id}">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start">
-                <div>
-                    <div class="ctag ${catCls(t.category)}">${t.category.toUpperCase()}</div>
-                    ${isTrend?'<span class="badge b-trend" data-testid="trending-badge">🔥 Hot Right Now</span>':''}
-                    ${hypeBadge(tr.score,tr.lifecycle)}
-                    ${freshBadge(t.lastUpdated)}
+          <div class="tx-card-top">
+            <div style="display:flex;gap:12px;align-items:flex-start;min-width:0">
+              <div class="tx-card-ico" aria-hidden="true">${icon}</div>
+              <div style="min-width:0">
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                  <span class="tx-tag ${catCls(t.category)}" style="border-color:transparent;background:var(--input-bg)">${t.category.toUpperCase()}</span>
+                  ${isTrend?'<span class="badge b-trend" data-testid="trending-badge">🔥 Hot Right Now</span>':''}
+                  ${freshBadge(t.lastUpdated)}
                 </div>
-<input
-  type="checkbox"
-  data-testid="compare-checkbox-${t.id}"
-  onclick="event.stopPropagation(); toggleCompareItem('${t.id}', this.checked)"
->
+                <div class="tx-card-title">${t.name}</div>
+                <div class="tx-card-sub">${ux.simpleDesc}</div>
+              </div>
             </div>
-            <div class="tcard-name" style="margin-top:6px">${t.name}</div>
-            <div class="tcard-desc">${ux.simpleDesc}</div>
-            <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center">
-                ${riskPill(ux.riskLevel)}
-                ${csPill(c)}
-                ${feelMeter(c)}
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+              ${riskPill(ux.riskLevel)}
+              ${cmpBox}
             </div>
-            <div class="tmets" style="margin-top:10px">
-                <div class="tmet"><div class="tmet-l">5-Year Growth</div><div class="tmet-v" style="color:${pc(c.cagr5y)}">${fp(c.cagr5y)}</div><div class="mexp">${c.cagr5y!=null?'per year avg':'no data'}</div></div>
-                <div class="tmet"><div class="tmet-l">How Bumpy</div><div class="tmet-v">${volLabel(c.vol)}</div><div class="mexp">${c.vol!=null?fa(c.vol)+' swing':'—'}</div></div>
-                <div class="tmet"><div class="tmet-l">Reward/Risk</div><div class="tmet-v">${fn(c.sharpe)}</div><div class="mexp">${c.sharpe!=null?(c.sharpe>0.5?'Good':'Modest'):'—'}</div></div>
-                <div class="tmet"><div class="tmet-l">Biggest Drop</div><div class="tmet-v" style="color:var(--red)">${c.maxDD!=null?'-'+fa(c.maxDD):'—'}</div><div class="mexp">worst peak to bottom</div></div>
-            </div>
-            <div class="sbar" style="margin-top:10px"><div class="sfill" style="width:${tr.score}%;background:${trendColor(tr.score)}"></div></div>
-            <div class="slbl"><span>${tl.icon} Trend: ${tl.label}</span><span style="color:${trendColor(tr.score)}">${lch.label}</span></div>
+          </div>
+
+          <div class="tx-tags" aria-label="Tags">
+            <span class="tx-tag">${t.megaTheme}</span>
+            ${(t.tags||[]).slice(0,3).map(tg=>`<span class="tx-tag">#${tg}</span>`).join('')}
+          </div>
+
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px">
+            ${csPill(c)}
+            ${feelMeter(c)}
+            <span class="tx-mini">${tl.icon} Trend: <strong style="color:${trendColor(tr.score)}">${tl.label}</strong> (${tr.score}/100)</span>
+          </div>
+
+          <div class="tmets" style="margin-top:12px">
+            <div class="tmet"><div class="tmet-l">5Y Growth</div><div class="tmet-v" style="color:${pc(c.cagr5y)}">${fp(c.cagr5y)}</div></div>
+            <div class="tmet"><div class="tmet-l">How Bumpy</div><div class="tmet-v">${volLabel(c.vol)}</div></div>
+            <div class="tmet"><div class="tmet-l">Reward/Risk</div><div class="tmet-v">${fn(c.sharpe)}</div></div>
+            <div class="tmet"><div class="tmet-l">Biggest Drop</div><div class="tmet-v" style="color:var(--red)">${c.maxDD!=null?'-'+fa(c.maxDD):'—'}</div></div>
+          </div>
+
+          <div class="sbar" style="margin-top:12px"><div class="sfill" style="width:${tr.score}%;background:${trendColor(tr.score)}"></div></div>
+
+          <div class="tx-actions">
+            <button class="tx-primary" type="button" onclick="event.stopPropagation(); showDetail('${t.id}')">View details →</button>
+            <button class="tx-secondary" type="button" onclick="event.stopPropagation(); toggleCompareMode(); if(!compareSet.has('${t.id}')){ compareSet.add('${t.id}'); document.getElementById('cmp-count').textContent=compareSet.size+' selected'; renderGrid(); }">Add to compare</button>
+          </div>
         </div>`;
     }).join('');
 }
+
 
 // ============================================================================
 // RENDER: DETAIL VIEW
