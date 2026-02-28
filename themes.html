@@ -280,7 +280,11 @@ body{
 .tx-sep{height:1px;background:var(--border);margin:12px 0}
 .tx-subtitle{font-size:12px;font-weight:800;color:var(--text);margin:10px 0 8px}
 .tx-pills{display:flex;flex-wrap:wrap;gap:8px}
-.tx-pill{padding:8px 10px;border:1.5px solid var(--border);border-radius:999px;background:var(--container);font-size:12px;font-weight:800;color:var(--text);cursor:default;opacity:.85}
+.tx-pill{padding:8px 10px;border:1.5px solid var(--border);border-radius:999px;background:var(--container);font-size:12px;font-weight:800;color:var(--text);cursor:pointer;opacity:.85}
+.tx-pill{appearance:none;-webkit-appearance:none;outline:none}
+.tx-pill.active{border-color:var(--accent);box-shadow:0 0 0 3px rgba(33,204,150,.18);opacity:1}
+.tx-pill:hover{opacity:1}
+
 .tx-hint{font-size:11px;color:var(--text2);line-height:1.5;margin-top:10px}
 .tx-reset{width:100%;margin-top:12px}
 .tx-results{min-width:0}
@@ -674,10 +678,10 @@ body{
         <div class="tx-sep"></div>
 
         <div class="tx-subtitle">Risk level (informational)</div>
-        <div class="tx-pills">
-          <div class="tx-pill">🟢 Low</div>
-          <div class="tx-pill">🟡 Moderate</div>
-          <div class="tx-pill">🔴 High</div>
+        <div class="tx-pills" id="risk-pills" aria-label="Risk level filter">
+          <button class="tx-pill" type="button" data-risk="low" onclick="setRiskFilter('low')" aria-pressed="false">🟢 Low</button>
+          <button class="tx-pill" type="button" data-risk="moderate" onclick="setRiskFilter('moderate')" aria-pressed="false">🟡 Moderate</button>
+          <button class="tx-pill" type="button" data-risk="high" onclick="setRiskFilter('high')" aria-pressed="false">🔴 High</button>
         </div>
         <div class="tx-hint">
           These are broad labels to help you browse. This tool is educational and not investment advice.
@@ -1243,6 +1247,7 @@ function safeDestroyCharts() {
 }
 let compareMode = false;
 let compareSet = new Set();
+let riskFilter = 'all'; // low | moderate | high | all
 let watchlist = JSON.parse(localStorage.getItem('themeWatchlist')||'[]');
 
 // ============================================================================
@@ -1252,6 +1257,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadDarkModePreference();
     loadPortfolio();
     showOnboarding();
+    updateRiskPills();
     renderGrid();
     await loadThemes();
     renderGrid();
@@ -1577,6 +1583,32 @@ function guideWhyMatch(theme,c,h,r,g){
 // ============================================================================
 // THEME EXPLORER UI HELPERS (design-only; behavior stays the same)
 // ============================================================================
+
+function riskLevelForTheme(t){
+    // Prefer curated UX mapping if available; fall back to 'moderate'
+    const ux = (typeof THEME_UX !== 'undefined' && THEME_UX && THEME_UX[t.id]) ? THEME_UX[t.id] : null;
+    const rl = (ux && ux.riskLevel) ? String(ux.riskLevel).toLowerCase() : 'moderate';
+    if(rl==='low'||rl==='moderate'||rl==='high') return rl;
+    return 'moderate';
+}
+function setRiskFilter(level){
+    // Toggle: clicking active pill clears to 'all'
+    if(riskFilter===level){ riskFilter='all'; }
+    else{ riskFilter=level; }
+    updateRiskPills();
+    applyFilters();
+}
+function updateRiskPills(){
+    const wrap=document.getElementById('risk-pills');
+    if(!wrap) return;
+    [...wrap.querySelectorAll('.tx-pill')].forEach(btn=>{
+        const lvl=btn.getAttribute('data-risk');
+        const on = (riskFilter!=='all' && lvl===riskFilter);
+        btn.classList.toggle('active', on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+}
+
 function resetThemeFilters(){
     const s=document.getElementById('search-in');
     const c=document.getElementById('cat-fil');
@@ -1584,6 +1616,8 @@ function resetThemeFilters(){
     if(s) s.value='';
     if(c) c.value='all';
     if(so) so.value='trending';
+    riskFilter='all';
+    updateRiskPills();
     applyFilters();
 }
 function quickFilter(keyword){
@@ -1618,7 +1652,8 @@ function applyFilters(){
     let filtered=THEMES.filter(t=>{
         const matchQ=!q||t.name.toLowerCase().includes(q)||t.description.toLowerCase().includes(q)||t.tags.some(tg=>tg.toLowerCase().includes(q))||t.megaTheme.toLowerCase().includes(q);
         const matchCat=cat==='all'||t.category===cat;
-        return matchQ&&matchCat;
+        const matchRisk=(riskFilter==='all')||riskLevelForTheme(t)===riskFilter;
+        return matchQ&&matchCat&&matchRisk;
     });
 
     // Sort
