@@ -58,6 +58,9 @@
     .footer-disclaimer{margin-top:14px;padding:12px 14px;border-radius:14px;border:1px solid var(--border-color);background:var(--input-bg)}
     .footer-disclaimer p{margin:0;font-size:11px;color:var(--text-secondary);line-height:1.6;text-align:center}
   </style>
+
+  <link rel="stylesheet" href="tools-nav.css"/>
+  <script src="tools-nav.js" defer></script>
 </head>
 <body>
   <div class="container">
@@ -67,7 +70,7 @@
       <p>Keep multiple portfolios in one place (stored in your browser). Open any portfolio in the Visualizer, run a Health Check, or compare portfolios in a historical backtest.</p>
       <div class="top-actions">
         <div class="navlinks">
-          <a href="index.html">Portfolio Visualizer</a>
+          <a href="visualizer.html">Portfolio Visualizer</a>
           <a href="goals.html">Goals Simulator</a>
           <a href="themes.html">Theme Explorer</a>
           <a href="health.html">Health Check</a>
@@ -151,7 +154,7 @@
 
       const keys = Object.keys(portfolios);
       if(!keys.length){
-        list.innerHTML = `<div class="row"><div><strong>No portfolios yet</strong><div class="meta">Go to the Portfolio Visualizer → save a portfolio → come back here.</div></div><div class="actions"><a class="btn primary" href="index.html">Open Visualizer</a></div></div>`;
+        list.innerHTML = `<div class="row"><div><strong>No portfolios yet</strong><div class="meta">Go to the Portfolio Visualizer → save a portfolio → come back here.</div></div><div class="actions"><a class="btn primary" href="visualizer.html">Open Visualizer</a></div></div>`;
       }
 
       keys
