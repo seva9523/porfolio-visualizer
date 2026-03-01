@@ -1,82 +1,49 @@
 
-(function(){
-  const LINKS = [
-    { href: "library.html", label: "Library" },
-    { href: "visualizer.html", label: "Portfolio Visualizer" },
-    { href: "goals.html", label: "Goals Simulator" },
-    { href: "themes.html", label: "Theme Explorer" },
-    { href: "health.html", label: "Health Check" },
-    { href: "backtest.html", label: "Multi-Backtest" },
-  ];
-
-  function getCurrentFile(){
-    const p = (location.pathname || "").split("/").filter(Boolean).pop() || "index.html";
-    return p;
-  }
-
-  function ensureDarkClassMirrorsLocalStorage(){
-    // Many pages already manage dark mode; we only mirror if they don't.
-    // If a page already toggles, this is harmless.
-    try{
-      const saved = localStorage.getItem("wv_theme") || localStorage.getItem("theme") || "";
-      if(saved){
-        if(saved.toLowerCase().includes("dark")) document.documentElement.classList.add("dark");
-        else document.documentElement.classList.remove("dark");
-      }
-    }catch(e){}
-  }
-
-  function inject(){
-    ensureDarkClassMirrorsLocalStorage();
-
-    const nav = document.createElement("div");
-    nav.className = "wv-tools-nav";
-    nav.setAttribute("role","navigation");
-    nav.setAttribute("aria-label","WealthView tools");
-
-    const inner = document.createElement("div");
-    inner.className = "wv-tools-nav__inner";
-
-    const label = document.createElement("div");
-    label.className = "wv-tools-nav__label";
-    label.textContent = "Tools";
-
-    inner.appendChild(label);
-
-    const current = getCurrentFile();
-
-    LINKS.forEach(l => {
-      const a = document.createElement("a");
-      a.className = "wv-tools-nav__link";
-      a.href = l.href;
-      a.textContent = l.label;
-      if(current === l.href || (current === "index.html" && l.href === "library.html")){
-        a.setAttribute("aria-current","page");
-      }
-      inner.appendChild(a);
-    });
-
-    const spacer = document.createElement("div");
-    spacer.className = "wv-tools-nav__spacer";
-    inner.appendChild(spacer);
-
-    const mini = document.createElement("div");
-    mini.className = "wv-tools-nav__mini";
-    mini.textContent = "Educational only — not financial advice";
-    inner.appendChild(mini);
-
-    nav.appendChild(inner);
-
-    // Place it at the top of body
-    const b = document.body;
-    if(!b) return;
-    if(b.firstElementChild && b.firstElementChild.classList && b.firstElementChild.classList.contains("wv-tools-nav")) return;
-    b.insertBefore(nav, b.firstChild);
-  }
-
-  if(document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded", inject);
-  }else{
-    inject();
-  }
-})();
+/* WealthView Tools Nav (shared) */
+.wv-tools-nav{
+  position:sticky; top:0; z-index:50;
+  backdrop-filter:saturate(180%) blur(10px);
+  /* Match Portfolio Visualizer ribbon feel (subtle teal/sky wash) */
+  background:linear-gradient(90deg,
+    rgba(224,242,254,.92),
+    rgba(204,251,241,.92)
+  );
+  border-bottom:1px solid rgba(15,23,42,.10);
+}
+html.dark .wv-tools-nav{
+  background:linear-gradient(90deg,
+    rgba(2,6,23,.82),
+    rgba(2,6,23,.72)
+  );
+  border-bottom:1px solid rgba(148,163,184,.22);
+}
+.wv-tools-nav__inner{
+  /* Align with the wider app layout used in Portfolio Visualizer */
+  width:min(1400px, calc(100% - 40px));
+  margin:0 auto;
+  padding:10px 0;
+  display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+}
+.wv-tools-nav__label{
+  font-weight:700; font-size:12px; letter-spacing:.06em; text-transform:uppercase;
+  opacity:.7; margin-right:4px;
+}
+.wv-tools-nav__link{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:8px 10px; border-radius:999px;
+  border:1px solid rgba(15,23,42,.12);
+  text-decoration:none; font-weight:600; font-size:13px;
+  color:inherit; background:rgba(255,255,255,.55);
+}
+html.dark .wv-tools-nav__link{ border-color:rgba(148,163,184,.22); background:rgba(2,6,23,.35); }
+.wv-tools-nav__link:hover{ transform:translateY(-1px); transition:.12s ease; }
+.wv-tools-nav__link[aria-current="page"]{
+  border-color:rgba(14,165,233,.45);
+  box-shadow:0 0 0 3px rgba(14,165,233,.18) inset;
+}
+.wv-tools-nav__spacer{ flex:1; }
+.wv-tools-nav__mini{
+  font-size:12px; opacity:.78; padding:6px 10px; border-radius:999px;
+  border:1px dashed rgba(15,23,42,.18);
+}
+html.dark .wv-tools-nav__mini{ border-color:rgba(148,163,184,.25); }
