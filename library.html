@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WealthView — Portfolio Library</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="p0-engine.js"></script>
+  <style>
+    :root{
+      --container-bg:#f8fafc;--card-bg:#ffffff;--input-bg:#f1f5f9;
+      --text-primary:#0f172a;--text-secondary:#475569;--border-color:#e2e8f0;
+      --shadow:0 8px 22px rgba(2,6,23,0.08);
+    }
+    body.dark-mode{
+      --container-bg:#0b1220;--card-bg:#0f172a;--input-bg:#111c33;
+      --text-primary:#e2e8f0;--text-secondary:#94a3b8;--border-color:rgba(148,163,184,0.25);
+      --shadow:0 10px 26px rgba(0,0,0,0.35);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--container-bg);color:var(--text-primary)}
+    .container{max-width:1200px;margin:0 auto;padding:18px 16px 28px}
+    .hero{border-radius:18px;padding:22px 22px 18px;color:#fff;
+      background:linear-gradient(135deg,#0f172a 0%,#0b3b5a 45%,#14b8a6 120%);
+      box-shadow:var(--shadow);position:relative;overflow:hidden}
+    .hero h1{margin:6px 0 6px;font-size:26px;letter-spacing:-0.02em}
+    .hero p{margin:0;opacity:.92;max-width:780px;line-height:1.55;font-size:13.5px}
+    .top-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-top:14px}
+    .navlinks{display:flex;gap:10px;flex-wrap:wrap}
+    .navlinks a{color:rgba(255,255,255,.9);text-decoration:none;font-weight:700;font-size:13px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08)}
+    .navlinks a:hover{background:rgba(255,255,255,.14)}
+    .toggle{border:none;background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.25);
+      padding:10px 12px;border-radius:12px;font-weight:800;cursor:pointer;font-size:13px}
+
+    .grid{display:grid;grid-template-columns: 1fr;gap:14px;margin-top:16px}
+    @media(min-width:980px){.grid{grid-template-columns: 1.2fr .8fr;}}
+    .card{background:var(--card-bg);border:1px solid var(--border-color);border-radius:16px;padding:14px;box-shadow:0 2px 10px rgba(2,6,23,0.05)}
+    body.dark-mode .card{box-shadow:0 2px 16px rgba(0,0,0,0.18)}
+    .card h2{margin:0 0 10px;font-size:15px;letter-spacing:-0.01em}
+    .muted{color:var(--text-secondary);font-size:12.5px;line-height:1.5}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0 6px}
+    .btn{padding:10px 12px;border-radius:12px;border:1px solid var(--border-color);background:var(--input-bg);color:var(--text-primary);
+      font-weight:800;cursor:pointer;font-size:13px}
+    .btn.primary{background:#14b8a6;border-color:#14b8a6;color:#fff}
+    .btn.danger{background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.35);color:#ef4444}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+    .input{padding:10px 12px;border-radius:12px;border:1px solid var(--border-color);background:var(--input-bg);color:var(--text-primary);font-weight:700}
+    .list{display:grid;gap:10px;margin-top:10px}
+    .row{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px;border-radius:14px;border:1px solid var(--border-color);background:rgba(15,23,42,0.02)}
+    body.dark-mode .row{background:rgba(148,163,184,0.06)}
+    .row strong{font-size:13.5px}
+    .row .meta{font-size:12px;color:var(--text-secondary);margin-top:3px}
+    .row .actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid var(--border-color);
+      background:var(--input-bg);font-size:12px;font-weight:800;color:var(--text-primary)}
+
+    .note{margin-top:10px;padding:12px 12px;border-radius:14px;border:1px dashed rgba(148,163,184,0.45);background:rgba(20,184,166,0.06)}
+    .footer-disclaimer{margin-top:14px;padding:12px 14px;border-radius:14px;border:1px solid var(--border-color);background:var(--input-bg)}
+    .footer-disclaimer p{margin:0;font-size:11px;color:var(--text-secondary);line-height:1.6;text-align:center}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="hero">
+      <div style="font-size:12px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;opacity:.85">WealthView</div>
+      <h1>Portfolio Library</h1>
+      <p>Keep multiple portfolios in one place (stored in your browser). Open any portfolio in the Visualizer, run a Health Check, or compare portfolios in a historical backtest.</p>
+      <div class="top-actions">
+        <div class="navlinks">
+          <a href="index.html">Portfolio Visualizer</a>
+          <a href="goals.html">Goals Simulator</a>
+          <a href="themes.html">Theme Explorer</a>
+          <a href="health.html">Health Check</a>
+          <a href="backtest.html">Multi-Backtest</a>
+        </div>
+        <button class="toggle" id="darkToggle" onclick="toggleDarkMode()">🌙 Dark Mode</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>Your saved portfolios</h2>
+        <div class="muted">Tip: if you don’t see anything here, open the Portfolio Visualizer and save a portfolio first. No login required.</div>
+
+        <div class="toolbar">
+          <input class="input" id="search" placeholder="Search by name…" style="flex:1;min-width:220px" />
+          <button class="btn primary" onclick="createEmptyPortfolio()">+ New portfolio</button>
+          <button class="btn" onclick="createTemplate('60/40 Classic')">+ Template 60/40</button>
+          <button class="btn" onclick="createTemplate('All-Weather (example)')">+ Template All-Weather</button>
+        </div>
+
+        <div id="list" class="list"></div>
+
+        <div class="footer-disclaimer">
+          <p>Educational analysis only. WealthView does not provide financial advice or recommendations. Templates are illustrative examples and not endorsements.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Quick actions</h2>
+        <div class="note">
+          <div style="font-weight:900;margin-bottom:6px">How it works</div>
+          <div class="muted">Portfolios are stored locally in your browser (LocalStorage). Clearing browser storage will remove them. You can export by copying the JSON below.</div>
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+          <button class="btn" onclick="copyAllPortfolios()">Copy portfolios JSON</button>
+          <button class="btn danger" onclick="dangerClearAll()">Clear ALL portfolios</button>
+        </div>
+
+        <div style="margin-top:12px">
+          <div class="chip">No login</div>
+          <div class="chip">Browser-only storage</div>
+          <div class="chip">Export via copy</div>
+        </div>
+
+        <textarea id="jsonDump" class="input" style="width:100%;height:260px;margin-top:12px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono',monospace;font-size:12px" readonly></textarea>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function applyDarkModeFromStorage(){
+      const isDark = localStorage.getItem('darkMode') === 'true';
+      document.body.classList.toggle('dark-mode', isDark);
+      const btn = document.getElementById('darkToggle');
+      if(btn) btn.textContent = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
+    }
+    function toggleDarkMode(){
+      const isDark = !document.body.classList.contains('dark-mode');
+      document.body.classList.toggle('dark-mode', isDark);
+      localStorage.setItem('darkMode', String(isDark));
+      applyDarkModeFromStorage();
+    }
+
+    function portfolioSummary(p){
+      const holdings = (p && p.holdings) ? p.holdings : [];
+      const n = holdings.filter(h=>h && h.ticker && Number(h.shares)>0).length;
+      const tickers = holdings.map(h=>String(h.ticker||'').trim().toUpperCase()).filter(Boolean);
+      const unique = new Set(tickers);
+      return { count:n, unique: unique.size };
+    }
+
+    function render(){
+      const portfolios = WV.getPortfolios();
+      const currentId = WV.getCurrentPortfolioId();
+      const q = (document.getElementById('search').value||'').toLowerCase().trim();
+
+      const list = document.getElementById('list');
+      list.innerHTML = '';
+
+      const keys = Object.keys(portfolios);
+      if(!keys.length){
+        list.innerHTML = `<div class="row"><div><strong>No portfolios yet</strong><div class="meta">Go to the Portfolio Visualizer → save a portfolio → come back here.</div></div><div class="actions"><a class="btn primary" href="index.html">Open Visualizer</a></div></div>`;
+      }
+
+      keys
+        .map(id => ({ id, p: portfolios[id] }))
+        .filter(x => !q || String(x.p?.name||'').toLowerCase().includes(q))
+        .sort((a,b)=> String(a.p?.name||'').localeCompare(String(b.p?.name||'')))
+        .forEach(({id,p})=>{
+          const s = portfolioSummary(p);
+          const isCurrent = id === currentId;
+          const row = document.createElement('div');
+          row.className = 'row';
+          row.innerHTML = `
+            <div>
+              <strong>${escapeHtml(p?.name || 'Untitled Portfolio')}</strong> ${isCurrent ? '<span class="chip" style="margin-left:8px">Current</span>' : ''}
+              <div class="meta">${s.unique} unique tickers • ${s.count} positions</div>
+            </div>
+            <div class="actions">
+              <button class="btn" onclick="setCurrentAndOpen('${id}')">Open</button>
+              <button class="btn" onclick="openHealth('${id}')">Health Check</button>
+              <button class="btn" onclick="duplicatePortfolio('${id}')">Duplicate</button>
+              <button class="btn" onclick="renamePortfolioPrompt('${id}')">Rename</button>
+              <button class="btn danger" onclick="deletePortfolio('${id}')">Delete</button>
+            </div>
+          `;
+          list.appendChild(row);
+        });
+
+      document.getElementById('jsonDump').value = JSON.stringify(portfolios, null, 2);
+    }
+
+    function escapeHtml(str){
+      return String(str).replace(/[&<>"]+/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s]||s));
+    }
+
+    function setCurrentAndOpen(id){
+      WV.setCurrentPortfolioId(id);
+      window.location.href = 'index.html#portfolio-builder-section';
+    }
+    function openHealth(id){
+      WV.setCurrentPortfolioId(id);
+      window.location.href = 'health.html';
+    }
+
+    function createEmptyPortfolio(){
+      const portfolios = WV.getPortfolios();
+      const id = WV.makeId();
+      portfolios[id] = { name: 'New Portfolio', holdings: [] };
+      WV.savePortfolios(portfolios);
+      WV.setCurrentPortfolioId(id);
+      render();
+    }
+
+    function createTemplate(name){
+      const templates = {
+        '60/40 Classic': [
+          { ticker:'VTI', shares: 10, name:'Total US Stock (example)' },
+          { ticker:'BND', shares: 10, name:'Total US Bond (example)' }
+        ],
+        'All-Weather (example)': [
+          { ticker:'VTI', shares: 7, name:'Stocks (example)' },
+          { ticker:'TLT', shares: 3, name:'Long Treasuries (example)' },
+          { ticker:'IEF', shares: 3, name:'Intermediate Treasuries (example)' },
+          { ticker:'GLD', shares: 2, name:'Gold (example)' }
+        ]
+      };
+      const portfolios = WV.getPortfolios();
+      const id = WV.makeId();
+      portfolios[id] = { name, holdings: templates[name] ? templates[name] : [] };
+      WV.savePortfolios(portfolios);
+      WV.setCurrentPortfolioId(id);
+      render();
+    }
+
+    function duplicatePortfolio(id){
+      const portfolios = WV.getPortfolios();
+      if(!portfolios[id]) return;
+      const clone = WV.clone(portfolios[id]);
+      const newId = WV.makeId();
+      clone.name = (clone.name || 'Portfolio') + ' (copy)';
+      portfolios[newId] = clone;
+      WV.savePortfolios(portfolios);
+      WV.setCurrentPortfolioId(newId);
+      render();
+    }
+
+    function renamePortfolioPrompt(id){
+      const portfolios = WV.getPortfolios();
+      if(!portfolios[id]) return;
+      const next = prompt('Rename portfolio:', portfolios[id].name || '');
+      if(next === null) return;
+      portfolios[id].name = (next || 'Untitled').slice(0, 80);
+      WV.savePortfolios(portfolios);
+      render();
+    }
+
+    function deletePortfolio(id){
+      const portfolios = WV.getPortfolios();
+      if(!portfolios[id]) return;
+      if(!confirm('Delete this portfolio? This cannot be undone.')) return;
+      delete portfolios[id];
+      WV.savePortfolios(portfolios);
+      const current = WV.getCurrentPortfolioId();
+      if(current === id){
+        const first = Object.keys(portfolios)[0] || '';
+        localStorage.setItem('currentPortfolio', first);
+      }
+      render();
+    }
+
+    function copyAllPortfolios(){
+      const text = document.getElementById('jsonDump').value;
+      navigator.clipboard.writeText(text).then(()=>{
+        alert('Copied to clipboard');
+      }).catch(()=>{
+        alert('Copy failed. You can manually select and copy the text.');
+      });
+    }
+
+    function dangerClearAll(){
+      if(!confirm('This will remove ALL saved portfolios from this browser. Continue?')) return;
+      localStorage.removeItem('portfolios');
+      localStorage.removeItem('currentPortfolio');
+      render();
+    }
+
+    document.getElementById('search').addEventListener('input', render);
+    applyDarkModeFromStorage();
+    render();
+  </script>
+</body>
+</html>
