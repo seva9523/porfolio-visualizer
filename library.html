@@ -1,130 +1,505 @@
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>WealthView — Portfolio Library</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="tools-nav.css">
-<style>
-body {
-  margin: 0;
-  font-family: Inter, sans-serif;
-  background: linear-gradient(to bottom, #f8fafc, #eef2f7);
-}
-.container {
-  padding: 30px 40px;
-}
-.header {
-  background: linear-gradient(135deg,#0f766e,#14b8a6);
-  color: white;
-  padding: 60px 40px;
-  text-align: center;
-}
-.templates-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px,1fr));
-  gap: 20px;
-  margin-top: 20px;
-}
-.card {
-  background: white;
-  padding: 18px;
-  border-radius: 14px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-}
-.button {
-  display: inline-block;
-  padding: 8px 14px;
-  border-radius: 8px;
-  background: #14b8a6;
-  color: white;
-  text-decoration: none;
-  font-size: 14px;
-  cursor: pointer;
-}
-.modal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.4);
-  align-items: center;
-  justify-content: center;
-}
-.modal-content {
-  background: white;
-  width: 90%;
-  max-width: 1000px;
-  padding: 30px;
-  border-radius: 16px;
-  max-height: 80vh;
-  overflow-y: auto;
-}
-.close-btn {
-  float: right;
-  cursor: pointer;
-  font-size: 18px;
-}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WealthView — Portfolio Library</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="p0-engine.js"></script>
+  <link rel="stylesheet" href="tools-nav.css"/>
+  <script src="tools-nav.js" defer></script>
+  <style>
+    :root{
+      --container-bg:#f8fafc;--card-bg:#ffffff;--input-bg:#f1f5f9;
+      --text-primary:#0f172a;--text-secondary:#475569;--border-color:#e2e8f0;
+      --shadow:0 8px 22px rgba(2,6,23,0.08);
+      --brand:#14b8a6;
+      --brand-dark:#0f766e;
+      --danger:#ef4444;
+    }
+    body.dark-mode{
+      --container-bg:#0b1220;--card-bg:#0f172a;--input-bg:#111c33;
+      --text-primary:#e2e8f0;--text-secondary:#94a3b8;--border-color:rgba(148,163,184,0.25);
+      --shadow:0 10px 26px rgba(0,0,0,0.35);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--container-bg);color:var(--text-primary)}
+    .container{max-width:1200px;margin:0 auto;padding:18px 16px 28px}
+    .hero{border-radius:18px;padding:22px 22px 18px;color:#fff;
+      background:linear-gradient(135deg,#0f172a 0%,#0b3b5a 45%,#14b8a6 120%);
+      box-shadow:var(--shadow);position:relative;overflow:hidden}
+    .hero h1{margin:6px 0 6px;font-size:26px;letter-spacing:-0.02em}
+    .hero p{margin:0;opacity:.92;max-width:780px;line-height:1.55;font-size:13.5px}
+    .top-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-top:14px}
+    .navlinks{display:flex;gap:10px;flex-wrap:wrap}
+    .navlinks a{color:rgba(255,255,255,.9);text-decoration:none;font-weight:700;font-size:13px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08)}
+    .navlinks a:hover{background:rgba(255,255,255,.14)}
+    .toggle{border:none;background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.25);
+      padding:10px 12px;border-radius:12px;font-weight:800;cursor:pointer;font-size:13px}
+
+    .grid{display:grid;grid-template-columns: 1fr;gap:14px;margin-top:16px}
+    @media(min-width:980px){.grid{grid-template-columns: 1.2fr .8fr;}}
+    .card{background:var(--card-bg);border:1px solid var(--border-color);border-radius:16px;padding:14px;box-shadow:0 2px 10px rgba(2,6,23,0.05)}
+    body.dark-mode .card{box-shadow:0 2px 16px rgba(0,0,0,0.18)}
+    .card h2{margin:0 0 10px;font-size:15px;letter-spacing:-0.01em}
+    .muted{color:var(--text-secondary);font-size:12.5px;line-height:1.5}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0 6px}
+    .btn{padding:10px 12px;border-radius:12px;border:1px solid var(--border-color);background:var(--input-bg);color:var(--text-primary);
+      font-weight:800;cursor:pointer;font-size:13px}
+    .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+    .btn.danger{background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.35);color:var(--danger)}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+    .input{padding:10px 12px;border-radius:12px;border:1px solid var(--border-color);background:var(--input-bg);color:var(--text-primary);font-weight:700}
+    .list{display:grid;gap:10px;margin-top:12px}
+    .row{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px;border-radius:14px;border:1px solid var(--border-color);background:rgba(15,23,42,0.02)}
+    body.dark-mode .row{background:rgba(148,163,184,0.06)}
+    .row strong{font-size:13.5px}
+    .row .meta{font-size:12px;color:var(--text-secondary);margin-top:3px}
+    .row .actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid var(--border-color);
+      background:var(--input-bg);font-size:12px;font-weight:800;color:var(--text-primary)}
+
+    .note{margin-top:10px;padding:12px 12px;border-radius:14px;border:1px dashed rgba(148,163,184,0.45);background:rgba(20,184,166,0.06)}
+    .footer-disclaimer{margin-top:14px;padding:12px 14px;border-radius:14px;border:1px solid var(--border-color);background:var(--input-bg)}
+    .footer-disclaimer p{margin:0;font-size:11px;color:var(--text-secondary);line-height:1.6;text-align:center}
+
+    /* Templates UX (Option B) */
+    .sectionHead{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:10px}
+    .sectionHead h3{margin:0;font-size:13px;letter-spacing:-0.01em}
+    .templates{display:grid;grid-template-columns:1fr;gap:10px;margin-top:10px}
+    @media(min-width:720px){.templates{grid-template-columns:repeat(3,1fr)}}
+    .tcard{border:1px solid var(--border-color);background:rgba(15,23,42,0.02);border-radius:16px;padding:12px}
+    body.dark-mode .tcard{background:rgba(148,163,184,0.06)}
+    .tname{font-weight:900;font-size:13px;margin:0 0 4px}
+    .tdesc{margin:0 0 10px;color:var(--text-secondary);font-size:12px;line-height:1.45}
+    .tmeta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+    .pill{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:900;border:1px solid var(--border-color);background:var(--input-bg);color:var(--text-primary)}
+    .pill.ok{background:rgba(20,184,166,0.14);border-color:rgba(20,184,166,0.35)}
+    .pill.warn{background:rgba(245,158,11,0.14);border-color:rgba(245,158,11,0.35)}
+    .pill.hi{background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.35);color:var(--danger)}
+    .tbtnrow{display:flex;gap:8px;flex-wrap:wrap}
+
+    /* Modal */
+    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,0.55);padding:18px;z-index:9999}
+    .modal.open{display:flex}
+    .modalCard{width:min(980px, 100%);max-height:80vh;overflow:auto;background:var(--card-bg);border:1px solid var(--border-color);border-radius:18px;box-shadow:var(--shadow)}
+    .modalTop{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 14px;border-bottom:1px solid var(--border-color);position:sticky;top:0;background:var(--card-bg);z-index:2}
+    .modalTop strong{font-size:13.5px}
+    .xbtn{border:1px solid var(--border-color);background:var(--input-bg);border-radius:12px;padding:8px 10px;font-weight:900;cursor:pointer}
+    .modalBody{padding:14px}
+    .filters{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 12px}
+    .filterChip{cursor:pointer;user-select:none}
+    .filterChip.active{border-color:rgba(20,184,166,0.6);background:rgba(20,184,166,0.14)}
+    .catalog{display:grid;grid-template-columns:1fr;gap:10px}
+    @media(min-width:720px){.catalog{grid-template-columns:repeat(2,1fr)}}
+    @media(min-width:980px){.catalog{grid-template-columns:repeat(3,1fr)}}
+  </style>
 </head>
 <body>
+  <div class="container">
+    <div class="hero">
+      <div style="font-size:12px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;opacity:.85">WealthView</div>
+      <h1>Portfolio Library</h1>
+      <p>Keep multiple portfolios in one place (stored in your browser). Open any portfolio in the Visualizer, run a Health Check, or compare portfolios in a historical backtest.</p>
+      <div class="top-actions">
+        <div class="navlinks">
+          <a href="visualizer.html">Portfolio Visualizer</a>
+          <a href="goals.html">Goals Simulator</a>
+          <a href="themes.html">Theme Explorer</a>
+          <a href="health.html">Health Check</a>
+          <a href="backtest.html">Multi-Backtest</a>
+        </div>
+        <button class="toggle" id="darkToggle" onclick="toggleDarkMode()">🌙 Dark Mode</button>
+      </div>
+    </div>
 
-<div class="header">
-  <h1>Portfolio Library</h1>
-  <p>Starter templates and full catalog. Educational examples only.</p>
-</div>
+    <div class="grid">
+      <div class="card">
+        <h2>Your saved portfolios</h2>
+        <div class="muted">Tip: if you don’t see anything here, open the Portfolio Visualizer and save a portfolio first. No login required.</div>
 
-<div class="container">
+        <div class="toolbar">
+          <input class="input" id="search" placeholder="Search by name…" style="flex:1;min-width:220px" />
+          <button class="btn primary" onclick="createEmptyPortfolio()">+ New portfolio</button>
+          <button class="btn" onclick="openTemplates()">Browse templates</button>
+        </div>
 
-<h2>Starter Templates</h2>
-<div class="templates-grid">
-  <div class="card">
-    <h3>Global Market</h3>
-    <p>Single global equity exposure.</p>
-    <div class="button">Use Template</div>
-  </div>
-  <div class="card">
-    <h3>Classic 60/40</h3>
-    <p>Balanced stocks and bonds mix.</p>
-    <div class="button">Use Template</div>
-  </div>
-  <div class="card">
-    <h3>3-Fund Portfolio</h3>
-    <p>US, International, Bonds.</p>
-    <div class="button">Use Template</div>
-  </div>
-</div>
+        <div class="sectionHead">
+          <h3>Starter templates</h3>
+          <div class="muted">Quick examples to get started. Educational only.</div>
+        </div>
 
-<br><br>
-<div class="button" onclick="openModal()">Browse All Templates</div>
+        <div class="templates" id="starterTemplates"></div>
 
-</div>
+        <div id="list" class="list"></div>
 
-<div class="modal" id="templateModal">
-  <div class="modal-content">
-    <span class="close-btn" onclick="closeModal()">✕ Close</span>
-    <h2>Template Catalog</h2>
-    <div class="templates-grid">
-      <div class="card"><h3>Conservative</h3><p>Higher bond allocation.</p></div>
-      <div class="card"><h3>Growth</h3><p>Higher equity allocation.</p></div>
-      <div class="card"><h3>Income Tilt</h3><p>Dividend-focused example.</p></div>
-      <div class="card"><h3>Gold Tilt</h3><p>Gold sleeve example.</p></div>
-      <div class="card"><h3>Real Assets</h3><p>Real estate exposure.</p></div>
-      <div class="card"><h3>Balanced + Gold</h3><p>Balanced with small hedge.</p></div>
-      <div class="card"><h3>Blank Starter</h3><p>Empty template to customize.</p></div>
+        <div class="footer-disclaimer">
+          <p>Educational analysis only. WealthView does not provide financial advice or recommendations. Templates are illustrative examples and not endorsements.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Quick actions</h2>
+        <div class="note">
+          <div style="font-weight:900;margin-bottom:6px">How it works</div>
+          <div class="muted">Portfolios are stored locally in your browser (LocalStorage). Clearing browser storage will remove them. You can export by copying the JSON below.</div>
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+          <button class="btn" onclick="copyAllPortfolios()">Copy portfolios JSON</button>
+          <button class="btn danger" onclick="dangerClearAll()">Clear ALL portfolios</button>
+        </div>
+
+        <div style="margin-top:12px">
+          <div class="chip">No login</div>
+          <div class="chip">Browser-only storage</div>
+          <div class="chip">Export via copy</div>
+        </div>
+
+        <textarea id="jsonDump" class="input" style="width:100%;height:260px;margin-top:12px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono',monospace;font-size:12px" readonly></textarea>
+      </div>
     </div>
   </div>
-</div>
 
-<script>
-function openModal() {
-  document.getElementById("templateModal").style.display = "flex";
-}
-function closeModal() {
-  document.getElementById("templateModal").style.display = "none";
-}
-</script>
+  <!-- Template catalog modal -->
+  <div class="modal" id="tplModal" aria-hidden="true">
+    <div class="modalCard" role="dialog" aria-modal="true" aria-label="Template catalog">
+      <div class="modalTop">
+        <div>
+          <strong>Template catalog</strong>
+          <div class="muted" style="margin-top:2px">Pick an illustrative template. You can edit holdings later in the Portfolio Visualizer.</div>
+        </div>
+        <button class="xbtn" onclick="closeTemplates()">✕</button>
+      </div>
+      <div class="modalBody">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <input id="tplSearch" class="input" placeholder="Search templates…" style="flex:1;min-width:220px" />
+          <button class="btn" onclick="clearTplFilters()">Clear filters</button>
+        </div>
+        <div class="filters" id="tplFilters"></div>
+        <div class="catalog" id="tplCatalog"></div>
+        <div class="muted" style="margin-top:12px">Risk labels are descriptive only (not recommendations). Holdings are examples for learning.</div>
+      </div>
+    </div>
+  </div>
 
+  <script>
+    // ---------- Dark mode ----------
+    function applyDarkModeFromStorage(){
+      const isDark = localStorage.getItem('darkMode') === 'true';
+      document.body.classList.toggle('dark-mode', isDark);
+      const btn = document.getElementById('darkToggle');
+      if(btn) btn.textContent = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
+    }
+    function toggleDarkMode(){
+      const isDark = !document.body.classList.contains('dark-mode');
+      document.body.classList.toggle('dark-mode', isDark);
+      localStorage.setItem('darkMode', String(isDark));
+      applyDarkModeFromStorage();
+    }
+
+    // ---------- Template definitions ----------
+    const TEMPLATE_DEFS = [
+      // Starter (3)
+      { key:'Global Market (example)', starter:true, tag:'Beginner', risk:'Medium', riskClass:'warn',
+        desc:'Single global equity exposure (illustrative).',
+        holdings:[ {ticker:'VT', shares:10, name:'Total World Stock (example)'} ],
+        preview:'VT' },
+      { key:'Classic 60/40', starter:true, tag:'Baseline', risk:'Medium', riskClass:'warn',
+        desc:'Balanced mix of stocks and bonds (illustrative).',
+        holdings:[ {ticker:'VTI', shares:6, name:'US Stocks (example)'}, {ticker:'BND', shares:4, name:'US Bonds (example)'} ],
+        preview:'VTI • BND' },
+      { key:'3-Fund Portfolio', starter:true, tag:'Baseline', risk:'Medium', riskClass:'warn',
+        desc:'US, International, and Bonds (illustrative).',
+        holdings:[ {ticker:'VTI', shares:5, name:'US Stocks (example)'}, {ticker:'VXUS', shares:3, name:'Intl Stocks (example)'}, {ticker:'BND', shares:2, name:'Bonds (example)'} ],
+        preview:'VTI • VXUS • BND' },
+
+      // Catalog only (7)
+      { key:'Conservative (example)', starter:false, tag:'Conservative', risk:'Lower', riskClass:'ok',
+        desc:'Higher bonds, lower equities (illustrative).',
+        holdings:[ {ticker:'BND', shares:7, name:'Bonds (example)'}, {ticker:'VTI', shares:3, name:'Stocks (example)'} ],
+        preview:'BND • VTI' },
+      { key:'Growth (example)', starter:false, tag:'Growth', risk:'Higher', riskClass:'hi',
+        desc:'Higher equities, lower bonds (illustrative).',
+        holdings:[ {ticker:'VTI', shares:8, name:'Stocks (example)'}, {ticker:'VXUS', shares:2, name:'Intl (example)'} ],
+        preview:'VTI • VXUS' },
+      { key:'Income Tilt (example)', starter:false, tag:'Income tilt', risk:'Medium', riskClass:'warn',
+        desc:'Dividend/income tilt example (illustrative).',
+        holdings:[ {ticker:'VYM', shares:6, name:'Dividend Stocks (example)'}, {ticker:'BND', shares:4, name:'Bonds (example)'} ],
+        preview:'VYM • BND' },
+      { key:'Gold Tilt (example)', starter:false, tag:'Real assets', risk:'Medium', riskClass:'warn',
+        desc:'Small gold sleeve example (illustrative).',
+        holdings:[ {ticker:'VTI', shares:7, name:'Stocks (example)'}, {ticker:'GLD', shares:3, name:'Gold (example)'} ],
+        preview:'VTI • GLD' },
+      { key:'Real Assets Tilt (example)', starter:false, tag:'Real assets', risk:'Medium', riskClass:'warn',
+        desc:'Small REIT sleeve example (illustrative).',
+        holdings:[ {ticker:'VTI', shares:7, name:'Stocks (example)'}, {ticker:'VNQ', shares:3, name:'REITs (example)'} ],
+        preview:'VTI • VNQ' },
+      { key:'Balanced + Gold (example)', starter:false, tag:'Hedge sleeve', risk:'Medium', riskClass:'warn',
+        desc:'Balanced mix with a small hedge sleeve (illustrative).',
+        holdings:[ {ticker:'VTI', shares:5, name:'Stocks (example)'}, {ticker:'BND', shares:4, name:'Bonds (example)'}, {ticker:'GLD', shares:1, name:'Gold (example)'} ],
+        preview:'VTI • BND • GLD' },
+      { key:'All-Weather (example)', starter:false, tag:'Diversified', risk:'Medium', riskClass:'warn',
+        desc:'Multiple sleeves example for diversification learning.',
+        holdings:[ {ticker:'VTI', shares:7, name:'Stocks (example)'}, {ticker:'TLT', shares:3, name:'Long Treasuries (example)'}, {ticker:'IEF', shares:3, name:'Intermediate Treasuries (example)'}, {ticker:'GLD', shares:2, name:'Gold (example)'} ],
+        preview:'VTI • TLT • IEF • GLD' },
+      { key:'Blank Starter (custom)', starter:false, tag:'Blank', risk:'—', riskClass:'ok',
+        desc:'Empty template to build your own.',
+        holdings:[],
+        preview:'No holdings' },
+    ];
+
+    function templateByName(name){
+      return TEMPLATE_DEFS.find(t => t.key === name);
+    }
+
+    // ---------- Portfolio list ----------
+    function portfolioSummary(p){
+      const holdings = (p && p.holdings) ? p.holdings : [];
+      const n = holdings.filter(h=>h && h.ticker && Number(h.shares)>0).length;
+      const tickers = holdings.map(h=>String(h.ticker||'').trim().toUpperCase()).filter(Boolean);
+      const unique = new Set(tickers);
+      return { count:n, unique: unique.size };
+    }
+
+    function escapeHtml(str){
+      return String(str).replace(/[&<>"]+/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s]||s));
+    }
+
+    function render(){
+      const portfolios = WV.getPortfolios();
+      const currentId = WV.getCurrentPortfolioId();
+      const q = (document.getElementById('search').value||'').toLowerCase().trim();
+
+      const list = document.getElementById('list');
+      list.innerHTML = '';
+
+      const keys = Object.keys(portfolios);
+      if(!keys.length){
+        list.innerHTML = `<div class="row"><div><strong>No portfolios yet</strong><div class="meta">Go to the Portfolio Visualizer → save a portfolio → come back here.</div></div><div class="actions"><a class="btn primary" href="visualizer.html">Open Visualizer</a></div></div>`;
+      }
+
+      keys
+        .map(id => ({ id, p: portfolios[id] }))
+        .filter(x => !q || String(x.p?.name||'').toLowerCase().includes(q))
+        .sort((a,b)=> String(a.p?.name||'').localeCompare(String(b.p?.name||'')))
+        .forEach(({id,p})=>{
+          const s = portfolioSummary(p);
+          const isCurrent = id === currentId;
+          const row = document.createElement('div');
+          row.className = 'row';
+          row.innerHTML = `
+            <div>
+              <strong>${escapeHtml(p?.name || 'Untitled Portfolio')}</strong> ${isCurrent ? '<span class="chip" style="margin-left:8px">Current</span>' : ''}
+              <div class="meta">${s.unique} unique tickers • ${s.count} positions</div>
+            </div>
+            <div class="actions">
+              <button class="btn" onclick="setCurrentAndOpen('${id}')">Open</button>
+              <button class="btn" onclick="openHealth('${id}')">Health Check</button>
+              <button class="btn" onclick="duplicatePortfolio('${id}')">Duplicate</button>
+              <button class="btn" onclick="renamePortfolioPrompt('${id}')">Rename</button>
+              <button class="btn danger" onclick="deletePortfolio('${id}')">Delete</button>
+            </div>
+          `;
+          list.appendChild(row);
+        });
+
+      document.getElementById('jsonDump').value = JSON.stringify(portfolios, null, 2);
+    }
+
+    function setCurrentAndOpen(id){
+      WV.setCurrentPortfolioId(id);
+      window.location.href = 'index.html#portfolio-builder-section';
+    }
+    function openHealth(id){
+      WV.setCurrentPortfolioId(id);
+      window.location.href = 'health.html';
+    }
+
+    // ---------- Portfolio actions ----------
+    function createEmptyPortfolio(){
+      const portfolios = WV.getPortfolios();
+      const id = WV.makeId();
+      portfolios[id] = { name: 'New Portfolio', holdings: [] };
+      WV.savePortfolios(portfolios);
+      WV.setCurrentPortfolioId(id);
+      render();
+    }
+
+    function createTemplate(name){
+      const tpl = templateByName(name);
+      const portfolios = WV.getPortfolios();
+      const id = WV.makeId();
+      portfolios[id] = { name, holdings: tpl ? tpl.holdings : [] };
+      WV.savePortfolios(portfolios);
+      WV.setCurrentPortfolioId(id);
+      render();
+      closeTemplates();
+    }
+
+    function duplicatePortfolio(id){
+      const portfolios = WV.getPortfolios();
+      if(!portfolios[id]) return;
+      const clone = WV.clone(portfolios[id]);
+      const newId = WV.makeId();
+      clone.name = (clone.name || 'Portfolio') + ' (copy)';
+      portfolios[newId] = clone;
+      WV.savePortfolios(portfolios);
+      WV.setCurrentPortfolioId(newId);
+      render();
+    }
+
+    function renamePortfolioPrompt(id){
+      const portfolios = WV.getPortfolios();
+      if(!portfolios[id]) return;
+      const next = prompt('Rename portfolio:', portfolios[id].name || '');
+      if(next === null) return;
+      portfolios[id].name = (next || 'Untitled').slice(0, 80);
+      WV.savePortfolios(portfolios);
+      render();
+    }
+
+    function deletePortfolio(id){
+      const portfolios = WV.getPortfolios();
+      if(!portfolios[id]) return;
+      if(!confirm('Delete this portfolio? This cannot be undone.')) return;
+      delete portfolios[id];
+      WV.savePortfolios(portfolios);
+      const current = WV.getCurrentPortfolioId();
+      if(current === id){
+        const first = Object.keys(portfolios)[0] || '';
+        localStorage.setItem('currentPortfolio', first);
+      }
+      render();
+    }
+
+    function copyAllPortfolios(){
+      const text = document.getElementById('jsonDump').value;
+      navigator.clipboard.writeText(text).then(()=>alert('Copied to clipboard'))
+        .catch(()=>alert('Copy failed. You can manually select and copy the text.'));
+    }
+
+    function dangerClearAll(){
+      if(!confirm('This will remove ALL saved portfolios from this browser. Continue?')) return;
+      localStorage.removeItem('portfolios');
+      localStorage.removeItem('currentPortfolio');
+      render();
+    }
+
+    // ---------- Templates UI ----------
+    const FILTERS = ['Beginner','Baseline','Conservative','Growth','Income tilt','Real assets','Hedge sleeve','Diversified','Blank'];
+    let activeFilter = '';
+    function renderStarter(){
+      const host = document.getElementById('starterTemplates');
+      host.innerHTML = '';
+      TEMPLATE_DEFS.filter(t=>t.starter).forEach(t=>{
+        const el = document.createElement('div');
+        el.className = 'tcard';
+        el.innerHTML = `
+          <div class="tname">${escapeHtml(t.key)}</div>
+          <div class="tdesc">${escapeHtml(t.desc)}</div>
+          <div class="tmeta">
+            <span class="pill">${escapeHtml(t.tag)}</span>
+            <span class="pill ${t.riskClass}">Risk: ${escapeHtml(t.risk)}</span>
+          </div>
+          <div class="muted" style="margin-bottom:10px">Holdings: ${escapeHtml(t.preview)}</div>
+          <div class="tbtnrow">
+            <button class="btn primary" onclick="createTemplate('${escapeHtml(t.key).replace(/'/g,"&#39;")}')">Use template</button>
+            <button class="btn" onclick="openTemplates('${escapeHtml(t.key).replace(/'/g,"&#39;")}')">See in catalog</button>
+          </div>
+        `;
+        host.appendChild(el);
+      });
+    }
+
+    function openTemplates(focusName){
+      document.getElementById('tplModal').classList.add('open');
+      document.getElementById('tplModal').setAttribute('aria-hidden','false');
+      document.getElementById('tplSearch').value = '';
+      activeFilter = '';
+      renderFilters();
+      renderCatalog(focusName || '');
+      // simple focus for accessibility
+      setTimeout(()=>document.getElementById('tplSearch').focus(), 50);
+    }
+    function closeTemplates(){
+      document.getElementById('tplModal').classList.remove('open');
+      document.getElementById('tplModal').setAttribute('aria-hidden','true');
+    }
+    window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') closeTemplates(); });
+
+    function clearTplFilters(){
+      activeFilter = '';
+      document.getElementById('tplSearch').value = '';
+      renderFilters();
+      renderCatalog('');
+    }
+
+    function renderFilters(){
+      const host = document.getElementById('tplFilters');
+      host.innerHTML = '';
+      FILTERS.forEach(f=>{
+        const chip = document.createElement('div');
+        chip.className = 'pill filterChip' + (activeFilter===f ? ' active' : '');
+        chip.textContent = f;
+        chip.onclick = ()=>{ activeFilter = (activeFilter===f ? '' : f); renderFilters(); renderCatalog(''); };
+        host.appendChild(chip);
+      });
+    }
+
+    function renderCatalog(focusName){
+      const host = document.getElementById('tplCatalog');
+      host.innerHTML = '';
+      const q = (document.getElementById('tplSearch').value||'').toLowerCase().trim();
+
+      let items = TEMPLATE_DEFS.slice();
+      if(activeFilter){
+        items = items.filter(t=>t.tag===activeFilter || t.key.includes(activeFilter));
+      }
+      if(q){
+        items = items.filter(t=> (t.key+' '+t.desc+' '+t.tag+' '+t.preview).toLowerCase().includes(q));
+      }
+      // Keep stable ordering: starter first then others
+      items.sort((a,b)=> (b.starter - a.starter) || a.key.localeCompare(b.key));
+
+      items.forEach(t=>{
+        const el = document.createElement('div');
+        el.className = 'tcard';
+        el.innerHTML = `
+          <div class="tname">${escapeHtml(t.key)}</div>
+          <div class="tdesc">${escapeHtml(t.desc)}</div>
+          <div class="tmeta">
+            <span class="pill">${escapeHtml(t.tag)}</span>
+            <span class="pill ${t.riskClass}">Risk: ${escapeHtml(t.risk)}</span>
+          </div>
+          <div class="muted" style="margin-bottom:10px">Holdings: ${escapeHtml(t.preview)}</div>
+          <div class="tbtnrow">
+            <button class="btn primary" onclick="createTemplate('${escapeHtml(t.key).replace(/'/g,"&#39;")}')">Use template</button>
+            <a class="btn" href="visualizer.html" onclick="WV.setCurrentPortfolioId(WV.getCurrentPortfolioId())">Edit later in Visualizer</a>
+          </div>
+        `;
+        host.appendChild(el);
+      });
+
+      if(!items.length){
+        host.innerHTML = `<div class="muted">No templates match your search/filter.</div>`;
+      }
+
+      if(focusName){
+        // scroll to focused template if exists
+        const target = Array.from(host.querySelectorAll('.tname')).find(x=>x.textContent===focusName);
+        if(target){ target.scrollIntoView({block:'center'}); }
+      }
+    }
+
+    document.getElementById('tplSearch').addEventListener('input', ()=>renderCatalog(''));
+
+    // ---------- Init ----------
+    document.getElementById('search').addEventListener('input', render);
+    applyDarkModeFromStorage();
+    renderStarter();
+    render();
+  </script>
 </body>
 </html>
