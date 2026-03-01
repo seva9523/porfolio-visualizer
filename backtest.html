@@ -8,80 +8,228 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="p0-engine.js"></script>
   <style>
-    :root{
-      --container-bg:#f8fafc;--card-bg:#ffffff;--input-bg:#f1f5f9;
-      --text-primary:#0f172a;--text-secondary:#475569;--border-color:#e2e8f0;
-      --shadow:0 8px 22px rgba(2,6,23,0.08);
-    }
-    body.dark-mode{
-      --container-bg:#0b1220;--card-bg:#0f172a;--input-bg:#111c33;
-      --text-primary:#e2e8f0;--text-secondary:#94a3b8;--border-color:rgba(148,163,184,0.25);
-      --shadow:0 10px 26px rgba(0,0,0,0.35);
-    }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--container-bg);color:var(--text-primary)}
-    .container{max-width:1200px;margin:0 auto;padding:18px 16px 28px}
-    .hero{border-radius:18px;padding:22px 22px 18px;color:#fff;
-      background:linear-gradient(135deg,#0f172a 0%,#0b3b5a 45%,#14b8a6 120%);
-      box-shadow:var(--shadow);position:relative;overflow:hidden}
-    .hero h1{margin:6px 0 6px;font-size:26px;letter-spacing:-0.02em}
-    .hero p{margin:0;opacity:.92;max-width:950px;line-height:1.55;font-size:13.5px}
-    .top-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-top:14px}
-    .navlinks{display:flex;gap:10px;flex-wrap:wrap}
-    .navlinks a{color:rgba(255,255,255,.9);text-decoration:none;font-weight:700;font-size:13px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08)}
-    .navlinks a:hover{background:rgba(255,255,255,.14)}
-    .toggle{border:none;background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.25);
-      padding:10px 12px;border-radius:12px;font-weight:800;cursor:pointer;font-size:13px}
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg-gradient-start:#F8FAFC;
+  --bg-gradient-end:#EEF2F7;
+  --container-bg:#FFFFFF;
+  --header-gradient-start:#0F172A;
+  --header-gradient-end:#14B8A6;
+  --text-primary:#0F172A;
+  --text-secondary:#475569;
+  --input-bg:#F1F5F9;
+  --input-border:#CBD5E1;
+  --border-color:#E2E8F0;
+  --card-bg:#FFFFFF;
+  --accent:#14B8A6;
+  --accent-2:#0F172A;
+  --shadow:0 10px 35px rgba(0,0,0,.18);
+  --shadow-soft:0 8px 24px rgba(20,184,166,.12);
+}
+body.dark-mode{
+  --bg-gradient-start:#1a1a2e;
+  --bg-gradient-end:#16213e;
+  --container-bg:#0f3460;
+  --header-gradient-start:#1a5276;
+  --header-gradient-end:#0e3b5c;
+  --text-primary:#e8e8e8;
+  --text-secondary:#b0b0b0;
+  --input-bg:#1a2332;
+  --input-border:#2a3f5f;
+  --border-color:#2a3f5f;
+  --card-bg:rgba(255,255,255,.08);
+  --shadow:0 10px 35px rgba(0,0,0,.35);
+  --shadow-soft:0 10px 28px rgba(0,0,0,.22);
+}
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,sans-serif;
+  background:linear-gradient(135deg,var(--bg-gradient-start) 0%,var(--bg-gradient-end) 100%);
+  min-height:100vh;
+  color:var(--text-primary);
+}
+.container{
+  width:100%;
+  max-width:none;
+  margin:0;
+  background:var(--container-bg);
+  border-radius:0;
+  box-shadow:var(--shadow);
+  overflow:hidden;
+  min-height:100vh;
+}
+.header{
+  position:relative;
+  background:linear-gradient(135deg,var(--header-gradient-start) 0%,var(--header-gradient-end) 100%);
+  color:#fff;
+  padding:34px 28px 28px;
+  text-align:center;
+}
+.header h1{font-size:2.35em;margin:0 0 10px}
+.header p{opacity:.92;font-size:1.05em;max-width:860px;margin:0 auto;line-height:1.6}
+.dark-mode-toggle{
+  position:absolute;
+  top:18px;right:18px;
+  background:rgba(255,255,255,0.2);
+  border:2px solid rgba(255,255,255,0.3);
+  color:#fff;
+  padding:10px 18px;
+  border-radius:25px;
+  cursor:pointer;
+  font-size:14px;
+  font-weight:700;
+  transition:all .2s ease;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.dark-mode-toggle:hover{background:rgba(255,255,255,0.3);transform:translateY(-2px)}
+.top-nav{
+  display:flex;
+  gap:10px;
+  padding:12px 18px;
+  background:var(--input-bg);
+  border-bottom:1px solid var(--border-color);
+  flex-wrap:wrap;
+  align-items:center;
+}
+.top-nav a{
+  padding:8px 16px;
+  border:1.5px solid var(--border-color);
+  border-radius:10px;
+  background:var(--card-bg);
+  color:var(--text-primary);
+  font-size:13px;
+  font-weight:800;
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  transition:all .2s ease;
+}
+.top-nav a:hover{
+  border-color:var(--accent);
+  transform:translateY(-1px);
+  box-shadow:0 6px 16px rgba(0,0,0,.06);
+}
+.top-nav a.active{
+  border-color:var(--accent);
+  background:rgba(20,184,166,0.10);
+}
+.page-shell{
+  display:grid;
+  grid-template-columns: 1fr 340px;
+  gap:0;
+  min-height: calc(100vh - 160px);
+}
+.main-content{padding:22px 22px 28px}
+.right-rail{
+  border-left:1px solid var(--border-color);
+  background:var(--input-bg);
+  padding:18px;
+}
+.rail-card{
+  background:var(--card-bg);
+  border:1px solid var(--border-color);
+  border-radius:14px;
+  padding:14px;
+  margin-bottom:12px;
+}
+.rail-title{font-size:13px;font-weight:900;margin-bottom:8px;color:var(--text-primary)}
+.rail-sub{font-size:12px;color:var(--text-secondary);line-height:1.5}
+.rail-item{
+  padding:10px;
+  border-radius:10px;
+  background:rgba(15,23,42,0.03);
+  border:1px dashed rgba(15,23,42,0.12);
+  font-size:12px;
+  color:var(--text-secondary);
+  line-height:1.45;
+  margin-top:8px;
+}
+@media (max-width: 1200px){
+  .page-shell{grid-template-columns: 1fr;}
+  .right-rail{display:none;}
+  .main-content{padding:18px;}
+}
+@media (max-width: 1024px){
+  .dark-mode-toggle{position:static;margin:14px auto 0}
+  .header{padding:28px 16px 22px}
+  .header h1{font-size:1.95em}
+}
+.card{
+  background:var(--card-bg);
+  border:1.5px solid var(--border-color);
+  border-radius:14px;
+  padding:16px;
+  box-shadow:0 8px 24px rgba(0,0,0,0.06);
+}
+.card h2{margin:0 0 10px;font-size:15px;letter-spacing:-0.01em}
+.muted{color:var(--text-secondary);font-size:12.5px;line-height:1.55}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0 6px}
+.btn{
+  padding:10px 12px;border-radius:12px;
+  border:1.5px solid var(--border-color);
+  background:rgba(20,184,166,0.10);
+  color:var(--text-primary);
+  font-weight:900;cursor:pointer;font-size:13px;
+  transition:all .15s ease;
+}
+.btn:hover{border-color:var(--accent);background:rgba(20,184,166,0.16);transform:translateY(-1px)}
+.btn.primary{
+  background:linear-gradient(135deg,var(--accent) 0%, #0EA5A3 100%);
+  border-color:var(--accent);
+  color:#fff;
+  box-shadow:0 10px 24px rgba(20,184,166,0.22);
+}
+.btn.primary:hover{opacity:.98}
+.btn.danger{
+  background:rgba(239,68,68,0.12);
+  border-color:rgba(239,68,68,0.35);
+  color:#ef4444;
+}
+.btn:disabled{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none}
+.input{
+  padding:10px 12px;border-radius:12px;
+  border:2px solid var(--input-border);
+  background:var(--container-bg);
+  color:var(--text-primary);
+  font-weight:800;
+  outline:none;
+}
+.input:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(20,184,166,.10)}
+.footer-disclaimer{
+  margin-top:14px;padding:12px 14px;border-radius:14px;
+  border:1px solid var(--border-color);background:var(--input-bg)
+}
+.footer-disclaimer p{margin:0;font-size:11px;color:var(--text-secondary);line-height:1.6;text-align:center}
 
-    .grid{display:grid;grid-template-columns: 1fr;gap:14px;margin-top:16px}
-    @media(min-width:1050px){.grid{grid-template-columns: 420px 1fr;}}
-    .card{background:var(--card-bg);border:1px solid var(--border-color);border-radius:16px;padding:14px;box-shadow:0 2px 10px rgba(2,6,23,0.05)}
-    body.dark-mode .card{box-shadow:0 2px 16px rgba(0,0,0,0.18)}
-    .card h2{margin:0 0 10px;font-size:15px;letter-spacing:-0.01em}
-    .muted{color:var(--text-secondary);font-size:12.5px;line-height:1.5}
-
-    .btn{padding:10px 12px;border-radius:12px;border:1px solid var(--border-color);background:var(--input-bg);color:var(--text-primary);
-      font-weight:800;cursor:pointer;font-size:13px}
-    .btn.primary{background:#14b8a6;border-color:#14b8a6;color:#fff}
-    .btn:disabled{opacity:.55;cursor:not-allowed}
-    .input{padding:10px 12px;border-radius:12px;border:1px solid var(--border-color);background:var(--input-bg);color:var(--text-primary);font-weight:800}
-
-    .pick{display:grid;gap:8px;margin-top:10px}
-    .pick label{display:flex;gap:10px;align-items:flex-start;padding:10px;border-radius:14px;border:1px solid var(--border-color);background:rgba(15,23,42,0.02)}
-    body.dark-mode .pick label{background:rgba(148,163,184,0.06)}
-    .pick input{margin-top:4px}
-    .pick .name{font-weight:900;font-size:13px}
-    .pick .meta{font-size:12px;color:var(--text-secondary);margin-top:2px}
-
-    .table{width:100%;border-collapse:separate;border-spacing:0 8px;margin-top:10px}
-    .table th{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-secondary);text-align:left;padding:0 8px}
-    .table td{background:rgba(15,23,42,0.02);border:1px solid var(--border-color);padding:10px 8px;font-size:13px}
-    body.dark-mode .table td{background:rgba(148,163,184,0.06)}
-    .table tr td:first-child{border-radius:12px 0 0 12px}
-    .table tr td:last-child{border-radius:0 12px 12px 0}
-
-    .footer-disclaimer{margin-top:14px;padding:12px 14px;border-radius:14px;border:1px solid var(--border-color);background:var(--input-bg)}
-    .footer-disclaimer p{margin:0;font-size:11px;color:var(--text-secondary);line-height:1.6;text-align:center}
-  </style>
+</style>
 
   <link rel="stylesheet" href="tools-nav.css"/>
   <script src="tools-nav.js" defer></script>
 </head>
 <body>
   <div class="container">
-    <div class="hero">
-      <div style="font-size:12px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;opacity:.85">WealthView</div>
-      <h1>Multi-Portfolio Backtest</h1>
+
+    <div class="header">
+      <h1>Multi‑Portfolio Backtest</h1>
+      <p>Compare how different saved portfolios behaved historically, side‑by‑side (educational only).</p>
+      <button class="dark-mode-toggle" id="darkToggle" onclick="toggleDarkMode()">🌙 Dark Mode</button>
+    </div>
+    <div class="top-nav">
+      <a href="visualizer.html">Portfolio Visualizer</a>
+      <a href="goals.html">Goals Simulator</a>
+      <a href="themes.html">Theme Explorer</a>
+      <a href="library.html">Portfolio Library</a>
+      <a href="health.html">Health Check</a>
+      <a href="backtest.html" class="active">Multi‑Backtest</a>
+    </div>
+
+  <div class="page-shell">
+    <div class="main-content">
+<h1>Multi-Portfolio Backtest</h1>
       <p>Compare multiple saved portfolios over the same historical window. Portfolios are modeled with constant weights (no rebalancing), using daily closing prices.</p>
-      <div class="top-actions">
-        <div class="navlinks">
-          <a href="library.html">Portfolio Library</a>
-          <a href="visualizer.html">Portfolio Visualizer</a>
-          <a href="goals.html">Goals Simulator</a>
-          <a href="themes.html">Theme Explorer</a>
-          <a href="health.html">Health Check</a>
-        </div>
-        <button class="toggle" id="darkToggle" onclick="toggleDarkMode()">🌙 Dark Mode</button>
+      <button class="toggle" id="darkToggle" onclick="toggleDarkMode()">🌙 Dark Mode</button>
       </div>
     </div>
 
@@ -323,5 +471,23 @@
     applyDarkModeFromStorage();
     renderPicker();
   </script>
+    </div>
+
+      <div class="right-rail">
+        <div class="rail-card">
+          <div class="rail-title">How to use this</div>
+          <div class="rail-sub">A quick, non‑advice workflow to explore your options.</div>
+          <div class="rail-item">1) Save a few “candidate” portfolios here.</div>
+          <div class="rail-item">2) Run a Health Check to spot concentration and balance issues.</div>
+          <div class="rail-item">3) Use Multi‑Backtest to compare how mixes behaved historically.</div>
+        </div>
+        <div class="rail-card">
+          <div class="rail-title">Reminder</div>
+          <div class="rail-sub">Outputs are educational and do not predict results.</div>
+        </div>
+      </div>
+
+  </div>
+</div>
 </body>
 </html>
