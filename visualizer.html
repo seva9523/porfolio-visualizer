@@ -81,6 +81,8 @@ function fmtInt(n) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WealthView — Understand Your Portfolio</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0f19">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -4922,7 +4924,7 @@ function updateRightRail() {
         }
 
         function createTable(data, total) {
-            let html = '<div class="holdings-table"><table><thead><tr><th>Ticker</th><th>Name</th><th>Shares</th><th>Purchase Price</th><th>Current Price</th><th>Cost Basis</th><th>Value</th><th>Gain/Loss</th><th>%</th><th>Allocation</th></tr></thead><tbody>';
+            let html = '<div class="holdings-table"><table><thead><tr><th>Ticker</th><th>Name</th><th>Class</th><th>Shares</th><th>Purchase Price</th><th>Current Price</th><th>Cost Basis</th><th>Value</th><th>Gain/Loss</th><th>%</th><th>Allocation</th></tr></thead><tbody>';
             data.forEach(h => {
                 const pct = ((h.value/total)*100);
                 const priceDisplay = h.currentPrice > 0 ? `$${h.currentPrice.toFixed(2)}` : '-';
@@ -4957,6 +4959,41 @@ function updateRightRail() {
             html += '</tbody></table></div>';
             document.getElementById('table-section').innerHTML = html;
         }
+
+        // P2: Multi-Asset Support (lightweight) — manual asset class tagging
+        function renderAssetClassSelect(item) {
+            const cur = (item && item.assetClass) ? item.assetClass : 'Equity';
+            const tk = String((item && item.ticker) ? item.ticker : '').toUpperCase().trim();
+            const opts = ['Equity','Bond','Cash','Commodity','Crypto','REIT','Other'];
+            return (
+                '<select class="form-control" style="padding:6px; font-size:12px;" ' +
+                'onchange="setHoldingClass(\'' + tk + '\', this.value)">' +
+                opts.map(o => (
+                    '<option value="' + o + '" ' + (o===cur ? 'selected' : '') + '>' + o + '</option>'
+                )).join('') +
+                '</select>'
+            );
+        }
+
+        function setHoldingClass(ticker, value) {
+            try {
+                const tk = String(ticker||'').toUpperCase().trim();
+                if (!tk) return;
+                const p = portfolios[currentPortfolio];
+                if (p && Array.isArray(p.holdings)) {
+                    const h = p.holdings.find(x => String(x.ticker||'').toUpperCase() === tk);
+                    if (h) h.assetClass = value;
+                    saveAllPortfolios();
+                }
+            } catch(e) {
+                console.warn('setHoldingClass failed', e);
+            }
+        }
+            } catch(e) {
+                console.warn('setHoldingClass failed', e);
+            }
+        }
+
 
         function clearAll() {
             if (confirm('Are you sure you want to clear all holdings in this portfolio?')) {
@@ -5137,7 +5174,16 @@ document.addEventListener('DOMContentLoaded', () => {
 <!-- ================= END QA PATCH v13 ================= -->
   
 <!-- ================= QA STABILITY PATCH v14 ================= -->
-<!-- Paste this block right before </body> in index.html -->
+<!-- Paste this block right before 
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(()=>{});
+    });
+  }
+</script>
+
+</body> in index.html -->
 <div id="qa-metrics" style="position:absolute; left:-9999px; top:-9999px; width:1px; height:1px; overflow:hidden;">
   <span data-testid="total-value-raw"></span>
   <span data-testid="total-cost-basis-raw"></span>
@@ -5271,5 +5317,14 @@ document.addEventListener('DOMContentLoaded', () => {
 })();
 </script>
 <!-- ================= END QA STABILITY PATCH v14 ================= -->
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(()=>{});
+    });
+  }
+</script>
+
 </body>
 </html>
