@@ -814,6 +814,10 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
                             <button onclick="changeTimeRange('1Y')" id="range-1Y" class="time-range-btn">1Y</button>
                             <button onclick="changeTimeRange('ALL')" id="range-ALL" class="time-range-btn">All</button>
                         </div>
+                        <label style="display:flex; align-items:center; gap:8px; font-size:12px; color: var(--text-primary); background: var(--input-bg); border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 999px; cursor:pointer; user-select:none;">
+                          <input id="inflationToggle" type="checkbox" style="accent-color:#14B8A6;" onchange="toggleInflationMode(this.checked)">
+                          <span><strong>Real</strong> (inflation-adjusted)</span>
+                        </label>
                     </div>
                     <canvas id="performanceChart" style="max-height: 300px;"></canvas>
                     <div id="qa-metrics" style="display:none;">
@@ -837,6 +841,10 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
 </div>
 <div id="table-section"></div>
                 <div id="correlation-section" style="margin-top: 30px;"></div>
+                <!-- P1 Advanced Analytics (Drawdown + Rolling + Income/Fees) -->
+                <div id="rolling-returns-section" style="margin-top: 30px;"></div>
+                <div id="drawdown-recovery-section" style="margin-top: 30px;"></div>
+                <div id="income-fees-section" style="margin-top: 30px;"></div>
                 <div id="benchmark-section" style="margin-top: 30px;"></div>
                 <div id="montecarlo-section" style="margin-top: 30px;"></div>
                 <div id="optimization-section" style="margin-top: 30px;"></div>
@@ -2177,6 +2185,30 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
                     }
                 }
             });
+
+            // Store series for P1 analytics (estimated has only 2 points)
+            WV_ANALYTICS.series = {
+                dates: [fromDate, today],
+                valuesNominal: values.slice(),
+                valuesReal: null
+            };
+
+            // CPI adjustment (best-effort)
+            (async () => {
+                try {
+                    const cpi = await fetchCPI(fromDate, today);
+                    if (cpi && typeof cpi === 'object') {
+                        WV_ANALYTICS.cpiMonthly = cpi;
+                        const cpiDaily = buildDailyCPIIndex([fromDate, today], cpi);
+                        WV_ANALYTICS.series.valuesReal = adjustForInflation(values, cpiDaily);
+                        if (WV_ANALYTICS.isReal) updatePerformanceChartInflation();
+                    }
+                } catch (e) {
+                    console.warn('CPI setup failed (estimated):', e);
+                }
+            })();
+
+            renderP1AdvancedAnalytics();
             
             console.log('Estimated chart created:', { from: fromDate, purchaseValue, currentValue });
         }
@@ -2253,6 +2285,33 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
             }
             
             document.getElementById('performanceChart').style.display = 'block';
+
+            // Store series for P1 analytics
+            WV_ANALYTICS.series = {
+                dates: filteredDates,
+                valuesNominal: filteredValues.slice(),
+                valuesReal: null
+            };
+
+            // Best-effort CPI fetch (non-blocking)
+            (async () => {
+                try {
+                    const from = filteredDates[0];
+                    const to = filteredDates[filteredDates.length - 1];
+                    const cpi = await fetchCPI(from, to);
+                    if (cpi && typeof cpi === 'object') {
+                        WV_ANALYTICS.cpiMonthly = cpi;
+                        const cpiDaily = buildDailyCPIIndex(filteredDates, cpi);
+                        WV_ANALYTICS.series.valuesReal = adjustForInflation(filteredValues, cpiDaily);
+                        // If user already toggled Real, update chart immediately
+                        if (WV_ANALYTICS.isReal) {
+                            updatePerformanceChartInflation();
+                        }
+                    }
+                } catch (e) {
+                    console.warn('CPI setup failed:', e);
+                }
+            })();
             
             if (performanceChart) performanceChart.destroy();
             
@@ -2318,6 +2377,476 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
             });
             
             console.log('Performance chart created successfully');
+
+            // Render P1 analytics panels (rolling/drawdown/income/fees)
+            renderP1AdvancedAnalytics();
+        }
+
+        // =====================================================================
+        // P1: Inflation Toggle + Rolling Returns + Drawdown Recovery + Income/Fees
+        // =====================================================================
+        const WV_ANALYTICS = {
+            series: null, // { dates:[YYYY-MM-DD], valuesNominal:[n], valuesReal:[n] }
+            cpiMonthly: null, // { 'YYYY-MM': index }
+            isReal: false,
+            charts: {
+                rolling: null,
+                drawdown: null
+            },
+            fundamentalsCache: {}
+        };
+
+        async function fetchCPI(fromDate, toDate) {
+            try {
+                const url = `/api/cpi?from=${encodeURIComponent(fromDate)}&to=${encodeURIComponent(toDate)}`;
+                const r = await fetch(url);
+                const j = await r.json();
+                if (j && j.data && typeof j.data === 'object') return j.data;
+            } catch (e) {
+                console.warn('CPI fetch failed:', e);
+            }
+            return null;
+        }
+
+        function buildDailyCPIIndex(dates, monthlyMap) {
+            // Forward-fill monthly CPI to daily dates.
+            // Return array aligned with dates.
+            const out = [];
+            let last = null;
+            for (const d of dates) {
+                const ym = String(d).slice(0, 7);
+                if (monthlyMap && monthlyMap[ym] != null) last = Number(monthlyMap[ym]);
+                out.push((last != null && isFinite(last)) ? last : null);
+            }
+            // If leading nulls exist, back-fill with first non-null
+            const firstIdx = out.findIndex(x => x != null);
+            if (firstIdx > 0) {
+                const firstVal = out[firstIdx];
+                for (let i = 0; i < firstIdx; i++) out[i] = firstVal;
+            }
+            return out;
+        }
+
+        function adjustForInflation(values, cpiDaily) {
+            if (!values || !values.length || !cpiDaily || cpiDaily.length !== values.length) return values;
+            const base = cpiDaily[0];
+            if (!(base > 0)) return values;
+            return values.map((v, i) => {
+                const cpi = cpiDaily[i];
+                if (!(cpi > 0) || !isFinite(v)) return v;
+                return v * (base / cpi);
+            });
+        }
+
+        async function toggleInflationMode(isReal) {
+            WV_ANALYTICS.isReal = !!isReal;
+            // If we already have a series, re-render performance chart with adjusted values.
+            try {
+                if (WV_ANALYTICS.series && WV_ANALYTICS.series.dates?.length) {
+                    updatePerformanceChartInflation();
+                    renderP1AdvancedAnalytics();
+                }
+            } catch (e) {
+                console.warn('toggleInflationMode failed:', e);
+            }
+        }
+
+        function updatePerformanceChartInflation() {
+            if (!WV_ANALYTICS.series || !performanceChart) return;
+            const s = WV_ANALYTICS.series;
+            const values = WV_ANALYTICS.isReal ? (s.valuesReal || s.valuesNominal) : s.valuesNominal;
+            if (!Array.isArray(values) || !values.length) return;
+            // Update dataset in-place
+            performanceChart.data.datasets[0].data = values;
+            performanceChart.data.datasets[0].label = WV_ANALYTICS.isReal ? 'Portfolio Value (Real)' : 'Portfolio Value';
+            performanceChart.update();
+        }
+
+        function computeDrawdowns(values) {
+            const dd = [];
+            let peak = -Infinity;
+            for (const v of values) {
+                if (!isFinite(v)) { dd.push(0); continue; }
+                peak = Math.max(peak, v);
+                const d = peak > 0 ? (v / peak) - 1 : 0;
+                dd.push(d);
+            }
+            return dd; // negative numbers
+        }
+
+        function extractDrawdownEvents(dates, values) {
+            const dd = computeDrawdowns(values);
+            const events = [];
+            let inDD = false;
+            let startIdx = 0;
+            let troughIdx = 0;
+            for (let i = 0; i < dd.length; i++) {
+                if (!inDD && dd[i] < 0) {
+                    inDD = true;
+                    startIdx = i - 1 >= 0 ? i - 1 : i;
+                    troughIdx = i;
+                }
+                if (inDD) {
+                    if (dd[i] < dd[troughIdx]) troughIdx = i;
+                    if (dd[i] === 0) {
+                        // recovery
+                        const endIdx = i;
+                        events.push({
+                            start: dates[startIdx],
+                            trough: dates[troughIdx],
+                            recovery: dates[endIdx],
+                            depth: dd[troughIdx],
+                            daysToTrough: troughIdx - startIdx,
+                            daysToRecover: endIdx - startIdx
+                        });
+                        inDD = false;
+                    }
+                }
+            }
+            // If still in drawdown, add open event
+            if (inDD) {
+                events.push({
+                    start: dates[startIdx],
+                    trough: dates[troughIdx],
+                    recovery: null,
+                    depth: dd[troughIdx],
+                    daysToTrough: troughIdx - startIdx,
+                    daysToRecover: null
+                });
+            }
+            // Sort by depth
+            events.sort((a, b) => (a.depth || 0) - (b.depth || 0));
+            return { dd, events };
+        }
+
+        function computeRollingReturns(values, windowDays, annualizeYears) {
+            const out = new Array(values.length).fill(null);
+            const w = windowDays;
+            for (let i = w; i < values.length; i++) {
+                const a = values[i - w];
+                const b = values[i];
+                if (!(a > 0 && b > 0)) continue;
+                const tot = (b / a) - 1;
+                if (annualizeYears && annualizeYears > 0) {
+                    out[i] = Math.pow(1 + tot, 1 / annualizeYears) - 1;
+                } else {
+                    out[i] = tot;
+                }
+            }
+            return out;
+        }
+
+        async function fetchFundamentals(symbol) {
+            const tk = (symbol || '').toUpperCase().trim();
+            if (!tk) return null;
+            if (WV_ANALYTICS.fundamentalsCache[tk]) return WV_ANALYTICS.fundamentalsCache[tk];
+            try {
+                const r = await fetch(`/api/fundamentals?symbol=${encodeURIComponent(tk)}`);
+                const j = await r.json();
+                WV_ANALYTICS.fundamentalsCache[tk] = j;
+                return j;
+            } catch (e) {
+                console.warn('fundamentals fetch failed', tk, e);
+                return null;
+            }
+        }
+
+        async function renderIncomeAndFees(holdings) {
+            const host = document.getElementById('income-fees-section');
+            if (!host) return;
+            host.innerHTML = '';
+            if (!holdings || !holdings.length) return;
+
+            const totalValue = holdings.reduce((s, h) => s + (Number(h.value) || 0), 0);
+            if (!(totalValue > 0)) return;
+
+            // Pull fundamentals in parallel (best-effort)
+            const rows = await Promise.all(holdings.map(async (h) => {
+                const t = (h.ticker || '').toUpperCase().trim();
+                const f = await fetchFundamentals(t);
+                const dy = Number(f?.dividendYield);
+                const er = Number(f?.expenseRatio);
+                const value = Number(h.value) || 0;
+                return {
+                    ticker: t,
+                    value,
+                    dividendYield: isFinite(dy) ? dy : null,
+                    expenseRatio: isFinite(er) ? er : null,
+                    sourceError: f?.error || null
+                };
+            }));
+
+            const annualIncome = rows.reduce((s, r) => s + (r.dividendYield ? r.value * r.dividendYield : 0), 0);
+            const weightedER = rows.reduce((s, r) => s + (r.expenseRatio ? (r.value / totalValue) * r.expenseRatio : 0), 0);
+            const annualFees = totalValue * (weightedER || 0);
+
+            // Fee drag projections (educational)
+            const assumedReturn = 0.07;
+            const years = [10, 20, 30];
+            const drags = years.map(y => {
+                const gross = totalValue * Math.pow(1 + assumedReturn, y);
+                const net = totalValue * Math.pow(1 + assumedReturn - (weightedER || 0), y);
+                return { years: y, gross, net, drag: gross - net };
+            });
+
+            const box = document.createElement('div');
+            box.className = 'summary-box';
+            box.innerHTML = `
+              <h2>💸 Income & Fees (Educational)</h2>
+              <p style="font-size: 14px; color: var(--text-secondary); margin-top: 10px; line-height: 1.6;">
+                These estimates use public fund metadata (best-effort) and are <strong>not financial advice</strong>.
+                Dividend yields and expense ratios can change over time.
+              </p>
+
+              <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-top: 16px;">
+                <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px;">
+                  <div style="font-weight:700;">Dividend projection</div>
+                  <div style="margin-top: 8px; font-size: 28px; font-weight: 800; color: var(--text-primary);">${fmtCurrency(annualIncome, 0)}</div>
+                  <div style="font-size: 12px; color: var(--text-secondary); margin-top: 6px;">Estimated annual dividends (based on yield × current value)</div>
+                </div>
+                <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px;">
+                  <div style="font-weight:700;">Fee drag</div>
+                  <div style="margin-top: 8px; font-size: 28px; font-weight: 800; color: var(--text-primary);">${fmtCurrency(annualFees, 0)}</div>
+                  <div style="font-size: 12px; color: var(--text-secondary); margin-top: 6px;">Estimated annual fees (weighted expense ratio ≈ ${(weightedER*100).toFixed(2)}%)</div>
+                </div>
+              </div>
+
+              <div style="margin-top: 14px; overflow:auto; border: 1px solid var(--border-color); border-radius: 12px;">
+                <table style="width:100%; border-collapse: collapse; font-size: 13px;">
+                  <thead style="background: var(--table-header); color: white;">
+                    <tr>
+                      <th style="text-align:left; padding: 10px;">Holding</th>
+                      <th style="text-align:right; padding: 10px;">Value</th>
+                      <th style="text-align:right; padding: 10px;">Dividend Yield</th>
+                      <th style="text-align:right; padding: 10px;">Expense Ratio</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${rows.map(r => `
+                      <tr style="border-top: 1px solid var(--border-color);">
+                        <td style="padding: 10px; font-weight: 700;">${r.ticker || '—'}</td>
+                        <td style="padding: 10px; text-align:right;">${fmtCurrency(r.value, 0)}</td>
+                        <td style="padding: 10px; text-align:right;">${r.dividendYield != null ? (r.dividendYield*100).toFixed(2)+'%' : '—'}</td>
+                        <td style="padding: 10px; text-align:right;">${r.expenseRatio != null ? (r.expenseRatio*100).toFixed(2)+'%' : '—'}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+
+              <div style="margin-top: 14px; overflow:auto; border: 1px solid var(--border-color); border-radius: 12px;">
+                <table style="width:100%; border-collapse: collapse; font-size: 13px;">
+                  <thead style="background: var(--table-header); color: white;">
+                    <tr>
+                      <th style="text-align:left; padding: 10px;">Fee drag horizon</th>
+                      <th style="text-align:right; padding: 10px;">Gross (no fees)</th>
+                      <th style="text-align:right; padding: 10px;">Net (after fees)</th>
+                      <th style="text-align:right; padding: 10px;">Difference</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${drags.map(d => `
+                      <tr style="border-top: 1px solid var(--border-color);">
+                        <td style="padding: 10px; font-weight: 700;">${d.years} years</td>
+                        <td style="padding: 10px; text-align:right;">${fmtCurrency(d.gross, 0)}</td>
+                        <td style="padding: 10px; text-align:right;">${fmtCurrency(d.net, 0)}</td>
+                        <td style="padding: 10px; text-align:right;">${fmtCurrency(d.drag, 0)}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            `;
+            host.appendChild(box);
+        }
+
+        function renderRollingReturns() {
+            const host = document.getElementById('rolling-returns-section');
+            if (!host) return;
+            host.innerHTML = '';
+            const s = WV_ANALYTICS.series;
+            if (!s || !s.dates?.length) return;
+            const values = WV_ANALYTICS.isReal ? (s.valuesReal || s.valuesNominal) : s.valuesNominal;
+            if (!values || values.length < 260) return;
+
+            const box = document.createElement('div');
+            box.className = 'summary-box';
+            box.innerHTML = `
+              <h2>🧭 Rolling Returns (Consistency)</h2>
+              <p style="font-size: 14px; color: var(--text-secondary); margin-top: 10px; line-height: 1.6;">
+                Rolling returns answer: “If I started on <em>any</em> day in history, what return would I have seen over the next 1 / 3 / 5 years?”
+                This helps you see consistency (not just one lucky start/end date).
+              </p>
+              <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top: 12px;">
+                <label style="font-weight:700; font-size: 13px;">Window</label>
+                <select id="wv-rolling-window" style="padding:10px; border:1px solid var(--input-border); border-radius:10px; background: var(--chart-bg); color: var(--text-primary);">
+                  <option value="1">1 year</option>
+                  <option value="3">3 years</option>
+                  <option value="5" selected>5 years</option>
+                </select>
+                <span style="font-size:12px; color: var(--text-secondary);">(annualized)</span>
+              </div>
+              <div style="margin-top: 12px;">
+                <canvas id="wvRollingChart" style="max-height: 280px;"></canvas>
+              </div>
+            `;
+            host.appendChild(box);
+
+            const sel = document.getElementById('wv-rolling-window');
+            const paint = () => {
+                const years = Number(sel.value);
+                const windowDays = Math.round(252 * years);
+                const rr = computeRollingReturns(values, windowDays, years);
+                const labels = s.dates.map(d => d.slice(2));
+                const data = rr.map(x => (x == null ? null : x * 100));
+
+                const isDark = document.body.classList.contains('dark-mode');
+                const textColor = isDark ? '#e8e8e8' : '#2c3e50';
+                const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+
+                if (WV_ANALYTICS.charts.rolling) WV_ANALYTICS.charts.rolling.destroy();
+                WV_ANALYTICS.charts.rolling = new Chart(document.getElementById('wvRollingChart'), {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [{
+                            label: `${years}Y Rolling Return (annualized)`,
+                            data,
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.2,
+                            pointRadius: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: (ctx) => {
+                                        const y = safeNum(ctx.parsed?.y);
+                                        if (y === null) return '—';
+                                        return `${y.toFixed(2)}%`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: { ticks: { color: textColor, maxTicksLimit: 12 }, grid: { color: gridColor } },
+                            y: { ticks: { color: textColor, callback: (v) => v + '%' }, grid: { color: gridColor } }
+                        }
+                    }
+                });
+            };
+            sel.addEventListener('change', paint);
+            paint();
+        }
+
+        function renderDrawdownRecovery() {
+            const host = document.getElementById('drawdown-recovery-section');
+            if (!host) return;
+            host.innerHTML = '';
+            const s = WV_ANALYTICS.series;
+            if (!s || !s.dates?.length) return;
+            const values = WV_ANALYTICS.isReal ? (s.valuesReal || s.valuesNominal) : s.valuesNominal;
+            if (!values || values.length < 20) return;
+
+            const { dd, events } = extractDrawdownEvents(s.dates, values);
+            const worst = events.slice(0, 6);
+
+            const box = document.createElement('div');
+            box.className = 'summary-box';
+            box.innerHTML = `
+              <h2>🕳️ Drawdown & Recovery Timeline</h2>
+              <p style="font-size: 14px; color: var(--text-secondary); margin-top: 10px; line-height: 1.6;">
+                Drawdown is the drop from your portfolio’s peak. Recovery time shows how long it took to get back to the previous high.
+                (Think: how deep the valley was, and how long you were in it.)
+              </p>
+              <div style="margin-top: 12px;">
+                <canvas id="wvDrawdownChart" style="max-height: 260px;"></canvas>
+              </div>
+              <div style="margin-top: 14px; overflow:auto; border: 1px solid var(--border-color); border-radius: 12px;">
+                <table style="width:100%; border-collapse: collapse; font-size: 13px;">
+                  <thead style="background: var(--table-header); color: white;">
+                    <tr>
+                      <th style="text-align:left; padding: 10px;">Start</th>
+                      <th style="text-align:left; padding: 10px;">Bottom</th>
+                      <th style="text-align:left; padding: 10px;">Recovered</th>
+                      <th style="text-align:right; padding: 10px;">Depth</th>
+                      <th style="text-align:right; padding: 10px;">Days to recover</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${worst.map(e => `
+                      <tr style="border-top: 1px solid var(--border-color);">
+                        <td style="padding: 10px;">${e.start || '—'}</td>
+                        <td style="padding: 10px;">${e.trough || '—'}</td>
+                        <td style="padding: 10px;">${e.recovery || '<span style=\"color:var(--text-secondary)\">Not yet</span>'}</td>
+                        <td style="padding: 10px; text-align:right; font-weight: 800;">${(e.depth*100).toFixed(1)}%</td>
+                        <td style="padding: 10px; text-align:right;">${e.daysToRecover != null ? fmtInt(e.daysToRecover) : '—'}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            `;
+            host.appendChild(box);
+
+            const labels = s.dates.map(d => d.slice(2));
+            const data = dd.map(x => x * 100);
+
+            const isDark = document.body.classList.contains('dark-mode');
+            const textColor = isDark ? '#e8e8e8' : '#2c3e50';
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+
+            if (WV_ANALYTICS.charts.drawdown) WV_ANALYTICS.charts.drawdown.destroy();
+            WV_ANALYTICS.charts.drawdown = new Chart(document.getElementById('wvDrawdownChart'), {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Drawdown %',
+                        data,
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.2,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    const y = safeNum(ctx.parsed?.y);
+                                    if (y === null) return '—';
+                                    return `${y.toFixed(2)}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { ticks: { color: textColor, maxTicksLimit: 12 }, grid: { color: gridColor } },
+                        y: { ticks: { color: textColor, callback: (v) => v + '%' }, grid: { color: gridColor } }
+                    }
+                }
+            });
+        }
+
+        function renderP1AdvancedAnalytics() {
+            try {
+                renderRollingReturns();
+                renderDrawdownRecovery();
+                // income/fees needs holdings (current)
+                renderIncomeAndFees(holdings);
+            } catch (e) {
+                console.warn('renderP1AdvancedAnalytics failed:', e);
+            }
         }
 
         function createPerformanceChart(snapshots) {
@@ -2340,6 +2869,28 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
             });
             
             const values = snapshots.map(s => s.value);
+
+            // Store snapshot series for P1 analytics
+            WV_ANALYTICS.series = {
+                dates: snapshots.map(s => (s.date || '').split('T')[0] || ''),
+                valuesNominal: values.slice(),
+                valuesReal: null
+            };
+
+            (async () => {
+                try {
+                    const ds = WV_ANALYTICS.series.dates.filter(Boolean);
+                    if (ds.length >= 2) {
+                        const cpi = await fetchCPI(ds[0], ds[ds.length - 1]);
+                        if (cpi && typeof cpi === 'object') {
+                            WV_ANALYTICS.cpiMonthly = cpi;
+                            const cpiDaily = buildDailyCPIIndex(ds, cpi);
+                            WV_ANALYTICS.series.valuesReal = adjustForInflation(values, cpiDaily);
+                            if (WV_ANALYTICS.isReal) updatePerformanceChartInflation();
+                        }
+                    }
+                } catch (e) {}
+            })();
             
             performanceChart = new Chart(document.getElementById('performanceChart'), {
                 type: 'line',
@@ -3295,92 +3846,150 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
         function handleCSVUpload(event) {
             const files = event.target.files;
             if (!files || files.length === 0) return;
-            
+
             const statusDiv = document.getElementById('csv-status');
             statusDiv.innerHTML = '⏳ Processing CSV files...';
-            
+
             let processed = 0;
-            let total = files.length;
-            
+            const total = files.length;
+
+            const parseLine = (line, delim) => {
+                // Minimal CSV parsing with quote support
+                const out = [];
+                let cur = '';
+                let inQ = false;
+                for (let i = 0; i < line.length; i++) {
+                    const ch = line[i];
+                    if (ch === '"') {
+                        inQ = !inQ;
+                        continue;
+                    }
+                    if (!inQ && ch === delim) {
+                        out.push(cur);
+                        cur = '';
+                        continue;
+                    }
+                    cur += ch;
+                }
+                out.push(cur);
+                return out.map(x => (x ?? '').trim());
+            };
+
+            const detectDelimiter = (header) => {
+                const commas = (header.match(/,/g) || []).length;
+                const semis = (header.match(/;/g) || []).length;
+                return semis > commas ? ';' : ',';
+            };
+
+            const normalizeHeader = (h) => String(h || '').trim().toLowerCase();
+            const findIdx = (headers, candidates) => headers.findIndex(h => candidates.some(c => h === c || h.includes(c)));
+
             Array.from(files).forEach(file => {
                 const reader = new FileReader();
-                
-                reader.onload = function(e) {
+
+                reader.onload = function (e) {
                     try {
-                        const csv = e.target.result;
-                        const lines = csv.split('\n');
-                        
-                        // Detect ticker from filename (e.g., "AAPL.csv" or "AAPL_data.csv")
-                        const ticker = file.name.replace('.csv', '').split('_')[0].toUpperCase();
-                        
-                        // Parse CSV (Yahoo Finance format)
-                        const data = {};
-                        let headerLine = -1;
-                        
-                        // Find header line
-                        for (let i = 0; i < Math.min(5, lines.length); i++) {
-                            if (lines[i].toLowerCase().includes('date') && lines[i].toLowerCase().includes('close')) {
-                                headerLine = i;
-                                break;
+                        const csv = String(e.target.result || '');
+                        const lines = csv.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+                        if (lines.length < 2) throw new Error('CSV is empty or too short');
+
+                        // Find first plausible header line
+                        const headerLine = lines[0];
+                        const delim = detectDelimiter(headerLine);
+                        const headersRaw = parseLine(headerLine, delim);
+                        const headers = headersRaw.map(normalizeHeader);
+
+                        const hasDateClose = (headers.includes('date') || headers.some(h => h.includes('date'))) && headers.some(h => h.includes('close'));
+
+                        // Case A: Price history CSV (Yahoo-like). Store as csv_<TICKER> for offline historical.
+                        if (hasDateClose) {
+                            const ticker = file.name.replace(/\.csv$/i, '').split('_')[0].toUpperCase();
+                            const data = {};
+                            const dateIdx = findIdx(headers, ['date']);
+                            const openIdx = findIdx(headers, ['open']);
+                            const highIdx = findIdx(headers, ['high']);
+                            const lowIdx = findIdx(headers, ['low']);
+                            const closeIdx = headers.findIndex(h => h.includes('close') && !h.includes('adj'));
+                            const volumeIdx = findIdx(headers, ['volume']);
+
+                            for (let i = 1; i < lines.length; i++) {
+                                const values = parseLine(lines[i], delim);
+                                if (values.length < 2) continue;
+                                const date = values[dateIdx]?.trim();
+                                if (!date) continue;
+                                data[date] = {
+                                    date,
+                                    open: parseFloat(values[openIdx]) || 0,
+                                    high: parseFloat(values[highIdx]) || 0,
+                                    low: parseFloat(values[lowIdx]) || 0,
+                                    close: parseFloat(values[closeIdx]) || 0,
+                                    volume: parseInt(values[volumeIdx]) || 0
+                                };
                             }
+                            if (Object.keys(data).length === 0) throw new Error('No valid rows found in price history CSV');
+                            localStorage.setItem(`csv_${ticker}`, JSON.stringify(data));
+                            console.log(`✅ Loaded ${Object.keys(data).length} dates for ${ticker} from CSV`);
+                        } else {
+                            // Case B: Broker holdings CSV (auto-mapping)
+                            // Goal: convert common broker exports to WealthView holdings.
+                            // We support flexible column names (Symbol/Ticker, Quantity/Shares, Avg Price/Cost, Trade Date).
+                            const symbolIdx = findIdx(headers, ['symbol', 'ticker', 'security', 'instrument']);
+                            const qtyIdx = findIdx(headers, ['quantity', 'qty', 'shares', 'units', 'position']);
+                            const nameIdx = findIdx(headers, ['description', 'name', 'security name']);
+                            const priceIdx = findIdx(headers, ['avg price', 'average price', 'price', 'cost', 'cost basis', 'purchase price']);
+                            const dateIdx = findIdx(headers, ['trade date', 'purchase date', 'date acquired', 'open date', 'transaction date']);
+
+                            if (symbolIdx === -1 || qtyIdx === -1) {
+                                throw new Error('Could not auto-map this broker CSV. Expected columns like Symbol/Ticker and Quantity/Shares.');
+                            }
+
+                            const imported = [];
+                            for (let i = 1; i < lines.length; i++) {
+                                const values = parseLine(lines[i], delim);
+                                const sym = (values[symbolIdx] || '').replace(/[^A-Za-z0-9\.\-\^]/g, '').toUpperCase();
+                                const qty = parseFloat(String(values[qtyIdx] || '').replace(/,/g, ''));
+                                if (!sym || !isFinite(qty) || qty === 0) continue;
+                                const nm = nameIdx !== -1 ? (values[nameIdx] || '').trim() : '';
+                                const pr = priceIdx !== -1 ? parseFloat(String(values[priceIdx] || '').replace(/[^0-9\.\-]/g, '')) : 0;
+                                let dt = dateIdx !== -1 ? (values[dateIdx] || '').trim() : '';
+                                // Try to normalize date to YYYY-MM-DD
+                                if (dt) {
+                                    const d = new Date(dt);
+                                    if (!isNaN(d)) dt = d.toISOString().split('T')[0];
+                                }
+                                imported.push({ ticker: sym, shares: qty, name: nm, purchasePrice: pr || 0, purchaseDate: dt || '' });
+                            }
+
+                            if (!imported.length) throw new Error('No valid holdings rows found in broker CSV');
+
+                            // Merge into current holdings
+                            updateHoldingsArray();
+                            holdings = holdings || [];
+                            imported.forEach(h => holdings.push(h));
+
+                            // Persist + re-render input rows
+                            if (portfolios[currentPortfolio]) {
+                                portfolios[currentPortfolio].holdings = holdings;
+                                saveAllPortfolios();
+                            }
+                            document.getElementById('holdings-container').innerHTML = '';
+                            holdingCounter = 0;
+                            holdings.forEach(h => addHolding(h.ticker, h.shares || '', h.name, h.purchasePrice || '', h.purchaseDate || ''));
+
+                            console.log(`✅ Imported ${imported.length} holdings from broker CSV into portfolio: ${currentPortfolio}`);
                         }
-                        
-                        if (headerLine === -1) {
-                            throw new Error('Invalid CSV format - could not find header with Date and Close columns');
-                        }
-                        
-                        const headers = lines[headerLine].split(',').map(h => h.trim().toLowerCase());
-                        const dateIdx = headers.findIndex(h => h.includes('date'));
-                        const openIdx = headers.findIndex(h => h === 'open');
-                        const highIdx = headers.findIndex(h => h === 'high');
-                        const lowIdx = headers.findIndex(h => h === 'low');
-                        const closeIdx = headers.findIndex(h => h.includes('close') && !h.includes('adj'));
-                        const volumeIdx = headers.findIndex(h => h === 'volume');
-                        
-                        // Parse data rows
-                        for (let i = headerLine + 1; i < lines.length; i++) {
-                            const line = lines[i].trim();
-                            if (!line) continue;
-                            
-                            const values = line.split(',');
-                            if (values.length < headers.length) continue;
-                            
-                            const date = values[dateIdx]?.trim();
-                            if (!date || date === '') continue;
-                            
-                            data[date] = {
-                                date: date,
-                                open: parseFloat(values[openIdx]) || 0,
-                                high: parseFloat(values[highIdx]) || 0,
-                                low: parseFloat(values[lowIdx]) || 0,
-                                close: parseFloat(values[closeIdx]) || 0,
-                                volume: parseInt(values[volumeIdx]) || 0
-                            };
-                        }
-                        
-                        if (Object.keys(data).length === 0) {
-                            throw new Error('No valid data rows found in CSV');
-                        }
-                        
-                        // Store in localStorage
-                        localStorage.setItem(`csv_${ticker}`, JSON.stringify(data));
-                        
+
                         processed++;
-                        console.log(`✅ Loaded ${Object.keys(data).length} dates for ${ticker} from CSV`);
-                        
                         if (processed === total) {
-                            statusDiv.innerHTML = `✅ Successfully loaded ${total} CSV file${total > 1 ? 's' : ''}!`;
-                            setTimeout(() => {
-                                statusDiv.innerHTML = '';
-                            }, 3000);
+                            statusDiv.innerHTML = `✅ Processed ${total} CSV file${total > 1 ? 's' : ''}.`;
+                            setTimeout(() => { statusDiv.innerHTML = ''; }, 3500);
                         }
-                        
                     } catch (error) {
                         console.error(`Error processing ${file.name}:`, error);
                         statusDiv.innerHTML = `❌ Error processing ${file.name}: ${error.message}`;
                     }
                 };
-                
+
                 reader.readAsText(file);
             });
         }
@@ -4430,7 +5039,7 @@ function setWVView(view) {
   ];
   const driftIds = ['drift-analytics-section'];
   const simIds = ['rebalancing-section','benchmark-section','montecarlo-section','optimization-section'];
-  const advIds = ['correlation-section'];
+  const advIds = ['correlation-section','rolling-returns-section','drawdown-recovery-section','income-fees-section'];
 
   function show(ids, yes) {
     ids.forEach(id => {
