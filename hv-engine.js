@@ -175,12 +175,29 @@
       const txt = await res.text().catch(() => '');
       throw new Error(`Historical API failed (${res.status}). ${txt || ''}`.trim());
     }
-    const data = await res.json();
-    // Expect: [{date:'YYYY-MM-DD', close: number}, ...]
-    if (!Array.isArray(data)) throw new Error('Unexpected historical response.');
-    return data
+    const json = await res.json();
+
+    // Handle multiple response shapes:
+    // Shape A (API actual): { symbol, data: { "YYYY-MM-DD": {date, close, ...}, ... }, totalDates }
+    // Shape B (array): [{date, close}, ...]
+    let arr;
+    if (Array.isArray(json)) {
+      arr = json;
+    } else if (json && typeof json.data === 'object' && !Array.isArray(json.data)) {
+      // API returns data as object keyed by date string
+      arr = Object.values(json.data);
+    } else if (json && Array.isArray(json.data)) {
+      arr = json.data;
+    } else if (json && Array.isArray(json.prices)) {
+      arr = json.prices;
+    } else {
+      throw new Error('Unexpected historical response.');
+    }
+
+    return arr
       .map(r => ({ date: r.date, close: Number(r.close ?? r.c ?? r.price ?? r.value) }))
-      .filter(r => r.date && isFinite(r.close));
+      .filter(r => r.date && isFinite(r.close))
+      .sort((a, b) => a.date.localeCompare(b.date));
   };
 
   // ---------------------------
@@ -294,6 +311,10 @@
   };
 
   WV.hhi = function hhi(weights) {
+    // Accept both array of {weight} objects and plain object {ticker: weight}
+    if (Array.isArray(weights)) {
+      return weights.reduce((a, w) => a + (typeof w === 'number' ? w * w : (w.weight || 0) * (w.weight || 0)), 0);
+    }
     const vals = Object.values(weights || {});
     return vals.reduce((a,w)=>a + w*w, 0);
   };

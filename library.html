@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>WealthView — Portfolio Library</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script src="p0-engine.js"></script>
+  <script src="hv-engine.js"></script>
   <link rel="stylesheet" href="tools-nav.css"/>
   <script src="tools-nav.js" defer></script>
   <style>
@@ -201,6 +201,32 @@
 
   <script>
     // ---------- Dark mode ----------
+    // Polyfill missing WV helpers that library.html expects
+    if (typeof WV.makeId !== 'function') {
+      WV.makeId = function() {
+        return 'p_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+      };
+    }
+    if (typeof WV.savePortfolios !== 'function') {
+      WV.savePortfolios = function(obj) {
+        localStorage.setItem('portfolios', JSON.stringify(obj || {}));
+      };
+    }
+    if (typeof WV.clone !== 'function') {
+      WV.clone = function(obj) {
+        return JSON.parse(JSON.stringify(obj));
+      };
+    }
+    if (typeof WV.getCurrentPortfolioId !== 'function') {
+      WV.getCurrentPortfolioId = function() {
+        return localStorage.getItem('currentPortfolio') || '';
+      };
+    }
+    if (typeof WV.setCurrentPortfolioId !== 'function') {
+      WV.setCurrentPortfolioId = function(id) {
+        localStorage.setItem('currentPortfolio', id);
+      };
+    }
     function applyDarkModeFromStorage(){
       const isDark = localStorage.getItem('darkMode') === 'true';
       document.body.classList.toggle('dark-mode', isDark);

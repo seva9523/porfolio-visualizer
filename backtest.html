@@ -222,36 +222,28 @@ function rangeToDates(range){
   btn.addEventListener('click',()=>applyDark(!(localStorage.getItem(key)==='1')));
 
   const list=document.getElementById('portList');
-  const names=WV.listPortfolioNames();
+  const portfolios=WV.getPortfolios();
+  const portfolioList=WV.getPortfoliosList();
 
-  
-function renderList(){
-  const el=document.getElementById('portfolioList');
-  if(!el) return;
-  const currentId = WV.getCurrentPortfolioKey ? WV.getCurrentPortfolioKey() : (localStorage.getItem('currentPortfolio')||'default');
-  const items = (WV.listPortfolioNames ? WV.listPortfolioNames() : []).map(x => (typeof x === 'string') ? ({id:x, name:x}) : x);
-  el.innerHTML = '';
-  if(items.length===0){
-    el.innerHTML = '<div class="small">No saved portfolios found. Create one in the Portfolio Visualizer first.</div>';
-    return;
+  // Render portfolio checkboxes
+  function renderPortfolioCheckboxes(){
+    list.innerHTML='';
+    if(!portfolioList.length){
+      list.innerHTML='<div style="font-size:12px;color:var(--muted);">No saved portfolios found. Create one in the Portfolio Visualizer first.</div>';
+      return;
+    }
+    const currentId = WV.getCurrentPortfolioId();
+    portfolioList.forEach((p, idx) => {
+      const label=document.createElement('label');
+      label.style.cssText='display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:12px;cursor:pointer;font-size:13px;font-weight:600;';
+      label.innerHTML=`
+        <input type="checkbox" data-name="${p.id}" ${idx===0?'checked':''} style="width:16px;height:16px;">
+        <span>${p.name||p.id}${p.id===currentId?' <span style="font-size:11px;opacity:.6;">(current)</span>':''}</span>
+      `;
+      list.appendChild(label);
+    });
   }
-  items.forEach((p, idx) => {
-    const id = p.id ?? p.name;
-    const name = p.name ?? String(p.id);
-    const row = document.createElement('label');
-    row.className = 'checkRow';
-    row.innerHTML = `
-      <input type="checkbox" class="pfCheck" data-id="${id}" ${idx===0 ? 'checked' : ''}>
-      <div class="checkMeta">
-        <div class="checkName">${name}${id===currentId ? ' <span class="pill">Current</span>' : ''}</div>
-        <div class="small">Selected by default</div>
-      </div>
-    `;
-    el.appendChild(row);
-  });
-}
-
-renderList();
+  renderPortfolioCheckboxes();
 
   let chart=null;
 
@@ -264,14 +256,17 @@ renderList();
 
     const range=document.getElementById('rangeSelect').value;
     const {from, to} = rangeToDates(range);
-    const portfolios=WV.getPortfolios();
+    const allPortfolios=WV.getPortfolios();
     // gather all tickers needed
     const portWeights={};
+    const portNames={};
     const tickersSet=new Set();
-    for(const name of checked){
-      const p=portfolios[name];
+    for(const id of checked){
+      const p=allPortfolios[id];
+      if(!p || !p.holdings || !p.holdings.length) continue;
       const w=WV.getWeights(p, 12);
-      portWeights[name]=w;
+      portWeights[id]=w;
+      portNames[id]=p.name||id;
       w.forEach(x=>tickersSet.add(x.ticker));
     }
     const tickers=[...tickersSet];
@@ -300,9 +295,10 @@ renderList();
     // compute normalized equity for each portfolio
     const datasets=[];
     const metrics=[];
-    for(const name of checked){
-      const weights=portWeights[name].filter(x=>aligned.closes[x.ticker]); // only tickers with data
+    for(const id of checked){
+      const weights=(portWeights[id]||[]).filter(x=>aligned.closes[x.ticker]); // only tickers with data
       if(!weights.length) continue;
+      const displayName=portNames[id]||id;
       const wmap=new Map(weights.map(x=>[x.ticker, x.weight]));
       const closes=[];
       for(let i=0;i<dates.length;i++){
@@ -320,8 +316,8 @@ renderList();
       const cagr=WV.cagr(closes.filter(x=>isFinite(x)));
       const vol=WV.volatility(rets);
       const mdd=WV.maxDrawdown(closes.filter(x=>isFinite(x)));
-      datasets.push({ label:name, data:equity, tension:.15, pointRadius:0, borderWidth:2 });
-      metrics.push({name, cagr, vol, mdd});
+      datasets.push({ label:displayName, data:equity, tension:.15, pointRadius:0, borderWidth:2 });
+      metrics.push({name:displayName, cagr, vol, mdd});
     }
 
     const ctx=document.getElementById('chart');
