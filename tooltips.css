@@ -1,55 +1,63 @@
-/* WealthView metric tooltips (P1.1) */
-.wv-tip{
+
+/* WealthView tooltip system (P1) */
+.wv-tip-icon{
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  width:16px;height:16px;
+  width:18px;
+  height:18px;
   margin-left:6px;
   border-radius:999px;
-  border:1px solid rgba(148,163,184,0.9);
-  background:rgba(255,255,255,0.65);
+  border:1px solid rgba(15,23,42,.25);
+  background:rgba(248,250,252,.9);
   color:#0f172a;
-  font-size:11px;
-  font-weight:800;
+  font-size:12px;
   line-height:1;
   cursor:pointer;
-  padding:0;
-  vertical-align:middle;
+  user-select:none;
 }
-body.dark-mode .wv-tip{
-  background:rgba(2,6,23,0.35);
+body.dark .wv-tip-icon,
+.dark .wv-tip-icon{
+  border-color:rgba(226,232,240,.25);
+  background:rgba(15,23,42,.55);
   color:#e2e8f0;
-  border-color:rgba(148,163,184,0.45);
 }
-.wv-tip:focus{ outline:2px solid rgba(20,184,166,0.55); outline-offset:2px; }
-
 .wv-tooltip{
   position:fixed;
   z-index:9999;
   max-width:320px;
-  padding:12px 12px 10px;
+  padding:10px 12px;
   border-radius:12px;
-  background:rgba(255,255,255,0.98);
-  border:1px solid rgba(148,163,184,0.55);
-  box-shadow:0 12px 28px rgba(2,6,23,0.18);
+  border:1px solid rgba(15,23,42,.12);
+  background:#ffffff;
+  box-shadow:0 12px 30px rgba(2,6,23,.18);
   color:#0f172a;
+  font-size:12.5px;
 }
-body.dark-mode .wv-tooltip{
-  background:rgba(2,6,23,0.96);
+body.dark .wv-tooltip,
+.dark .wv-tooltip{
+  background:#0b1220;
+  border-color:rgba(226,232,240,.12);
   color:#e2e8f0;
-  border-color:rgba(148,163,184,0.28);
-  box-shadow:0 12px 28px rgba(0,0,0,0.5);
+  box-shadow:0 12px 30px rgba(0,0,0,.45);
 }
-.wv-tooltip .t-title{
-  font-weight:800;
-  font-size:13px;
+.wv-tooltip .wv-tip-title{
+  font-weight:700;
   margin:0 0 6px 0;
+  font-size:12.5px;
 }
-.wv-tooltip .t-body{
-  font-size:12px;
-  line-height:1.35;
+.wv-tooltip .wv-tip-body{
   margin:0;
-  opacity:0.95;
-  white-space:pre-line;
+  opacity:.95;
 }
-.wv-tooltip .t-body b{ font-weight:800; }
+.wv-tooltip .wv-tip-analogy{
+  margin-top:8px;
+  padding-top:8px;
+  border-top:1px dashed rgba(15,23,42,.18);
+  font-style:italic;
+  opacity:.9;
+}
+body.dark .wv-tooltip .wv-tip-analogy,
+.dark .wv-tooltip .wv-tip-analogy{
+  border-top-color:rgba(226,232,240,.18);
+}
