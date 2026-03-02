@@ -5315,9 +5315,9 @@ document.addEventListener('DOMContentLoaded', () => {
 <!-- ================= END QA STABILITY PATCH v14 ================= -->
 
 <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(()=>{});
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/sw.js").catch(console.warn);
     });
   }
 </script>
