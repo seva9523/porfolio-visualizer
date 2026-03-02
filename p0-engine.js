@@ -1,227 +1,150 @@
-/* WealthView P0 Tools Engine (Library + Health Check + Multi-Backtest)
-   Educational analysis only. No recommendations.
-*/
+/* WealthView P0 Engine (minimal) - browser-only, educational */
+window.WV = window.WV || {};
 
-(function () {
-  const WV = (window.WV = window.WV || {});
+WV.storageKey = 'portfolios';
 
-  // ---- Storage helpers -------------------------------------------------
-  WV.getPortfolios = function getPortfolios() {
-    try {
-      const raw = localStorage.getItem('portfolios');
-      const obj = raw ? JSON.parse(raw) : null;
-      return obj && typeof obj === 'object' ? obj : {};
-    } catch {
-      return {};
-    }
-  };
+WV.getPortfolios = function(){
+  try{
+    const raw = localStorage.getItem(WV.storageKey);
+    if(!raw) return {};
+    const obj = JSON.parse(raw);
+    return (obj && typeof obj==='object') ? obj : {};
+  }catch(e){ return {}; }
+};
 
-  WV.savePortfolios = function savePortfolios(portfolios) {
-    localStorage.setItem('portfolios', JSON.stringify(portfolios || {}));
-  };
+WV.setPortfolios = function(obj){
+  localStorage.setItem(WV.storageKey, JSON.stringify(obj||{}));
+};
 
-  WV.getCurrentPortfolioId = function getCurrentPortfolioId() {
-    const p = WV.getPortfolios();
-    const saved = localStorage.getItem('currentPortfolio');
-    if (saved && p[saved]) return saved;
-    const first = Object.keys(p)[0];
-    return first || null;
-  };
+WV.listPortfolioNames = function(){
+  const p=WV.getPortfolios();
+  return Object.keys(p);
+};
 
-  WV.setCurrentPortfolioId = function setCurrentPortfolioId(id) {
-    localStorage.setItem('currentPortfolio', id);
-  };
+WV.populatePortfolioSelect = function(selectEl){
+  const names = WV.listPortfolioNames();
+  selectEl.innerHTML='';
+  names.forEach(n=>{
+    const opt=document.createElement('option');
+    opt.value=n; opt.textContent=n;
+    selectEl.appendChild(opt);
+  });
+  if(!names.length){
+    const opt=document.createElement('option');
+    opt.value=''; opt.textContent='No saved portfolios';
+    selectEl.appendChild(opt);
+  }
+};
 
-  WV.makeId = function makeId() {
-    return 'p_' + Math.random().toString(36).slice(2, 9) + '_' + Date.now().toString(36);
-  };
+function holdingMarketValue(h){
+  const shares = Number(h.shares ?? h.quantity ?? 0) || 0;
+  const price  = Number(h.currentPrice ?? h.price ?? h.lastPrice ?? 0) || 0;
+  const value  = Number(h.value ?? 0) || 0;
+  return value || (shares*price);
+}
 
-  WV.clone = function clone(x) {
-    return JSON.parse(JSON.stringify(x));
-  };
+WV.getHoldingsArray = function(portfolioObj){
+  if(!portfolioObj) return [];
+  const h = portfolioObj.holdings;
+  if(Array.isArray(h)) return h;
+  if(h && typeof h==='object'){
+    // sometimes stored as object keyed by ticker
+    return Object.values(h);
+  }
+  return [];
+};
 
-  // ---- Date helpers -----------------------------------------------------
-  WV.toISO = function toISO(d) {
-    const z = new Date(d);
-    const y = z.getUTCFullYear();
-    const m = String(z.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(z.getUTCDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  };
+WV.getWeights = function(portfolioObj, maxTickers=12){
+  const holdings = WV.getHoldingsArray(portfolioObj)
+    .filter(x=>x && (x.ticker || x.symbol))
+    .map(x=>{
+      const t=(x.ticker||x.symbol||'').toUpperCase().trim();
+      return { ticker:t, mv: holdingMarketValue(x) };
+    })
+    .filter(x=>x.ticker);
 
-  WV.dateMonthsAgoISO = function dateMonthsAgoISO(months) {
-    const d = new Date();
-    d.setMonth(d.getMonth() - months);
-    return WV.toISO(d);
-  };
+  // if market values missing, equal weight
+  const limited = holdings.slice(0, maxTickers);
+  const totalMv = limited.reduce((s,x)=>s+(x.mv||0),0);
 
-  // ---- Data cache -------------------------------------------------------
-  WV.cacheGet = function cacheGet(key) {
-    try {
-      const raw = localStorage.getItem(key);
-      if (!raw) return null;
-      return JSON.parse(raw);
-    } catch {
-      return null;
-    }
-  };
+  if(totalMv>0){
+    return limited.map(x=>({ticker:x.ticker, weight:(x.mv||0)/totalMv}));
+  }
+  const uniq = Array.from(new Set(limited.map(x=>x.ticker)));
+  const w = uniq.length ? 1/uniq.length : 0;
+  return uniq.map(t=>({ticker:t, weight:w}));
+};
 
-  WV.cacheSet = function cacheSet(key, value) {
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-      localStorage.setItem(key + '_time', String(Date.now()));
-    } catch {}
-  };
+WV.fetchHistory = async function(ticker, range='1y'){
+  const url = `/api/historical?ticker=${encodeURIComponent(ticker)}&range=${encodeURIComponent(range)}`;
+  const r = await fetch(url);
+  if(!r.ok) throw new Error('history fetch failed');
+  const j = await r.json();
+  // expected: [{date, close}] or {prices:[...]}
+  const arr = Array.isArray(j) ? j : (j.prices||j.data||[]);
+  return arr
+    .map(d=>({
+      date: (d.date||d.time||d.timestamp||d[0]),
+      close: Number(d.close ?? d.adjClose ?? d.price ?? d[1])
+    }))
+    .filter(x=>x.date && isFinite(x.close));
+};
 
-  WV.cacheFresh = function cacheFresh(key, maxAgeMs) {
-    const t = Number(localStorage.getItem(key + '_time') || '0');
-    if (!t) return false;
-    return (Date.now() - t) <= maxAgeMs;
-  };
+WV.alignSeries = function(seriesMap){
+  // seriesMap: {name: [{date, close}], ...}
+  const keys = Object.keys(seriesMap);
+  if(!keys.length) return {dates:[], closes:{}};
+  const dateSets = keys.map(k=> new Set(seriesMap[k].map(x=>String(x.date))));
+  // intersection
+  let common = dateSets[0];
+  for(let i=1;i<dateSets.length;i++){
+    common = new Set([...common].filter(d=>dateSets[i].has(d)));
+  }
+  const dates = [...common].sort();
+  const closes={};
+  keys.forEach(k=>{
+    const m = new Map(seriesMap[k].map(x=>[String(x.date), x.close]));
+    closes[k]=dates.map(d=>m.get(d));
+  });
+  return {dates, closes};
+};
 
-  // ---- Yahoo via /api/historical ---------------------------------------
-  WV.fetchHistorical = async function fetchHistorical(symbol, fromISO, toISO) {
-    const cacheKey = `wv_hist_${symbol}_${fromISO || '0'}_${toISO || '9'}`;
-    const maxAge = 1000 * 60 * 60 * 12; // 12h
+WV.toReturns = function(closes){
+  const rets=[];
+  for(let i=1;i<closes.length;i++){
+    const a=closes[i-1], b=closes[i];
+    if(!isFinite(a)||!isFinite(b)||a<=0){ rets.push(0); continue; }
+    rets.push((b/a)-1);
+  }
+  return rets;
+};
 
-    if (WV.cacheFresh(cacheKey, maxAge)) {
-      const cached = WV.cacheGet(cacheKey);
-      if (cached && cached.data) return cached;
-    }
+WV.cagr = function(closes, periodsPerYear=252){
+  if(closes.length<2) return 0;
+  const start=closes[0], end=closes[closes.length-1];
+  if(!(start>0 && end>0)) return 0;
+  const years = (closes.length-1)/periodsPerYear;
+  return Math.pow(end/start, 1/years)-1;
+};
 
-    const url = `/api/historical?symbol=${encodeURIComponent(symbol)}&from=${encodeURIComponent(fromISO || '')}&to=${encodeURIComponent(toISO || '')}`;
-    const res = await fetch(url);
-    const json = await res.json();
-    WV.cacheSet(cacheKey, json);
-    return json;
-  };
+WV.volatility = function(returns, periodsPerYear=252){
+  if(!returns.length) return 0;
+  const mean=returns.reduce((s,x)=>s+x,0)/returns.length;
+  const varr=returns.reduce((s,x)=>s+Math.pow(x-mean,2),0)/Math.max(1,returns.length-1);
+  return Math.sqrt(varr)*Math.sqrt(periodsPerYear);
+};
 
-  WV.seriesFromHistorical = function seriesFromHistorical(histJson) {
-    // returns [{date, close}...] sorted asc
-    const data = histJson && histJson.data ? histJson.data : {};
-    const arr = Object.keys(data)
-      .map(k => ({ date: k, close: Number(data[k].close) }))
-      .filter(x => Number.isFinite(x.close) && x.close > 0)
-      .sort((a, b) => a.date.localeCompare(b.date));
-    return arr;
-  };
+WV.maxDrawdown = function(closes){
+  let peak=-Infinity, mdd=0;
+  for(const c of closes){
+    if(!isFinite(c)) continue;
+    peak=Math.max(peak,c);
+    if(peak>0) mdd=Math.min(mdd, (c/peak)-1);
+  }
+  return mdd; // negative
+};
 
-  // ---- Portfolio math ---------------------------------------------------
-  WV.computeWeightsFromHoldings = async function computeWeightsFromHoldings(holdings, fromISO) {
-    // weights based on shares * latest close (from historical)
-    const clean = (holdings || []).filter(h => h && h.ticker && Number(h.shares) > 0);
-    const tickers = [...new Set(clean.map(h => String(h.ticker).trim().toUpperCase()))];
-
-    const prices = {};
-    for (const t of tickers) {
-      try {
-        const hist = await WV.fetchHistorical(t, fromISO || WV.dateMonthsAgoISO(18), WV.toISO(new Date()));
-        const series = WV.seriesFromHistorical(hist);
-        const last = series[series.length - 1];
-        if (last && last.close) prices[t] = last.close;
-      } catch {
-        // ignore
-      }
-    }
-
-    const values = clean.map(h => {
-      const t = String(h.ticker).trim().toUpperCase();
-      const p = prices[t];
-      return {
-        ticker: t,
-        shares: Number(h.shares) || 0,
-        value: (Number(h.shares) || 0) * (Number(p) || 0)
-      };
-    }).filter(x => x.value > 0);
-
-    const total = values.reduce((s, x) => s + x.value, 0);
-    const weights = {};
-    values.forEach(x => { weights[x.ticker] = x.value / total; });
-    return { weights, prices, totalValue: total };
-  };
-
-  WV.mergeSeriesOnDates = function mergeSeriesOnDates(seriesByTicker) {
-    // seriesByTicker: {TICKER: [{date, close}...]}
-    // returns sorted dates common to all tickers
-    const tickers = Object.keys(seriesByTicker);
-    if (!tickers.length) return [];
-    const sets = tickers.map(t => new Set(seriesByTicker[t].map(x => x.date)));
-    // intersect
-    let common = sets[0];
-    for (let i = 1; i < sets.length; i++) {
-      const next = new Set();
-      for (const d of common) if (sets[i].has(d)) next.add(d);
-      common = next;
-      if (!common.size) break;
-    }
-    return [...common].sort((a, b) => a.localeCompare(b));
-  };
-
-  WV.portfolioIndexSeries = function portfolioIndexSeries(seriesByTicker, weights) {
-    const dates = WV.mergeSeriesOnDates(seriesByTicker);
-    if (!dates.length) return [];
-    const tickers = Object.keys(seriesByTicker);
-    const closeMap = {};
-    tickers.forEach(t => {
-      closeMap[t] = new Map(seriesByTicker[t].map(x => [x.date, x.close]));
-    });
-
-    const baseDate = dates[0];
-    const base = tickers.reduce((s, t) => s + (weights[t] || 0) * (closeMap[t].get(baseDate) || 0), 0);
-    if (!(base > 0)) return [];
-
-    return dates.map(d => {
-      const v = tickers.reduce((s, t) => s + (weights[t] || 0) * (closeMap[t].get(d) || 0), 0);
-      return { date: d, index: (v / base) * 100 };
-    });
-  };
-
-  WV.calcDrawdown = function calcDrawdown(indexSeries) {
-    let peak = -Infinity;
-    let maxDD = 0;
-    for (const p of indexSeries) {
-      const v = p.index;
-      if (v > peak) peak = v;
-      const dd = peak > 0 ? (v / peak) - 1 : 0;
-      if (dd < maxDD) maxDD = dd;
-    }
-    return maxDD; // negative
-  };
-
-  WV.calcCAGR = function calcCAGR(indexSeries) {
-    if (!indexSeries || indexSeries.length < 2) return null;
-    const start = indexSeries[0];
-    const end = indexSeries[indexSeries.length - 1];
-    const years = (new Date(end.date) - new Date(start.date)) / (1000 * 60 * 60 * 24 * 365.25);
-    if (!(years > 0)) return null;
-    const ratio = end.index / start.index;
-    if (!(ratio > 0)) return null;
-    return Math.pow(ratio, 1 / years) - 1;
-  };
-
-  WV.calcVol = function calcVol(indexSeries) {
-    if (!indexSeries || indexSeries.length < 3) return null;
-    const rets = [];
-    for (let i = 1; i < indexSeries.length; i++) {
-      const a = indexSeries[i - 1].index;
-      const b = indexSeries[i].index;
-      if (a > 0 && b > 0) rets.push(Math.log(b / a));
-    }
-    if (rets.length < 2) return null;
-    const mean = rets.reduce((s, x) => s + x, 0) / rets.length;
-    const varr = rets.reduce((s, x) => s + Math.pow(x - mean, 2), 0) / (rets.length - 1);
-    const daily = Math.sqrt(varr);
-    return daily * Math.sqrt(252);
-  };
-
-  WV.hhi = function hhi(weights) {
-    const vals = Object.values(weights || {});
-    if (!vals.length) return null;
-    return vals.reduce((s, w) => s + w * w, 0);
-  };
-
-  WV.fmtPct = function fmtPct(x, digits = 1) {
-    if (x === null || x === undefined || !Number.isFinite(x)) return '—';
-    return (x * 100).toFixed(digits) + '%';
-  };
-})();
+WV.hhi = function(weights){
+  // Herfindahl-Hirschman Index
+  return weights.reduce((s,x)=>s+Math.pow(x.weight||0,2),0);
+};

@@ -1,66 +1,60 @@
-/* WealthView Tools Nav (shared) — safe unified version */
-.wv-tools-nav{
+/* WealthView Tools Ribbon (unified) */
+:root{
+  --wv-slate:#0f172a;
+  --wv-border:rgba(15,23,42,.10);
+  --wv-sky:#e0f2fe;
+  --wv-tealwash:#ccfbf1;
+  --wv-pill:#ffffffcc;
+  --wv-pill-border:rgba(15,23,42,.10);
+  --wv-active:rgba(20,184,166,.18);
+}
+.wv-toolsbar{
   position: sticky;
   top: 0;
   z-index: 9999;
-  backdrop-filter: saturate(180%) blur(10px);
-  -webkit-backdrop-filter: saturate(180%) blur(10px);
-  background: linear-gradient(90deg, rgba(224,242,254,.92), rgba(204,251,241,.92));
-  border-bottom: 1px solid rgba(15,23,42,.10);
+  background: linear-gradient(90deg, var(--wv-sky), var(--wv-tealwash));
+  border-bottom: 1px solid var(--wv-border);
+  backdrop-filter: blur(10px);
 }
-html.dark .wv-tools-nav{
-  background: linear-gradient(90deg, rgba(2,6,23,.86), rgba(2,6,23,.78));
-  border-bottom: 1px solid rgba(148,163,184,.22);
+.wv-toolsbar .inner{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  padding:10px 14px;
 }
-.wv-tools-nav__inner{
-  width: min(1600px, calc(100% - 32px));
-  margin: 0 auto;
-  padding: 10px 0;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-wrap: wrap;
+.wv-toolsbar .label{
+  font-size:11px;
+  letter-spacing:.12em;
+  color:#334155;
+  text-transform:uppercase;
+  margin-right:4px;
 }
-.wv-tools-nav__label{
-  font-weight: 700;
-  font-size: 12px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  opacity: .7;
-  margin-right: 4px;
+.wv-toolsbar a{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid var(--wv-pill-border);
+  background: var(--wv-pill);
+  color:#0f172a;
+  text-decoration:none;
+  font-weight:600;
+  font-size:12px;
 }
-.wv-tools-nav__link{
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(15,23,42,.12);
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 13px;
-  color: inherit;
-  background: rgba(255,255,255,.62);
+.wv-toolsbar a:hover{ filter:brightness(.98); }
+.wv-toolsbar a.active{
+  background: #fff;
+  box-shadow: 0 6px 14px rgba(2,6,23,.08);
+  outline: 2px solid var(--wv-active);
+  outline-offset: 0;
 }
-html.dark .wv-tools-nav__link{
-  border-color: rgba(148,163,184,.22);
-  background: rgba(2,6,23,.35);
-}
-.wv-tools-nav__link:hover{ transform: translateY(-1px); transition: .12s ease; }
-.wv-tools-nav__link[aria-current="page"]{
-  border-color: rgba(14,165,233,.45);
-  box-shadow: 0 0 0 3px rgba(14,165,233,.18) inset;
-}
-.wv-tools-nav__spacer{ flex: 1; }
-.wv-tools-nav__mini{
-  font-size: 12px;
-  opacity: .78;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px dashed rgba(15,23,42,.18);
-  background: rgba(255,255,255,.35);
-}
-html.dark .wv-tools-nav__mini{
-  border-color: rgba(148,163,184,.25);
-  background: rgba(2,6,23,.25);
+.wv-toolsbar .spacer{ flex:1; }
+.wv-toolsbar .note{
+  font-size:12px;
+  color:#334155;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid var(--wv-pill-border);
+  background:#ffffffa6;
 }
