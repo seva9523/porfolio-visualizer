@@ -201,32 +201,57 @@ th{color:#334155; font-size:11px; text-transform:uppercase; letter-spacing:.08em
     localStorage.setItem(key, on?'1':'0');
     btn.textContent = on ? '☀️ Light Mode' : '🌙 Dark Mode';
   }
+
+function rangeToDates(range){
+  const end = new Date();
+  const start = new Date(end);
+  const r = String(range||'1y');
+  if(r==='3m') start.setMonth(start.getMonth()-3);
+  else if(r==='6m') start.setMonth(start.getMonth()-6);
+  else if(r==='1y') start.setFullYear(start.getFullYear()-1);
+  else if(r==='3y') start.setFullYear(start.getFullYear()-3);
+  else if(r==='5y') start.setFullYear(start.getFullYear()-5);
+  else if(r==='10y') start.setFullYear(start.getFullYear()-10);
+  else if(r==='max') start.setFullYear(start.getFullYear()-20);
+  const pad=n=>String(n).padStart(2,'0');
+  const fmt=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  return { from: fmt(start), to: fmt(end) };
+}
+
   applyDark(localStorage.getItem(key)==='1');
   btn.addEventListener('click',()=>applyDark(!(localStorage.getItem(key)==='1')));
 
   const list=document.getElementById('portList');
   const names=WV.listPortfolioNames();
 
-  function renderList(){
-    list.innerHTML='';
-    if(!names.length){
-      list.innerHTML='<div class="label">No saved portfolios found. Save portfolios in the Visualizer first.</div>';
-      return;
-    }
-    names.forEach((name, idx)=>{
-      const row=document.createElement('label');
-      row.style.display='flex';
-      row.style.alignItems='center';
-      row.style.gap='10px';
-      row.style.padding='10px 12px';
-      row.style.border='1px solid var(--border)';
-      row.style.borderRadius='12px';
-      row.style.background='#fff';
-      row.innerHTML = `<input type="checkbox" data-name="${name}" ${idx===0?'checked':''} /> <div><div style="font-weight:800">${name}</div><div class="label">${idx===0?'Selected by default':''}</div></div>`;
-      list.appendChild(row);
-    });
+  
+function renderList(){
+  const el=document.getElementById('portfolioList');
+  if(!el) return;
+  const currentId = WV.getCurrentPortfolioKey ? WV.getCurrentPortfolioKey() : (localStorage.getItem('currentPortfolio')||'default');
+  const items = (WV.listPortfolioNames ? WV.listPortfolioNames() : []).map(x => (typeof x === 'string') ? ({id:x, name:x}) : x);
+  el.innerHTML = '';
+  if(items.length===0){
+    el.innerHTML = '<div class="small">No saved portfolios found. Create one in the Portfolio Visualizer first.</div>';
+    return;
   }
-  renderList();
+  items.forEach((p, idx) => {
+    const id = p.id ?? p.name;
+    const name = p.name ?? String(p.id);
+    const row = document.createElement('label');
+    row.className = 'checkRow';
+    row.innerHTML = `
+      <input type="checkbox" class="pfCheck" data-id="${id}" ${idx===0 ? 'checked' : ''}>
+      <div class="checkMeta">
+        <div class="checkName">${name}${id===currentId ? ' <span class="pill">Current</span>' : ''}</div>
+        <div class="small">Selected by default</div>
+      </div>
+    `;
+    el.appendChild(row);
+  });
+}
+
+renderList();
 
   let chart=null;
 
@@ -238,6 +263,7 @@ th{color:#334155; font-size:11px; text-transform:uppercase; letter-spacing:.08em
     if(checked.length>5){ alert('Select up to 5 portfolios'); return; }
 
     const range=document.getElementById('rangeSelect').value;
+    const {from, to} = rangeToDates(range);
     const portfolios=WV.getPortfolios();
     // gather all tickers needed
     const portWeights={};
@@ -254,7 +280,7 @@ th{color:#334155; font-size:11px; text-transform:uppercase; letter-spacing:.08em
     const seriesMap={};
     for(const t of tickers){
       try{
-        seriesMap[t]=await WV.fetchHistory(t, range);
+        seriesMap[t]=await WV.fetchHistory(t, from, to);
       }catch(e){
         // ignore missing
       }

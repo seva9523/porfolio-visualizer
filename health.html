@@ -234,10 +234,28 @@ th{color:#334155; font-size:11px; text-transform:uppercase; letter-spacing:.08em
     return 100*(0.35*h + 0.35*v + 0.30*d);
   }
 
+
+function rangeToDates(range){
+  const end = new Date();
+  const start = new Date(end);
+  const r = String(range||'1y');
+  if(r==='3m') start.setMonth(start.getMonth()-3);
+  else if(r==='6m') start.setMonth(start.getMonth()-6);
+  else if(r==='1y') start.setFullYear(start.getFullYear()-1);
+  else if(r==='3y') start.setFullYear(start.getFullYear()-3);
+  else if(r==='5y') start.setFullYear(start.getFullYear()-5);
+  else if(r==='10y') start.setFullYear(start.getFullYear()-10);
+  else if(r==='max') start.setFullYear(start.getFullYear()-20);
+  const pad=n=>String(n).padStart(2,'0');
+  const fmt=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  return { from: fmt(start), to: fmt(end) };
+}
+
   async function run(){
     const name=sel.value;
     if(!name){ document.getElementById('status').textContent='No saved portfolios found. Save one in the Visualizer first.'; return; }
     const range=document.getElementById('rangeSelect').value;
+    const {from, to} = rangeToDates(range);
     const portfolios=WV.getPortfolios();
     const p=portfolios[name];
     if(!p){ document.getElementById('status').textContent='Portfolio not found.'; return; }
@@ -250,7 +268,7 @@ th{color:#334155; font-size:11px; text-transform:uppercase; letter-spacing:.08em
     const seriesMap={};
     for(const w of weights){
       try{
-        seriesMap[w.ticker]=await WV.fetchHistory(w.ticker, range);
+        seriesMap[w.ticker]=await WV.fetchHistory(w.ticker, from, to);
       }catch(e){
         // ignore missing
       }
