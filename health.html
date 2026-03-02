@@ -197,7 +197,7 @@ th{color:#334155; font-size:11px; text-transform:uppercase; letter-spacing:.08em
   </div>
 </main>
 
-<script src="p0-engine.js"></script>
+<script src="hv-engine.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
 (function(){
@@ -216,9 +216,8 @@ th{color:#334155; font-size:11px; text-transform:uppercase; letter-spacing:.08em
   WV.populatePortfolioSelect(sel);
 
   document.getElementById('editBtn').addEventListener('click', ()=>{
-    const name=sel.value;
-    const url = 'visualizer.html' + (name?('#'+encodeURIComponent(name)):''); // harmless hint
-    location.href=url;
+    localStorage.setItem('currentPortfolio', sel.value);
+    window.location.href = 'visualizer.html';
   });
 
   let chart=null;
@@ -242,6 +241,7 @@ th{color:#334155; font-size:11px; text-transform:uppercase; letter-spacing:.08em
     const portfolios=WV.getPortfolios();
     const p=portfolios[name];
     if(!p){ document.getElementById('status').textContent='Portfolio not found.'; return; }
+    if(!p.holdings || !p.holdings.length){ document.getElementById('status').textContent='No holdings in this portfolio. Open Portfolio Visualizer, add holdings, then come back.'; return; }
 
     const weights=WV.getWeights(p, 12);
     if(!weights.length){ document.getElementById('status').textContent='This portfolio has no tickers. Add holdings in the Visualizer.'; return; }
