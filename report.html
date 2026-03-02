@@ -1,78 +1,128 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>WealthView Report</title>
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; }
-    .muted { color: #666; }
-    h1 { margin: 0 0 6px 0; }
-    h2 { margin-top: 18px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 8px; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .card { border: 1px solid #ddd; border-radius: 10px; padding: 12px; }
-    @media print { .no-print { display: none; } body { margin: 10mm; } }
+    :root { --text:#111; --muted:#555; --border:#ddd; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; color:var(--text); margin:24px; }
+    h1,h2,h3{ margin:0 0 8px 0; }
+    .muted{ color:var(--muted); }
+    .card{ border:1px solid var(--border); border-radius:12px; padding:16px; margin-top:14px; }
+    table{ width:100%; border-collapse:collapse; font-size:13px; }
+    th,td{ text-align:left; padding:8px; border-bottom:1px solid var(--border); vertical-align:top; }
+    th{ font-weight:700; }
+    .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
+    .kpi{ font-size:22px; font-weight:800; }
+    .btnbar{ display:flex; gap:10px; margin-top:14px; }
+    button{ padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:#fff; cursor:pointer; }
+    @media print {
+      body { margin:0.5in; }
+      .btnbar { display:none; }
+      .card { break-inside: avoid; }
+    }
   </style>
 </head>
 <body>
-  <div class="no-print" style="display:flex; gap:10px; align-items:center; justify-content:space-between;">
-    <div>
-      <strong>Tip:</strong> Use your browser’s Print dialog and choose “Save as PDF”.
-      <span class="muted">(This is educational content, not financial advice.)</span>
-    </div>
+  <div class="muted">WealthView.pro — Educational report (not advice)</div>
+  <h1 id="r-title">Portfolio Report</h1>
+  <div class="muted" id="r-sub"></div>
+
+  <div class="btnbar">
     <button onclick="window.print()">Print / Save as PDF</button>
+    <button onclick="window.close()">Close</button>
   </div>
 
-  <h1>Portfolio Report</h1>
-  <div class="muted" id="meta"></div>
+  <div class="card">
+    <h2>Summary</h2>
+    <div class="grid" style="margin-top:10px;">
+      <div>
+        <div class="muted">Total Value</div>
+        <div class="kpi" id="r-total">$0</div>
+      </div>
+      <div>
+        <div class="muted">Holdings</div>
+        <div class="kpi" id="r-count">0</div>
+      </div>
+    </div>
+    <div class="muted" style="margin-top:10px; line-height:1.5;">
+      This report is generated from your locally saved portfolio data in your browser.
+    </div>
+  </div>
 
-  <div class="grid" style="margin-top:12px;">
-    <div class="card">
-      <h2 style="margin:0 0 6px 0;">Holdings</h2>
-      <table id="holdingsTbl">
-        <thead><tr><th>Ticker</th><th>Weight</th><th>Class</th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </div>
-    <div class="card">
-      <h2 style="margin:0 0 6px 0;">Summary</h2>
-      <div id="summary"></div>
-    </div>
+  <div class="card">
+    <h2>Top Holdings</h2>
+    <table>
+      <thead>
+        <tr><th>Ticker</th><th>Allocation</th><th>Value</th></tr>
+      </thead>
+      <tbody id="r-top"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>All Holdings</h2>
+    <table>
+      <thead>
+        <tr><th>Ticker</th><th>Shares</th><th>Price</th><th>Value</th></tr>
+      </thead>
+      <tbody id="r-all"></tbody>
+    </table>
   </div>
 
   <script>
-    function safeParse(key, fallback) {
-      try { return JSON.parse(localStorage.getItem(key) || "null") ?? fallback; } catch(e){ return fallback; }
+    function money(x){ return '$' + (Number(x||0)).toFixed(2); }
+    function pct(x){ return (Number(x||0)).toFixed(1) + '%'; }
+
+    function load() {
+      const pkey = localStorage.getItem('currentPortfolio');
+      const ps = JSON.parse(localStorage.getItem('portfolios') || '{}');
+      const p = ps && pkey ? ps[pkey] : null;
+      const title = document.getElementById('r-title');
+      const sub = document.getElementById('r-sub');
+
+      if (!p) {
+        title.textContent = 'No portfolio found';
+        sub.textContent = 'Open the Portfolio Visualizer first, then try again.';
+        return;
+      }
+
+      title.textContent = (p.name || 'Portfolio') + ' — Report';
+      sub.textContent = new Date().toLocaleString();
+
+      const holdings = (p.holdings || []).map(h => ({
+        ticker: (h.ticker||'').toUpperCase(),
+        shares: Number(h.shares||0),
+        price: Number(h.price||0),
+        value: Number(h.value||0)
+      })).filter(h => h.ticker);
+
+      const total = holdings.reduce((s,h)=>s+h.value,0);
+      document.getElementById('r-total').textContent = money(total);
+      document.getElementById('r-count').textContent = holdings.length;
+
+      const top = [...holdings].sort((a,b)=>b.value-a.value).slice(0,10);
+      const topBody = document.getElementById('r-top');
+      topBody.innerHTML = top.map(h => `
+        <tr>
+          <td><strong>${h.ticker}</strong></td>
+          <td>${pct(total>0 ? (h.value/total*100) : 0)}</td>
+          <td>${money(h.value)}</td>
+        </tr>
+      `).join('');
+
+      const allBody = document.getElementById('r-all');
+      allBody.innerHTML = holdings.map(h => `
+        <tr>
+          <td><strong>${h.ticker}</strong></td>
+          <td>${h.shares.toFixed(4)}</td>
+          <td>${money(h.price)}</td>
+          <td>${money(h.value)}</td>
+        </tr>
+      `).join('');
     }
-    const portfolios = safeParse("portfolios", {});
-    const currentPortfolio = localStorage.getItem("currentPortfolio") || "";
-    const p = portfolios?.[currentPortfolio];
-
-    document.getElementById("meta").textContent =
-      `Generated: ${new Date().toLocaleString()} • Portfolio: ${currentPortfolio || "N/A"}`;
-
-    const tbody = document.querySelector("#holdingsTbl tbody");
-    if (p?.holdings?.length) {
-      p.holdings.forEach(h => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${h.ticker || ""}</td><td>${(h.weight ?? 0).toFixed(2)}%</td><td>${h.assetClass || ""}</td>`;
-        tbody.appendChild(tr);
-      });
-    } else {
-      tbody.innerHTML = `<tr><td colspan="3" class="muted">No holdings found in localStorage.</td></tr>`;
-    }
-
-    // Basic summary (kept simple on purpose)
-    const summary = document.getElementById("summary");
-    const totalW = (p?.holdings || []).reduce((s,h)=>s + (Number(h.weight)||0), 0);
-    summary.innerHTML = `
-      <div><strong>Total weight:</strong> ${totalW.toFixed(2)}%</div>
-      <div class="muted" style="margin-top:8px;">
-        Educational report generated from your saved portfolio data in this browser.
-      </div>
-    `;
+    load();
   </script>
 </body>
 </html>

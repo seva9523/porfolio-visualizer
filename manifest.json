@@ -1,9 +1,20 @@
 {
   "name": "WealthView Pro",
   "short_name": "WealthView",
-  "start_url": "/index.html",
+  "start_url": "library.html",
   "display": "standalone",
-  "background_color": "#0b1220",
-  "theme_color": "#0b1220",
-  "icons": []
+  "background_color": "#0b0f19",
+  "theme_color": "#0b0f19",
+  "icons": [
+    {
+      "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAHUlEQVR42u3BAQ0AAADCoPdPbQ43oAAAAAAAAAA4G4YgAAE7gG5QAAAABJRU5ErkJggg==",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAHUlEQVR42u3BAQ0AAADCoPdPbQ43oAAAAAAAAAA4G4YgAAE7gG5QAAAABJRU5ErkJggg==",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
 }
