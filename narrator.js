@@ -160,6 +160,77 @@
     return { lines };
   }
 
+  // ---------------------------
+  // API narrator (optional)
+  // ---------------------------
+  function gatherMetricsForApi(){
+    const holdingsCount = toNum(findStatValue('Number of Holdings'));
+
+    const largest = findStatValue('Largest Position');
+    let largestTicker = '';
+    let largestPct = null;
+    if(largest){
+      const m = largest.match(/^\s*([^\s(]+)\s*\(([-+0-9.]+)%\)/);
+      if(m){ largestTicker = m[1]; largestPct = Number(m[2]); }
+    }
+
+    const riskLevelRaw = getOptimizationValue('Risk Level');
+    const diversificationRaw = getOptimizationValue('Diversification Score');
+    const largestPosRaw = getOptimizationValue('Largest Position');
+
+    let divScore = null;
+    if(diversificationRaw){
+      const m = diversificationRaw.match(/(\d+)\s*\/\s*10/);
+      if(m) divScore = Number(m[1]);
+    }
+
+    // Prefer largest position from optimization if present
+    const largestPct2 = toNum(largestPosRaw);
+    if(largestPct2 != null) largestPct = largestPct2;
+
+    const cagr = toNum(getMetricCardValueByTitle('CAGR'));
+    const sharpe = toNum(getMetricCardValueByTitle('Sharpe'));
+    const maxDd = toNum(getMetricCardValueByTitle('Max Drawdown'));
+    const vol = toNum(getMetricCardValueByTitle('Volatility'));
+
+    return {
+      holdingsCount,
+      largestTicker: largestTicker || null,
+      largestPct,
+      riskLabel: riskLevelRaw || null,
+      diversificationScore10: divScore,
+      cagrPct: cagr,
+      volatilityPct: vol,
+      maxDrawdownPct: maxDd,
+      sharpe
+    };
+  }
+
+  async function tryApiNarration(){
+    // If the endpoint isn't deployed or key isn't set, we fall back silently.
+    const metrics = gatherMetricsForApi();
+    // If we have basically nothing to narrate, skip
+    const hasSignal = Object.values(metrics).some(v => v != null && v !== '');
+    if(!hasSignal) return null;
+
+    try {
+      const r = await fetch('/api/narrate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          metrics,
+          context: { page: 'visualizer' }
+        })
+      });
+      if(!r.ok) return null;
+      const j = await r.json();
+      if(!j || !j.title || !Array.isArray(j.paragraphs)) return null;
+      return j;
+    } catch(_e){
+      return null;
+    }
+  }
+
   function ensureCard(){
     const summaryHost = document.getElementById('summary-section');
     if(!summaryHost) return null;
@@ -174,17 +245,30 @@
     return card;
   }
 
-  function render(){
+  async function render(){
     const card = ensureCard();
     if(!card) return;
-    const n = buildNarrative();
 
+    // Prefer API narration if available; otherwise rule-based.
+    const api = await tryApiNarration();
+    if(api){
+      card.style.display = 'block';
+      card.innerHTML = `
+        <h2>🧠 ${api.title || 'Portfolio Story (Plain English)'}</h2>
+        <div style="margin-top:12px; display:grid; gap:10px;">
+          ${(api.paragraphs||[]).map(p => `<div style="font-size:13px; line-height:1.65; color: var(--text-primary);">${p}</div>`).join('')}
+          <div style="font-size:12px; line-height:1.55; opacity:0.85; color: var(--text-secondary);">${api.disclaimer || ''}</div>
+        </div>
+      `;
+      return;
+    }
+
+    const n = buildNarrative();
     if(!n.lines || n.lines.length < 2){
       card.style.display = 'none';
       return;
     }
     card.style.display = 'block';
-
     card.innerHTML = `
       <h2>🧠 Portfolio Story (Plain English)</h2>
       <div style="margin-top:12px; display:grid; gap:10px;">
@@ -197,7 +281,7 @@
     const targets = ['summary-section','optimization-section','correlation-section'];
     const obs = new MutationObserver(() => {
       if(attachObservers._t) clearTimeout(attachObservers._t);
-      attachObservers._t = setTimeout(render, 60);
+      attachObservers._t = setTimeout(() => { try { render(); } catch(e) {} }, 80);
     });
     targets.forEach(id => {
       const el = document.getElementById(id);
