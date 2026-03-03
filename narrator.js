@@ -1,13 +1,19 @@
 // WealthView — Plain-Language Portfolio Narrator
-// Educational only. No recommendations. No external calls.
+// Educational only. No recommendations.
 //
 // Injects a "Portfolio Story" card into the Portfolio Visualizer (visualizer.html).
 // It reads already-rendered metrics from the DOM and turns them into a short narrative.
+// If /api/narrate is available, it uses it (and falls back silently if not).
 
 (function(){
   'use strict';
 
   const CARD_ID = 'wv-narrator-card';
+  const API_PATH = '/api/narrate';
+
+  let lastMetricsHash = '';
+  let inFlight = null;
+  let apiBackoffUntil = 0;
 
   function safeText(el){ return (el && (el.textContent||'').trim()) || ''; }
   function toNum(s){
@@ -157,11 +163,11 @@
 
     lines.push('**Educational note:** these summaries describe historical behavior under the tool’s assumptions. They are not predictions or recommendations.');
 
-    return { lines };
+    return { title: 'Portfolio Story (Plain English)', paragraphs: lines.slice(0, -1), disclaimer: lines[lines.length - 1] };
   }
 
   // ---------------------------
-  // API narrator (optional)
+  // API narrator
   // ---------------------------
   function gatherMetricsForApi(){
     const holdingsCount = toNum(findStatValue('Number of Holdings'));
@@ -206,29 +212,59 @@
     };
   }
 
+  function hashMetrics(m){
+    try {
+      const s = JSON.stringify(m, Object.keys(m).sort());
+      let h = 0;
+      for(let i=0;i<s.length;i++){ h = ((h<<5)-h) + s.charCodeAt(i); h |= 0; }
+      return String(h);
+    } catch(_) {
+      return String(Date.now());
+    }
+  }
+
   async function tryApiNarration(){
-    // If the endpoint isn't deployed or key isn't set, we fall back silently.
+    if(Date.now() < apiBackoffUntil) return null;
+
     const metrics = gatherMetricsForApi();
-    // If we have basically nothing to narrate, skip
     const hasSignal = Object.values(metrics).some(v => v != null && v !== '');
     if(!hasSignal) return null;
 
-    try {
-      const r = await fetch('/api/narrate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          metrics,
-          context: { page: 'visualizer' }
-        })
-      });
-      if(!r.ok) return null;
-      const j = await r.json();
-      if(!j || !j.title || !Array.isArray(j.paragraphs)) return null;
-      return j;
-    } catch(_e){
+    const h = hashMetrics(metrics);
+    if(h === lastMetricsHash && !inFlight) {
+      // Metrics unchanged and no request running; don't spam.
       return null;
     }
+
+    // Deduplicate in-flight calls
+    if(inFlight) return inFlight;
+
+    lastMetricsHash = h;
+
+    inFlight = (async () => {
+      try {
+        const r = await fetch(API_PATH, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ metrics, context: { page: 'visualizer' } })
+        });
+        if(!r.ok){
+          // Back off on server errors to avoid hammering
+          apiBackoffUntil = Date.now() + 30000;
+          return null;
+        }
+        const j = await r.json();
+        if(!j || !j.title || !Array.isArray(j.paragraphs)) return null;
+        return j;
+      } catch(_e){
+        apiBackoffUntil = Date.now() + 30000;
+        return null;
+      } finally {
+        inFlight = null;
+      }
+    })();
+
+    return inFlight;
   }
 
   function ensureCard(){
@@ -245,6 +281,20 @@
     return card;
   }
 
+  function renderFromData(card, data){
+    card.style.display = 'block';
+    const title = data.title || 'Portfolio Story (Plain English)';
+    const paragraphs = Array.isArray(data.paragraphs) ? data.paragraphs : [];
+    const disclaimer = data.disclaimer || '';
+    card.innerHTML = `
+      <h2>🧠 ${title}</h2>
+      <div style="margin-top:12px; display:grid; gap:10px;">
+        ${paragraphs.map(p => `<div style="font-size:13px; line-height:1.65; color: var(--text-primary);">${p}</div>`).join('')}
+        ${disclaimer ? `<div style="font-size:12px; line-height:1.55; opacity:0.85; color: var(--text-secondary);">${disclaimer}</div>` : ''}
+      </div>
+    `;
+  }
+
   async function render(){
     const card = ensureCard();
     if(!card) return;
@@ -252,37 +302,45 @@
     // Prefer API narration if available; otherwise rule-based.
     const api = await tryApiNarration();
     if(api){
-      card.style.display = 'block';
-      card.innerHTML = `
-        <h2>🧠 ${api.title || 'Portfolio Story (Plain English)'}</h2>
-        <div style="margin-top:12px; display:grid; gap:10px;">
-          ${(api.paragraphs||[]).map(p => `<div style="font-size:13px; line-height:1.65; color: var(--text-primary);">${p}</div>`).join('')}
-          <div style="font-size:12px; line-height:1.55; opacity:0.85; color: var(--text-secondary);">${api.disclaimer || ''}</div>
-        </div>
-      `;
+      renderFromData(card, api);
       return;
     }
 
-    const n = buildNarrative();
-    if(!n.lines || n.lines.length < 2){
-      card.style.display = 'none';
-      return;
+    const rb = buildNarrative();
+    // For rule-based, paragraphs already include the educational note; split it.
+    const paragraphs = rb.paragraphs || [];
+    const disclaimer = rb.disclaimer || '';
+    renderFromData(card, { title: rb.title, paragraphs, disclaimer });
+  }
+
+  function isInsideNarrator(node){
+    if(!node) return false;
+    if(node.id === CARD_ID) return true;
+    if(typeof node.closest === 'function') {
+      return !!node.closest('#' + CARD_ID);
     }
-    card.style.display = 'block';
-    card.innerHTML = `
-      <h2>🧠 Portfolio Story (Plain English)</h2>
-      <div style="margin-top:12px; display:grid; gap:10px;">
-        ${n.lines.map(line => `<div style="font-size:13px; line-height:1.65; color: var(--text-primary);">${line}</div>`).join('')}
-      </div>
-    `;
+    return false;
   }
 
   function attachObservers(){
+    // Observe only sections that change due to analysis.
     const targets = ['summary-section','optimization-section','correlation-section'];
-    const obs = new MutationObserver(() => {
+    const obs = new MutationObserver((mutations) => {
+      // Ignore mutations that come only from our own narrator card to prevent loops/spam.
+      const meaningful = mutations.some(m => {
+        if(isInsideNarrator(m.target)) return false;
+        if(m.addedNodes && m.addedNodes.length){
+          for(const n of m.addedNodes){ if(!isInsideNarrator(n)) return true; }
+          return false;
+        }
+        return true;
+      });
+      if(!meaningful) return;
+
       if(attachObservers._t) clearTimeout(attachObservers._t);
-      attachObservers._t = setTimeout(() => { try { render(); } catch(e) {} }, 80);
+      attachObservers._t = setTimeout(() => { try { render(); } catch(e) {} }, 200);
     });
+
     targets.forEach(id => {
       const el = document.getElementById(id);
       if(el) obs.observe(el, { childList:true, subtree:true, characterData:true });

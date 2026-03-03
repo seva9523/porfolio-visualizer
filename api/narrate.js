@@ -28,8 +28,8 @@ export default async function handler(req, res) {
     });
   }
 
-  let body = req.body;
   // Vercel may deliver body as string depending on config
+  let body = req.body;
   if (typeof body === 'string') {
     try { body = JSON.parse(body); } catch (_) { body = {}; }
   }
@@ -73,8 +73,22 @@ export default async function handler(req, res) {
 
   const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 
+  // Node runtime compatibility: some Vercel runtimes may not expose fetch globally.
+  let fetchFn = globalThis.fetch;
+  if (!fetchFn) {
+    try {
+      const mod = await import('node-fetch');
+      fetchFn = mod.default;
+    } catch (e) {
+      return res.status(500).json({
+        error: 'Server runtime missing fetch(), and node-fetch is not available.',
+        details: String(e && e.message ? e.message : e)
+      });
+    }
+  }
+
   try {
-    const resp = await fetch('https://api.openai.com/v1/responses', {
+    const resp = await fetchFn('https://api.openai.com/v1/responses', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
