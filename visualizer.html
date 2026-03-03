@@ -763,7 +763,7 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
                 <div id="holdings-container"></div>
                 <button class="add-btn" onclick="addHolding()">+ Add Holding</button>
                 <button class="visualize-btn" onclick="visualizePortfolio()">📈 Visualize Portfolio</button>
-                <button class="add-btn" onclick="WV.Snapshots && WV.Snapshots.saveCurrent && WV.Snapshots.saveCurrent()" style="margin-left:10px; background:#0f766e; font-size:14px; padding:12px 16px;">💾 Save Snapshot</button>
+                <button class="add-btn" onclick="if(window.WV && window.WV.Snapshots && window.WV.Snapshots.saveCurrent){window.WV.Snapshots.saveCurrent();}else{alert('Snapshots module not loaded yet. Please refresh.');}" style="margin-left:10px; background:#0f766e; font-size:14px; padding:12px 16px;">💾 Save Snapshot</button>
                 
                 <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color);">
                     <p style="font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Quick Actions</p>
@@ -5180,6 +5180,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 </script>
 
+
+  <script src="snapshots.js"></script>
 </body> in index.html -->
 <div id="qa-metrics" style="position:absolute; left:-9999px; top:-9999px; width:1px; height:1px; overflow:hidden;">
   <span data-testid="total-value-raw"></span>
@@ -5323,5 +5325,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 </script>
 
+
+  <script src="snapshots.js"></script>
 </body>
 </html>
