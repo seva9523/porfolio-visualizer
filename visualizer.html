@@ -90,7 +90,6 @@ function fmtInt(n) {
     <script src="journey.js" defer></script>
 
     <script src="rebalancing-engine.js"></script>
-    <script src="narrator.js" defer></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -338,7 +337,25 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
             transition: all 0.3s;
         }
         
-        .add-btn {
+        
+        .share-btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            border: 1px solid rgba(255,255,255,0.14);
+            background: rgba(255,255,255,0.06);
+            color: var(--text-primary);
+            transition: all 0.3s;
+        }
+        .share-btn:hover {
+            transform: translateY(-1px);
+            background: rgba(255,255,255,0.10);
+        }
+.add-btn {
             background: #27ae60;
             color: white;
         }
@@ -764,6 +781,7 @@ body.qa-mode .autocomplete-dropdown{ opacity:0 !important; }
                 <div id="holdings-container"></div>
                 <button class="add-btn" onclick="addHolding()">+ Add Holding</button>
                 <button class="visualize-btn" onclick="visualizePortfolio()">📈 Visualize Portfolio</button>
+                <button class="share-btn" onclick="WVShare.copyShareLink()">🔗 Share this portfolio link</button>
                 
                 <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color);">
                     <p style="font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Quick Actions</p>
@@ -5180,6 +5198,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 </script>
 
+  <script src="share.js" defer></script>
 </body> in index.html -->
 <div id="qa-metrics" style="position:absolute; left:-9999px; top:-9999px; width:1px; height:1px; overflow:hidden;">
   <span data-testid="total-value-raw"></span>
@@ -5323,5 +5342,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 </script>
 
+  <script src="share.js" defer></script>
 </body>
 </html>
