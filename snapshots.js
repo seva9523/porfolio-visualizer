@@ -1,12 +1,10 @@
-/* WealthView Snapshots / Time Machine (Roadmap #16) — Robust Loader Patch
-   Fixes cases where:
-   - snapshots.js loads (200) but inline onclick runs before WV is ready
-   - visualizer.html has an inline onclick guard that shows "module not loaded"
-   This file:
-   1) Ensures window.WV exists (even if previously overwritten)
-   2) Defines WV.Snapshots API
-   3) On DOMContentLoaded, force-binds the Save Snapshot button click to WV.Snapshots.saveSnapshot
-      and removes any inline onclick handler that might throw.
+/* WealthView Snapshots / Time Machine (Roadmap #16) — Library Render + Storage Compatibility
+   Fixes:
+   - "Snapshot saved" but not visible in Library page.
+   Causes addressed:
+   1) Library rendering not firing / selector mismatch
+   2) Key mismatch (writes to multiple keys for backward/forward compat)
+   3) Library page may have different markup versions — we detect and render flexibly
 */
 
 (function () {
@@ -14,21 +12,21 @@
 
   const g = (typeof window !== 'undefined') ? window : globalThis;
 
-  // Ensure a sane global WV container (overwrite invalid types safely)
   if (!g.WV || typeof g.WV !== 'object') g.WV = {};
   const WV = g.WV;
   if (!WV.Snapshots || typeof WV.Snapshots !== 'object') WV.Snapshots = {};
 
+  // Primary storage key (new)
   const SNAP_KEY = 'wvSnapshots';
+  // Compatibility keys (older/alternate)
+  const COMPAT_KEYS = ['wv_snapshots', 'snapshots'];
 
-  function safeParse(json) {
-    try { return JSON.parse(json); } catch { return null; }
-  }
+  function safeParse(json) { try { return JSON.parse(json); } catch { return null; } }
   function nowISO() { return new Date().toISOString(); }
+  function uid() { return 's_' + Math.random().toString(36).slice(2) + '_' + Date.now().toString(36); }
 
   function toast(msg, type) {
     if (typeof g.showToast === 'function') return g.showToast(msg, type);
-
     try {
       const el = document.createElement('div');
       el.textContent = msg;
@@ -47,71 +45,25 @@
       document.body.appendChild(el);
       setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .25s'; }, 1600);
       setTimeout(() => { el.remove(); }, 2100);
-    } catch {
-      console.log('[Snapshots]', msg);
+    } catch { console.log('[Snapshots]', msg); }
+  }
+
+  function readAnySnapshots() {
+    const primary = safeParse(localStorage.getItem(SNAP_KEY));
+    if (Array.isArray(primary)) return primary;
+
+    for (const k of COMPAT_KEYS) {
+      const v = safeParse(localStorage.getItem(k));
+      if (Array.isArray(v) && v.length) return v;
     }
+    return [];
   }
 
-  function getSnapshots() {
-    const arr = safeParse(localStorage.getItem(SNAP_KEY));
-    return Array.isArray(arr) ? arr : [];
-  }
-
-  function setSnapshots(arr) {
-    localStorage.setItem(SNAP_KEY, JSON.stringify(arr || []));
-  }
-
-  function uid() {
-    return 's_' + Math.random().toString(36).slice(2) + '_' + Date.now().toString(36);
-  }
-
-  // Read saved portfolio (if user pressed Save in manager)
-  function getSavedPortfolioFromStorage() {
-    const portfolios = safeParse(localStorage.getItem('portfolios'));
-    const currentId = localStorage.getItem('currentPortfolio');
-
-    if (!portfolios || typeof portfolios !== 'object') return null;
-
-    const pid = (typeof currentId === 'string' && currentId.trim()) ? currentId.trim() : null;
-    const raw = pid && portfolios[pid] ? portfolios[pid] : null;
-    if (!raw) return null;
-
-    const name = raw.name || (pid === 'default' ? 'Default Portfolio' : pid);
-    const holdings = Array.isArray(raw.holdings) ? raw.holdings : [];
-    return { id: pid || 'unknown', name, holdings };
-  }
-
-  // Read portfolio from current Visualizer UI
-  function getPortfolioFromUI() {
-    const select = document.getElementById('portfolio-selector');
-    const name = select ? (select.options[select.selectedIndex]?.textContent || 'Current Portfolio') : 'Current Portfolio';
-    const id = select ? (select.value || 'current') : 'current';
-
-    const container = document.getElementById('holdings-container');
-    const holdings = [];
-
-    if (!container) return { id, name, holdings };
-
-    const rows = Array.from(container.querySelectorAll('.holding-input'));
-    for (const row of rows) {
-      const tickerInput = row.querySelector('input[type="text"]');
-      const numInputs = row.querySelectorAll('input[type="number"]');
-      const dateInput = row.querySelector('input[type="text"][placeholder*="DD"]') || null;
-
-      // In your UI: [ticker text] [shares number] [cost basis number] [date text]
-      const ticker = (tickerInput?.value || '').trim().toUpperCase();
-      const shares = Number(numInputs?.[0]?.value || 0);
-      const purchasePrice = (numInputs?.[1]?.value !== undefined && numInputs?.[1]?.value !== '')
-        ? Number(numInputs[1].value)
-        : null;
-      const purchaseDate = (dateInput?.value || '').trim() || null;
-
-      if (!ticker || !isFinite(shares) || shares <= 0) continue;
-
-      holdings.push({ ticker, shares, purchasePrice, purchaseDate });
-    }
-
-    return { id, name, holdings };
+  function writeSnapshots(arr) {
+    const json = JSON.stringify(arr || []);
+    localStorage.setItem(SNAP_KEY, json);
+    // keep compat mirrors so any older UI can still read
+    for (const k of COMPAT_KEYS) localStorage.setItem(k, json);
   }
 
   function normalizeHoldings(holdings) {
@@ -123,6 +75,52 @@
     })).filter(h => h.ticker && isFinite(h.shares) && h.shares > 0);
   }
 
+  function getSavedPortfolioFromStorage() {
+    const portfolios = safeParse(localStorage.getItem('portfolios'));
+    const currentId = localStorage.getItem('currentPortfolio');
+    if (!portfolios || typeof portfolios !== 'object') return null;
+
+    const pid = (typeof currentId === 'string' && currentId.trim()) ? currentId.trim() : null;
+    const raw = pid && portfolios[pid] ? portfolios[pid] : null;
+    if (!raw) return null;
+
+    return {
+      id: pid || 'unknown',
+      name: raw.name || (pid === 'default' ? 'Default Portfolio' : pid),
+      holdings: Array.isArray(raw.holdings) ? raw.holdings : []
+    };
+  }
+
+  function getPortfolioFromUI() {
+    const select = document.getElementById('portfolio-selector');
+    const name = select ? (select.options[select.selectedIndex]?.textContent || 'Current Portfolio') : 'Current Portfolio';
+    const id = select ? (select.value || 'current') : 'current';
+
+    const container = document.getElementById('holdings-container');
+    const holdings = [];
+    if (!container) return { id, name, holdings };
+
+    const rows = Array.from(container.querySelectorAll('.holding-input'));
+    for (const row of rows) {
+      const tickerInput = row.querySelector('input[type="text"]');
+      const nums = row.querySelectorAll('input[type="number"]');
+      const dateInput = row.querySelector('input[type="text"][placeholder*="DD"]') || null;
+
+      const ticker = (tickerInput?.value || '').trim().toUpperCase();
+      const shares = Number(nums?.[0]?.value || 0);
+      const purchasePrice = (nums?.[1]?.value !== undefined && nums[1].value !== '')
+        ? Number(nums[1].value)
+        : null;
+      const purchaseDate = (dateInput?.value || '').trim() || null;
+
+      if (!ticker || !isFinite(shares) || shares <= 0) continue;
+      holdings.push({ ticker, shares, purchasePrice, purchaseDate });
+    }
+
+    return { id, name, holdings };
+  }
+
+  // ---------- Public API ----------
   WV.Snapshots.saveSnapshot = function saveSnapshot() {
     const saved = getSavedPortfolioFromStorage();
     const ui = getPortfolioFromUI();
@@ -143,21 +141,26 @@
       meta: { source: (chosen === saved) ? 'storage' : 'ui' }
     };
 
-    const snaps = getSnapshots();
+    const snaps = readAnySnapshots();
     snaps.unshift(snap);
-    setSnapshots(snaps.slice(0, 100));
+    writeSnapshots(snaps.slice(0, 100));
+
     toast('Snapshot saved ✅');
+
+    // If we are on library page, update list instantly
+    try { WV.Snapshots.renderLibrary(); } catch {}
   };
 
-  WV.Snapshots.list = function list() { return getSnapshots(); };
+  WV.Snapshots.list = function list() { return readAnySnapshots(); };
 
   WV.Snapshots.delete = function del(snapshotId) {
-    setSnapshots(getSnapshots().filter(s => s.snapshotId !== snapshotId));
+    writeSnapshots(readAnySnapshots().filter(s => s.snapshotId !== snapshotId));
     toast('Snapshot deleted ✅');
+    try { WV.Snapshots.renderLibrary(); } catch {}
   };
 
   WV.Snapshots.restoreAsNewPortfolio = function restoreAsNewPortfolio(snapshotId) {
-    const snap = getSnapshots().find(s => s.snapshotId === snapshotId);
+    const snap = readAnySnapshots().find(s => s.snapshotId === snapshotId);
     if (!snap) { toast('Snapshot not found', 'error'); return; }
 
     const portfolios = safeParse(localStorage.getItem('portfolios')) || {};
@@ -172,42 +175,193 @@
     location.href = 'visualizer.html';
   };
 
-  // Mark ready
-  g.__WV_SNAPSHOTS_READY__ = true;
+  // ---------- Library rendering ----------
+  function fmtDate(iso) {
+    try { return new Date(iso).toLocaleString(); } catch { return iso; }
+  }
 
-  // Force-bind the Save Snapshot button to avoid inline handler issues
-  function bindButton() {
-    const candidates = [
-      document.getElementById('saveSnapshotBtn'),
-      document.querySelector('[data-testid="save-snapshot"]'),
-      ...Array.from(document.querySelectorAll('button'))
-        .filter(b => (b.textContent || '').toLowerCase().includes('save snapshot'))
-    ].filter(Boolean);
+  function findLibraryListContainer() {
+    return (
+      document.querySelector('[data-testid="snapshots-list"]') ||
+      document.getElementById('snapshots-list') ||
+      document.getElementById('snapshotsList') ||
+      document.querySelector('[data-snapshots-list]') ||
+      null
+    );
+  }
 
-    const btn = candidates[0];
-    if (!btn) return;
+  function findLibraryPortfolioFilter() {
+    return (
+      document.querySelector('[data-testid="snapshots-portfolio-filter"]') ||
+      document.getElementById('snapshots-portfolio-filter') ||
+      document.getElementById('snapshotsPortfolioFilter') ||
+      null
+    );
+  }
 
-    // Remove inline onclick that may show the "module not loaded" alert
-    try { btn.onclick = null; } catch {}
-    // Avoid multiple bindings
-    if (btn.__wvSnapshotBound) return;
+  function ensureLibraryScaffold() {
+    // If the Library HTML changed and the container is missing, create a simple section.
+    let list = findLibraryListContainer();
+    if (list) return { list };
+
+    const host =
+      document.querySelector('#main-content') ||
+      document.querySelector('.content') ||
+      document.querySelector('main') ||
+      document.body;
+
+    const card = document.createElement('div');
+    card.className = 'wv-card';
+    card.style.background = '#fff';
+    card.style.border = '1px solid #e7eef6';
+    card.style.borderRadius = '14px';
+    card.style.padding = '14px';
+    card.style.marginTop = '14px';
+
+    const h = document.createElement('h3');
+    h.textContent = 'Snapshots (Time Machine)';
+    h.style.margin = '0 0 10px 0';
+    h.style.fontSize = '16px';
+
+    list = document.createElement('div');
+    list.id = 'snapshots-list';
+
+    card.appendChild(h);
+    card.appendChild(list);
+    host.appendChild(card);
+
+    return { list };
+  }
+
+  WV.Snapshots.renderLibrary = function renderLibrary() {
+    const { list } = ensureLibraryScaffold();
+    const filterEl = findLibraryPortfolioFilter();
+
+    const snaps = readAnySnapshots();
+
+    let filtered = snaps;
+    if (filterEl && filterEl.value) {
+      const v = filterEl.value;
+      filtered = snaps.filter(s => (s.portfolioId === v) || (s.portfolioName === v));
+    }
+
+    list.innerHTML = '';
+
+    if (!filtered.length) {
+      const empty = document.createElement('div');
+      empty.textContent = 'No snapshots yet. Create one in Portfolio Visualizer → “Save Snapshot”.';
+      empty.style.opacity = '0.8';
+      empty.style.fontSize = '13px';
+      list.appendChild(empty);
+      return;
+    }
+
+    for (const s of filtered) {
+      const row = document.createElement('div');
+      row.style.display = 'flex';
+      row.style.alignItems = 'center';
+      row.style.justifyContent = 'space-between';
+      row.style.gap = '10px';
+      row.style.padding = '10px';
+      row.style.border = '1px solid #eef2f7';
+      row.style.borderRadius = '12px';
+      row.style.marginBottom = '10px';
+
+      const left = document.createElement('div');
+      const title = document.createElement('div');
+      title.textContent = `${s.portfolioName || 'Portfolio'} • ${fmtDate(s.createdAt)}`;
+      title.style.fontWeight = '700';
+      title.style.fontSize = '13px';
+
+      const meta = document.createElement('div');
+      meta.textContent = `${(s.holdings?.length || 0)} holdings • source: ${s.meta?.source || 'unknown'}`;
+      meta.style.opacity = '0.75';
+      meta.style.fontSize = '12px';
+
+      left.appendChild(title);
+      left.appendChild(meta);
+
+      const right = document.createElement('div');
+      right.style.display = 'flex';
+      right.style.gap = '8px';
+
+      const restore = document.createElement('button');
+      restore.textContent = 'Restore as new portfolio';
+      restore.className = 'btn btn-primary';
+      restore.style.padding = '8px 10px';
+      restore.style.borderRadius = '10px';
+      restore.style.border = '0';
+      restore.style.cursor = 'pointer';
+      restore.addEventListener('click', () => WV.Snapshots.restoreAsNewPortfolio(s.snapshotId));
+
+      const del = document.createElement('button');
+      del.textContent = 'Delete';
+      del.className = 'btn btn-secondary';
+      del.style.padding = '8px 10px';
+      del.style.borderRadius = '10px';
+      del.style.border = '1px solid #dbe6f2';
+      del.style.background = '#fff';
+      del.style.cursor = 'pointer';
+      del.addEventListener('click', () => WV.Snapshots.delete(s.snapshotId));
+
+      right.appendChild(restore);
+      right.appendChild(del);
+
+      row.appendChild(left);
+      row.appendChild(right);
+      list.appendChild(row);
+    }
+  };
+
+  // Auto-render on Library page
+  function maybeAutoRenderLibrary() {
+    const isLibrary = /library\.html/i.test(location.pathname);
+    if (!isLibrary) return;
+
+    try {
+      WV.Snapshots.renderLibrary();
+      // If a filter exists, re-render on change
+      const filterEl = findLibraryPortfolioFilter();
+      if (filterEl && !filterEl.__wvBound) {
+        filterEl.__wvBound = true;
+        filterEl.addEventListener('change', () => WV.Snapshots.renderLibrary());
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  // Bind Save Snapshot button on visualizer
+  function bindVisualizerButton() {
+    const isViz = /visualizer\.html/i.test(location.pathname);
+    if (!isViz) return;
+
+    const btn =
+      document.getElementById('saveSnapshotBtn') ||
+      document.querySelector('[data-testid="save-snapshot"]') ||
+      Array.from(document.querySelectorAll('button')).find(b => (b.textContent || '').toLowerCase().includes('save snapshot'));
+
+    if (!btn || btn.__wvSnapshotBound) return;
     btn.__wvSnapshotBound = true;
+
+    // Remove inline handler
+    try { btn.onclick = null; } catch {}
 
     btn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      try {
-        WV.Snapshots.saveSnapshot();
-      } catch (err) {
-        console.error(err);
-        toast('Snapshots failed to save (see console).', 'error');
-      }
+      WV.Snapshots.saveSnapshot();
     }, true);
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bindButton, { once: true });
+    document.addEventListener('DOMContentLoaded', () => {
+      bindVisualizerButton();
+      maybeAutoRenderLibrary();
+    }, { once: true });
   } else {
-    bindButton();
+    bindVisualizerButton();
+    maybeAutoRenderLibrary();
   }
+
 })();
