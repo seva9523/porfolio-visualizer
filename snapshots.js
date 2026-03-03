@@ -5,6 +5,8 @@
    1) Library rendering not firing / selector mismatch
    2) Key mismatch (writes to multiple keys for backward/forward compat)
    3) Library page may have different markup versions — we detect and render flexibly
+   4) URL matching now works with both /library and /library.html paths
+   5) Save Snapshot button styled inline with Visualize Portfolio button
 */
 
 (function () {
@@ -50,7 +52,7 @@
 
   function readAnySnapshots() {
     const primary = safeParse(localStorage.getItem(SNAP_KEY));
-    if (Array.isArray(primary)) return primary;
+    if (Array.isArray(primary) && primary.length) return primary;
 
     for (const k of COMPAT_KEYS) {
       const v = safeParse(localStorage.getItem(k));
@@ -249,7 +251,7 @@
 
     if (!filtered.length) {
       const empty = document.createElement('div');
-      empty.textContent = 'No snapshots yet. Create one in Portfolio Visualizer → “Save Snapshot”.';
+      empty.textContent = 'No snapshots yet. Create one in Portfolio Visualizer → "Save Snapshot".';
       empty.style.opacity = '0.8';
       empty.style.fontSize = '13px';
       list.appendChild(empty);
@@ -313,10 +315,33 @@
     }
   };
 
+  // ---------- Detect Library page (broader URL matching) ----------
+  function isLibraryPage() {
+    const path = location.pathname.toLowerCase();
+    const hash = (location.hash || '').toLowerCase();
+    return (
+      path.includes('library') ||
+      hash.includes('library') ||
+      !!document.querySelector('[data-page="library"]') ||
+      !!findLibraryListContainer()
+    );
+  }
+
+  // ---------- Detect Visualizer page (broader URL matching) ----------
+  function isVisualizerPage() {
+    const path = location.pathname.toLowerCase();
+    const hash = (location.hash || '').toLowerCase();
+    return (
+      path.includes('visualizer') ||
+      hash.includes('visualizer') ||
+      !!document.getElementById('holdings-container') ||
+      !!document.getElementById('saveSnapshotBtn')
+    );
+  }
+
   // Auto-render on Library page
   function maybeAutoRenderLibrary() {
-    const isLibrary = /library\.html/i.test(location.pathname);
-    if (!isLibrary) return;
+    if (!isLibraryPage()) return;
 
     try {
       WV.Snapshots.renderLibrary();
@@ -327,14 +352,13 @@
         filterEl.addEventListener('change', () => WV.Snapshots.renderLibrary());
       }
     } catch (e) {
-      console.error(e);
+      console.error('[Snapshots] Library render error:', e);
     }
   }
 
-  // Bind Save Snapshot button on visualizer
+  // Bind Save Snapshot button on visualizer + make it inline with Visualize Portfolio
   function bindVisualizerButton() {
-    const isViz = /visualizer\.html/i.test(location.pathname);
-    if (!isViz) return;
+    if (!isVisualizerPage()) return;
 
     const btn =
       document.getElementById('saveSnapshotBtn') ||
@@ -352,16 +376,74 @@
       e.stopPropagation();
       WV.Snapshots.saveSnapshot();
     }, true);
+
+    // --- Make Save Snapshot button inline with Visualize Portfolio ---
+    const vizBtn =
+      document.getElementById('visualizeBtn') ||
+      document.querySelector('[data-testid="visualize-portfolio"]') ||
+      Array.from(document.querySelectorAll('button')).find(b => (b.textContent || '').toLowerCase().includes('visualize portfolio'));
+
+    if (vizBtn && btn) {
+      // Check if they are NOT already in the same flex row
+      const vizParent = vizBtn.parentElement;
+      const snapParent = btn.parentElement;
+
+      if (vizParent && vizParent !== snapParent) {
+        // Create a flex wrapper row for both buttons
+        const wrapper = document.createElement('div');
+        wrapper.style.display = 'flex';
+        wrapper.style.gap = '10px';
+        wrapper.style.marginBottom = '10px';
+        wrapper.style.width = '100%';
+
+        // Insert wrapper where the Visualize button currently is
+        vizParent.insertBefore(wrapper, vizBtn);
+
+        // Style both buttons to share the row equally
+        vizBtn.style.flex = '1';
+        vizBtn.style.margin = '0';
+        btn.style.flex = '1';
+        btn.style.margin = '0';
+
+        // Move both buttons into the wrapper
+        wrapper.appendChild(vizBtn);
+        wrapper.appendChild(btn);
+      } else if (vizParent && vizParent === snapParent) {
+        // Already same parent — just make sure parent is flex
+        vizParent.style.display = 'flex';
+        vizParent.style.gap = '10px';
+        vizBtn.style.flex = '1';
+        btn.style.flex = '1';
+      }
+    }
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      bindVisualizerButton();
-      maybeAutoRenderLibrary();
-    }, { once: true });
-  } else {
+  // --- Init with retry (handles late-loading SPAs / dynamic content) ---
+  function init() {
     bindVisualizerButton();
     maybeAutoRenderLibrary();
   }
+
+  function initWithRetry() {
+    init();
+    // Retry a few times for SPAs where DOM may populate after initial load
+    let retries = 0;
+    const maxRetries = 5;
+    const interval = setInterval(() => {
+      retries++;
+      init();
+      if (retries >= maxRetries) clearInterval(interval);
+    }, 500);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initWithRetry, { once: true });
+  } else {
+    initWithRetry();
+  }
+
+  // Also listen for SPA-style navigation changes
+  window.addEventListener('hashchange', init);
+  window.addEventListener('popstate', init);
 
 })();
