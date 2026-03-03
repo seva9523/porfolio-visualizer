@@ -202,15 +202,25 @@
   }
 
   function ensureLibraryScaffold() {
-    // If the Library HTML changed and the container is missing, create a simple section.
     let list = findLibraryListContainer();
-    if (list) return { list };
+    if (list) return { list, found: true };
 
+    // SAFE fallback: only inject into a known main content container
+    // Use very specific selectors to avoid injecting into sidebar/nav
     const host =
       document.querySelector('#main-content') ||
-      document.querySelector('.content') ||
-      document.querySelector('main') ||
-      document.body;
+      document.querySelector('.main-content') ||
+      document.querySelector('.page-content') ||
+      document.querySelector('.content-area') ||
+      document.querySelector('.dashboard-content') ||
+      null;
+
+    // If we can't find a safe main content host, do NOT inject anywhere
+    // This prevents accidentally injecting into the sidebar or nav
+    if (!host) {
+      console.warn('[Snapshots] Could not find main content container for library scaffold. Skipping DOM injection.');
+      return { list: null, found: false };
+    }
 
     const card = document.createElement('div');
     card.className = 'wv-card';
@@ -232,11 +242,13 @@
     card.appendChild(list);
     host.appendChild(card);
 
-    return { list };
+    return { list, found: true };
   }
 
   WV.Snapshots.renderLibrary = function renderLibrary() {
-    const { list } = ensureLibraryScaffold();
+    const { list, found } = ensureLibraryScaffold();
+    if (!list) return; // No safe container found, skip rendering
+
     const filterEl = findLibraryPortfolioFilter();
 
     const snaps = readAnySnapshots();
@@ -315,24 +327,22 @@
     }
   };
 
-  // ---------- Detect Library page (broader URL matching) ----------
+  // ---------- Detect pages (broader URL matching — works with /library, /library.html, #library) ----------
   function isLibraryPage() {
     const path = location.pathname.toLowerCase();
     const hash = (location.hash || '').toLowerCase();
     return (
-      path.includes('library') ||
+      /library(\.html)?/i.test(path) ||
       hash.includes('library') ||
-      !!document.querySelector('[data-page="library"]') ||
       !!findLibraryListContainer()
     );
   }
 
-  // ---------- Detect Visualizer page (broader URL matching) ----------
   function isVisualizerPage() {
     const path = location.pathname.toLowerCase();
     const hash = (location.hash || '').toLowerCase();
     return (
-      path.includes('visualizer') ||
+      /visualizer(\.html)?/i.test(path) ||
       hash.includes('visualizer') ||
       !!document.getElementById('holdings-container') ||
       !!document.getElementById('saveSnapshotBtn')
@@ -378,47 +388,45 @@
     }, true);
 
     // --- Make Save Snapshot button inline with Visualize Portfolio ---
+    alignSnapshotButton(btn);
+  }
+
+  function alignSnapshotButton(snapBtn) {
     const vizBtn =
       document.getElementById('visualizeBtn') ||
       document.querySelector('[data-testid="visualize-portfolio"]') ||
-      Array.from(document.querySelectorAll('button')).find(b => (b.textContent || '').toLowerCase().includes('visualize portfolio'));
+      Array.from(document.querySelectorAll('button')).find(b =>
+        (b.textContent || '').toLowerCase().includes('visualize portfolio')
+      );
 
-    if (vizBtn && btn) {
-      // Check if they are NOT already in the same flex row
-      const vizParent = vizBtn.parentElement;
-      const snapParent = btn.parentElement;
+    if (!vizBtn || !snapBtn) return;
 
-      if (vizParent && vizParent !== snapParent) {
-        // Create a flex wrapper row for both buttons
-        const wrapper = document.createElement('div');
-        wrapper.style.display = 'flex';
-        wrapper.style.gap = '10px';
-        wrapper.style.marginBottom = '10px';
-        wrapper.style.width = '100%';
+    const vizParent = vizBtn.parentElement;
+    const snapParent = snapBtn.parentElement;
 
-        // Insert wrapper where the Visualize button currently is
-        vizParent.insertBefore(wrapper, vizBtn);
+    // If they already share the same parent, just ensure it's a flex row
+    if (vizParent && vizParent === snapParent) {
+      vizParent.style.display = 'flex';
+      vizParent.style.flexWrap = 'wrap';
+      vizParent.style.gap = '10px';
+      vizParent.style.alignItems = 'center';
+      return;
+    }
 
-        // Style both buttons to share the row equally
-        vizBtn.style.flex = '1';
-        vizBtn.style.margin = '0';
-        btn.style.flex = '1';
-        btn.style.margin = '0';
+    // Move the snapshot button next to the visualize button inside its parent
+    if (vizParent) {
+      vizParent.style.display = 'flex';
+      vizParent.style.flexWrap = 'wrap';
+      vizParent.style.gap = '10px';
+      vizParent.style.alignItems = 'center';
 
-        // Move both buttons into the wrapper
-        wrapper.appendChild(vizBtn);
-        wrapper.appendChild(btn);
-      } else if (vizParent && vizParent === snapParent) {
-        // Already same parent — just make sure parent is flex
-        vizParent.style.display = 'flex';
-        vizParent.style.gap = '10px';
-        vizBtn.style.flex = '1';
-        btn.style.flex = '1';
-      }
+      // Remove snapshot btn from old location and insert after vizBtn
+      snapBtn.remove();
+      vizBtn.insertAdjacentElement('afterend', snapBtn);
     }
   }
 
-  // --- Init with retry (handles late-loading SPAs / dynamic content) ---
+  // --- Init with retry for SPAs / late-loading content ---
   function init() {
     bindVisualizerButton();
     maybeAutoRenderLibrary();
@@ -426,7 +434,6 @@
 
   function initWithRetry() {
     init();
-    // Retry a few times for SPAs where DOM may populate after initial load
     let retries = 0;
     const maxRetries = 5;
     const interval = setInterval(() => {
@@ -442,7 +449,7 @@
     initWithRetry();
   }
 
-  // Also listen for SPA-style navigation changes
+  // Listen for SPA-style navigation changes
   window.addEventListener('hashchange', init);
   window.addEventListener('popstate', init);
 
