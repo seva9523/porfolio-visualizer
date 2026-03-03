@@ -154,6 +154,24 @@
         </div>
       </div>
 
+      
+      <div class="card" id="snapshotsCard">
+        <h2>Snapshots (Time Machine)</h2>
+        <div class="muted">Save a snapshot from the Visualizer, then restore it later (as a new portfolio) to compare changes over time. Stored locally in your browser.</div>
+
+        <div class="toolbar" style="margin-top:12px">
+          <select class="input" id="snapPortfolio" style="flex:1;min-width:220px"></select>
+          <button class="btn" onclick="refreshSnapshots()">Refresh</button>
+        </div>
+
+        <div id="snapList" style="margin-top:12px;display:grid;gap:10px"></div>
+
+        <div class="footer-disclaimer" style="margin-top:10px">
+          <p>Tip: Open a snapshot in Visualizer after restoring it as a new portfolio.</p>
+        </div>
+      </div>
+
+
       <div class="card">
         <h2>Quick actions</h2>
         <div class="note">
@@ -538,11 +556,77 @@
 
     document.getElementById('tplSearch').addEventListener('input', ()=>renderCatalog(''));
 
-    // ---------- Init ----------
+    
+    // ---------- Snapshots ----------
+    function refreshSnapshots(){
+      try{
+        const sel = document.getElementById('snapPortfolio');
+        const pid = sel && sel.value ? sel.value : (WV.getCurrentPortfolioId ? WV.getCurrentPortfolioId() : '');
+        renderSnapshots(pid);
+      }catch(e){}
+    }
+
+    function renderSnapshots(portfolioId){
+      const listEl = document.getElementById('snapList');
+      const sel = document.getElementById('snapPortfolio');
+      if(!listEl || !sel || !WV || !WV.getPortfoliosList || !WV.Snapshots){ return; }
+
+      // populate select
+      const options = WV.getPortfoliosList();
+      sel.innerHTML = options.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+      if(portfolioId && options.some(p=>p.id===portfolioId)) sel.value = portfolioId;
+
+      const pid = sel.value;
+      const snaps = WV.Snapshots.list(pid);
+
+      if(!snaps.length){
+        listEl.innerHTML = `<div class="muted">No snapshots yet for this portfolio. Open Visualizer and click “Save Snapshot”.</div>`;
+        return;
+      }
+
+      listEl.innerHTML = '';
+      snaps.forEach(s => {
+        const row = document.createElement('div');
+        row.style.border = '1px solid var(--border-color)';
+        row.style.borderRadius = '14px';
+        row.style.padding = '12px';
+        row.style.background = 'var(--input-bg)';
+        row.innerHTML = `
+          <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">
+            <div>
+              <div style="font-weight:800">${escapeHtml(s.portfolioName || 'Portfolio')}</div>
+              <div class="muted" style="margin-top:4px">${escapeHtml(WV.Snapshots.fmtDate(s.ts))} • ${(s.holdings||[]).length} holdings</div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button class="btn primary" onclick="restoreSnapshot('${pid}','${s.id}')">Restore as new portfolio</button>
+              <button class="btn" onclick="deleteSnapshot('${pid}','${s.id}')">Delete</button>
+            </div>
+          </div>
+        `;
+        listEl.appendChild(row);
+      });
+    }
+
+    function restoreSnapshot(pid, sid){
+      const r = WV.Snapshots.restoreAsNew(pid, sid);
+      if(r && r.ok){
+        // jump to visualizer
+        window.location.href = 'visualizer.html';
+      }
+    }
+
+    function deleteSnapshot(pid, sid){
+      WV.Snapshots.delete(pid, sid);
+      refreshSnapshots();
+    }
+
+
+// ---------- Init ----------
     document.getElementById('search').addEventListener('input', render);
     applyDarkModeFromStorage();
     renderStarter();
     render();
+    refreshSnapshots();
   </script>
 
 <script>
