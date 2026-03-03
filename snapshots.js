@@ -1,16 +1,23 @@
-/* WealthView Snapshots / Time Machine (Roadmap #16)
-   - Stores snapshots in localStorage (key: 'wvSnapshots')
-   - Works even if the user hasn't pressed "Save" on the portfolio:
-       it can snapshot directly from the Visualizer UI inputs.
+/* WealthView Snapshots / Time Machine (Roadmap #16) — Robust Loader Patch
+   Fixes cases where:
+   - snapshots.js loads (200) but inline onclick runs before WV is ready
+   - visualizer.html has an inline onclick guard that shows "module not loaded"
+   This file:
+   1) Ensures window.WV exists (even if previously overwritten)
+   2) Defines WV.Snapshots API
+   3) On DOMContentLoaded, force-binds the Save Snapshot button click to WV.Snapshots.saveSnapshot
+      and removes any inline onclick handler that might throw.
 */
 
 (function () {
   'use strict';
 
   const g = (typeof window !== 'undefined') ? window : globalThis;
-  g.WV = g.WV || {};
+
+  // Ensure a sane global WV container (overwrite invalid types safely)
+  if (!g.WV || typeof g.WV !== 'object') g.WV = {};
   const WV = g.WV;
-  WV.Snapshots = WV.Snapshots || {};
+  if (!WV.Snapshots || typeof WV.Snapshots !== 'object') WV.Snapshots = {};
 
   const SNAP_KEY = 'wvSnapshots';
 
@@ -20,9 +27,8 @@
   function nowISO() { return new Date().toISOString(); }
 
   function toast(msg, type) {
-    // If your site has a global toast, use it; else fallback to alert-like
     if (typeof g.showToast === 'function') return g.showToast(msg, type);
-    // lightweight inline toast
+
     try {
       const el = document.createElement('div');
       el.textContent = msg;
@@ -42,7 +48,6 @@
       setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .25s'; }, 1600);
       setTimeout(() => { el.remove(); }, 2100);
     } catch {
-      // last resort
       console.log('[Snapshots]', msg);
     }
   }
@@ -60,7 +65,7 @@
     return 's_' + Math.random().toString(36).slice(2) + '_' + Date.now().toString(36);
   }
 
-  // ---------- Read current portfolio from storage (if saved) ----------
+  // Read saved portfolio (if user pressed Save in manager)
   function getSavedPortfolioFromStorage() {
     const portfolios = safeParse(localStorage.getItem('portfolios'));
     const currentId = localStorage.getItem('currentPortfolio');
@@ -69,7 +74,6 @@
 
     const pid = (typeof currentId === 'string' && currentId.trim()) ? currentId.trim() : null;
     const raw = pid && portfolios[pid] ? portfolios[pid] : null;
-
     if (!raw) return null;
 
     const name = raw.name || (pid === 'default' ? 'Default Portfolio' : pid);
@@ -77,7 +81,7 @@
     return { id: pid || 'unknown', name, holdings };
   }
 
-  // ---------- Read portfolio from UI (works even if not saved) ----------
+  // Read portfolio from current Visualizer UI
   function getPortfolioFromUI() {
     const select = document.getElementById('portfolio-selector');
     const name = select ? (select.options[select.selectedIndex]?.textContent || 'Current Portfolio') : 'Current Portfolio';
@@ -88,27 +92,23 @@
 
     if (!container) return { id, name, holdings };
 
-    // Each holding row contains: ticker input (text), shares (number), purchase (number), date (text)
     const rows = Array.from(container.querySelectorAll('.holding-input'));
     for (const row of rows) {
-      const tickerInput = row.querySelector('input[type="text"][placeholder="Ticker"]') || row.querySelector('input[type="text"]');
-      const sharesInput = row.querySelector('input[type="number"][placeholder="Shares"]') || row.querySelector('input[id^="shares-"]');
-      const purchaseInput = row.querySelector('input[type="number"][placeholder="Cost Basis"]') || row.querySelector('input[id^="purchase-"]');
-      const dateInput = row.querySelector('input[type="text"][placeholder="DD/MM/YYYY"]') || row.querySelector('input[id^="date-"]');
+      const tickerInput = row.querySelector('input[type="text"]');
+      const numInputs = row.querySelectorAll('input[type="number"]');
+      const dateInput = row.querySelector('input[type="text"][placeholder*="DD"]') || null;
 
+      // In your UI: [ticker text] [shares number] [cost basis number] [date text]
       const ticker = (tickerInput?.value || '').trim().toUpperCase();
-      const shares = Number(sharesInput?.value || 0);
-      const purchasePrice = purchaseInput?.value !== undefined && purchaseInput?.value !== '' ? Number(purchaseInput.value) : null;
+      const shares = Number(numInputs?.[0]?.value || 0);
+      const purchasePrice = (numInputs?.[1]?.value !== undefined && numInputs?.[1]?.value !== '')
+        ? Number(numInputs[1].value)
+        : null;
       const purchaseDate = (dateInput?.value || '').trim() || null;
 
       if (!ticker || !isFinite(shares) || shares <= 0) continue;
 
-      holdings.push({
-        ticker,
-        shares,
-        purchasePrice,
-        purchaseDate
-      });
+      holdings.push({ ticker, shares, purchasePrice, purchaseDate });
     }
 
     return { id, name, holdings };
@@ -123,12 +123,9 @@
     })).filter(h => h.ticker && isFinite(h.shares) && h.shares > 0);
   }
 
-  // ---------- Public API ----------
   WV.Snapshots.saveSnapshot = function saveSnapshot() {
-    // Prefer storage if available; fallback to UI.
     const saved = getSavedPortfolioFromStorage();
     const ui = getPortfolioFromUI();
-
     const chosen = (saved && saved.holdings && saved.holdings.length) ? saved : ui;
 
     const holdings = normalizeHoldings(chosen.holdings);
@@ -143,25 +140,19 @@
       portfolioId: chosen.id || 'current',
       portfolioName: chosen.name || 'Current Portfolio',
       holdings,
-      meta: {
-        source: (chosen === saved) ? 'storage' : 'ui'
-      }
+      meta: { source: (chosen === saved) ? 'storage' : 'ui' }
     };
 
     const snaps = getSnapshots();
     snaps.unshift(snap);
-    // keep last 100 snapshots
     setSnapshots(snaps.slice(0, 100));
     toast('Snapshot saved ✅');
   };
 
-  WV.Snapshots.list = function list() {
-    return getSnapshots();
-  };
+  WV.Snapshots.list = function list() { return getSnapshots(); };
 
   WV.Snapshots.delete = function del(snapshotId) {
-    const snaps = getSnapshots().filter(s => s.snapshotId !== snapshotId);
-    setSnapshots(snaps);
+    setSnapshots(getSnapshots().filter(s => s.snapshotId !== snapshotId));
     toast('Snapshot deleted ✅');
   };
 
@@ -170,31 +161,53 @@
     if (!snap) { toast('Snapshot not found', 'error'); return; }
 
     const portfolios = safeParse(localStorage.getItem('portfolios')) || {};
-    // Make a new id
     const newId = 'snap_' + Date.now().toString(36);
     const label = (snap.portfolioName || 'Snapshot') + ' — ' + new Date(snap.createdAt).toLocaleString();
 
-    portfolios[newId] = {
-      name: label,
-      holdings: snap.holdings.map(h => ({
-        ticker: h.ticker,
-        shares: h.shares,
-        purchasePrice: h.purchasePrice ?? undefined,
-        purchaseDate: h.purchaseDate ?? undefined
-      }))
-    };
-
+    portfolios[newId] = { name: label, holdings: snap.holdings };
     localStorage.setItem('portfolios', JSON.stringify(portfolios));
     localStorage.setItem('currentPortfolio', newId);
 
     toast('Snapshot restored ✅');
-    // Navigate to visualizer
-    try {
-      const base = location.origin + location.pathname.replace(/\/[^\/]*$/, '/');
-      location.href = base + 'visualizer.html';
-    } catch {
-      location.href = 'visualizer.html';
-    }
+    location.href = 'visualizer.html';
   };
 
+  // Mark ready
+  g.__WV_SNAPSHOTS_READY__ = true;
+
+  // Force-bind the Save Snapshot button to avoid inline handler issues
+  function bindButton() {
+    const candidates = [
+      document.getElementById('saveSnapshotBtn'),
+      document.querySelector('[data-testid="save-snapshot"]'),
+      ...Array.from(document.querySelectorAll('button'))
+        .filter(b => (b.textContent || '').toLowerCase().includes('save snapshot'))
+    ].filter(Boolean);
+
+    const btn = candidates[0];
+    if (!btn) return;
+
+    // Remove inline onclick that may show the "module not loaded" alert
+    try { btn.onclick = null; } catch {}
+    // Avoid multiple bindings
+    if (btn.__wvSnapshotBound) return;
+    btn.__wvSnapshotBound = true;
+
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      try {
+        WV.Snapshots.saveSnapshot();
+      } catch (err) {
+        console.error(err);
+        toast('Snapshots failed to save (see console).', 'error');
+      }
+    }, true);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bindButton, { once: true });
+  } else {
+    bindButton();
+  }
 })();
