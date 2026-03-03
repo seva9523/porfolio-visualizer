@@ -1,152 +1,177 @@
-// WealthView — Portfolio Narrator (API)
-// Vercel Serverless Function (Node)
-//
-// POST /api/narrate
-// Body: { metrics: {...}, context?: {...} }
-// Returns: { title, paragraphs: string[], disclaimer }
-//
-// Requires env var:
-//   OPENAI_API_KEY
-// Optional:
-//   OPENAI_MODEL (default: gpt-4o-mini)
+/**
+ * /api/narrate (Vercel Serverless Function)
+ *
+ * Uses OpenAI Responses API + Structured Outputs (JSON Schema) to return:
+ *   { title: string, paragraphs: string[], disclaimer: string }
+ *
+ * Env:
+ *   OPENAI_API_KEY (required)
+ *   OPENAI_MODEL   (optional, default gpt-4o-mini)
+ */
 
-export default async function handler(req, res) {
-  // Basic CORS (safe default for same-origin use)
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  if (req.method === 'OPTIONS') return res.status(200).end();
+function sendJson(res, status, obj) {
+  res.statusCode = status;
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.end(JSON.stringify(obj));
+}
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+function getApiKey() {
+  const v = process.env.OPENAI_API_KEY;
+  return (typeof v === "string" && v.trim()) ? v.trim() : "";
+}
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({
-      error: 'OPENAI_API_KEY is not set on the server. Add it to Vercel Environment Variables and redeploy.'
-    });
-  }
+function safeParseJson(s) {
+  try { return JSON.parse(s); } catch { return null; }
+}
 
-  // Vercel may deliver body as string depending on config
-  let body = req.body;
-  if (typeof body === 'string') {
-    try { body = JSON.parse(body); } catch (_) { body = {}; }
-  }
-
-  const metrics = (body && body.metrics) || {};
-  const context = (body && body.context) || {};
-
-  // Keep prompt tight, descriptive, and explicitly non-advisory.
-  const instructions = [
-    'You are WealthView, an educational portfolio analytics narrator.',
-    'Write a short plain-English summary of the portfolio using ONLY the provided metrics.',
-    'Do NOT give financial advice. Do NOT recommend buying/selling/holding specific assets.',
-    'Do NOT predict the future. Avoid words like "should", "must", "recommend".',
-    'Use neutral descriptive language, focusing on concentration, volatility, drawdowns, and risk-adjusted performance.',
-    'Keep it concise: 2–4 short paragraphs, each 1–2 sentences.',
-    'Output must follow the JSON schema exactly.'
-  ].join(' ');
-
-  const input = {
-    page: context.page || 'visualizer',
-    window: context.window || null,
-    metrics
+function coercePayload(body) {
+  const b = (body && typeof body === "object") ? body : {};
+  return {
+    metrics: (b.metrics && typeof b.metrics === "object") ? b.metrics : {},
+    holdings: Array.isArray(b.holdings) ? b.holdings.slice(0, 200) : [],
+    context: (b.context && typeof b.context === "object") ? b.context : {},
   };
+}
 
-  // Structured output schema via Responses API text.format
+async function getFetch() {
+  if (typeof globalThis.fetch === "function") return globalThis.fetch.bind(globalThis);
+  const mod = await import("node-fetch");
+  return mod.default;
+}
+
+async function callOpenAI({ apiKey, model, payload }) {
+  const fetchFn = await getFetch();
+
+  const system = [
+    "You are WealthView's educational portfolio narrator.",
+    "Write in plain English.",
+    "Be descriptive, not prescriptive: no recommendations, no 'you should buy/sell'.",
+    "Avoid certainty; describe what the historical metrics show.",
+    "Keep it concise (3–6 short paragraphs).",
+    "Return ONLY valid JSON matching the required schema."
+  ].join(" ");
+
+  // Structured Outputs schema
   const schema = {
-    type: 'object',
+    type: "object",
     additionalProperties: false,
     properties: {
-      title: { type: 'string', minLength: 3, maxLength: 80 },
-      paragraphs: {
-        type: 'array',
-        minItems: 2,
-        maxItems: 4,
-        items: { type: 'string', minLength: 10, maxLength: 260 }
-      },
-      disclaimer: { type: 'string', minLength: 10, maxLength: 220 }
+      title: { type: "string" },
+      paragraphs: { type: "array", items: { type: "string" }, minItems: 2, maxItems: 8 },
+      disclaimer: { type: "string" }
     },
-    required: ['title', 'paragraphs', 'disclaimer']
+    required: ["title", "paragraphs", "disclaimer"]
   };
 
-  const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-
-  // Node runtime compatibility: some Vercel runtimes may not expose fetch globally.
-  let fetchFn = globalThis.fetch;
-  if (!fetchFn) {
-    try {
-      const mod = await import('node-fetch');
-      fetchFn = mod.default;
-    } catch (e) {
-      return res.status(500).json({
-        error: 'Server runtime missing fetch(), and node-fetch is not available.',
-        details: String(e && e.message ? e.message : e)
-      });
+  const reqBody = {
+    model,
+    input: [
+      { role: "system", content: system },
+      { role: "user", content: JSON.stringify(payload) }
+    ],
+    // IMPORTANT: Responses API uses text.format, and name is REQUIRED.
+    // See Structured Outputs + Responses migration docs.
+    text: {
+      format: {
+        type: "json_schema",
+        name: "portfolio_story",
+        schema,
+        strict: true
+      }
     }
+  };
+
+  const resp = await fetchFn("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(reqBody)
+  });
+
+  const raw = await resp.text();
+  const parsed = safeParseJson(raw);
+
+  if (!resp.ok) {
+    const err = parsed?.error || { message: raw?.slice(0, 500) || "OpenAI request failed" };
+    return { ok: false, status: resp.status, error: err };
   }
 
-  try {
-    const resp = await fetchFn('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model,
-        instructions,
-        input: JSON.stringify(input),
-        text: {
-          format: {
-            type: 'json_schema',
-            strict: true,
-            schema
-          }
+  // Extract the model's structured JSON.
+  // Most reliably, Responses returns a top-level `output_text` helper (SDK),
+  // but raw HTTP often returns content blocks. We'll handle both.
+  let text = "";
+  if (typeof parsed?.output_text === "string") {
+    text = parsed.output_text;
+  } else if (Array.isArray(parsed?.output)) {
+    for (const item of parsed.output) {
+      if (Array.isArray(item?.content)) {
+        for (const c of item.content) {
+          if (typeof c?.text === "string") { text = c.text; break; }
         }
-      })
-    });
-
-    if (!resp.ok) {
-      const errText = await resp.text();
-      return res.status(502).json({
-        error: 'OpenAI request failed',
-        status: resp.status,
-        details: errText?.slice(0, 2000)
-      });
+      }
+      if (text) break;
     }
+  }
 
-    const data = await resp.json();
+  const jsonOut = safeParseJson(text);
+  if (!jsonOut || typeof jsonOut !== "object") {
+    return {
+      ok: false,
+      status: 502,
+      error: { message: "Could not parse structured JSON from OpenAI response.", raw_preview: String(text).slice(0, 300) }
+    };
+  }
 
-    // Responses API may return structured output as output_text (JSON string)
-    // and some SDKs expose output_parsed. We handle both.
-    let parsed = null;
-    if (data && typeof data.output_parsed === 'object' && data.output_parsed) {
-      parsed = data.output_parsed;
-    } else if (typeof data.output_text === 'string' && data.output_text.trim().startsWith('{')) {
-      try { parsed = JSON.parse(data.output_text); } catch (_) {}
-    } else {
-      // Fallback: scan output items
-      try {
-        const out = Array.isArray(data.output) ? data.output : [];
-        const textItem = out.flatMap(o => o.content || []).find(c => c.type === 'output_text' && c.text);
-        if (textItem && textItem.text) parsed = JSON.parse(textItem.text);
-      } catch (_) {}
-    }
+  return { ok: true, data: jsonOut };
+}
 
-    if (!parsed || !parsed.title || !Array.isArray(parsed.paragraphs)) {
-      return res.status(502).json({
-        error: 'Could not parse model output',
-        raw: (data && (data.output_text || null))
-      });
-    }
+module.exports = async (req, res) => {
+  // CORS
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  if (req.method === "OPTIONS") return res.end();
 
-    return res.status(200).json(parsed);
-  } catch (e) {
-    return res.status(500).json({
-      error: 'Server error',
-      details: String(e && e.message ? e.message : e)
+  if (req.method === "GET") {
+    const hasKey = Boolean(getApiKey());
+    return sendJson(res, 200, {
+      ok: true,
+      hasOpenAIKey: hasKey,
+      vercelEnv: process.env.VERCEL_ENV || "",
+      vercelRegion: process.env.VERCEL_REGION || ""
     });
   }
-}
+
+  if (req.method !== "POST") return sendJson(res, 405, { error: "Method Not Allowed" });
+
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    return sendJson(res, 500, {
+      error: "OPENAI_API_KEY is not set on the server. Add it to Vercel Environment Variables and redeploy."
+    });
+  }
+
+  let body = req.body;
+  // In some Vercel setups, req.body may be a string.
+  if (typeof body === "string") body = safeParseJson(body) || {};
+  const payload = coercePayload(body);
+
+  const model = (typeof process.env.OPENAI_MODEL === "string" && process.env.OPENAI_MODEL.trim())
+    ? process.env.OPENAI_MODEL.trim()
+    : "gpt-4o-mini";
+
+  const result = await callOpenAI({ apiKey, model, payload });
+
+  if (!result.ok) {
+    // pass through OpenAI status for debugging
+    return sendJson(res, 502, {
+      error: "OpenAI request failed",
+      status: result.status,
+      details: result.error
+    });
+  }
+
+  return sendJson(res, 200, result.data);
+};
