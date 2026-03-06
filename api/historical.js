@@ -1,60 +1,111 @@
 const https = require('https');
 
+function getJson(url) {
+  return new Promise((resolve, reject) => {
+    https
+      .get(url, { headers: { 'User-Agent': 'Mozilla/5.0', Accept: 'application/json' } }, (response) => {
+        let data = '';
+        response.on('data', (chunk) => {
+          data += chunk;
+        });
+        response.on('end', () => {
+          try {
+            resolve({ status: response.statusCode || 500, json: JSON.parse(data), raw: data });
+          } catch (err) {
+            reject(new Error(`Upstream parse failed: ${String(err.message || err)} | body: ${data.slice(0, 300)}`));
+          }
+        });
+      })
+      .on('error', reject);
+  });
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  const { symbol } = req.query;
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  const symbol = (req.query.symbol || '').toUpperCase().trim();
+  const from = req.query.from;
+  const to = req.query.to;
 
   if (!symbol) {
     return res.status(400).json({ error: 'Missing symbol', data: {} });
   }
 
+  const apiKey = process.env.FINNHUB_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: 'API key not configured', data: {} });
+  }
+
   try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=10y`;
+    let fromTs;
+    let toTs;
 
-    https.get(url, (response) => {
-      let data = '';
+    if (from) {
+      fromTs = Math.floor(new Date(`${from}T00:00:00Z`).getTime() / 1000);
+    } else {
+      const d = new Date();
+      d.setFullYear(d.getFullYear() - 10);
+      fromTs = Math.floor(d.getTime() / 1000);
+    }
 
-      response.on('data', chunk => data += chunk);
+    if (to) {
+      toTs = Math.floor(new Date(`${to}T23:59:59Z`).getTime() / 1000);
+    } else {
+      toTs = Math.floor(Date.now() / 1000);
+    }
 
-      response.on('end', () => {
-        try {
-          const parsed = JSON.parse(data);
+    if (!Number.isFinite(fromTs) || !Number.isFinite(toTs) || fromTs <= 0 || toTs <= 0 || fromTs >= toTs) {
+      return res.status(400).json({ error: 'Invalid date range', data: {} });
+    }
 
-          const result = parsed.chart.result[0];
-          const timestamps = result.timestamp;
-          const closes = result.indicators.quote[0].close;
+    const url = `https://finnhub.io/api/v1/stock/candle?symbol=${encodeURIComponent(symbol)}&resolution=D&from=${fromTs}&to=${toTs}&token=${encodeURIComponent(apiKey)}`;
+    const { status, json, raw } = await getJson(url);
 
-          const formatted = {};
+    if (status !== 200) {
+      return res.status(status).json({ error: `Finnhub request failed: ${status}`, details: raw.slice(0, 500), data: {} });
+    }
 
-          timestamps.forEach((t, i) => {
-            if (closes[i] == null) return;
-
-            const date = new Date(t * 1000).toISOString().slice(0,10);
-
-            formatted[date] = {
-              date,
-              close: closes[i]
-            };
-          });
-
-          res.status(200).json({
-            symbol,
-            data: formatted,
-            totalDates: Object.keys(formatted).length,
-            source: "yahoo_chart_api"
-          });
-
-        } catch (err) {
-          res.status(500).json({ error: 'Parse error', data:{} });
-        }
+    if (!json || json.s !== 'ok' || !Array.isArray(json.t) || !json.t.length) {
+      return res.status(200).json({
+        error: 'No data available',
+        details: json && typeof json === 'object' ? json : raw.slice(0, 300),
+        data: {}
       });
+    }
 
-    }).on('error', () => {
-      res.status(500).json({ error: 'Request failed', data:{} });
+    const formatted = {};
+    for (let i = 0; i < json.t.length; i += 1) {
+      const ts = json.t[i];
+      const close = json.c?.[i];
+      if (close == null) continue;
+      const date = new Date(ts * 1000).toISOString().slice(0, 10);
+      formatted[date] = {
+        date,
+        open: json.o?.[i] ?? close,
+        high: json.h?.[i] ?? close,
+        low: json.l?.[i] ?? close,
+        close,
+        volume: json.v?.[i] ?? 0
+      };
+    }
+
+    return res.status(200).json({
+      symbol,
+      data: formatted,
+      totalDates: Object.keys(formatted).length,
+      source: 'finnhub_candles'
     });
-
-  } catch (err) {
-    res.status(500).json({ error: 'Server error', data:{} });
+  } catch (error) {
+    return res.status(500).json({
+      error: 'Historical API failed',
+      details: error?.message || String(error),
+      data: {}
+    });
   }
 };
