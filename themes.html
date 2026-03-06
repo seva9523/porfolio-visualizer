@@ -345,6 +345,18 @@ body{
   box-shadow:0 2px 10px rgba(0,0,0,.06);
 }
 .sbox h3{font-size:16px;font-weight:900;margin-bottom:12px}
+
+.detailed-only{display:none!important}
+.detailed-only.show{display:block!important}
+.sc.detailed-only.show{display:flex!important}
+.vtoggle{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}
+.vtoggle button{border:1px solid var(--border);background:var(--card);color:var(--text);padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:700}
+.vtoggle button.vt-on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.chart-wrap{position:relative;width:100%;height:280px;min-height:280px}
+.chart-wrap.chart-sm{height:200px;min-height:200px}
+.chart-wrap.chart-md{height:300px;min-height:300px}
+.chart-wrap canvas{display:block!important;width:100%!important;height:100%!important}
+
 .sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
 .sc{padding:14px;background:var(--input-bg);border:1px solid var(--border);border-radius:12px;text-align:center}
 .sc-l{font-size:10px;color:var(--text2);font-weight:900;text-transform:uppercase;margin-bottom:4px;letter-spacing:.04em}
@@ -424,50 +436,6 @@ body{
 }
 .guide-next{background:var(--accent);color:#fff}
 .guide-back{background:var(--input-bg);color:var(--text)}
-
-
-/* View toggle + hide/show detailed sections */
-.vtoggle{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 16px}
-.vtoggle button{padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);font-size:13px;font-weight:800;cursor:pointer;transition:all .2s ease}
-.vtoggle button:hover{border-color:var(--accent);transform:translateY(-1px)}
-.vtoggle button.vt-on{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 6px 18px rgba(20,184,166,.22)}
-.detailed-only{display:none !important}
-.detailed-only.show{display:block !important}
-.sc.detailed-only.show{display:block !important}
-.suit-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.suit-box{padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--input-bg)}
-.suit-yes{border-left:4px solid var(--green)}
-.suit-no{border-left:4px solid var(--orange)}
-.guardrail,.cmp-summary,.overlap-box,.conf-card,.mpanel,.vwarn,.cta{padding:14px 16px;border-radius:12px;background:var(--input-bg);border:1px solid var(--border);margin-bottom:16px}
-.traffic-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:12px}
-.traffic-item{padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--card)}
-.traffic-label{font-size:12px;color:var(--text2);margin-bottom:6px}
-.traffic-val{font-size:14px;font-weight:800;display:flex;align-items:center;gap:8px}
-.traffic-dot{width:10px;height:10px;border-radius:999px;display:inline-block}
-.rpill,.cs-pill,.fresh-badge,.hype-badge,.guide-conf,.mtag{display:inline-block;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800;margin:4px 6px 0 0}
-.rpill-low{background:rgba(22,163,74,.12);color:var(--green)}
-.rpill-med{background:rgba(245,158,11,.12);color:var(--orange)}
-.rpill-high,.rpill-vhigh{background:rgba(220,38,38,.12);color:var(--red)}
-.cs-core{background:rgba(46,134,171,.12);color:var(--blue)}
-.cs-sat{background:rgba(94,84,142,.12);color:#5E548E}
-.fresh-ok{background:rgba(22,163,74,.12);color:var(--green)}
-.fresh-old{background:rgba(245,158,11,.12);color:var(--orange)}
-.hype-hot{background:rgba(220,38,38,.12);color:var(--red)}
-.hype-cold{background:rgba(46,134,171,.12);color:var(--blue)}
-.hype-normal{background:rgba(20,184,166,.12);color:var(--accent)}
-.mtag{background:var(--input-bg);color:var(--text2);border:1px solid var(--border);border-radius:8px}
-.feel-meter{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:var(--input-bg);border:1px solid var(--border);font-size:11px;font-weight:800;margin-top:4px}
-.sa-btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.sa-btn{padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);font-size:12px;font-weight:800;cursor:pointer}
-.sa-btn:hover,.sa-btn.on{border-color:var(--accent);background:var(--accent-l)}
-.guide-q{font-size:18px;font-weight:800;margin:12px 0 16px}
-.guide-opts{display:grid;gap:10px}
-.guide-nav{display:flex;gap:10px;margin-top:16px}
-.guide-results{display:grid;gap:12px;margin-top:14px}
-.guide-result{padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--card);cursor:pointer}
-.guide-result:hover{border-color:var(--accent)}
-.mexp{font-size:10px;color:var(--text2);margin-top:2px}
-.chase-warn{padding:10px 12px;border-radius:10px;background:rgba(245,158,11,.10);border:1px solid rgba(245,158,11,.25);margin:10px 0}
 
 /* Footer */
 .ftr{
@@ -1239,6 +1207,12 @@ function toggleViewMode(mode){
     detailViewMode=mode;
     document.querySelectorAll('.vtoggle button').forEach(b=>b.classList.toggle('vt-on',b.dataset.mode===mode));
     document.querySelectorAll('.detailed-only').forEach(el=>el.classList.toggle('show',mode==='detailed'));
+    requestAnimationFrame(()=>{
+        charts.forEach(ch=>{try{ch.resize();ch.update('none')}catch(e){}});
+    });
+    setTimeout(()=>{
+        charts.forEach(ch=>{try{ch.resize();ch.update('none')}catch(e){}});
+    },120);
 }
 
 // ============================================================================
@@ -1720,7 +1694,7 @@ function applyFilters(){
         switch(sort){
             case 'trending': return (tb.score||0)-(ta.score||0);
             case 'cagr5y': return (cb.cagr5y??-1e9)-(ca.cagr5y??-1e9);
-            case 'volatility': return (ca.vol??1e9)-(cb.vol??1e9);
+            case 'volatility': return (ca.volatility??1e9)-(cb.volatility??1e9);
             case 'sharpe': return (cb.sharpe??-1e9)-(ca.sharpe??-1e9);
             case 'maxdd': return (ca.maxDD??1e9)-(cb.maxDD??1e9);
             case 'name': return a.name.localeCompare(b.name);
@@ -1992,10 +1966,10 @@ function showDetail(id){
                 <div class="sc detailed-only show"><div class="sc-l">Crash Exposure <span class="tt" data-tip="When the market drops, does this drop more or less? Under 100% = you lose less in bad times.">?</span></div><div class="sc-v">${c.dnCapture!=null?c.dnCapture.toFixed(0)+'%':'—'}</div></div>
             </div>
             <p style="font-size:12px;color:var(--text2);margin-top:14px">${describeVol(c.vol)} ${describeDD(c.maxDD)}</p>
-            <div style="margin-top:20px"><canvas id="perf-ch" style="max-height:280px"></canvas></div>
-            <div class="detailed-only" style="margin-top:20px"><canvas id="dd-ch" style="max-height:200px"></canvas></div>
-            <div class="detailed-only" style="margin-top:20px"><canvas id="vol-ch" style="max-height:200px"></canvas></div>
-            <div class="detailed-only" style="margin-top:20px"><canvas id="rcorr-ch" style="max-height:200px"></canvas></div>
+            <div class="chart-wrap" style="margin-top:20px"><canvas id="perf-ch"></canvas></div>
+            <div class="detailed-only chart-wrap chart-sm" style="margin-top:20px"><canvas id="dd-ch"></canvas></div>
+            <div class="detailed-only chart-wrap chart-sm" style="margin-top:20px"><canvas id="vol-ch"></canvas></div>
+            <div class="detailed-only chart-wrap chart-sm" style="margin-top:20px"><canvas id="rcorr-ch"></canvas></div>
         </div>
 
         <!-- Stress Test with Feature 5 mini-stories -->
@@ -2090,6 +2064,7 @@ function sample(arr,max){
 
 function drawPerf(c){
     const ctx=document.getElementById('perf-ch');if(!ctx)return;
+    if(ctx.parentElement) ctx.parentElement.style.height='280px';
     const{t,g}=chCol();const base=c.closes[0];
     const norm=c.closes.map(v=>(v/base)*100);
     const{d,ix}=sample(norm,500);const labels=ix.map(i=>c.dates[i]);
@@ -2098,6 +2073,7 @@ function drawPerf(c){
 
 function drawDD(c){
     const ctx=document.getElementById('dd-ch');if(!ctx)return;
+    if(ctx.parentElement) ctx.parentElement.style.height='200px';
     const{t,g}=chCol();
     const{d,ix}=sample(c.ddSeries,500);const labels=ix.map(i=>c.dates[i]);
     charts.push(new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'Drawdown %',data:d,borderColor:'var(--red)',backgroundColor:'rgba(231,76,60,.1)',fill:true,pointRadius:0,borderWidth:1.5,tension:.1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:t}}},scales:{x:{ticks:{color:t,maxTicksLimit:8},grid:{color:g}},y:{ticks:{color:t,callback:v=>v.toFixed(0)+'%'},grid:{color:g}}}}}));
@@ -2105,6 +2081,7 @@ function drawDD(c){
 
 function drawVol(c){
     const ctx=document.getElementById('vol-ch');if(!ctx)return;
+    if(ctx.parentElement) ctx.parentElement.style.height='200px';
     const{t,g}=chCol();const w=30;const rv=[],vd=[];
     for(let i=w;i<c.dr.length;i++){
         const sl=c.dr.slice(i-w,i);const m=sl.reduce((s,v)=>s+v,0)/w;
@@ -2117,6 +2094,7 @@ function drawVol(c){
 
 function drawRollingCorr(c){
     const ctx=document.getElementById('rcorr-ch');if(!ctx)return;
+    if(ctx.parentElement) ctx.parentElement.style.height='200px';
     const{t,g}=chCol();
     const spD=benchCache.SP500?.daily||[];const len=Math.min(c.dr.length,spD.length);
     if(len<90)return;
@@ -2243,7 +2221,7 @@ function showCompare(){
 
         <div class="sbox">
             <h3>How They've Grown Over Time</h3>
-            <canvas id="cmp-perf-ch" style="max-height:300px"></canvas>
+            <div class="chart-wrap chart-md"><canvas id="cmp-perf-ch"></canvas></div>
         </div>
 
         <div class="sbox">
@@ -2268,6 +2246,7 @@ function showCompare(){
 
 function drawComparePerf(themes){
     const ctx=document.getElementById('cmp-perf-ch');if(!ctx)return;
+    if(ctx.parentElement) ctx.parentElement.style.height='300px';
     const{t,g}=chCol();
     const colors=['#5E548E','#2E86AB','#27ae60','#F18F01','#e74c3c'];
     const datasets=themes.map((th,i)=>{
@@ -2367,7 +2346,7 @@ function runSim(id,pct){
             </tbody>
         </table>
         ${vi>3?'<div class="vwarn">🎢 Adding this theme would make your portfolio noticeably bumpier — the swings increase by about '+vi.toFixed(1)+' percentage points. Make sure you\'re comfortable with that.</div>':''}
-        <div style="margin-top:20px"><canvas id="mc-hist" style="max-height:220px" data-testid="mc-histogram"></canvas></div>
+        <div class="chart-wrap chart-sm" style="margin-top:20px"><canvas id="mc-hist" data-testid="mc-histogram"></canvas></div>
         <div style="margin-top:12px;font-size:11px;color:var(--text2);text-align:center">This is a "what-if" simulation, not a prediction. We ran ${mcC.n.toLocaleString()} scenarios. Real results will be different.</div>
     `;
     drawMCHist(mcC.f,mcB.f,tn,pct);
@@ -2382,6 +2361,7 @@ function runMC(init,ar,av,yrs,ns){
 
 function drawMCHist(cf,bf,tn,pct){
     const ctx=document.getElementById('mc-hist');if(!ctx)return;
+    if(ctx.parentElement) ctx.parentElement.style.height='200px';
     const{t}=chCol();const all=[...cf,...bf];
     const mn=Math.min(...all),mx=Math.max(...all);const bins=30;const bw=(mx-mn)/bins;
     if(bw<=0)return;
