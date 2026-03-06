@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 
 <html lang="en">
@@ -497,7 +498,7 @@ body{
 </div>
 <!-- Feature 1: Guided Mode Overlay -->
 <div class="guide-overlay" data-testid="guided-mode" id="guide-overlay" style="display:none">
-
+<div class="guide-box" id="guide-content"></div>
 </div>
 <!-- Feature 3: Allocation Confirmation Modal -->
 <div class="alloc-modal" data-testid="alloc-modal" id="alloc-modal" style="display:none">
@@ -697,17 +698,17 @@ body{
 <!-- ===== DETAIL VIEW ===== -->
 <div class="dview" data-testid="theme-detail" id="dv">
 <button class="bbtn" data-testid="back-btn" onclick="showList()">← Back to Themes</button>
-
+<div id="dc"></div>
 </div>
 <!-- ===== COMPARE VIEW ===== -->
 <div class="cview" id="cv">
 <button class="bbtn" data-testid="compare-back-btn" onclick="showList()">← Back to Themes</button>
-
+<div id="cc"></div>
 </div>
 </div>
 <div style="padding:0 30px 16px;text-align:left">
 <button class="nb" data-testid="diagnostics-toggle" id="diag-toggle" onclick="toggleDiagnostics()" style="font-size:11px;padding:5px 10px">ⓘ Diagnostics</button>
-
+<div id="diag-panel" style="display:none;margin-top:10px;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--card);font-size:12px;color:var(--text2)"></div>
 </div>
 <div class="ftr">🎓 This tool is for learning and exploration. Past performance does not guarantee future results. Nothing here is investment advice.</div>
 </div>
@@ -2002,6 +2003,7 @@ function showDetail(id){
                     <input type="number" id="ca" placeholder="Custom %" min="1" max="50" style="width:80px;padding:8px;border:2px solid var(--border);border-radius:8px;font-size:13px;background:var(--card);color:var(--text)">
                     <button class="sa-btn" onclick="runSimGuarded('${id}',parseInt(document.getElementById('ca').value)||10)">Apply</button>
                 </div>
+                <div id="sim-r" style="margin-top:14px"></div>
             `:`<div style="padding:30px;text-align:center;background:var(--input-bg);border-radius:12px"><div style="font-size:14px;color:var(--text2)">You haven't built a portfolio yet. <a href="/" style="color:var(--accent);font-weight:600">Create your portfolio first</a>, then come back to try this.</div></div>`}
         </div>
 
@@ -2184,7 +2186,7 @@ function showCompare(){
                     <input type="checkbox" class="etf-chk" value="AGG" onchange="updateETFOverlap()" style="accent-color:var(--accent)"> Bonds (AGG)
                 </label>
             </div>
-            
+            <div id="etf-overlap-results" style="padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--input-bg);font-size:13px;color:var(--text2)"><em>Select an ETF above to see how these themes relate to it.</em></div>
         </div>
 
         <!-- Simple comparison grid -->
