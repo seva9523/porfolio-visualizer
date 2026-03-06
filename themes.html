@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 
 <html lang="en">
@@ -423,6 +424,50 @@ body{
 }
 .guide-next{background:var(--accent);color:#fff}
 .guide-back{background:var(--input-bg);color:var(--text)}
+
+
+/* View toggle + hide/show detailed sections */
+.vtoggle{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 16px}
+.vtoggle button{padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);font-size:13px;font-weight:800;cursor:pointer;transition:all .2s ease}
+.vtoggle button:hover{border-color:var(--accent);transform:translateY(-1px)}
+.vtoggle button.vt-on{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 6px 18px rgba(20,184,166,.22)}
+.detailed-only{display:none !important}
+.detailed-only.show{display:block !important}
+.sc.detailed-only.show{display:block !important}
+.suit-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.suit-box{padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--input-bg)}
+.suit-yes{border-left:4px solid var(--green)}
+.suit-no{border-left:4px solid var(--orange)}
+.guardrail,.cmp-summary,.overlap-box,.conf-card,.mpanel,.vwarn,.cta{padding:14px 16px;border-radius:12px;background:var(--input-bg);border:1px solid var(--border);margin-bottom:16px}
+.traffic-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:12px}
+.traffic-item{padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--card)}
+.traffic-label{font-size:12px;color:var(--text2);margin-bottom:6px}
+.traffic-val{font-size:14px;font-weight:800;display:flex;align-items:center;gap:8px}
+.traffic-dot{width:10px;height:10px;border-radius:999px;display:inline-block}
+.rpill,.cs-pill,.fresh-badge,.hype-badge,.guide-conf,.mtag{display:inline-block;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800;margin:4px 6px 0 0}
+.rpill-low{background:rgba(22,163,74,.12);color:var(--green)}
+.rpill-med{background:rgba(245,158,11,.12);color:var(--orange)}
+.rpill-high,.rpill-vhigh{background:rgba(220,38,38,.12);color:var(--red)}
+.cs-core{background:rgba(46,134,171,.12);color:var(--blue)}
+.cs-sat{background:rgba(94,84,142,.12);color:#5E548E}
+.fresh-ok{background:rgba(22,163,74,.12);color:var(--green)}
+.fresh-old{background:rgba(245,158,11,.12);color:var(--orange)}
+.hype-hot{background:rgba(220,38,38,.12);color:var(--red)}
+.hype-cold{background:rgba(46,134,171,.12);color:var(--blue)}
+.hype-normal{background:rgba(20,184,166,.12);color:var(--accent)}
+.mtag{background:var(--input-bg);color:var(--text2);border:1px solid var(--border);border-radius:8px}
+.feel-meter{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:var(--input-bg);border:1px solid var(--border);font-size:11px;font-weight:800;margin-top:4px}
+.sa-btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sa-btn{padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);font-size:12px;font-weight:800;cursor:pointer}
+.sa-btn:hover,.sa-btn.on{border-color:var(--accent);background:var(--accent-l)}
+.guide-q{font-size:18px;font-weight:800;margin:12px 0 16px}
+.guide-opts{display:grid;gap:10px}
+.guide-nav{display:flex;gap:10px;margin-top:16px}
+.guide-results{display:grid;gap:12px;margin-top:14px}
+.guide-result{padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--card);cursor:pointer}
+.guide-result:hover{border-color:var(--accent)}
+.mexp{font-size:10px;color:var(--text2);margin-top:2px}
+.chase-warn{padding:10px 12px;border-radius:10px;background:rgba(245,158,11,.10);border:1px solid rgba(245,158,11,.25);margin:10px 0}
 
 /* Footer */
 .ftr{
@@ -1675,7 +1720,7 @@ function applyFilters(){
         switch(sort){
             case 'trending': return (tb.score||0)-(ta.score||0);
             case 'cagr5y': return (cb.cagr5y??-1e9)-(ca.cagr5y??-1e9);
-            case 'volatility': return (ca.volatility??1e9)-(cb.volatility??1e9);
+            case 'volatility': return (ca.vol??1e9)-(cb.vol??1e9);
             case 'sharpe': return (cb.sharpe??-1e9)-(ca.sharpe??-1e9);
             case 'maxdd': return (ca.maxDD??1e9)-(cb.maxDD??1e9);
             case 'name': return a.name.localeCompare(b.name);
