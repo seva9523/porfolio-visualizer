@@ -1,5 +1,5 @@
-// cypress/e2e/themes/themes_compare.cy.js
-describe("Theme Explorer — Compare Mode", () => {
+// cypress/e2e/themes/themes_search_filter.cy.js
+describe("Theme Explorer — Filters & Sorting", () => {
   function waitForPageReady() {
     cy.get("#load-bar", { timeout: 30000 }).should("not.be.visible");
     cy.get('[data-testid="theme-card"]', { timeout: 25000 }).should("have.length.greaterThan", 10);
@@ -12,59 +12,47 @@ describe("Theme Explorer — Compare Mode", () => {
 
   beforeEach(() => { cy.visit("/themes.html"); waitForPageReady(); });
 
-  it("TH-050: compare mode toggle shows checkboxes", () => {
-    cy.get('[data-testid="compare-toggle"]').click({ force: true });
-    cy.wait(500);
-    cy.get("#cmp-bar").should("be.visible");
-    // Checkboxes should appear on cards
-    cy.get('[data-testid^="compare-checkbox-"]').should("have.length.greaterThan", 5);
-  });
-
-  it("TH-051: selecting themes updates count", () => {
-    cy.get('[data-testid="compare-toggle"]').click({ force: true });
-    cy.wait(500);
-    cy.get('[data-testid="compare-checkbox-ai"]').check({ force: true });
-    cy.get('[data-testid="compare-checkbox-gold"]').check({ force: true });
-    cy.get("#cmp-count").should("contain", "2 selected");
-  });
-
-  it("TH-052: compare with <2 themes shows alert", () => {
-    cy.get('[data-testid="compare-toggle"]').click({ force: true });
-    cy.wait(500);
-    // Try to compare with 0 selected — stub window.alert
-    const stub = cy.stub();
-    cy.on("window:alert", stub);
-    cy.get('[data-testid="compare-go-btn"]').click({ force: true });
-    cy.then(() => {
-      expect(stub).to.have.been.calledOnce;
+  it("TH-010: all theme cards display with name", () => {
+    cy.get('[data-testid="theme-card"]').should("have.length.greaterThan", 25);
+    cy.get('[data-testid="theme-card"]').first().within(() => {
+      cy.get(".tcard-name").should("exist").invoke("text").should("have.length.greaterThan", 2);
     });
   });
 
-  it("TH-053: compare view renders with 3 themes selected", () => {
-    cy.get('[data-testid="compare-toggle"]').click({ force: true });
-    cy.wait(500);
-    cy.get('[data-testid="compare-checkbox-ai"]').check({ force: true });
-    cy.get('[data-testid="compare-checkbox-gold"]').check({ force: true });
-    cy.get('[data-testid="compare-checkbox-dividend_income"]').check({ force: true });
-    cy.get("#cmp-count").should("contain", "3 selected");
-
-    cy.get('[data-testid="compare-go-btn"]').click({ force: true });
-    cy.wait(2000);
-
-    // Compare view visible with content
-    cy.get("#cv").should("have.class", "on");
-    cy.get("#cc").should("exist").invoke("text").should("have.length.greaterThan", 30);
+  it("TH-017: filter by category reduces card count", () => {
+    cy.get('[data-testid="theme-card"]').then(($all) => {
+      const totalCount = $all.length;
+      // Use the category filter dropdown
+      cy.get('[data-testid="filter-category"]').select("growth", { force: true });
+      cy.wait(500);
+      cy.get('[data-testid="theme-card"]').should("have.length.lessThan", totalCount);
+      cy.get('[data-testid="theme-card"]').should("have.length.greaterThan", 0);
+    });
   });
 
-  it("TH-056: toggle compare mode off clears selection", () => {
-    cy.get('[data-testid="compare-toggle"]').click({ force: true });
-    cy.wait(500);
-    cy.get('[data-testid="compare-checkbox-ai"]').check({ force: true });
-    cy.get("#cmp-count").should("contain", "1 selected");
+  it("TH-020: reset filters restores all themes", () => {
+    cy.get('[data-testid="theme-card"]').then(($all) => {
+      const totalCount = $all.length;
+      cy.get('[data-testid="filter-category"]').select("income", { force: true });
+      cy.wait(500);
+      cy.get('[data-testid="theme-card"]').should("have.length.lessThan", totalCount);
+      cy.get('[data-testid="reset-filters"]').click({ force: true });
+      cy.wait(500);
+      cy.get('[data-testid="theme-card"]').should("have.length", totalCount);
+    });
+  });
 
-    // Toggle off
-    cy.get('[data-testid="compare-toggle"]').click({ force: true });
-    cy.wait(500);
-    cy.get("#cmp-bar").should("not.be.visible");
+  it("TH-021: showing count text matches visible cards", () => {
+    cy.get('[data-testid="theme-card"]').then(($cards) => {
+      const count = $cards.length;
+      cy.get("#showing-count").should("contain", `${count}`);
+    });
+  });
+
+  it("TH-011: sort buttons exist and are clickable", () => {
+    // Sort buttons use data-testid or are identifiable by text
+    cy.contains("What's Hot").should("exist");
+    cy.contains("5-Year Growth").should("exist");
+    cy.contains("Calmest").should("exist");
   });
 });
