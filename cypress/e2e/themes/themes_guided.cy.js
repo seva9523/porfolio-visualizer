@@ -1,32 +1,30 @@
 // cypress/e2e/themes/themes_guided.cy.js
-
-describe("Theme Explorer - Guided", () => {
-  const BASE_URL = Cypress.env("baseUrl") || "https://porfolio-visualizer-taca.vercel.app";
-
+describe("Theme Explorer — Guided Wizard & Help", () => {
   function waitForPageReady() {
-    cy.get('#load-bar', { timeout: 25000 }).should('not.be.visible');
-    cy.get('[data-testid="theme-card"]', { timeout: 20000 })
-      .should('have.length.greaterThan', 10);
-    
-    cy.get('body').then(($body) => {
-      if ($body.find('[data-testid="onboarding-modal"]').length > 0) {
-        cy.get('[data-testid="onboarding-modal"]').then(($modal) => {
-          if ($modal.is(':visible')) {
-            cy.get('[data-testid="onboarding-modal"]').find('button').first().click({ force: true });
-          }
-        });
-      }
+    cy.get("#load-bar", { timeout: 30000 }).should("not.be.visible");
+    cy.get('[data-testid="theme-card"]', { timeout: 25000 }).should("have.length.greaterThan", 10);
+    cy.get("body").then(($b) => {
+      if ($b.find('[data-testid="onboarding-modal"]:visible').length)
+        cy.get('[data-testid="onboarding-modal"]').find("button").first().click({ force: true });
     });
-    
-    cy.wait(2000);
+    cy.wait(3000);
   }
 
-  beforeEach(() => {
-    cy.visit(`${BASE_URL}/themes.html`);
-    waitForPageReady();
+  beforeEach(() => { cy.visit("/themes.html"); waitForPageReady(); });
+
+  it("UX-003: Help Me Choose button exists and opens guide", () => {
+    cy.get('[data-testid="help-choose-btn"]').should("exist").and("be.visible");
+    cy.get('[data-testid="help-choose-btn"]').click({ force: true });
+    cy.wait(500);
+    cy.get('[data-testid="guide-overlay"]').should("be.visible");
   });
 
-  it("help button exists", () => {
-    cy.get('[data-testid="help-choose-btn"]').should('exist');
+  it("UX-014: educational disclaimers are visible", () => {
+    cy.contains("not tell you what to buy").should("exist");
+    cy.contains("not investment advice").should("exist");
+  });
+
+  it("UX-004: What is a Market Theme section is visible", () => {
+    cy.contains("What is a Market Theme").should("exist");
   });
 });
