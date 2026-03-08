@@ -20,19 +20,36 @@
 
   function isObj(x) { return x && typeof x === 'object' && !Array.isArray(x); }
 
+  function normalizeHolding(h, fallbackTicker) {
+    return {
+      ticker: (h?.ticker || h?.symbol || fallbackTicker || '').toString().trim().toUpperCase(),
+      shares: Number(h?.shares ?? h?.quantity ?? h?.qty ?? 0),
+      purchasePrice: (h?.purchasePrice != null ? Number(h.purchasePrice) : null),
+      purchaseDate: (h?.purchaseDate != null ? String(h.purchaseDate) : null)
+    };
+  }
+
   // Normalize one portfolio into { id, name, holdings: [{ticker, shares, purchasePrice?, purchaseDate?}] }
   function normalizePortfolio(id, rawVal) {
-    // Shape A: { name, holdings: [ {ticker, shares, ...}, ... ] }
+    // Shape A: { name, holdings: [ {ticker or symbol, shares or quantity, ...}, ... ] }
     if (isObj(rawVal) && Array.isArray(rawVal.holdings)) {
       return {
         id,
         name: (typeof rawVal.name === 'string' && rawVal.name.trim()) ? rawVal.name.trim() : id,
-        holdings: rawVal.holdings.map(h => ({
-          ticker: (h.ticker || '').toString().trim().toUpperCase(),
-          shares: Number(h.shares ?? h.quantity ?? 0),
-          purchasePrice: (h.purchasePrice != null ? Number(h.purchasePrice) : null),
-          purchaseDate: (h.purchaseDate != null ? String(h.purchaseDate) : null)
-        })).filter(h => h.ticker && isFinite(h.shares) && h.shares > 0)
+        holdings: rawVal.holdings
+          .map(h => normalizeHolding(h))
+          .filter(h => h.ticker && isFinite(h.shares) && h.shares > 0)
+      };
+    }
+
+    // Shape A2: { name, positions: [ ... ] }
+    if (isObj(rawVal) && Array.isArray(rawVal.positions)) {
+      return {
+        id,
+        name: (typeof rawVal.name === 'string' && rawVal.name.trim()) ? rawVal.name.trim() : id,
+        holdings: rawVal.positions
+          .map(h => normalizeHolding(h))
+          .filter(h => h.ticker && isFinite(h.shares) && h.shares > 0)
       };
     }
 
@@ -41,12 +58,9 @@
       return {
         id,
         name: id,
-        holdings: rawVal.map(h => ({
-          ticker: (h.ticker || '').toString().trim().toUpperCase(),
-          shares: Number(h.shares ?? h.quantity ?? 0),
-          purchasePrice: (h.purchasePrice != null ? Number(h.purchasePrice) : null),
-          purchaseDate: (h.purchaseDate != null ? String(h.purchaseDate) : null)
-        })).filter(h => h.ticker && isFinite(h.shares) && h.shares > 0)
+        holdings: rawVal
+          .map(h => normalizeHolding(h))
+          .filter(h => h.ticker && isFinite(h.shares) && h.shares > 0)
       };
     }
 
@@ -59,16 +73,21 @@
       const holdings = [];
       for (const [k, v] of Object.entries(holdingsObj || {})) {
         if (!k) continue;
+
         if (isObj(v)) {
-          const shares = Number(v.shares ?? v.quantity ?? v.qty ?? 0);
-          const ticker = (v.ticker || k).toString().trim().toUpperCase();
-          if (ticker && isFinite(shares) && shares > 0) holdings.push({ ticker, shares, purchasePrice: null, purchaseDate: null });
+          const holding = normalizeHolding(v, k);
+          if (holding.ticker && isFinite(holding.shares) && holding.shares > 0) {
+            holdings.push(holding);
+          }
         } else {
           const shares = Number(v);
           const ticker = k.toString().trim().toUpperCase();
-          if (ticker && isFinite(shares) && shares > 0) holdings.push({ ticker, shares, purchasePrice: null, purchaseDate: null });
+          if (ticker && isFinite(shares) && shares > 0) {
+            holdings.push({ ticker, shares, purchasePrice: null, purchaseDate: null });
+          }
         }
       }
+
       return {
         id,
         name: (typeof rawVal.name === 'string' && rawVal.name.trim()) ? rawVal.name.trim() : id,
@@ -93,7 +112,7 @@
       }
     } else if (Array.isArray(raw)) {
       raw.forEach((val, idx) => {
-        const id = val?.id || val?.name || `portfolio_${idx+1}`;
+        const id = val?.id || val?.name || `portfolio_${idx + 1}`;
         const p = normalizePortfolio(id, val);
         map[id] = p;
         list.push(p);
@@ -106,8 +125,6 @@
       list.push(p);
     }
 
-    // Backward compatibility: many pages expect WV.getPortfolios() to be a plain object map.
-    // We also attach a non-enumerable list for convenience.
     Object.defineProperty(map, '_list', { value: list, enumerable: false });
     return map;
   };
@@ -165,9 +182,50 @@
     return `${yyyy}-${mm}-${dd}`;
   }
 
-  WV.fetchHistory = async function fetchHistory(ticker, fromDate, toDate) {
-    const from = (typeof fromDate === 'string') ? fromDate : fmtDate(fromDate);
-    const to = (typeof toDate === 'string') ? toDate : fmtDate(toDate);
+  function rangeToDates(range) {
+    const to = new Date();
+    const from = new Date(to);
+
+    switch (String(range || '1y').toLowerCase()) {
+      case '1m': from.setMonth(from.getMonth() - 1); break;
+      case '3m': from.setMonth(from.getMonth() - 3); break;
+      case '6m': from.setMonth(from.getMonth() - 6); break;
+      case 'ytd':
+        from.setMonth(0, 1);
+        break;
+      case '1y': from.setFullYear(from.getFullYear() - 1); break;
+      case '3y': from.setFullYear(from.getFullYear() - 3); break;
+      case '5y': from.setFullYear(from.getFullYear() - 5); break;
+      case '10y': from.setFullYear(from.getFullYear() - 10); break;
+      case 'max': from.setFullYear(from.getFullYear() - 20); break;
+      default: from.setFullYear(from.getFullYear() - 1); break;
+    }
+
+    return { from: fmtDate(from), to: fmtDate(to) };
+  }
+
+  WV.fetchHistory = async function fetchHistory(ticker, fromOrRange, maybeTo) {
+    let from;
+    let to;
+
+    if (maybeTo) {
+      from = fromOrRange;
+      to = maybeTo;
+    } else if (typeof fromOrRange === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(fromOrRange)) {
+      from = fromOrRange;
+      to = fmtDate(new Date());
+    } else if (typeof fromOrRange === 'string' && fromOrRange) {
+      const r = rangeToDates(fromOrRange);
+      from = r.from;
+      to = r.to;
+    } else {
+      const end = new Date();
+      const start = new Date();
+      start.setFullYear(start.getFullYear() - 1);
+      from = fmtDate(start);
+      to = fmtDate(end);
+    }
+
     const url = `/api/historical?symbol=${encodeURIComponent(ticker)}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
 
     const res = await fetch(url);
@@ -175,40 +233,38 @@
       const txt = await res.text().catch(() => '');
       throw new Error(`Historical API failed (${res.status}). ${txt || ''}`.trim());
     }
+
     const json = await res.json();
 
-    // Handle multiple response shapes:
-    // Shape A (API actual): { symbol, data: { "YYYY-MM-DD": {date, close, ...}, ... }, totalDates }
-    // Shape B (array): [{date, close}, ...]
-    let arr;
+    let arr = [];
     if (Array.isArray(json)) {
       arr = json;
-    } else if (json && typeof json.data === 'object' && !Array.isArray(json.data)) {
-      // API returns data as object keyed by date string
-      arr = Object.values(json.data);
-    } else if (json && Array.isArray(json.data)) {
-      arr = json.data;
     } else if (json && Array.isArray(json.prices)) {
       arr = json.prices;
+    } else if (json && Array.isArray(json.data)) {
+      arr = json.data;
+    } else if (json && json.data && typeof json.data === 'object') {
+      arr = Object.values(json.data);
     } else {
       throw new Error('Unexpected historical response.');
     }
 
     return arr
-      .map(r => ({ date: r.date, close: Number(r.close ?? r.c ?? r.price ?? r.value) }))
+      .map(r => ({
+        date: r.date || r.time || r.timestamp || r[0],
+        close: Number(r.close ?? r.adjClose ?? r.price ?? r.c ?? r.value ?? r[1])
+      }))
       .filter(r => r.date && isFinite(r.close))
-      .sort((a, b) => a.date.localeCompare(b.date));
+      .sort((a, b) => String(a.date).localeCompare(String(b.date)));
   };
 
   // ---------------------------
   // Portfolio math
   // ---------------------------
   WV.alignSeries = function alignSeries(seriesByTicker) {
-    // seriesByTicker: { TICKER: [{date,close}, ...], ... }
     const tickers = Object.keys(seriesByTicker);
     if (tickers.length === 0) return { dates: [], matrix: {} };
 
-    // build date -> close maps
     const maps = {};
     tickers.forEach(t => {
       const m = new Map();
@@ -216,13 +272,13 @@
       maps[t] = m;
     });
 
-    // intersect dates
     let common = null;
     tickers.forEach(t => {
       const dates = new Set(seriesByTicker[t].map(r => r.date));
       if (common === null) common = dates;
       else common = new Set([...common].filter(d => dates.has(d)));
     });
+
     const dates = Array.from(common || []).sort();
 
     const matrix = {};
@@ -234,45 +290,48 @@
   };
 
   WV.getWeights = function getWeights(a, b) {
-    // Backward-compatible:
-    // - getWeights(holdingsArray, firstPricesObj) -> weightsMap
-    // - getWeights(portfolioObject, topNNumber) -> [{ticker, weight}, ...]
     if (Array.isArray(a) && isObj(b)) {
       const holdings = a;
       const firstPrices = b;
       const values = holdings.map(h => (Number(h.shares) || 0) * (firstPrices[h.ticker] || 0));
-      const total = values.reduce((x,y)=>x+y,0);
+      const total = values.reduce((x, y) => x + y, 0);
       const weights = {};
-      holdings.forEach((h, i) => { weights[h.ticker] = total > 0 ? (values[i]/total) : (1/holdings.length); });
+      holdings.forEach((h, i) => {
+        weights[h.ticker] = total > 0 ? (values[i] / total) : (1 / holdings.length);
+      });
       return weights;
     }
 
-    // Portfolio object case
     const p = (isObj(a) ? a : {});
     const topN = (typeof b === 'number' && isFinite(b) && b > 0) ? b : null;
     const holdings = Array.isArray(p.holdings) ? p.holdings : (Array.isArray(p) ? p : []);
-    const totalShares = holdings.reduce((x,h)=>x + (Number(h.shares)||0), 0);
+    const totalShares = holdings.reduce((x, h) => x + (Number(h.shares) || 0), 0);
+
     const arr = holdings
-      .map(h => ({ ticker: h.ticker, weight: totalShares > 0 ? ((Number(h.shares)||0)/totalShares) : (1/holdings.length) }))
+      .map(h => ({
+        ticker: h.ticker,
+        weight: totalShares > 0 ? ((Number(h.shares) || 0) / totalShares) : (1 / holdings.length)
+      }))
       .filter(x => x.ticker && isFinite(x.weight) && x.weight > 0)
-      .sort((x,y)=>y.weight-x.weight);
+      .sort((x, y) => y.weight - x.weight);
+
     return topN ? arr.slice(0, topN) : arr;
   };
 
   WV.toReturns = function toReturns(values) {
     const rets = [];
-    for (let i=1;i<values.length;i++){
-      const prev = values[i-1];
+    for (let i = 1; i < values.length; i++) {
+      const prev = values[i - 1];
       const cur = values[i];
-      rets.push(prev > 0 ? (cur/prev - 1) : 0);
+      rets.push(prev > 0 ? (cur / prev - 1) : 0);
     }
     return rets;
   };
 
   WV.volatility = function volatility(dailyReturns) {
     if (!dailyReturns.length) return 0;
-    const mean = dailyReturns.reduce((a,b)=>a+b,0)/dailyReturns.length;
-    const varr = dailyReturns.reduce((a,b)=>a+(b-mean)*(b-mean),0)/dailyReturns.length;
+    const mean = dailyReturns.reduce((a, b) => a + b, 0) / dailyReturns.length;
+    const varr = dailyReturns.reduce((a, b) => a + (b - mean) * (b - mean), 0) / dailyReturns.length;
     const dailyVol = Math.sqrt(varr);
     return dailyVol * Math.sqrt(252);
   };
@@ -283,11 +342,11 @@
     for (const v of values) {
       if (v > peak) peak = v;
       if (peak > 0) {
-        const dd = (v/peak) - 1;
+        const dd = (v / peak) - 1;
         if (dd < mdd) mdd = dd;
       }
     }
-    return mdd; // negative
+    return mdd;
   };
 
   WV.cagr = function cagr(values, startDate, endDate) {
@@ -296,41 +355,35 @@
     const end = values[values.length - 1];
     if (!(start > 0) || !(end > 0)) return 0;
 
-    // If dates provided, use them
     if (startDate && endDate) {
       const ms = (new Date(endDate).getTime() - new Date(startDate).getTime());
       const years = ms / (365.25 * 24 * 3600 * 1000);
       if (years <= 0) return 0;
-      return Math.pow(end/start, 1/years) - 1;
+      return Math.pow(end / start, 1 / years) - 1;
     }
 
-    // Otherwise approximate using trading days (252/year)
     const yearsApprox = (values.length - 1) / 252;
     if (yearsApprox <= 0) return 0;
-    return Math.pow(end/start, 1/yearsApprox) - 1;
+    return Math.pow(end / start, 1 / yearsApprox) - 1;
   };
 
   WV.hhi = function hhi(weights) {
-    // Accept both array of {weight} objects and plain object {ticker: weight}
     if (Array.isArray(weights)) {
       return weights.reduce((a, w) => a + (typeof w === 'number' ? w * w : (w.weight || 0) * (w.weight || 0)), 0);
     }
     const vals = Object.values(weights || {});
-    return vals.reduce((a,w)=>a + w*w, 0);
+    return vals.reduce((a, w) => a + w * w, 0);
   };
 
-  // Build portfolio value series from aligned closes + holdings
   WV.buildPortfolioSeries = function buildPortfolioSeries(dates, matrix, holdings) {
     const tickers = holdings.map(h => h.ticker);
     if (!dates.length || !tickers.length) return { dates: [], values: [] };
 
-    // first prices
     const firstPrices = {};
     tickers.forEach(t => { firstPrices[t] = (matrix[t] && matrix[t][0]) || 0; });
 
     const weights = WV.getWeights(holdings, firstPrices);
 
-    // Use weights with normalized index: sum(weights * (price_t/price_0))
     const values = dates.map((_, i) => {
       let v = 0;
       tickers.forEach(t => {
