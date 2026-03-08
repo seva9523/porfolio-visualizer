@@ -22,8 +22,7 @@ describe("Theme Explorer — Filters & Sorting", () => {
   it("TH-017: filter by category reduces card count", () => {
     cy.get('[data-testid="theme-card"]').then(($all) => {
       const totalCount = $all.length;
-      // Use the category filter dropdown
-      cy.get('[data-testid="filter-category"]').select("growth", { force: true });
+      cy.get("#cat-fil-side").select("growth", { force: true });
       cy.wait(500);
       cy.get('[data-testid="theme-card"]').should("have.length.lessThan", totalCount);
       cy.get('[data-testid="theme-card"]').should("have.length.greaterThan", 0);
@@ -33,10 +32,10 @@ describe("Theme Explorer — Filters & Sorting", () => {
   it("TH-020: reset filters restores all themes", () => {
     cy.get('[data-testid="theme-card"]').then(($all) => {
       const totalCount = $all.length;
-      cy.get('[data-testid="filter-category"]').select("income", { force: true });
+      cy.get("#cat-fil-side").select("income", { force: true });
       cy.wait(500);
       cy.get('[data-testid="theme-card"]').should("have.length.lessThan", totalCount);
-      cy.get('[data-testid="reset-filters"]').click({ force: true });
+      cy.get(".resetbtn").click({ force: true });
       cy.wait(500);
       cy.get('[data-testid="theme-card"]').should("have.length", totalCount);
     });
@@ -50,7 +49,6 @@ describe("Theme Explorer — Filters & Sorting", () => {
   });
 
   it("TH-011: sort buttons exist and are clickable", () => {
-    // Sort buttons use data-testid or are identifiable by text
     cy.contains("What's Hot").should("exist");
     cy.contains("5-Year Growth").should("exist");
     cy.contains("Calmest").should("exist");
