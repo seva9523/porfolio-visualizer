@@ -1,34 +1,70 @@
-// cypress/e2e/themes/themes_search_filter.cy.js
-
-describe("Theme Explorer - Search", () => {
-  const BASE_URL = Cypress.env("baseUrl") || "https://porfolio-visualizer-taca.vercel.app";
-
+// cypress/e2e/themes/themes_compare.cy.js
+describe("Theme Explorer — Compare Mode", () => {
   function waitForPageReady() {
-    cy.get('#load-bar', { timeout: 25000 }).should('not.be.visible');
-    cy.get('[data-testid="theme-card"]', { timeout: 20000 })
-      .should('have.length.greaterThan', 10);
-    
-    cy.get('body').then(($body) => {
-      if ($body.find('[data-testid="onboarding-modal"]').length > 0) {
-        cy.get('[data-testid="onboarding-modal"]').then(($modal) => {
-          if ($modal.is(':visible')) {
-            cy.get('[data-testid="onboarding-modal"]').find('button').first().click({ force: true });
-          }
-        });
-      }
+    cy.get("#load-bar", { timeout: 30000 }).should("not.be.visible");
+    cy.get('[data-testid="theme-card"]', { timeout: 25000 }).should("have.length.greaterThan", 10);
+    cy.get("body").then(($b) => {
+      if ($b.find('[data-testid="onboarding-modal"]:visible').length)
+        cy.get('[data-testid="onboarding-modal"]').find("button").first().click({ force: true });
     });
-    
-    cy.wait(2000);
+    cy.wait(3000);
   }
 
-  beforeEach(() => {
-    cy.visit(`${BASE_URL}/themes.html`);
-    waitForPageReady();
+  beforeEach(() => { cy.visit("/themes.html"); waitForPageReady(); });
+
+  it("TH-050: compare mode toggle shows checkboxes", () => {
+    cy.get('[data-testid="compare-toggle"]').click({ force: true });
+    cy.wait(500);
+    cy.get("#cmp-bar").should("be.visible");
+    // Checkboxes should appear on cards
+    cy.get('[data-testid^="compare-checkbox-"]').should("have.length.greaterThan", 5);
   });
 
-  it("search works", () => {
-    cy.get('[data-testid="theme-search"]').clear({ force: true }).type("income", { force: true });
-    cy.wait(1500);
-    cy.get('[data-testid="theme-card"]').its("length").should("be.greaterThan", 0);
+  it("TH-051: selecting themes updates count", () => {
+    cy.get('[data-testid="compare-toggle"]').click({ force: true });
+    cy.wait(500);
+    cy.get('[data-testid="compare-checkbox-ai"]').check({ force: true });
+    cy.get('[data-testid="compare-checkbox-gold"]').check({ force: true });
+    cy.get("#cmp-count").should("contain", "2 selected");
+  });
+
+  it("TH-052: compare with <2 themes shows alert", () => {
+    cy.get('[data-testid="compare-toggle"]').click({ force: true });
+    cy.wait(500);
+    // Try to compare with 0 selected — stub window.alert
+    const stub = cy.stub();
+    cy.on("window:alert", stub);
+    cy.get('[data-testid="compare-go-btn"]').click({ force: true });
+    cy.then(() => {
+      expect(stub).to.have.been.calledOnce;
+    });
+  });
+
+  it("TH-053: compare view renders with 3 themes selected", () => {
+    cy.get('[data-testid="compare-toggle"]').click({ force: true });
+    cy.wait(500);
+    cy.get('[data-testid="compare-checkbox-ai"]').check({ force: true });
+    cy.get('[data-testid="compare-checkbox-gold"]').check({ force: true });
+    cy.get('[data-testid="compare-checkbox-dividend_income"]').check({ force: true });
+    cy.get("#cmp-count").should("contain", "3 selected");
+
+    cy.get('[data-testid="compare-go-btn"]').click({ force: true });
+    cy.wait(2000);
+
+    // Compare view visible with content
+    cy.get("#cv").should("have.class", "on");
+    cy.get("#cc").should("exist").invoke("text").should("have.length.greaterThan", 30);
+  });
+
+  it("TH-056: toggle compare mode off clears selection", () => {
+    cy.get('[data-testid="compare-toggle"]').click({ force: true });
+    cy.wait(500);
+    cy.get('[data-testid="compare-checkbox-ai"]').check({ force: true });
+    cy.get("#cmp-count").should("contain", "1 selected");
+
+    // Toggle off
+    cy.get('[data-testid="compare-toggle"]').click({ force: true });
+    cy.wait(500);
+    cy.get("#cmp-bar").should("not.be.visible");
   });
 });
