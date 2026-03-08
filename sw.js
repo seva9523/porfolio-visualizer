@@ -1,4 +1,4 @@
-const CACHE = "wealthview-cache-v1";
+const CACHE = "wealthview-cache-v2";
 const CORE = [
   "/",
   "/index.html",
