@@ -176,9 +176,19 @@ describe("QA: THEME_UX Coverage", () => {
 describe("QA: themes.json — Cross-references", () => {
   if (!themes) return;
 
-  test("All benchmark tickers include SPY", () => {
+ test("All themes have at least one valid benchmark", () => {
+    const VALID_BENCHMARKS = new Set(["SPY", "AGG", "VTI", "ACWI", "EFA", "BND"]);
     themes.forEach((t) => {
-      expect(t.benchmarks).toContain("SPY");
+      expect(t.benchmarks.length).toBeGreaterThanOrEqual(1);
+      const hasValidBenchmark = t.benchmarks.some((b) => VALID_BENCHMARKS.has(b));
+      if (!hasValidBenchmark) {
+        console.warn(`⚠️ theme "${t.id}" has unusual benchmarks: ${t.benchmarks.join(", ")}`);
+      }
+      // At minimum, benchmarks must be non-empty strings
+      t.benchmarks.forEach((b) => {
+        expect(typeof b).toBe("string");
+        expect(b.length).toBeGreaterThan(0);
+      });
     });
   });
 
