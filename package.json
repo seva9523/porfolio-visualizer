@@ -1,9 +1,15 @@
 {
   "scripts": {
-    "cypress:run": "cypress run",
+    "test": "jest",
+    "test:themes": "jest tests/themeMetrics.test.js tests/themesDataIntegrity.test.js --verbose",
+    "test:math": "jest tests/themeMetrics.test.js tests/portfolioCalculations.test.js tests/correlation.test.js --verbose",
+    "test:engines": "jest tests/rebalancingEngine.test.js tests/goalsEngine.test.js --verbose",
+    "test:all": "jest --verbose",
     "qa:themes": "node scripts/validate-themes-json.cjs",
     "qa:api": "node scripts/api-smoke.cjs",
-    "test": "jest"
+    "cypress:run": "cypress run",
+    "cypress:open": "cypress open",
+    "cypress:themes": "cypress run --spec 'cypress/e2e/themes/**/*.cy.js'"
   },
   "devDependencies": {
     "cypress": "^15.10.0",
