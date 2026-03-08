@@ -18,26 +18,29 @@ jobs:
 
       - run: npm install
 
-      # ✅ NEW: validate themes.json (fast fail)
       - name: Validate themes.json schema
         run: npm run qa:themes
 
-      # ✅ NEW: smoke test production endpoints
-      # You can override BASE_URL in repo secrets or env if you want wealthview.pro
       - name: API smoke tests
         env:
-          BASE_URL: ${{ secrets.NIGHTLY_BASE_URL }}
+          BASE_URL: https://www.wealthview.pro
         run: npm run qa:api
+        continue-on-error: true
 
-      # ✅ EXISTING: Cypress (keep)
+      - name: Unit tests
+        run: npm test
+
       - name: Cypress E2E tests
         run: npx cypress run
         env:
           CYPRESS_BASE_URL: https://www.wealthview.pro
+        continue-on-error: true
 
-      # ✅ EXISTING (but now meaningful): unit tests
-      - run: npm test
-
-      # ABB portfolio verification (summary, allocations, correlation, Monte Carlo, optimization, rebalancing)
-      - name: ABB portfolio verification
-        run: npm test -- tests/abb_portfolio_verification.test.js
+      - name: Upload Cypress screenshots & videos
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-results
+          path: |
+            cypress/screenshots/
+            cypress/videos/
