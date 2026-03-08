@@ -16,7 +16,8 @@ describe("Theme Explorer — Guided Wizard & Help", () => {
     cy.get('[data-testid="help-choose-btn"]').should("exist").and("be.visible");
     cy.get('[data-testid="help-choose-btn"]').click({ force: true });
     cy.wait(500);
-    cy.get('[data-testid="guide-overlay"]').should("be.visible");
+    // The guide overlay has data-testid="guided-mode" (not "guide-overlay")
+    cy.get('[data-testid="guided-mode"]').should("be.visible");
   });
 
   it("UX-014: educational disclaimers are visible", () => {
