@@ -2,8 +2,6 @@
 //
 // Phase 3: Edge cases, robustness, and stress tests.
 
-const BASE_URL =
-  Cypress.env("baseUrl") || "https://porfolio-visualizer-taca.vercel.app";
 
 function setRow(row, { ticker, shares, buyPrice, date }) {
   cy.get(`#ticker-${row}`).clear().type(ticker);
@@ -19,7 +17,7 @@ function clickVisualize() {
 
 describe("Edge Cases — Empty & Invalid Inputs", () => {
   beforeEach(() => {
-    cy.visit(BASE_URL, {
+    cy.visit("/visualizer.html", {
       onBeforeLoad(win) {
         cy.stub(win, "alert");
       },
@@ -107,7 +105,7 @@ describe("Edge Cases — Empty & Invalid Inputs", () => {
 
 describe("Edge Cases — API Failures", () => {
   beforeEach(() => {
-    cy.visit(BASE_URL);
+    cy.visit("/visualizer.html");
   });
 
   it("network timeout on quote does not crash", () => {
@@ -179,7 +177,7 @@ describe("Edge Cases — API Failures", () => {
 
 describe("Edge Cases — Multiple Holdings Stress", () => {
   beforeEach(() => {
-    cy.visit(BASE_URL);
+    cy.visit("/visualizer.html");
     cy.on("uncaught:exception", (err) => {
       if (err.message.includes("innerHTML") || err.message.includes("null")) {
         return false;
@@ -266,7 +264,7 @@ describe("Edge Cases — Multiple Holdings Stress", () => {
 
 describe("Benchmark Section", () => {
   beforeEach(() => {
-    cy.visit(BASE_URL);
+    cy.visit("/visualizer.html");
   });
 
   it("shows backtest unavailable when no historical data", () => {
