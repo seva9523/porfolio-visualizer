@@ -6,7 +6,7 @@
 // - Rebalancing Simulator (inside index.html)
 //
 // These tests assume your app is deployed at:
-// https://porfolio-visualizer-taca.vercel.app/
+// https://www.wealthview.pro/
 //
 // IMPORTANT:
 // - We clear localStorage between tests to avoid saved goals/holdings affecting results.
@@ -115,7 +115,7 @@ describe("Financial Goals Simulator – engine integrity", () => {
 
 describe("Portfolio Visualizer – basic correctness + data fetch", () => {
   beforeEach(() => {
-    cy.visit("/");
+    cy.visit("/visualizer.html");
     cy.clearLocalStorage();
     cy.reload();
   });
@@ -151,7 +151,7 @@ describe("Portfolio Visualizer – basic correctness + data fetch", () => {
 
 describe("Rebalancing Simulator – strategy sanity", () => {
   beforeEach(() => {
-    cy.visit("/");
+    cy.visit("/visualizer.html");
     cy.clearLocalStorage();
     cy.reload();
   });
