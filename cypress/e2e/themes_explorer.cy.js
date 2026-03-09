@@ -1,7 +1,5 @@
 describe("Theme & Trend Explorer", () => {
 
-  const BASE_URL = Cypress.env("baseUrl") || "https://porfolio-visualizer-taca.vercel.app";
-
   function waitForPageReady() {
     cy.get('#load-bar', { timeout: 25000 }).should('not.be.visible');
     cy.get('[data-testid="theme-card"]', { timeout: 20000 })
@@ -22,12 +20,13 @@ describe("Theme & Trend Explorer", () => {
   }
 
   beforeEach(() => {
-    cy.visit(`${BASE_URL}/themes.html`);
+    cy.visit("/themes.html");
     waitForPageReady();
   });
 
   it("loads themes from JSON and renders cards", () => {
-    cy.get('[data-testid="themes-grid"]').should("exist");
+    // The grid container uses id="grid" not data-testid="themes-grid"
+    cy.get("#grid").should("exist");
     cy.get('[data-testid="theme-card"]').should("have.length", 38);
   });
 
@@ -56,12 +55,13 @@ describe("Theme & Trend Explorer", () => {
     
     cy.get('#cmp-bar', { timeout: 5000 }).should('exist');
 
-    // Click 6 cards individually (not using .each to avoid DOM detachment)
+    // Check checkboxes on the first 6 cards
     for (let i = 0; i < 6; i++) {
-      cy.get('[data-testid="theme-card"]').eq(i).click({ force: true });
+      cy.get('[data-testid^="compare-checkbox-"]').eq(i).check({ force: true });
       cy.wait(300);
     }
 
+    // The compare-count element uses data-testid="compare-count" and id="cmp-count"
     cy.get('[data-testid="compare-count"]').then(($el) => {
       const text = $el.text();
       const count = parseInt(text.match(/\d+/)[0], 10);
@@ -80,9 +80,8 @@ describe("Theme & Trend Explorer", () => {
     cy.get('[data-testid="view-toggle"]', { timeout: 5000 }).should('exist');
     cy.wait(1000);
     
-    cy.get('[data-testid="view-toggle"]')
-      .find('button[data-mode="detailed"]')
-      .click({ force: true });
+    // The detailed button uses data-testid="view-detailed"
+    cy.get('[data-testid="view-detailed"]').click({ force: true });
 
     cy.wait(1500);
     cy.get('.detailed-only.show', { timeout: 5000 }).should('exist');
@@ -95,7 +94,8 @@ describe("Theme & Trend Explorer", () => {
     cy.get('[data-testid="diagnostics-toggle"]').click({ force: true });
     cy.wait(1500);
     
-    cy.get('[data-testid="diagnostics-panel"]', { timeout: 5000 }).should("exist");
+    // The diagnostics panel uses id="diag-panel" not data-testid="diagnostics-panel"
+    cy.get('#diag-panel', { timeout: 5000 }).should("be.visible");
   });
 
 });
