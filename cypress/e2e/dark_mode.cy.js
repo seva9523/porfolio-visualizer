@@ -2,12 +2,10 @@
 //
 // Tests for dark mode: toggle, body class, icon/text swap, localStorage persistence.
 
-const BASE_URL =
-  Cypress.env("baseUrl") || "https://porfolio-visualizer-taca.vercel.app";
 
 describe("Dark Mode — toggle + persistence", () => {
   beforeEach(() => {
-    cy.visit(BASE_URL);
+    cy.visit("/visualizer.html");
     cy.clearLocalStorage();
     cy.reload();
   });
