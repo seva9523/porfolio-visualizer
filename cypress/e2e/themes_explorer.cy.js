@@ -26,7 +26,7 @@ describe("Theme & Trend Explorer", () => {
 
   it("loads themes from JSON and renders cards", () => {
     // The grid container uses id="grid" not data-testid="themes-grid"
-    cy.get("#grid").should("exist");
+    cy.get("#tgrid").should("exist");
     cy.get('[data-testid="theme-card"]').should("have.length", 38);
   });
 
