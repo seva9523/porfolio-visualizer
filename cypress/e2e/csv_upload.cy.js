@@ -2,8 +2,6 @@
 //
 // Tests for CSV file upload: valid import, malformed file, clear CSV data.
 
-const BASE_URL =
-  Cypress.env("baseUrl") || "https://porfolio-visualizer-taca.vercel.app";
 
 // Yahoo Finance format CSV content
 const VALID_CSV = `Date,Open,High,Low,Close,Adj Close,Volume
@@ -27,7 +25,7 @@ function createCsvBlob(content, filename) {
 
 describe("CSV Upload — import + clear", () => {
   beforeEach(() => {
-    cy.visit(BASE_URL);
+    cy.visit("/visualizer.html");
     cy.clearLocalStorage();
     cy.reload();
   });
