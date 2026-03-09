@@ -3,8 +3,6 @@
 // Tests for Monte Carlo simulation, Correlation Matrix, Portfolio Optimization,
 // and Benchmark sections that render after visualization.
 
-const BASE_URL =
-  Cypress.env("baseUrl") || "https://porfolio-visualizer-taca.vercel.app";
 
 // Generate 60+ days of historical data for Monte Carlo to activate (needs >50 returns)
 function generateHistoricalData(startPrice, days) {
@@ -40,7 +38,7 @@ function clickVisualize() {
 
 describe("Monte Carlo Simulation Section", () => {
   beforeEach(() => {
-    cy.visit(BASE_URL);
+    cy.visit("/visualizer.html");
   });
 
   it("shows 'Simulation Unavailable' when historical data is empty", () => {
@@ -127,7 +125,7 @@ describe("Monte Carlo Simulation Section", () => {
 
 describe("Correlation Matrix Section", () => {
   beforeEach(() => {
-    cy.visit(BASE_URL);
+    cy.visit("/visualizer.html");
   });
 
   it("does not show correlation for single holding", () => {
@@ -183,7 +181,7 @@ describe("Correlation Matrix Section", () => {
 
 describe("Portfolio Optimization Section", () => {
   beforeEach(() => {
-    cy.visit(BASE_URL);
+    cy.visit("/visualizer.html");
   });
 
   it("renders optimization analysis after visualization", () => {
@@ -228,7 +226,7 @@ describe("Portfolio Optimization Section", () => {
 
 describe("Time Range Buttons", () => {
   beforeEach(() => {
-    cy.visit(BASE_URL);
+    cy.visit("/visualizer.html");
   });
 
   it("clicking each time range button does not crash", () => {
