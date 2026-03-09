@@ -2,12 +2,10 @@
 //
 // Tests for date validation, auto-fill buy price, clear all, add/remove holdings.
 
-const BASE_URL =
-  Cypress.env("baseUrl") || "https://porfolio-visualizer-taca.vercel.app";
 
 describe("Date Validation", () => {
   beforeEach(() => {
-    cy.visit(BASE_URL);
+    cy.visit("/visualizer.html");
   });
 
   it("accepts a valid DD/MM/YYYY date and sets data-date-value", () => {
@@ -70,7 +68,7 @@ describe("Date Validation", () => {
 
 describe("Add / Remove Holdings", () => {
   beforeEach(() => {
-    cy.visit(BASE_URL);
+    cy.visit("/visualizer.html");
     cy.clearLocalStorage();
     cy.reload();
     // Suppress search API calls that fire on ticker input
@@ -128,7 +126,7 @@ describe("Add / Remove Holdings", () => {
 
 describe("Clear All", () => {
   beforeEach(() => {
-    cy.visit(BASE_URL);
+    cy.visit("/visualizer.html");
     cy.clearLocalStorage();
     cy.reload();
   });
@@ -175,7 +173,7 @@ describe("Clear All", () => {
 
 describe("Refresh Prices", () => {
   beforeEach(() => {
-    cy.visit(BASE_URL);
+    cy.visit("/visualizer.html");
   });
 
   it("refresh prices does not crash with empty holdings", () => {
