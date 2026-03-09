@@ -4,11 +4,11 @@
 
 
 function setRow(row, { ticker, shares, buyPrice, date }) {
-  cy.get(`#ticker-${row}`).clear().type(ticker);
-  cy.get(`#shares-${row}`).clear().type(String(shares));
+  cy.get(`#ticker-${row}`).clear({ force: true }).type(ticker, { force: true });
+  cy.get(`#shares-${row}`).clear({ force: true }).type(String(shares), { force: true });
   if (buyPrice !== undefined)
-    cy.get(`#purchase-${row}`).clear().type(String(buyPrice));
-  if (date) cy.get(`#date-${row}`).clear().type(date);
+    cy.get(`#purchase-${row}`).clear({ force: true }).type(String(buyPrice), { force: true });
+  if (date) cy.get(`#date-${row}`).clear({ force: true }).type(date, { force: true });
 }
 
 function clickVisualize() {
@@ -42,8 +42,8 @@ describe("Edge Cases — Empty & Invalid Inputs", () => {
       body: { data: {} },
     });
 
-    cy.get("#ticker-0").clear().type("AAPL");
-    cy.get("#shares-0").clear().type("0");
+    cy.get("#ticker-0").clear({ force: true }).type("AAPL");
+    cy.get("#shares-0").clear({ force: true }).type("0");
 
     clickVisualize();
 
