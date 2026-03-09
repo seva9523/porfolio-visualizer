@@ -1,6 +1,5 @@
 // cypress/e2e/portfolio_math_and_failures.cy.js
 
-const BASE_URL = Cypress.env("baseUrl") || "https://porfolio-visualizer-taca.vercel.app";
 
 function setRow(row, { ticker, shares, date }) {
   cy.get(`#ticker-${row}`).clear().type(ticker);
@@ -13,7 +12,7 @@ function clickVisualize() {
 }
 
 function clickRefreshPrices() {
-  cy.contains("button", /refresh prices only/i).click();
+  cy.contains("button", /refresh prices/i).click();
 }
 
 function parseMoney(text) {
@@ -25,7 +24,7 @@ function parseMoney(text) {
 
 describe("Portfolio Visualizer — math correctness + API failure handling", () => {
   beforeEach(() => {
-    cy.visit(BASE_URL);
+    cy.visit("/visualizer.html");
   });
 
   it("computes Total Value correctly from stubbed quotes (2 holdings)", () => {
