@@ -36,15 +36,16 @@ describe("Rebalancing — Threshold Strategy", () => {
       body: { data: HIST_AAPL },
     });
 
-    cy.get("#ticker-0").clear().type("AAPL");
-    cy.get("#shares-0").clear().type("1");
-    cy.get("#date-0").clear().type("02/01/2024").blur();
+    cy.get("#ticker-0").clear({ force: true }).type("AAPL");
+    cy.get("#shares-0").clear({ force: true }).type("1");
+    cy.get("#date-0").clear({ force: true }).type("02/01/2024").blur();
 
     cy.get("#purchase-0", { timeout: 10000 }).should(($el) => {
       expect(parseFloat($el.val())).to.be.greaterThan(0);
     });
 
     cy.contains("button", /visualize portfolio/i).click();
+    cy.get('button[data-view="sim"]').click({ force: true });
     cy.get("#rebalancing-section", { timeout: 15000 }).should("be.visible");
 
     cy.get("#rebalance-strategy").select("threshold");
@@ -69,15 +70,16 @@ describe("Rebalancing — Threshold Strategy", () => {
       body: { data: HIST_AAPL },
     });
 
-    cy.get("#ticker-0").clear().type("AAPL");
-    cy.get("#shares-0").clear().type("1");
-    cy.get("#date-0").clear().type("02/01/2024").blur();
+    cy.get("#ticker-0").clear({ force: true }).type("AAPL");
+    cy.get("#shares-0").clear({ force: true }).type("1");
+    cy.get("#date-0").clear({ force: true }).type("02/01/2024").blur();
 
     cy.get("#purchase-0", { timeout: 10000 }).should(($el) => {
       expect(parseFloat($el.val())).to.be.greaterThan(0);
     });
 
     cy.contains("button", /visualize portfolio/i).click();
+    cy.get('button[data-view="sim"]').click({ force: true });
     cy.get("#rebalancing-section", { timeout: 15000 }).should("be.visible");
 
     cy.get("#rebalance-strategy").select("quarterly");
@@ -115,10 +117,10 @@ describe("Pie Chart & Bar Chart Rendering", () => {
       body: { data: {} },
     });
 
-    cy.get("#ticker-0").clear().type("AAPL");
-    cy.get("#shares-0").clear().type("5");
-    cy.get("#ticker-1").clear().type("GOOGL");
-    cy.get("#shares-1").clear().type("3");
+    cy.get("#ticker-0").clear({ force: true }).type("AAPL");
+    cy.get("#shares-0").clear({ force: true }).type("5");
+    cy.get("#ticker-1").clear({ force: true }).type("GOOGL");
+    cy.get("#shares-1").clear({ force: true }).type("3");
 
     cy.contains("button", /visualize portfolio/i).click();
 
@@ -137,8 +139,8 @@ describe("Pie Chart & Bar Chart Rendering", () => {
       body: { data: {} },
     });
 
-    cy.get("#ticker-0").clear().type("AAPL");
-    cy.get("#shares-0").clear().type("10");
+    cy.get("#ticker-0").clear({ force: true }).type("AAPL");
+    cy.get("#shares-0").clear({ force: true }).type("10");
 
     cy.contains("button", /visualize portfolio/i).click();
 
@@ -157,8 +159,8 @@ describe("Last Updated Timestamp", () => {
       body: { c: 150 },
     }).as("quote");
 
-    cy.get("#ticker-0").clear().type("AAPL");
-    cy.get("#shares-0").clear().type("1");
+    cy.get("#ticker-0").clear({ force: true }).type("AAPL");
+    cy.get("#shares-0").clear({ force: true }).type("1");
 
     cy.contains("button", /refresh prices/i).click();
     cy.wait("@quote");
