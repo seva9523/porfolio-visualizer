@@ -3,8 +3,6 @@
 // Final coverage gaps: rebalancing threshold strategy, pie/bar chart rendering,
 // last-updated timestamp, goals edge case.
 
-const BASE_URL =
-  Cypress.env("baseUrl") || "https://porfolio-visualizer-taca.vercel.app";
 
 function generateHistoricalData(startPrice, days) {
   const data = {};
@@ -25,7 +23,7 @@ const HIST_AAPL = generateHistoricalData(180, 120);
 
 describe("Rebalancing — Threshold Strategy", () => {
   beforeEach(() => {
-    cy.visit(BASE_URL);
+    cy.visit("/visualizer.html");
   });
 
   it("threshold rebalancing runs and shows results", () => {
@@ -96,7 +94,7 @@ describe("Rebalancing — Threshold Strategy", () => {
 
 describe("Pie Chart & Bar Chart Rendering", () => {
   beforeEach(() => {
-    cy.visit(BASE_URL);
+    cy.visit("/visualizer.html");
   });
 
   it("pie chart and bar chart render after visualization", () => {
@@ -150,7 +148,7 @@ describe("Pie Chart & Bar Chart Rendering", () => {
 
 describe("Last Updated Timestamp", () => {
   beforeEach(() => {
-    cy.visit(BASE_URL);
+    cy.visit("/visualizer.html");
   });
 
   it("shows last updated timestamp after refresh prices", () => {
@@ -174,7 +172,7 @@ describe("Last Updated Timestamp", () => {
 
 describe("Goals Simulator — Zero Target Edge Case", () => {
   beforeEach(() => {
-    cy.visit(`${BASE_URL}/goals.html`);
+    cy.visit("/goals.html");
     cy.clearLocalStorage();
     cy.reload();
   });
