@@ -2,8 +2,6 @@
 //
 // Tests for multi-portfolio management: create, rename, delete, switch, persistence.
 
-const BASE_URL =
-  Cypress.env("baseUrl") || "https://porfolio-visualizer-taca.vercel.app";
 
 // Shared stubs that persist across the test
 let promptStub;
@@ -16,7 +14,7 @@ describe("Portfolio Management — CRUD + persistence", () => {
 
     // Stub prompt/confirm/alert BEFORE the page loads so they are in place
     // when window.onload fires
-    cy.visit(BASE_URL, {
+    cy.visit("/visualizer.html", {
       onBeforeLoad(win) {
         promptStub = cy.stub(win, "prompt");
         confirmStub = cy.stub(win, "confirm");
