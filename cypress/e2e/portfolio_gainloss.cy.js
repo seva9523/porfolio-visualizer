@@ -1,6 +1,5 @@
 // cypress/e2e/portfolio_gainloss.cy.js
 
-const BASE_URL = Cypress.env("baseUrl") || "https://porfolio-visualizer-taca.vercel.app";
 
 function setRow(row, { ticker, shares, buyPrice, date }) {
   cy.get(`#ticker-${row}`).clear().type(ticker);
@@ -43,7 +42,7 @@ function parsePercent(text) {
 
 describe("Portfolio Visualizer — Gain/Loss correctness", () => {
   beforeEach(() => {
-    cy.visit(BASE_URL);
+    cy.visit("/visualizer.html");
   });
 
   it("computes cost basis, gain/loss $, and gain/loss % correctly (single holding)", () => {
