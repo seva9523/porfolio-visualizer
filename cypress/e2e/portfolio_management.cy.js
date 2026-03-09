@@ -11,15 +11,12 @@ let alertStub;
 describe("Portfolio Management — CRUD + persistence", () => {
   beforeEach(() => {
     cy.clearLocalStorage();
-
-    // Stub prompt/confirm/alert BEFORE the page loads so they are in place
-    // when window.onload fires
-    cy.visit("/visualizer.html", {
-      onBeforeLoad(win) {
-        promptStub = cy.stub(win, "prompt");
-        confirmStub = cy.stub(win, "confirm");
-        alertStub = cy.stub(win, "alert");
-      },
+    cy.visit("/visualizer.html");
+    // Stub prompt/confirm/alert AFTER page loads to ensure they stick
+    cy.window().then((win) => {
+      promptStub = cy.stub(win, "prompt");
+      confirmStub = cy.stub(win, "confirm");
+      alertStub = cy.stub(win, "alert");
     });
   });
 
@@ -50,16 +47,16 @@ describe("Portfolio Management — CRUD + persistence", () => {
     cy.intercept("GET", /\/api\/search/, { statusCode: 200, body: { result: [] } });
 
     // Fill a holding in the default portfolio
-    cy.get("#ticker-0").clear().type("AAPL");
-    cy.get("#shares-0").clear().type("10");
+    cy.get("#ticker-0").clear({ force: true }).type("AAPL");
+    cy.get("#shares-0").clear({ force: true }).type("10");
 
     // Create a new portfolio
     promptStub.returns("Bonds Portfolio");
     cy.contains("button", "New").click();
 
     cy.get(".holding-input").should("have.length", 3);
-    cy.get("#ticker-0").clear().type("BND");
-    cy.get("#shares-0").clear().type("50");
+    cy.get("#ticker-0").clear({ force: true }).type("BND");
+    cy.get("#shares-0").clear({ force: true }).type("50");
 
     // Switch back to Default Portfolio
     cy.get("#portfolio-selector").select("Default Portfolio");
@@ -137,8 +134,8 @@ describe("Portfolio Management — CRUD + persistence", () => {
   it("portfolio data persists after page reload", () => {
     cy.intercept("GET", /\/api\/search/, { statusCode: 200, body: { result: [] } });
 
-    cy.get("#ticker-0").clear().type("MSFT");
-    cy.get("#shares-0").clear().type("25");
+    cy.get("#ticker-0").clear({ force: true }).type("MSFT");
+    cy.get("#shares-0").clear({ force: true }).type("25");
 
     promptStub.returns("Second");
     cy.contains("button", "New").click();
