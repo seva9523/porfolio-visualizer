@@ -9,7 +9,7 @@ describe("Date Validation", () => {
   });
 
   it("accepts a valid DD/MM/YYYY date and sets data-date-value", () => {
-    cy.get("#date-0").clear().type("15/06/2023");
+    cy.get("#date-0").clear({ force: true }).type("15/06/2023");
     cy.get("#date-0").blur();
 
     // Wait for the debounce (800ms) to fire and set dataset
@@ -30,9 +30,9 @@ describe("Date Validation", () => {
       },
     });
 
-    cy.get("#ticker-0").clear().type("AAPL");
-    cy.get("#shares-0").clear().type("1");
-    cy.get("#date-0").clear().type("15/06/2023");
+    cy.get("#ticker-0").clear({ force: true }).type("AAPL");
+    cy.get("#shares-0").clear({ force: true }).type("1");
+    cy.get("#date-0").clear({ force: true }).type("15/06/2023");
     cy.get("#date-0").blur();
 
     cy.get("#purchase-0", { timeout: 5000 }).should(($el) => {
@@ -42,7 +42,7 @@ describe("Date Validation", () => {
   });
 
   it("does not crash on an invalid date format", () => {
-    cy.get("#date-0").clear().type("not-a-date");
+    cy.get("#date-0").clear({ force: true }).type("not-a-date");
     cy.get("#date-0").blur();
     cy.wait(1000);
 
@@ -55,7 +55,7 @@ describe("Date Validation", () => {
   });
 
   it("rejects an impossible date like 31/02/2023", () => {
-    cy.get("#date-0").clear().type("31/02/2023");
+    cy.get("#date-0").clear({ force: true }).type("31/02/2023");
     cy.get("#date-0").blur();
     cy.wait(1000);
 
@@ -101,9 +101,9 @@ describe("Add / Remove Holdings", () => {
 
   it("can add multiple holdings and remove specific ones", () => {
     // Fill 3 tickers — use blur() after each to settle any pending events
-    cy.get("#ticker-0").clear().type("AAPL").blur();
-    cy.get("#ticker-1").clear().type("GOOGL").blur();
-    cy.get("#ticker-2").clear().type("MSFT").blur();
+    cy.get("#ticker-0").clear({ force: true }).type("AAPL").blur();
+    cy.get("#ticker-1").clear({ force: true }).type("GOOGL").blur();
+    cy.get("#ticker-2").clear({ force: true }).type("MSFT").blur();
 
     // Small wait for any search timeouts to settle
     cy.wait(600);
@@ -136,10 +136,10 @@ describe("Clear All", () => {
     cy.intercept("GET", /\/api\/historical/, { statusCode: 200, body: { data: {} } });
     cy.intercept("GET", /\/api\/search/, { statusCode: 200, body: { result: [] } });
 
-    cy.get("#ticker-0").clear().type("AAPL");
-    cy.get("#shares-0").clear().type("10");
-    cy.get("#ticker-1").clear().type("GOOGL");
-    cy.get("#shares-1").clear().type("5");
+    cy.get("#ticker-0").clear({ force: true }).type("AAPL");
+    cy.get("#shares-0").clear({ force: true }).type("10");
+    cy.get("#ticker-1").clear({ force: true }).type("GOOGL");
+    cy.get("#shares-1").clear({ force: true }).type("5");
 
     cy.contains("button", /visualize portfolio/i).click();
     cy.get("#summary-section", { timeout: 10000 }).should("not.be.empty");
@@ -158,8 +158,8 @@ describe("Clear All", () => {
   });
 
   it("does nothing if user cancels the confirm dialog", () => {
-    cy.get("#ticker-0").clear().type("AAPL");
-    cy.get("#shares-0").clear().type("10");
+    cy.get("#ticker-0").clear({ force: true }).type("AAPL");
+    cy.get("#shares-0").clear({ force: true }).type("10");
 
     cy.window().then((win) => {
       cy.stub(win, "confirm").returns(false);
@@ -188,8 +188,8 @@ describe("Refresh Prices", () => {
       body: { c: 222.5 },
     }).as("quote");
 
-    cy.get("#ticker-0").clear().type("AAPL");
-    cy.get("#shares-0").clear().type("1");
+    cy.get("#ticker-0").clear({ force: true }).type("AAPL");
+    cy.get("#shares-0").clear({ force: true }).type("1");
 
     cy.contains("button", /refresh prices/i).click();
     cy.wait("@quote");
