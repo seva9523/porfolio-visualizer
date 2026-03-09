@@ -25,11 +25,11 @@ const HIST_AAPL = generateHistoricalData(180, 120);
 const HIST_GOOGL = generateHistoricalData(140, 120);
 
 function setRow(row, { ticker, shares, buyPrice, date }) {
-  cy.get(`#ticker-${row}`).clear().type(ticker);
-  cy.get(`#shares-${row}`).clear().type(String(shares));
+  cy.get(`#ticker-${row}`).clear({ force: true }).type(ticker, { force: true });
+  cy.get(`#shares-${row}`).clear({ force: true }).type(String(shares), { force: true });
   if (buyPrice !== undefined)
-    cy.get(`#purchase-${row}`).clear().type(String(buyPrice));
-  if (date) cy.get(`#date-${row}`).clear().type(date);
+    cy.get(`#purchase-${row}`).clear({ force: true }).type(String(buyPrice), { force: true });
+  if (date) cy.get(`#date-${row}`).clear({ force: true }).type(date, { force: true });
 }
 
 function clickVisualize() {
