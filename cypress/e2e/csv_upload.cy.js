@@ -37,7 +37,7 @@ describe("CSV Upload — import + clear", () => {
 
     cy.get("#csv-status", { timeout: 5000 }).should(
       "contain.text",
-      "Successfully loaded"
+      "Processed"
     );
 
     cy.window().then((win) => {
@@ -76,7 +76,7 @@ describe("CSV Upload — import + clear", () => {
 
     cy.get("#csv-status", { timeout: 5000 }).should(
       "contain.text",
-      "Successfully"
+      "Processed"
     );
 
     cy.window().then((win) => {
@@ -101,7 +101,7 @@ describe("CSV Upload — import + clear", () => {
 
     cy.get("#csv-status", { timeout: 5000 }).should(
       "contain.text",
-      "Successfully"
+      "Processed"
     );
 
     cy.window().then((win) => {
