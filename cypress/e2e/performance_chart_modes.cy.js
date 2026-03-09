@@ -1,6 +1,5 @@
 // cypress/e2e/performance_chart_modes.cy.js
 
-const BASE_URL = Cypress.env("baseUrl") || "https://porfolio-visualizer-taca.vercel.app";
 
 function setRow(row, { ticker, shares, buyPrice, date }) {
   cy.get(`#ticker-${row}`).clear().type(ticker);
@@ -15,7 +14,7 @@ function clickVisualize() {
 
 describe("Performance Chart — historical vs estimated modes", () => {
   beforeEach(() => {
-    cy.visit(BASE_URL);
+    cy.visit("/visualizer.html");
   });
 
   it("uses Estimated chart when historical data is empty and hides time-range buttons", () => {
