@@ -4,6 +4,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2263,10 +2264,20 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
                 holdings.forEach(h => {
                     // Check if this holding existed on this date
                     if (h.purchaseDate && date >= h.purchaseDate) {
-                        // Use historical price if available, otherwise skip
-                        if (h.historicalData && h.historicalData[date]) {
-                            const closePrice = h.historicalData[date].close;
-                            totalValue += h.shares * closePrice;
+                        if (h.historicalData) {
+                            let pricePoint = h.historicalData[date];
+
+                            if (!pricePoint) {
+                                const availableDates = Object.keys(h.historicalData).sort();
+                                const nearestDate = availableDates.reverse().find(d => d <= date && d >= h.purchaseDate);
+                                if (nearestDate) {
+                                    pricePoint = h.historicalData[nearestDate];
+                                }
+                            }
+
+                            if (pricePoint && Number.isFinite(pricePoint.close)) {
+                                totalValue += h.shares * pricePoint.close;
+                            }
                         }
                     }
                 });
@@ -3638,8 +3649,20 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
             sortedDates.forEach(date => {
                 let totalValue = 0;
                 holdings.forEach(h => {
-                    if (h.purchaseDate && date >= h.purchaseDate && h.historicalData && h.historicalData[date]) {
-                        totalValue += h.shares * h.historicalData[date].close;
+                    if (h.purchaseDate && date >= h.purchaseDate && h.historicalData) {
+                        let pricePoint = h.historicalData[date];
+
+                        if (!pricePoint) {
+                            const availableDates = Object.keys(h.historicalData).sort();
+                            const nearestDate = availableDates.reverse().find(d => d <= date && d >= h.purchaseDate);
+                            if (nearestDate) {
+                                pricePoint = h.historicalData[nearestDate];
+                            }
+                        }
+
+                        if (pricePoint && Number.isFinite(pricePoint.close)) {
+                            totalValue += h.shares * pricePoint.close;
+                        }
                     }
                 });
                 
@@ -4078,7 +4101,7 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
                     console.log(`Fetching historical data from ${holding.purchaseDate}...`);
                     holding.historicalData = await fetchHistoricalPrices(
                         holding.ticker, 
-                        holding.purchaseDate,
+                        earliestDate || holding.purchaseDate,
                         null
                     );
                 }
