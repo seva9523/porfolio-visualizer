@@ -1224,19 +1224,14 @@ let charts = [];       // active Chart.js instances
 // Debounce chart destruction to prevent rapid destroy/recreate cycles
 let chartDestroyTimer = null;
 function safeDestroyCharts() {
-    if (chartDestroyTimer) clearTimeout(chartDestroyTimer);
-    chartDestroyTimer = setTimeout(() => {
-        charts.forEach(c => {
-            if (c && typeof c.destroy === 'function') {
-                try {
-                    c.destroy();
-                } catch(e) {
-                    console.warn('Chart destroy error:', e);
-                }
-            }
-        });
-        charts = [];
-    }, 100);
+  if (perfChart) {
+    perfChart.destroy();
+    perfChart = null;
+  }
+  if (corrChart) {
+    corrChart.destroy();
+    corrChart = null;
+  }
 }
 let compareMode = false;
 let compareSet = new Set();
