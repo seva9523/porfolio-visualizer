@@ -1,10 +1,3 @@
-
-
-
-
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1732,6 +1725,8 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
         let currentTimeRange = '7D';
         let autoVisualizeTimeout = null;
         let removeVisualizeTimeout = null;
+        let historicalDataMemoryCache = {};
+        const HISTORICAL_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
 
         // Portfolio management
         let currentPortfolio = 'default';
@@ -1862,11 +1857,12 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
             let count = 0;
             const keys = Object.keys(localStorage);
             keys.forEach(key => {
-                if (key.startsWith('historical_')) {
+                if (key.startsWith('historical_') || key.startsWith('historical_api_')) {
                     localStorage.removeItem(key);
                     count++;
                 }
             });
+            historicalDataMemoryCache = {};
             console.log(`Cleared ${count / 2} cached historical data entries`);
             alert(`Cache cleared! Removed ${count / 2} cached stock data entries.`);
         }
@@ -3855,40 +3851,119 @@ function createAllocationDriftChart(result, targetWeights, textColor, gridColor)
             });
         }
 
+        function normalizeIsoDate(value) {
+            if (!value) return '';
+            const d = new Date(value);
+            if (Number.isNaN(d.getTime())) return '';
+            return d.toISOString().split('T')[0];
+        }
+
+        function sliceHistoricalRange(data, fromDate, toDate) {
+            if (!data || typeof data !== 'object') return {};
+            const from = normalizeIsoDate(fromDate) || '1900-01-01';
+            const to = normalizeIsoDate(toDate) || '9999-12-31';
+            const sliced = {};
+            Object.keys(data).sort().forEach(date => {
+                if (date >= from && date <= to) {
+                    sliced[date] = data[date];
+                }
+            });
+            return sliced;
+        }
+
+        function mergeHistoricalData(existingData, incomingData) {
+            return { ...(existingData || {}), ...(incomingData || {}) };
+        }
+
         async function fetchHistoricalPrices(ticker, fromDate, toDate) {
-            // First, check if we have CSV data in localStorage
-            const csvDataKey = `csv_${ticker}`;
+            const symbol = (ticker || '').toUpperCase().trim();
+            if (!symbol) return {};
+
+            const requestedFrom = normalizeIsoDate(fromDate);
+            if (!requestedFrom) return {};
+
+            const today = new Date().toISOString().split('T')[0];
+            let requestedTo = normalizeIsoDate(toDate) || today;
+            if (requestedTo > today) requestedTo = today;
+
+            const csvDataKey = `csv_${symbol}`;
             const csvData = localStorage.getItem(csvDataKey);
-            
+
             if (csvData) {
-                console.log(`✅ Using uploaded CSV data for ${ticker}`);
-                return JSON.parse(csvData);
+                console.log(`✅ Using uploaded CSV data for ${symbol}`);
+                return sliceHistoricalRange(JSON.parse(csvData), requestedFrom, requestedTo);
             }
-            
-            // If no CSV data, try API
+
+            const storageKey = `historical_api_${symbol}`;
             try {
-                const today = new Date().toISOString().split('T')[0];
-                const to = toDate || today;
-                
-                console.log(`📊 Fetching ${ticker} from Yahoo Chart API...`);
-                const response = await fetch(`/api/historical?symbol=${encodeURIComponent(ticker)}&from=${encodeURIComponent(fromDate)}&to=${encodeURIComponent(to)}`);
+                const persistedRaw = localStorage.getItem(storageKey);
+                if (persistedRaw) {
+                    const persisted = JSON.parse(persistedRaw);
+                    if (
+                        persisted &&
+                        persisted.data &&
+                        persisted.from &&
+                        persisted.to &&
+                        persisted.cachedAt &&
+                        (Date.now() - Number(persisted.cachedAt) < HISTORICAL_CACHE_TTL_MS)
+                    ) {
+                        historicalDataMemoryCache[symbol] = persisted;
+                    }
+                }
+            } catch (e) {
+                console.warn(`Could not read cached historical data for ${symbol}:`, e);
+            }
+
+            const cached = historicalDataMemoryCache[symbol];
+            if (cached && cached.data && cached.from <= requestedFrom && cached.to >= requestedTo) {
+                console.log(`♻️ Using cached historical data for ${symbol} (${cached.from} → ${cached.to})`);
+                return sliceHistoricalRange(cached.data, requestedFrom, requestedTo);
+            }
+
+            let fetchFrom = requestedFrom;
+            let fetchTo = requestedTo;
+
+            if (cached && cached.data) {
+                fetchFrom = cached.from < requestedFrom ? cached.from : requestedFrom;
+                fetchTo = cached.to > requestedTo ? cached.to : requestedTo;
+            }
+
+            try {
+                console.log(`📊 Fetching ${symbol} from Yahoo Chart API (${fetchFrom} → ${fetchTo})...`);
+                const response = await fetch(`/api/historical?symbol=${encodeURIComponent(symbol)}&from=${encodeURIComponent(fetchFrom)}&to=${encodeURIComponent(fetchTo)}`);
                 if (!response.ok) {
-                    console.error(`Historical API error for ${ticker}:`, response.status, await response.text());
-                    return {};
+                    console.error(`Historical API error for ${symbol}:`, response.status, await response.text());
+                    return cached?.data ? sliceHistoricalRange(cached.data, requestedFrom, requestedTo) : {};
                 }
                 const data = await response.json();
-                
+
                 if (data.error) {
-                    console.error(`❌ Error fetching data for ${ticker}:`, data.error);
-                    return {};
+                    console.error(`❌ Error fetching data for ${symbol}:`, data.error);
+                    return cached?.data ? sliceHistoricalRange(cached.data, requestedFrom, requestedTo) : {};
                 }
-                
-                console.log(`✅ Got ${Object.keys(data.data || {}).length} dates for ${ticker} from Yahoo Chart API`);
-                return data.data || {};
-                
+
+                const mergedData = mergeHistoricalData(cached?.data, data.data || {});
+                const cachePayload = {
+                    from: fetchFrom,
+                    to: fetchTo,
+                    cachedAt: Date.now(),
+                    data: mergedData
+                };
+
+                historicalDataMemoryCache[symbol] = cachePayload;
+
+                try {
+                    localStorage.setItem(storageKey, JSON.stringify(cachePayload));
+                } catch (e) {
+                    console.warn(`Could not persist historical cache for ${symbol}:`, e);
+                }
+
+                console.log(`✅ Got ${Object.keys(mergedData).length} cached dates for ${symbol}`);
+                return sliceHistoricalRange(mergedData, requestedFrom, requestedTo);
+
             } catch (error) {
-                console.error(`❌ Error fetching ${ticker}:`, error);
-                return {};
+                console.error(`❌ Error fetching ${symbol}:`, error);
+                return cached?.data ? sliceHistoricalRange(cached.data, requestedFrom, requestedTo) : {};
             }
         }
 
