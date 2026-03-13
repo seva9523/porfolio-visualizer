@@ -58,6 +58,7 @@ module.exports = async (req, res) => {
     let fromTs;
     let toTs;
 
+    // FROM date
     if (from) {
       fromTs = Math.floor(new Date(`${from}T00:00:00Z`).getTime() / 1000);
     } else {
@@ -66,10 +67,17 @@ module.exports = async (req, res) => {
       fromTs = Math.floor(d.getTime() / 1000);
     }
 
+    // TO date (never allow future dates)
+    const today = new Date();
+    const todayTs = Math.floor(today.getTime() / 1000);
+
     if (to) {
       toTs = Math.floor(new Date(`${to}T23:59:59Z`).getTime() / 1000);
+      if (toTs > todayTs) {
+        toTs = todayTs;
+      }
     } else {
-      toTs = Math.floor(Date.now() / 1000);
+      toTs = todayTs;
     }
 
     if (!Number.isFinite(fromTs) || !Number.isFinite(toTs) || fromTs <= 0 || toTs <= 0 || fromTs >= toTs) {
