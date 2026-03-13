@@ -2079,8 +2079,8 @@ toggleViewMode('simple');
 requestAnimationFrame(() => {
   if (c.dates.length > 20) {
     drawPerf(c);
-    if (document.getElementById('dd-ch')) drawDrawdown(c);
-    if (document.getElementById('vol-ch')) drawRollingVol(c);
+    if (document.getElementById('dd-ch')) drawDD(c);
+    if (document.getElementById('vol-ch')) drawVol(c);
     if (document.getElementById('rcorr-ch')) drawRollingCorr(c);
   } else {
     const perfWrap = document.getElementById('perf-ch')?.closest('.chart-wrap');
