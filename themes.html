@@ -2072,16 +2072,23 @@ function showDetail(id){
     `;
 
     // Draw charts — perf always, others only if we have data
-    if(c.dates.length>20){
-        drawPerf(c);drawDD(c);drawVol(c);drawRollingCorr(c);
-    } else {
-        const perfWrap=document.getElementById('perf-ch')?.closest('.chart-wrap');
-        if(perfWrap) perfWrap.innerHTML='<p style="text-align:center;color:var(--text2);padding:40px 20px;font-size:13px">⚠️ Chart data could not be loaded. Yahoo Finance may be temporarily unavailable or blocked by your browser. Try refreshing or disabling any ad blockers.</p>';
-    }
-    // Apply initial view mode
-    toggleViewMode('simple');
-}
+    // Keep simple view by default when opening a detail page
+toggleViewMode('simple');
 
+// Draw charts only after the DOM and view mode have settled
+requestAnimationFrame(() => {
+  if (c.dates.length > 20) {
+    drawPerf(c);
+    if (document.getElementById('dd-ch')) drawDrawdown(c);
+    if (document.getElementById('vol-ch')) drawRollingVol(c);
+    if (document.getElementById('rcorr-ch')) drawRollingCorr(c);
+  } else {
+    const perfWrap = document.getElementById('perf-ch')?.closest('.chart-wrap');
+    if (perfWrap) {
+      perfWrap.innerHTML = '<div class="note" style="padding:16px">Not enough historical data to display a performance chart.</div>';
+    }
+  }
+});
 function showList(){
     safeDestroyCharts();
     document.getElementById('dv').classList.remove('on');
