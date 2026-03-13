@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 
 <html lang="en">
@@ -1219,9 +1220,6 @@ function toggleViewMode(mode){
 let cache = {};        // themeId -> {hist, quote, computed, trend}
 let benchCache = {};   // "SP500"|"AGG" -> {hist, monthly, daily}
 let portfolio = null;  // user portfolio from localStorage
-let cache = {};        // themeId -> {hist, quote, computed, trend}
-let benchCache = {};   // "SP500"|"AGG" -> {hist, monthly, daily}
-let portfolio = null;  // user portfolio from localStorage
 let charts = [];       // active Chart.js instances
 
 function safeDestroyCharts() {
@@ -2089,6 +2087,8 @@ requestAnimationFrame(() => {
     }
   }
 });
+}
+
 function showList(){
     safeDestroyCharts();
     document.getElementById('dv').classList.remove('on');
@@ -2110,7 +2110,7 @@ function sample(arr,max){
 }
 
 function drawPerf(c){
-    const ctx=document.getElementById('perf-ch');if(!ctx)return;
+    const canvas=document.getElementById('perf-ch');if(!canvas)return;const ctx=canvas.getContext('2d');if(!ctx)return;
     if(ctx.parentElement) ctx.parentElement.style.height='280px';
     const{t,g}=chCol();const base=c.closes[0];
     const norm=c.closes.map(v=>(v/base)*100);
@@ -2119,15 +2119,15 @@ function drawPerf(c){
 }
 
 function drawDD(c){
-    const ctx=document.getElementById('dd-ch');if(!ctx)return;
+    const canvas=document.getElementById('dd-ch');if(!canvas)return;const ctx=canvas.getContext('2d');if(!ctx)return;
     if(ctx.parentElement) ctx.parentElement.style.height='200px';
     const{t,g}=chCol();
     const{d,ix}=sample(c.ddSeries,500);const labels=ix.map(i=>c.dates[i]);
-    charts.push(new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'Drawdown %',data:d,borderColor:'var(--red)',backgroundColor:'rgba(231,76,60,.1)',fill:true,pointRadius:0,borderWidth:1.5,tension:.1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:t}}},scales:{x:{ticks:{color:t,maxTicksLimit:8},grid:{color:g}},y:{ticks:{color:t,callback:v=>v.toFixed(0)+'%'},grid:{color:g}}}}}));
+    charts.push(new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'Drawdown %',data:d,borderColor:'#DC2626',backgroundColor:'rgba(231,76,60,.1)',fill:true,pointRadius:0,borderWidth:1.5,tension:.1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:t}}},scales:{x:{ticks:{color:t,maxTicksLimit:8},grid:{color:g}},y:{ticks:{color:t,callback:v=>v.toFixed(0)+'%'},grid:{color:g}}}}}));
 }
 
 function drawVol(c){
-    const ctx=document.getElementById('vol-ch');if(!ctx)return;
+    const canvas=document.getElementById('vol-ch');if(!canvas)return;const ctx=canvas.getContext('2d');if(!ctx)return;
     if(ctx.parentElement) ctx.parentElement.style.height='200px';
     const{t,g}=chCol();const w=30;const rv=[],vd=[];
     for(let i=w;i<c.dr.length;i++){
@@ -2136,11 +2136,11 @@ function drawVol(c){
         vd.push(c.dates[i+1]||'');
     }
     const{d,ix}=sample(rv,500);const labels=ix.map(i=>vd[i]);
-    charts.push(new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'30-Day Rolling Vol (Ann.)',data:d,borderColor:'var(--orange)',backgroundColor:'rgba(241,143,1,.1)',fill:true,pointRadius:0,borderWidth:1.5,tension:.1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:t}}},scales:{x:{ticks:{color:t,maxTicksLimit:8},grid:{color:g}},y:{ticks:{color:t,callback:v=>v.toFixed(0)+'%'},grid:{color:g}}}}}));
+    charts.push(new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'30-Day Rolling Vol (Ann.)',data:d,borderColor:'#F59E0B',backgroundColor:'rgba(241,143,1,.1)',fill:true,pointRadius:0,borderWidth:1.5,tension:.1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:t}}},scales:{x:{ticks:{color:t,maxTicksLimit:8},grid:{color:g}},y:{ticks:{color:t,callback:v=>v.toFixed(0)+'%'},grid:{color:g}}}}}));
 }
 
 function drawRollingCorr(c){
-    const ctx=document.getElementById('rcorr-ch');if(!ctx)return;
+    const canvas=document.getElementById('rcorr-ch');if(!canvas)return;const ctx=canvas.getContext('2d');if(!ctx)return;
     if(ctx.parentElement) ctx.parentElement.style.height='200px';
     const{t,g}=chCol();
     const spD=benchCache.SP500?.daily||[];const len=Math.min(c.dr.length,spD.length);
@@ -2153,7 +2153,7 @@ function drawRollingCorr(c){
         rd.push(c.dates[c.dates.length-len+i]||'');
     }
     const{d,ix}=sample(rc,500);const labels=ix.map(i=>rd[i]);
-    charts.push(new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'60-Day Rolling Corr vs S&P 500',data:d,borderColor:'var(--blue)',backgroundColor:'rgba(46,134,171,.1)',fill:true,pointRadius:0,borderWidth:1.5,tension:.1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:t}}},scales:{x:{ticks:{color:t,maxTicksLimit:8},grid:{color:g}},y:{min:-1,max:1,ticks:{color:t},grid:{color:g}}}}}));
+    charts.push(new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'60-Day Rolling Corr vs S&P 500',data:d,borderColor:'#2E86AB',backgroundColor:'rgba(46,134,171,.1)',fill:true,pointRadius:0,borderWidth:1.5,tension:.1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:t}}},scales:{x:{ticks:{color:t,maxTicksLimit:8},grid:{color:g}},y:{min:-1,max:1,ticks:{color:t},grid:{color:g}}}}}));
 }
 
 // ============================================================================
@@ -2292,7 +2292,7 @@ function showCompare(){
 }
 
 function drawComparePerf(themes){
-    const ctx=document.getElementById('cmp-perf-ch');if(!ctx)return;
+    const canvas=document.getElementById('cmp-perf-ch');if(!canvas)return;const ctx=canvas.getContext('2d');if(!ctx)return;
     if(ctx.parentElement) ctx.parentElement.style.height='300px';
     const{t,g}=chCol();
     const colors=['#5E548E','#2E86AB','#27ae60','#F18F01','#e74c3c'];
@@ -2408,7 +2408,7 @@ function runMC(init,ar,av,yrs,ns){
 }
 
 function drawMCHist(cf,bf,tn,pct){
-    const ctx=document.getElementById('mc-hist');if(!ctx)return;
+    const canvas=document.getElementById('mc-hist');if(!canvas)return;const ctx=canvas.getContext('2d');if(!ctx)return;
     if(ctx.parentElement) ctx.parentElement.style.height='200px';
     const{t}=chCol();const all=[...cf,...bf];
     const mn=Math.min(...all),mx=Math.max(...all);const bins=30;const bw=(mx-mn)/bins;
