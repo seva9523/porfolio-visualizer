@@ -1219,19 +1219,18 @@ function toggleViewMode(mode){
 let cache = {};        // themeId -> {hist, quote, computed, trend}
 let benchCache = {};   // "SP500"|"AGG" -> {hist, monthly, daily}
 let portfolio = null;  // user portfolio from localStorage
+let cache = {};        // themeId -> {hist, quote, computed, trend}
+let benchCache = {};   // "SP500"|"AGG" -> {hist, monthly, daily}
+let portfolio = null;  // user portfolio from localStorage
 let charts = [];       // active Chart.js instances
 
-// Debounce chart destruction to prevent rapid destroy/recreate cycles
-let chartDestroyTimer = null;
 function safeDestroyCharts() {
-  if (perfChart) {
-    perfChart.destroy();
-    perfChart = null;
-  }
-  if (corrChart) {
-    corrChart.destroy();
-    corrChart = null;
-  }
+  charts.forEach(ch => {
+    try {
+      if (ch) ch.destroy();
+    } catch (e) {}
+  });
+  charts = [];
 }
 let compareMode = false;
 let compareSet = new Set();
