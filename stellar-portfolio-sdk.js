@@ -14,19 +14,20 @@ window.StellarPortfolio = (() => {
   };
 
   // ============================
-  // CACHE (IMPORTANT FIX)
+  // CACHE
   // ============================
   const CACHE = {
     prices: {},
     xlm: null,
     pools: null,
-    poolTimestamp: 0
+    poolTimestamp: 0,
+    fx: {}
   };
 
   const CACHE_TTL = 60 * 1000;
 
   // ============================
-  // NORMALIZE (SAFE)
+  // NORMALIZE
   // ============================
   function normalize(symbol) {
     if (!symbol) return null;
@@ -55,7 +56,6 @@ window.StellarPortfolio = (() => {
       const price = data?.[id]?.usd ?? null;
 
       CACHE.prices[id] = { value: price, time: now };
-
       return price;
     } catch {
       return null;
@@ -70,7 +70,53 @@ window.StellarPortfolio = (() => {
   }
 
   // ============================
-  // DEX POOL CACHE (CRITICAL FIX)
+  // FX ENGINE (NEW)
+  // ============================
+  const STABLE_FIAT_MAP = {
+    USDC: "USD",
+    USDT: "USD",
+    PYUSD: "USD",
+    USDX: "USD",
+    USDY: "USD",
+    USDM0: "USD",
+    USDM1: "USD",
+
+    EURC: "EUR",
+    EURX: "EUR",
+
+    GBPx: "GBP",
+    GBPX: "GBP"
+  };
+
+  async function getFXRateToUSD(currency) {
+    const now = Date.now();
+
+    if (CACHE.fx[currency] && CACHE.fx[currency].time > now - CACHE_TTL) {
+      return CACHE.fx[currency].value;
+    }
+
+    try {
+      const res = await fetch(
+        `https://api.exchangerate.host/latest?base=${currency}&symbols=USD`
+      );
+
+      const data = await res.json();
+      const rate = data?.rates?.USD ?? null;
+
+      CACHE.fx[currency] = { value: rate, time: now };
+
+      return rate;
+    } catch {
+      return null;
+    }
+  }
+
+  function isStablecoin(symbol) {
+    return STABLE_FIAT_MAP[symbol] !== undefined;
+  }
+
+  // ============================
+  // DEX CACHE
   // ============================
   async function getPools() {
     const now = Date.now();
@@ -96,9 +142,6 @@ window.StellarPortfolio = (() => {
     return pools;
   }
 
-  // ============================
-  // DEX PRICE ENGINE (FIXED)
-  // ============================
   async function fetchStellarDEXPrice(asset) {
     const clean = normalize(asset);
     const pools = await getPools();
@@ -136,13 +179,17 @@ window.StellarPortfolio = (() => {
   }
 
   // ============================
-  // PRICE ENGINE (FINAL FIXED FLOW)
+  // PRICE ENGINE (FINAL)
   // ============================
   async function getLivePrice(symbol) {
     const clean = normalize(symbol);
 
-    // 🔥 FIXED: USDC always first
-    if (clean === "USDC") return 1;
+    // ⭐ STABLECOINS → FX (FIXED)
+    if (isStablecoin(clean)) {
+      const fiat = STABLE_FIAT_MAP[clean];
+      const rate = await getFXRateToUSD(fiat);
+      return rate ?? (fiat === "USD" ? 1 : null);
+    }
 
     if (clean === "XLM" || clean === "YXLM") {
       return await getXLMPrice();
@@ -182,7 +229,7 @@ window.StellarPortfolio = (() => {
   }
 
   // ============================
-  // PORTFOLIO ENGINE (FIXED TOTALS)
+  // PORTFOLIO ENGINE
   // ============================
   async function getPortfolio(addresses = []) {
     const portfolio = {
@@ -202,8 +249,11 @@ window.StellarPortfolio = (() => {
         const amount = parseFloat(b.balance);
         const price = await getLivePrice(symbol);
 
-        // 🔥 FIXED VALUE LOGIC
-        const value = price !== null ? amount * price : 0;
+        let value = 0;
+
+        if (price !== null) {
+          value = amount * price;
+        }
 
         if (!portfolio.assets[symbol]) {
           portfolio.assets[symbol] = {
