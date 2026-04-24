@@ -1,7 +1,7 @@
 window.StellarPortfolio = (() => {
 
   // ============================
-  // METADATA
+  // TOKEN METADATA
   // ============================
   const TOKEN_METADATA = {
     XLM: { name: "Stellar Lumens", icon: "https://raw.githubusercontent.com/stellar/stellar-icons/main/png/stellar.png", type: "native" },
@@ -24,7 +24,7 @@ window.StellarPortfolio = (() => {
   };
 
   // ============================
-  // STABLECOIN MAP
+  // STABLECOINS
   // ============================
   const STABLE_FIAT_MAP = {
     USDC: "USD",
@@ -32,61 +32,11 @@ window.StellarPortfolio = (() => {
     PYUSD: "USD",
     USDX: "USD",
     USDY: "USD",
-    USDM0: "USD",
-    USDM1: "USD",
     EURC: "EUR",
     EURX: "EUR",
     GBPx: "GBP",
     GBPX: "GBP"
   };
-
-  // ============================
-  // SELF-LEARNING GRAPH
-  // ============================
-  const PRICE_GRAPH = {
-    nodes: {},
-    edges: {}
-  };
-
-  function addNode(symbol) {
-    PRICE_GRAPH.nodes[symbol] = true;
-  }
-
-  function addEdge(from, to, rate) {
-    if (!PRICE_GRAPH.edges[from]) {
-      PRICE_GRAPH.edges[from] = {};
-    }
-    PRICE_GRAPH.edges[from][to] = rate;
-  }
-
-  function findPricePath(start, target = "USD", visited = new Set()) {
-    if (start === target) return 1;
-
-    visited.add(start);
-
-    const neighbors = PRICE_GRAPH.edges[start];
-    if (!neighbors) return null;
-
-    for (const next in neighbors) {
-      if (visited.has(next)) continue;
-
-      const rate = neighbors[next];
-      const result = findPricePath(next, target, visited);
-
-      if (result !== null) {
-        return rate * result;
-      }
-    }
-
-    return null;
-  }
-
-  function learn(from, to, rate) {
-    addNode(from);
-    addNode(to);
-    addEdge(from, to, rate);
-    addEdge(to, from, 1 / rate);
-  }
 
   // ============================
   // CACHE
@@ -102,11 +52,16 @@ window.StellarPortfolio = (() => {
   const CACHE_TTL = 60000;
 
   // ============================
-  // NORMALIZE
+  // NORMALIZE SAFE
   // ============================
   function normalize(s) {
     if (!s) return null;
     return String(s).toUpperCase().trim().replace(/[^A-Z0-9]/g, "");
+  }
+
+  function safeSymbol(b) {
+    if (b.asset_type === "native") return "XLM";
+    return normalize(b.asset_code || "UNKNOWN");
   }
 
   // ============================
@@ -137,13 +92,13 @@ window.StellarPortfolio = (() => {
 
   async function getXLMPrice() {
     if (CACHE.xlm) return CACHE.xlm;
-    const price = await fetchCoinGecko("stellar");
-    CACHE.xlm = price;
-    return price;
+    const p = await fetchCoinGecko("stellar");
+    CACHE.xlm = p;
+    return p;
   }
 
   // ============================
-  // FX ENGINE
+  // FX
   // ============================
   async function getFX(currency) {
     const now = Date.now();
@@ -168,12 +123,12 @@ window.StellarPortfolio = (() => {
     }
   }
 
-  function isStable(symbol) {
-    return STABLE_FIAT_MAP[symbol] !== undefined;
+  function isStable(s) {
+    return STABLE_FIAT_MAP[s] !== undefined;
   }
 
   // ============================
-  // DEX ENGINE
+  // DEX POOLS
   // ============================
   async function getPools() {
     const now = Date.now();
@@ -229,8 +184,6 @@ window.StellarPortfolio = (() => {
       if (price && liq > bestLiquidity) {
         best = price;
         bestLiquidity = liq;
-
-        learn(clean, "XLM", price);
       }
     }
 
@@ -238,14 +191,12 @@ window.StellarPortfolio = (() => {
   }
 
   // ============================
-  // PRICE ENGINE (SELF-LEARNING)
+  // PRICE ENGINE
   // ============================
   async function getPrice(symbol) {
     let clean = normalize(symbol);
-
     clean = TOKEN_ALIASES[clean] || clean;
 
-    // stablecoins
     if (isStable(clean)) {
       const fiat = STABLE_FIAT_MAP[clean];
       const fx = await getFX(fiat);
@@ -263,26 +214,13 @@ window.StellarPortfolio = (() => {
 
     if (CG[clean]) {
       const p = await fetchCoinGecko(CG[clean]);
-      if (p) {
-        learn(clean, "USD", p);
-        return p;
-      }
+      return p;
     }
 
     const dex = await fetchDEXPrice(clean);
     if (dex !== null) return dex;
 
-    const learned = findPricePath(clean, "USD");
-    if (learned !== null) return learned;
-
-    const fallback = {
-      AQUA: 0.0032,
-      HELIX: 0.015,
-      FELIX: 0.08,
-      YHELIX: 0.015
-    };
-
-    return fallback[clean] ?? null;
+    return null;
   }
 
   // ============================
@@ -295,9 +233,10 @@ window.StellarPortfolio = (() => {
   }
 
   // ============================
-  // PORTFOLIO
+  // PORTFOLIO (FIXED - NO 0 BUGS)
   // ============================
   async function getPortfolio(addresses = []) {
+
     const portfolio = {
       wallets: addresses.length,
       totalUSD: 0,
@@ -305,34 +244,56 @@ window.StellarPortfolio = (() => {
       assets: {}
     };
 
+    const allSymbols = new Set();
+    const rawData = [];
+
+    // STEP 1: collect everything safely
     for (const addr of addresses) {
       const balances = await fetchBalances(addr);
 
       for (const b of balances) {
-        const isNative = b.asset_type === "native";
-        const symbol = normalize(isNative ? "XLM" : b.asset_code);
+        const symbol = safeSymbol(b);
+        if (!symbol || symbol === "UNKNOWN") continue;
 
         const amount = parseFloat(b.balance);
-        const price = await getPrice(symbol);
 
-        const value = price ? amount * price : 0;
+        rawData.push({ symbol, amount });
 
-        if (!portfolio.assets[symbol]) {
-          portfolio.assets[symbol] = {
-            symbol,
-            name: TOKEN_METADATA[symbol]?.name || symbol,
-            icon: TOKEN_METADATA[symbol]?.icon || "",
-            totalAmount: 0,
-            totalValueUSD: 0,
-            priceUSD: price
-          };
-        }
+        allSymbols.add(symbol);
+      }
+    }
 
-        portfolio.assets[symbol].totalAmount += amount;
-        portfolio.assets[symbol].totalValueUSD += value;
-        portfolio.totalUSD += value;
+    // STEP 2: batch price fetch (CRITICAL FIX)
+    const priceMap = {};
+    await Promise.all([...allSymbols].map(async (s) => {
+      priceMap[s] = await getPrice(s);
+    }));
 
-        if (symbol === "XLM") portfolio.totalXLM += amount;
+    // STEP 3: build portfolio
+    for (const item of rawData) {
+      const { symbol, amount } = item;
+
+      const price = priceMap[symbol];
+      const value = price !== null ? amount * price : 0;
+
+      if (!portfolio.assets[symbol]) {
+        portfolio.assets[symbol] = {
+          symbol,
+          name: TOKEN_METADATA[symbol]?.name || symbol,
+          icon: TOKEN_METADATA[symbol]?.icon || "",
+          totalAmount: 0,
+          totalValueUSD: 0,
+          priceUSD: price
+        };
+      }
+
+      portfolio.assets[symbol].totalAmount += amount;
+      portfolio.assets[symbol].totalValueUSD += value;
+
+      portfolio.totalUSD += value;
+
+      if (symbol === "XLM") {
+        portfolio.totalXLM += amount;
       }
     }
 
