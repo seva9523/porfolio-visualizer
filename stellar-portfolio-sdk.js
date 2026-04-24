@@ -1,7 +1,7 @@
 window.StellarPortfolio = (() => {
 
   // ============================
-  // TOKEN METADATA
+  // METADATA
   // ============================
   const TOKEN_METADATA = {
     XLM: { name: "Stellar Lumens", icon: "https://raw.githubusercontent.com/stellar/stellar-icons/main/png/stellar.png", type: "native" },
@@ -9,33 +9,7 @@ window.StellarPortfolio = (() => {
     AQUA: { name: "Aqua Token", icon: "https://aqua.network/logo.png", type: "token" },
     HELIX: { name: "Helix Token", icon: "https://cdn-icons-png.flaticon.com/512/6001/6001368.png", type: "token" },
     FELIX: { name: "Felix Token", icon: "https://cdn-icons-png.flaticon.com/512/6001/6001368.png", type: "token" },
-    YHELIX: { name: "Yield Helix", icon: "https://cdn-icons-png.flaticon.com/512/6001/6001368.png", type: "token" },
     YXLM: { name: "Yield XLM", icon: "https://raw.githubusercontent.com/stellar/stellar-icons/main/png/stellar.png", type: "token" }
-  };
-
-  // ============================
-  // ALIASES (WRAPPED TOKENS)
-  // ============================
-  const TOKEN_ALIASES = {
-    YXLM: "XLM",
-    YBTC: "BTC",
-    YETH: "ETH",
-    YUSDC: "USDC"
-  };
-
-  // ============================
-  // STABLECOINS
-  // ============================
-  const STABLE_FIAT_MAP = {
-    USDC: "USD",
-    USDT: "USD",
-    PYUSD: "USD",
-    USDX: "USD",
-    USDY: "USD",
-    EURC: "EUR",
-    EURX: "EUR",
-    GBPx: "GBP",
-    GBPX: "GBP"
   };
 
   // ============================
@@ -43,46 +17,71 @@ window.StellarPortfolio = (() => {
   // ============================
   const CACHE = {
     prices: {},
-    fx: {},
     xlm: null,
-    pools: null,
-    poolTime: 0
+    gecko: {},
+    time: {}
   };
 
-  const CACHE_TTL = 60000;
+  const TTL = 60 * 1000;
 
   // ============================
-  // NORMALIZE SAFE
+  // NORMALIZE
   // ============================
-  function normalize(s) {
+  function norm(s) {
     if (!s) return null;
     return String(s).toUpperCase().trim().replace(/[^A-Z0-9]/g, "");
-  }
-
-  function safeSymbol(b) {
-    if (b.asset_type === "native") return "XLM";
-    return normalize(b.asset_code || "UNKNOWN");
   }
 
   // ============================
   // COINGECKO
   // ============================
-  async function fetchCoinGecko(id) {
+  async function coinGecko(id) {
     const now = Date.now();
-
-    if (CACHE.prices[id] && CACHE.prices[id].time > now - CACHE_TTL) {
-      return CACHE.prices[id].value;
+    if (CACHE.prices[id] && CACHE.time[id] > now - TTL) {
+      return CACHE.prices[id];
     }
 
     try {
-      const res = await fetch(
+      const r = await fetch(
         `https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=usd`
       );
+      const d = await r.json();
+      const p = d?.[id]?.usd ?? null;
 
+      CACHE.prices[id] = p;
+      CACHE.time[id] = now;
+
+      return p;
+    } catch {
+      return null;
+    }
+  }
+
+  // ============================
+  // GECKOTERMINAL (🔥 MAIN FIX)
+  // ============================
+  async function geckoTerminalPrice(symbol) {
+    const clean = norm(symbol);
+
+    if (CACHE.gecko[clean] && CACHE.time[clean] > Date.now() - TTL) {
+      return CACHE.gecko[clean];
+    }
+
+    try {
+      // 🔥 search pools on Stellar chain
+      const url = `https://api.geckoterminal.com/api/v2/networks/stellar/tokens/${clean}`;
+
+      const res = await fetch(url);
       const data = await res.json();
-      const price = data?.[id]?.usd ?? null;
 
-      CACHE.prices[id] = { value: price, time: now };
+      // IMPORTANT: GeckoTerminal structure varies
+      const price =
+        data?.data?.attributes?.price_usd ||
+        data?.data?.attributes?.price ||
+        null;
+
+      CACHE.gecko[clean] = price;
+      CACHE.time[clean] = Date.now();
 
       return price;
     } catch {
@@ -90,135 +89,44 @@ window.StellarPortfolio = (() => {
     }
   }
 
-  async function getXLMPrice() {
+  // ============================
+  // XLM PRICE
+  // ============================
+  async function xlmPrice() {
     if (CACHE.xlm) return CACHE.xlm;
-    const p = await fetchCoinGecko("stellar");
+    const p = await coinGecko("stellar");
     CACHE.xlm = p;
     return p;
   }
 
   // ============================
-  // FX
+  // PRICE ENGINE (FIXED PRIORITY)
   // ============================
-  async function getFX(currency) {
-    const now = Date.now();
+  async function price(symbol) {
+    const s = norm(symbol);
 
-    if (CACHE.fx[currency] && CACHE.fx[currency].time > now - CACHE_TTL) {
-      return CACHE.fx[currency].value;
-    }
+    if (!s) return null;
 
-    try {
-      const res = await fetch(
-        `https://api.exchangerate.host/latest?base=${currency}&symbols=USD`
-      );
+    // stablecoin
+    if (s === "USDC") return 1;
 
-      const data = await res.json();
-      const rate = data?.rates?.USD ?? null;
+    // XLM
+    if (s === "XLM") return await xlmPrice();
 
-      CACHE.fx[currency] = { value: rate, time: now };
+    // 1️⃣ GECKOTERMINAL FIRST (CRITICAL FIX)
+    const gt = await geckoTerminalPrice(s);
+    if (gt !== null) return gt;
 
-      return rate;
-    } catch {
-      return null;
-    }
-  }
-
-  function isStable(s) {
-    return STABLE_FIAT_MAP[s] !== undefined;
-  }
-
-  // ============================
-  // DEX POOLS
-  // ============================
-  async function getPools() {
-    const now = Date.now();
-
-    if (CACHE.pools && now - CACHE.poolTime < CACHE_TTL) {
-      return CACHE.pools;
-    }
-
-    let url = "https://horizon.stellar.org/liquidity_pools?limit=200";
-    let pools = [];
-
-    while (url) {
-      const res = await fetch(url);
-      const data = await res.json();
-
-      pools = pools.concat(data._embedded?.records || []);
-      url = data._links?.next?.href || null;
-    }
-
-    CACHE.pools = pools;
-    CACHE.poolTime = now;
-
-    return pools;
-  }
-
-  async function fetchDEXPrice(asset) {
-    const clean = normalize(asset);
-    const pools = await getPools();
-
-    let best = null;
-    let bestLiquidity = 0;
-
-    for (const p of pools) {
-      const a = p.reserves?.[0];
-      const b = p.reserves?.[1];
-      if (!a || !b) continue;
-
-      const A = normalize(a.asset?.code || (a.asset_type === "native" ? "XLM" : ""));
-      const B = normalize(b.asset?.code || (b.asset_type === "native" ? "XLM" : ""));
-
-      const amtA = parseFloat(a.amount);
-      const amtB = parseFloat(b.amount);
-      const liq = parseFloat(p.total_shares || 0);
-
-      let price = null;
-
-      if (A === "XLM" && B === clean) {
-        price = amtA / amtB;
-      } else if (B === "XLM" && A === clean) {
-        price = amtB / amtA;
-      }
-
-      if (price && liq > bestLiquidity) {
-        best = price;
-        bestLiquidity = liq;
-      }
-    }
-
-    return best;
-  }
-
-  // ============================
-  // PRICE ENGINE
-  // ============================
-  async function getPrice(symbol) {
-    let clean = normalize(symbol);
-    clean = TOKEN_ALIASES[clean] || clean;
-
-    if (isStable(clean)) {
-      const fiat = STABLE_FIAT_MAP[clean];
-      const fx = await getFX(fiat);
-      return fx ?? (fiat === "USD" ? 1 : null);
-    }
-
-    if (clean === "XLM") return await getXLMPrice();
-
-    const CG = {
+    // 2️⃣ COINGECKO fallback
+    const map = {
       BTC: "bitcoin",
       ETH: "ethereum",
-      XRP: "ripple",
-      USDT: "tether"
+      XRP: "ripple"
     };
 
-    if (CG[clean]) {
-      const p = await fetchCoinGecko(CG[clean]);
-      return p;
+    if (map[s]) {
+      return await coinGecko(map[s]);
     }
-
-    const dex = await fetchDEXPrice(clean);
-    if (dex !== null) return dex;
 
     return null;
   }
@@ -226,116 +134,103 @@ window.StellarPortfolio = (() => {
   // ============================
   // BALANCES
   // ============================
-  async function fetchBalances(addr) {
-    const res = await fetch(`https://horizon.stellar.org/accounts/${addr}`);
-    const data = await res.json();
-    return data.balances || [];
+  async function balances(addr) {
+    const r = await fetch(`https://horizon.stellar.org/accounts/${addr}`);
+    const d = await r.json();
+    return d.balances || [];
   }
 
   // ============================
-  // PORTFOLIO (FIXED - NO 0 BUGS)
+  // PORTFOLIO (FIXED)
   // ============================
-  async function getPortfolio(addresses = []) {
+  async function portfolio(addresses = []) {
 
-    const portfolio = {
+    const out = {
       wallets: addresses.length,
       totalUSD: 0,
       totalXLM: 0,
       assets: {}
     };
 
-    const allSymbols = new Set();
-    const rawData = [];
+    const symbols = new Set();
+    const rows = [];
 
-    // STEP 1: collect everything safely
-    for (const addr of addresses) {
-      const balances = await fetchBalances(addr);
+    for (const a of addresses) {
+      const b = await balances(a);
 
-      for (const b of balances) {
-        const symbol = safeSymbol(b);
-        if (!symbol || symbol === "UNKNOWN") continue;
+      for (const x of b) {
+        const s = x.asset_type === "native" ? "XLM" : norm(x.asset_code);
+        const amt = parseFloat(x.balance);
 
-        const amount = parseFloat(b.balance);
+        if (!s) continue;
 
-        rawData.push({ symbol, amount });
-
-        allSymbols.add(symbol);
+        symbols.add(s);
+        rows.push({ s, amt });
       }
     }
 
-    // STEP 2: batch price fetch (CRITICAL FIX)
-    const priceMap = {};
-    await Promise.all([...allSymbols].map(async (s) => {
-      priceMap[s] = await getPrice(s);
+    const prices = {};
+    await Promise.all([...symbols].map(async (s) => {
+      prices[s] = await price(s);
     }));
 
-    // STEP 3: build portfolio
-    for (const item of rawData) {
-      const { symbol, amount } = item;
+    for (const r of rows) {
+      const p = prices[r.s];
+      const val = p ? r.amt * p : 0;
 
-      const price = priceMap[symbol];
-      const value = price !== null ? amount * price : 0;
-
-      if (!portfolio.assets[symbol]) {
-        portfolio.assets[symbol] = {
-          symbol,
-          name: TOKEN_METADATA[symbol]?.name || symbol,
-          icon: TOKEN_METADATA[symbol]?.icon || "",
+      if (!out.assets[r.s]) {
+        out.assets[r.s] = {
+          symbol: r.s,
+          name: TOKEN_METADATA[r.s]?.name || r.s,
           totalAmount: 0,
           totalValueUSD: 0,
-          priceUSD: price
+          priceUSD: p
         };
       }
 
-      portfolio.assets[symbol].totalAmount += amount;
-      portfolio.assets[symbol].totalValueUSD += value;
+      out.assets[r.s].totalAmount += r.amt;
+      out.assets[r.s].totalValueUSD += val;
 
-      portfolio.totalUSD += value;
+      out.totalUSD += val;
 
-      if (symbol === "XLM") {
-        portfolio.totalXLM += amount;
-      }
+      if (r.s === "XLM") out.totalXLM += r.amt;
     }
 
-    return portfolio;
+    return out;
   }
 
   // ============================
   // UI
   // ============================
-  async function renderPortfolio(container, addresses) {
-    const data = await getPortfolio(addresses);
+  async function render(el, addrs) {
+    const d = await portfolio(addrs);
 
-    const assets = Object.values(data.assets)
+    const list = Object.values(d.assets)
       .sort((a, b) => b.totalValueUSD - a.totalValueUSD);
 
-    container.innerHTML = `
-      <h2>Total Portfolio: $${data.totalUSD.toFixed(2)}</h2>
-      <p>Wallets: ${data.wallets}</p>
+    el.innerHTML = `
+      <h2>Total: $${d.totalUSD.toFixed(2)}</h2>
+      <p>Wallets: ${d.wallets}</p>
     `;
 
-    assets.forEach(a => {
+    for (const a of list) {
       const div = document.createElement("div");
-      div.style = "display:flex;gap:10px;padding:10px;border:1px solid #ddd;margin:8px;border-radius:8px;";
+
+      div.style = "padding:10px;border:1px solid #ddd;margin:6px;border-radius:8px;display:flex;gap:10px";
 
       div.innerHTML = `
-        <img src="${a.icon}" width="28"/>
         <div>
           <strong>${a.name}</strong><br/>
           ${a.totalAmount.toFixed(2)} ${a.symbol}<br/>
-          ${a.priceUSD ? `$${a.priceUSD.toFixed(4)}` : "Unpriced"} •
+          ${a.priceUSD ? "$" + a.priceUSD.toFixed(6) : "Unpriced"} •
           $${a.totalValueUSD.toFixed(2)}
         </div>
       `;
 
-      container.appendChild(div);
-    });
+      el.appendChild(div);
+    }
   }
 
-  return {
-    getPortfolio,
-    renderPortfolio,
-    fetchBalances
-  };
+  return { portfolio, render };
 
 })();
