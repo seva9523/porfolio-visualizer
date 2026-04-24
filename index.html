@@ -1,87 +1,49 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Stellar Portfolio Viewer</title>
-</head>
+<script>
+  function useSample() {
+    document.getElementById("address").value = "GBSTRUSDN7U5GODNT3UQ2FJZ7V6E3YH4M6U4XUO3R6M5RZQ5T6XW7Y6Z";
+  }
 
-<body style="font-family: Arial; padding: 40px; max-width: 600px; margin: auto;">
+  async function fetchPortfolio() {
+    const address = document.getElementById("address").value;
+    const status = document.getElementById("status");
+    const results = document.getElementById("results");
 
-  <h1>Stellar Portfolio Viewer</h1>
-  <p>Paste a Stellar wallet address to view assets</p>
+    results.innerHTML = "";
 
-  <input id="address" placeholder="Enter Stellar wallet (G...)" 
-    style="padding:12px; width:100%; margin-bottom:10px;" />
-
-  <button onclick="fetchPortfolio()" 
-    style="padding:12px; width:100%; cursor:pointer;">
-    View Portfolio
-  </button>
-
-  <button onclick="useSample()" style="margin-top:10px;">
-    Use Sample Wallet
-  </button>
-
-  <p id="status" style="margin-top:20px;"></p>
-
-  <ul id="results" style="margin-top:10px;"></ul>
-
-  <script>
-    function useSample() {
-      document.getElementById("address").value = "GCFXJXK7P7XQY3W5R6F6C7Y4ZQ2R5U6V3W2X1Y0Z8A7B6C5D4E3F2G1H";
+    if (!address) {
+      status.innerText = "Please enter a wallet address";
+      return;
     }
 
-    async function fetchPortfolio() {
-      const address = document.getElementById("address").value;
-      const status = document.getElementById("status");
-      const results = document.getElementById("results");
+    status.innerText = "Loading...";
 
-      results.innerHTML = "";
+    try {
+      const res = await fetch(`https://horizon.stellar.org/accounts/${address}`);
+      const data = await res.json();
 
-      if (!address) {
-        status.innerText = "Please enter a wallet address";
+      if (!data.balances) {
+        status.innerText = "This wallet is not active or has no data";
         return;
       }
 
-      status.innerText = "Loading...";
+      let totalAssets = 0;
 
-      try {
-        const res = await fetch(`https://horizon.stellar.org/accounts/${address}`);
-        const data = await res.json();
+      data.balances.forEach(b => {
+        let asset = b.asset_type === "native" ? "XLM" : b.asset_code;
+        let amount = parseFloat(b.balance);
 
-        if (data.status === 404) {
-          status.innerText = "Wallet not found";
-          return;
-        }
+        totalAssets++;
 
-        let totalAssets = 0;
+        const li = document.createElement("li");
+        li.innerText = asset + ": " + amount.toFixed(2);
+        results.appendChild(li);
+      });
 
-        if (!data.balances) {
-  status.innerText = "This wallet is not active or has no data";
-  return;
-}
+      status.innerText = `Found ${totalAssets} assets`;
 
-let totalAssets = 0;
-
-data.balances.forEach(b => {
-  let asset = b.asset_type === "native" ? "XLM" : b.asset_code;
-  let amount = parseFloat(b.balance);
-
-  totalAssets++;
-
-  const li = document.createElement("li");
-  li.innerText = asset + ": " + amount.toFixed(2);
-  results.appendChild(li);
-});
-
-status.innerText = `Found ${totalAssets} assets`;
-        
-
-      } catch (e) {
-  status.innerText = "Error: " + e.message;
-  console.log(e);
-}
+    } catch (e) {
+      status.innerText = "Error: " + e.message;
+      console.log(e);
     }
-  </script>
-
-</body>
-</html>
+  }
+</script>
