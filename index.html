@@ -1,79 +1,94 @@
-
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Stellar Portfolio Viewer</title>
+  <title>Stellar Portfolio Infra</title>
 </head>
 
-<body style="font-family: Arial; padding: 40px; max-width: 600px; margin: auto;">
+<body style="font-family: Arial; padding: 40px; max-width: 700px; margin: auto;">
 
-  <h1>Stellar Portfolio Viewer</h1>
-  <p>Paste a Stellar wallet address to view assets</p>
+  <h1>Stellar Portfolio Infra</h1>
+  <p>Developer-grade portfolio data layer for Stellar wallets</p>
 
   <input id="address" placeholder="Enter Stellar wallet (G...)" 
     style="padding:12px; width:100%; margin-bottom:10px;" />
 
   <button onclick="fetchPortfolio()" 
     style="padding:12px; width:100%; cursor:pointer;">
-    View Portfolio
-  </button>
-
-  <button onclick="useSample()" style="margin-top:10px;">
-    Use Sample Wallet
+    Fetch Portfolio Data
   </button>
 
   <p id="status" style="margin-top:20px;"></p>
 
-  <ul id="results" style="margin-top:10px;"></ul>
+  <pre id="jsonOutput" style="background:#111; color:#0f0; padding:15px; margin-top:20px; overflow:auto;"></pre>
 
 <script>
-  function useSample() {
-    document.getElementById("address").value = "GBSTRUSDN7U5GODNT3UQ2FJZ7V6E3YH4M6U4XUO3R6M5RZQ5T6XW7Y6Z";
+async function fetchPortfolio() {
+  const address = document.getElementById("address").value;
+  const status = document.getElementById("status");
+  const output = document.getElementById("jsonOutput");
+
+  output.innerText = "";
+
+  if (!address) {
+    status.innerText = "Enter a wallet address";
+    return;
   }
 
-  async function fetchPortfolio() {
-    const address = document.getElementById("address").value;
-    const status = document.getElementById("status");
-    const results = document.getElementById("results");
+  status.innerText = "Loading...";
 
-    results.innerHTML = "";
+  try {
+    // Get XLM price
+    const priceRes = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=stellar&vs_currencies=usd");
+    const priceData = await priceRes.json();
+    const xlmPrice = priceData.stellar.usd;
 
-    if (!address) {
-      status.innerText = "Please enter a wallet address";
-      return;
-    }
+    // Get wallet data
+    const res = await fetch(`https://horizon.stellar.org/accounts/${address}`);
 
-    status.innerText = "Loading...";
-
-    try {
-      const res = await fetch(`https://horizon.stellar.org/accounts/${address}`);
-      const data = await res.json();
-
-      if (!data.balances) {
-        status.innerText = "This wallet is not active or has no data";
+    if (!res.ok) {
+      if (res.status === 404) {
+        status.innerText = "Account not found or not funded";
         return;
       }
+      throw new Error("HTTP error " + res.status);
+    }
 
-      let totalAssets = 0;
+    const data = await res.json();
 
-      data.balances.forEach(b => {
-        let asset = b.asset_type === "native" ? "XLM" : b.asset_code;
-        let amount = parseFloat(b.balance);
+    let portfolio = {
+      address: address,
+      assets: [],
+      totalXLM: 0,
+      totalUSD: 0
+    };
 
-        totalAssets++;
+    data.balances.forEach(b => {
+      let asset = b.asset_type === "native" ? "XLM" : b.asset_code;
+      let amount = parseFloat(b.balance);
 
-        const li = document.createElement("li");
-        li.innerText = asset + ": " + amount.toFixed(2);
-        results.appendChild(li);
+      let valueUSD = asset === "XLM" ? amount * xlmPrice : 0;
+
+      portfolio.assets.push({
+        asset: asset,
+        amount: amount,
+        valueUSD: valueUSD
       });
 
-      status.innerText = `Found ${totalAssets} assets`;
+      if (asset === "XLM") {
+        portfolio.totalXLM += amount;
+        portfolio.totalUSD += valueUSD;
+      }
+    });
 
-    } catch (e) {
-      status.innerText = "Error: " + e.message;
-      console.log(e);
-    }
+    status.innerText = "Portfolio loaded";
+
+    output.innerText = JSON.stringify(portfolio, null, 2);
+
+  } catch (e) {
+    status.innerText = "Error: " + e.message;
+    console.log(e);
   }
+}
 </script>
 
 </body>
