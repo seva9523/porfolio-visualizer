@@ -79,50 +79,57 @@ window.StellarPortfolio = (() => {
   // ============================
   // 🔥 STELLAR DEX PRICE ENGINE
   // ============================
-  async function fetchStellarDEXPrice(assetCode) {
-    try {
-      const res = await fetch("https://horizon.stellar.org/liquidity_pools?limit=200");
+ async function fetchStellarDEXPrice(assetCode) {
+  try {
+    const clean = normalize(assetCode);
+    let url = "https://horizon.stellar.org/liquidity_pools?limit=200";
+
+    let pools = [];
+
+    // 🔥 PAGINATION LOOP (CRITICAL FIX)
+    while (url) {
+      const res = await fetch(url);
       const data = await res.json();
 
-      const pools = data._embedded?.records || [];
-      const clean = normalize(assetCode);
+      pools = pools.concat(data._embedded?.records || []);
+      url = data._links?.next?.href || null;
+    }
 
-      let bestPrice = null;
-      let bestLiquidity = 0;
+    let bestPrice = null;
+    let bestLiquidity = 0;
 
-      for (const pool of pools) {
-        const a = pool.reserves?.[0];
-        const b = pool.reserves?.[1];
-        if (!a || !b) continue;
+    for (const pool of pools) {
+      const a = pool.reserves?.[0];
+      const b = pool.reserves?.[1];
+      if (!a || !b) continue;
 
-        const assetA = normalize(a.asset?.code || (a.asset_type === "native" ? "XLM" : ""));
-        const assetB = normalize(b.asset?.code || (b.asset_type === "native" ? "XLM" : ""));
+      const assetA = normalize(a.asset?.code || (a.asset_type === "native" ? "XLM" : ""));
+      const assetB = normalize(b.asset?.code || (b.asset_type === "native" ? "XLM" : ""));
 
-        let price = null;
+      const amountA = parseFloat(a.amount);
+      const amountB = parseFloat(b.amount);
+      const liquidity = parseFloat(pool.total_shares || 0);
 
-        const amountA = parseFloat(a.amount);
-        const amountB = parseFloat(b.amount);
-        const liquidity = parseFloat(pool.total_shares || 0);
+      let price = null;
 
-        // XLM pair pricing (core logic)
-        if (assetA === "XLM" && assetB === clean) {
-          price = amountA / amountB;
-        } else if (assetB === "XLM" && assetA === clean) {
-          price = amountB / amountA;
-        }
-
-        if (price && liquidity > bestLiquidity) {
-          bestPrice = price;
-          bestLiquidity = liquidity;
-        }
+      if (assetA === "XLM" && assetB === clean) {
+        price = amountA / amountB;
+      } else if (assetB === "XLM" && assetA === clean) {
+        price = amountB / amountA;
       }
 
-      return bestPrice;
-    } catch (e) {
-      console.warn("DEX pricing failed:", assetCode);
-      return null;
+      if (price && liquidity > bestLiquidity) {
+        bestPrice = price;
+        bestLiquidity = liquidity;
+      }
     }
+
+    return bestPrice;
+  } catch (e) {
+    console.warn("DEX scan failed:", assetCode);
+    return null;
   }
+}
 
   // ============================
   // PRICE ENGINE (HYBRID)
