@@ -165,26 +165,28 @@ window.StellarPortfolio = (() => {
         const amount = parseFloat(b.balance);
         const meta = getMeta(symbol, isNative);
 
-        // 2. NOW pricing
+        // 2. NOW pricing - MUST be before calculation
         const price = await getLivePrice(symbol);
-        const valueUSD = price ? amount * price : 0;
+        const valueUSD = price !== null && price !== undefined ? amount * price : 0;
 
-        console.log("DEBUG:", symbol, price, amount, valueUSD);
+        console.log("DEBUG:", symbol, "price:", price, "amount:", amount, "valueUSD:", valueUSD);
 
         if (!portfolio.assets[symbol]) {
           portfolio.assets[symbol] = {
             symbol,
             name: meta.name,
             icon: meta.icon,
-            amount: 0,
-            valueUSD: 0,
-            priceUSD: price
+            totalAmount: 0,
+            totalValueUSD: 0,
+            priceUSD: price,
+            type: meta.type
           };
         }
 
-        portfolio.assets[symbol].amount += amount;
-        portfolio.assets[symbol].valueUSD += valueUSD;
-        portfolio.assets[symbol].priceUSD = price; // Update price
+        // CRITICAL: Add to existing values
+        portfolio.assets[symbol].totalAmount += amount;
+        portfolio.assets[symbol].totalValueUSD += valueUSD;
+        portfolio.assets[symbol].priceUSD = price; // Always update with latest price
         portfolio.totalUSD += valueUSD;
 
         if (symbol === "XLM") {
@@ -202,8 +204,8 @@ window.StellarPortfolio = (() => {
   async function renderPortfolio(container, addresses) {
     const data = await getPortfolio(addresses);
     const assets = Object.values(data.assets)
-      .filter(a => a.amount > 0)
-      .sort((a, b) => b.valueUSD - a.valueUSD);
+      .filter(a => a.totalAmount > 0)
+      .sort((a, b) => b.totalValueUSD - a.totalValueUSD);
 
     container.innerHTML = "";
 
@@ -229,8 +231,8 @@ window.StellarPortfolio = (() => {
         <img src="${a.icon}" width="28" height="28" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Ccircle cx=%2212%22 cy=%2212%22 r=%2210%22 fill=%22%23ccc%22/%3E%3C/svg%3E'" />
         <div>
           <strong>${a.name}</strong><br/>
-          ${a.amount.toFixed(2)} ${a.symbol}<br/>
-          ${a.priceUSD ? "$" + a.priceUSD.toFixed(4) + " × $" + a.valueUSD.toFixed(2) : "Unpriced"}
+          ${a.totalAmount.toFixed(2)} ${a.symbol}<br/>
+          ${a.priceUSD ? "$" + a.priceUSD.toFixed(4) + " × $" + a.totalValueUSD.toFixed(2) : "Unpriced"}
         </div>
       `;
       container.appendChild(card);
