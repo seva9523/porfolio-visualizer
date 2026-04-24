@@ -1,7 +1,7 @@
 window.StellarPortfolio = (() => {
 
   // ============================
-  // METADATA
+  // TOKEN METADATA
   // ============================
   const TOKEN_METADATA = {
     XLM: { name: "Stellar Lumens", icon: "https://raw.githubusercontent.com/stellar/stellar-icons/main/png/stellar.png", type: "native" },
@@ -17,8 +17,9 @@ window.StellarPortfolio = (() => {
   // ============================
   const CACHE = {
     prices: {},
+    fx: {},
     xlm: null,
-    gecko: {},
+    pools: {},
     time: {}
   };
 
@@ -32,6 +33,12 @@ window.StellarPortfolio = (() => {
     return String(s).toUpperCase().trim().replace(/[^A-Z0-9]/g, "");
   }
 
+  function safeSymbol(b) {
+    return b.asset_type === "native"
+      ? "XLM"
+      : norm(b.asset_code || "UNKNOWN");
+  }
+
   // ============================
   // COINGECKO
   // ============================
@@ -42,46 +49,15 @@ window.StellarPortfolio = (() => {
     }
 
     try {
-      const r = await fetch(
+      const res = await fetch(
         `https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=usd`
       );
-      const d = await r.json();
-      const p = d?.[id]?.usd ?? null;
 
-      CACHE.prices[id] = p;
-      CACHE.time[id] = now;
-
-      return p;
-    } catch {
-      return null;
-    }
-  }
-
-  // ============================
-  // GECKOTERMINAL (🔥 MAIN FIX)
-  // ============================
-  async function geckoTerminalPrice(symbol) {
-    const clean = norm(symbol);
-
-    if (CACHE.gecko[clean] && CACHE.time[clean] > Date.now() - TTL) {
-      return CACHE.gecko[clean];
-    }
-
-    try {
-      // 🔥 search pools on Stellar chain
-      const url = `https://api.geckoterminal.com/api/v2/networks/stellar/tokens/${clean}`;
-
-      const res = await fetch(url);
       const data = await res.json();
+      const price = data?.[id]?.usd ?? null;
 
-      // IMPORTANT: GeckoTerminal structure varies
-      const price =
-        data?.data?.attributes?.price_usd ||
-        data?.data?.attributes?.price ||
-        null;
-
-      CACHE.gecko[clean] = price;
-      CACHE.time[clean] = Date.now();
+      CACHE.prices[id] = price;
+      CACHE.time[id] = now;
 
       return price;
     } catch {
@@ -89,9 +65,6 @@ window.StellarPortfolio = (() => {
     }
   }
 
-  // ============================
-  // XLM PRICE
-  // ============================
   async function xlmPrice() {
     if (CACHE.xlm) return CACHE.xlm;
     const p = await coinGecko("stellar");
@@ -100,33 +73,113 @@ window.StellarPortfolio = (() => {
   }
 
   // ============================
-  // PRICE ENGINE (FIXED PRIORITY)
+  // FX (stablecoins like EURC/GBPx)
   // ============================
-  async function price(symbol) {
+  async function fx(currency) {
+    const now = Date.now();
+    if (CACHE.fx[currency] && CACHE.time[currency] > now - TTL) {
+      return CACHE.fx[currency];
+    }
+
+    try {
+      const res = await fetch(
+        `https://api.exchangerate.host/latest?base=${currency}&symbols=USD`
+      );
+
+      const data = await res.json();
+      const rate = data?.rates?.USD ?? null;
+
+      CACHE.fx[currency] = rate;
+      CACHE.time[currency] = now;
+
+      return rate;
+    } catch {
+      return null;
+    }
+  }
+
+  const STABLES = {
+    USDC: "USD",
+    USDT: "USD",
+    PYUSD: "USD",
+    EURC: "EUR",
+    EURX: "EUR",
+    GBPx: "GBP"
+  };
+
+  function isStable(s) {
+    return STABLES[s] !== undefined;
+  }
+
+  // ============================
+  // 🔥 GECKOTERMINAL (POOL BASED FIX)
+  // ============================
+  async function geckoPrice(symbol) {
+    const s = norm(symbol);
+
+    try {
+      const res = await fetch(
+        `https://api.geckoterminal.com/api/v2/networks/stellar/pools?query=${s}`
+      );
+
+      const data = await res.json();
+      const pools = data?.data || [];
+
+      let best = null;
+      let bestLiquidity = 0;
+
+      for (const p of pools) {
+        const a = p.attributes;
+
+        const price = parseFloat(a.base_token_price_usd || a.price_usd || 0);
+        const liquidity = parseFloat(a.reserve_in_usd || 0);
+
+        if (!price || !liquidity) continue;
+
+        if (liquidity > bestLiquidity) {
+          best = price;
+          bestLiquidity = liquidity;
+        }
+      }
+
+      return best;
+    } catch {
+      return null;
+    }
+  }
+
+  // ============================
+  // PRICE ENGINE (FINAL FIXED)
+  // ============================
+  async function getPrice(symbol) {
     const s = norm(symbol);
 
     if (!s) return null;
 
-    // stablecoin
-    if (s === "USDC") return 1;
+    // stablecoins
+    if (isStable(s)) {
+      const c = STABLES[s];
+      const rate = await fx(c);
+      return c === "USD" ? 1 : rate;
+    }
 
     // XLM
     if (s === "XLM") return await xlmPrice();
 
-    // 1️⃣ GECKOTERMINAL FIRST (CRITICAL FIX)
-    const gt = await geckoTerminalPrice(s);
-    if (gt !== null) return gt;
-
-    // 2️⃣ COINGECKO fallback
-    const map = {
+    // CoinGecko majors
+    const cg = {
       BTC: "bitcoin",
       ETH: "ethereum",
       XRP: "ripple"
     };
 
-    if (map[s]) {
-      return await coinGecko(map[s]);
+    if (cg[s]) {
+      return await coinGecko(cg[s]);
     }
+
+    // 🔥 PRIMARY: GeckoTerminal (POOL BASED)
+    const gt = await geckoPrice(s);
+    if (gt !== null) return gt;
 
     return null;
   }
@@ -135,13 +188,13 @@ window.StellarPortfolio = (() => {
   // BALANCES
   // ============================
   async function balances(addr) {
-    const r = await fetch(`https://horizon.stellar.org/accounts/${addr}`);
-    const d = await r.json();
-    return d.balances || [];
+    const res = await fetch(`https://horizon.stellar.org/accounts/${addr}`);
+    const data = await res.json();
+    return data.balances || [];
   }
 
   // ============================
-  // PORTFOLIO (FIXED)
+  // PORTFOLIO ENGINE (FIXED ZERO BUG)
   // ============================
   async function portfolio(addresses = []) {
 
@@ -152,48 +205,57 @@ window.StellarPortfolio = (() => {
       assets: {}
     };
 
-    const symbols = new Set();
     const rows = [];
+    const symbols = new Set();
 
+    // STEP 1: collect balances
     for (const a of addresses) {
       const b = await balances(a);
 
       for (const x of b) {
-        const s = x.asset_type === "native" ? "XLM" : norm(x.asset_code);
+        const s = safeSymbol(x);
         const amt = parseFloat(x.balance);
 
         if (!s) continue;
 
-        symbols.add(s);
         rows.push({ s, amt });
+        symbols.add(s);
       }
     }
 
+    // STEP 2: batch pricing
     const prices = {};
+
     await Promise.all([...symbols].map(async (s) => {
-      prices[s] = await price(s);
+      const p = await getPrice(s);
+      prices[s] = (typeof p === "number" && p > 0) ? p : null;
     }));
 
+    // STEP 3: compute portfolio
     for (const r of rows) {
-      const p = prices[r.s];
-      const val = p ? r.amt * p : 0;
+
+      const price = prices[r.s];
+      const value = price ? r.amt * price : 0;
 
       if (!out.assets[r.s]) {
         out.assets[r.s] = {
           symbol: r.s,
           name: TOKEN_METADATA[r.s]?.name || r.s,
+          icon: TOKEN_METADATA[r.s]?.icon || "",
           totalAmount: 0,
           totalValueUSD: 0,
-          priceUSD: p
+          priceUSD: price
         };
       }
 
       out.assets[r.s].totalAmount += r.amt;
-      out.assets[r.s].totalValueUSD += val;
+      out.assets[r.s].totalValueUSD += value;
 
-      out.totalUSD += val;
+      out.totalUSD += value;
 
-      if (r.s === "XLM") out.totalXLM += r.amt;
+      if (r.s === "XLM") {
+        out.totalXLM += r.amt;
+      }
     }
 
     return out;
@@ -202,8 +264,8 @@ window.StellarPortfolio = (() => {
   // ============================
   // UI
   // ============================
-  async function render(el, addrs) {
-    const d = await portfolio(addrs);
+  async function render(el, addresses) {
+    const d = await portfolio(addresses);
 
     const list = Object.values(d.assets)
       .sort((a, b) => b.totalValueUSD - a.totalValueUSD);
@@ -219,6 +281,7 @@ window.StellarPortfolio = (() => {
       div.style = "padding:10px;border:1px solid #ddd;margin:6px;border-radius:8px;display:flex;gap:10px";
 
       div.innerHTML = `
+        <img src="${a.icon}" width="28"/>
         <div>
           <strong>${a.name}</strong><br/>
           ${a.totalAmount.toFixed(2)} ${a.symbol}<br/>
