@@ -89,25 +89,6 @@ async function getLivePrice(symbol) {
 
   return price ?? null;
 }
-  
-  // ----------------------------
-  // STELLAR API
-  // ----------------------------
-  async function fetchAccount(address) {
-    const res = await fetch(`https://horizon.stellar.org/accounts/${address}`);
-    if (!res.ok) throw new Error("Account not found: " + address);
-    return await res.json();
-  }
-
-  function getMeta(symbol, isNative) {
-    if (isNative) return TOKEN_METADATA.XLM;
-
-    return TOKEN_METADATA[symbol] || {
-      name: symbol,
-      icon: "https://cdn-icons-png.flaticon.com/512/6001/6001368.png",
-      type: "token"
-    };
-  }
 
   // ----------------------------
   // PORTFOLIO ENGINE
