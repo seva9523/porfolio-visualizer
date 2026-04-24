@@ -55,18 +55,26 @@
 
         let totalAssets = 0;
 
-        data.balances.forEach(b => {
-          let asset = b.asset_type === "native" ? "XLM" : b.asset_code;
-          let amount = parseFloat(b.balance);
+        if (!data.balances) {
+  status.innerText = "This wallet is not active or has no data";
+  return;
+}
 
-          totalAssets++;
+let totalAssets = 0;
 
-          const li = document.createElement("li");
-          li.innerText = asset + ": " + amount.toFixed(2);
-          results.appendChild(li);
-        });
+data.balances.forEach(b => {
+  let asset = b.asset_type === "native" ? "XLM" : b.asset_code;
+  let amount = parseFloat(b.balance);
 
-        status.innerText = `Found ${totalAssets} assets`;
+  totalAssets++;
+
+  const li = document.createElement("li");
+  li.innerText = asset + ": " + amount.toFixed(2);
+  results.appendChild(li);
+});
+
+status.innerText = `Found ${totalAssets} assets`;
+        
 
       } catch (e) {
   status.innerText = "Error: " + e.message;
