@@ -109,55 +109,49 @@ window.StellarPortfolio = (() => {
       assets: {}
     };
 
-    for (let addr of addresses) {
+ for (let b of data.balances) {
 
-      let data;
+  const isNative = b.asset_type === "native";
 
-      try {
-        data = await fetchAccount(addr);
-      } catch (e) {
-        continue;
-      }
+  // 1. ALWAYS normalize FIRST
+  let symbol = isNative ? "XLM" : b.asset_code;
 
-      for (let b of data.balances) {
+  symbol = String(symbol)
+    .toUpperCase()
+    .trim()
+    .split(":")[0];   // removes issuer part
 
-        const isNative = b.asset_type === "native";
+  const amount = parseFloat(b.balance);
 
-        // ----------------------------
-        // FIX 1: SYMBOL NORMALIZATION
-        // ----------------------------
-        let symbol = isNative ? "XLM" : b.asset_code;
-        symbol = symbol?.toUpperCase().split(":")[0].trim();
+  const meta = getMeta(symbol, isNative);
 
-        const amount = parseFloat(b.balance);
-        const meta = getMeta(symbol, isNative);
+  // 2. NOW pricing
+  const price = await getLivePrice(symbol);
 
-        // ----------------------------
-        // FIX 2: SAFE PRICING
-        // ----------------------------
-        const price = await getLivePrice(symbol);
-        const valueUSD = price ? amount * price : 0;
+  const valueUSD = price ? amount * price : 0;
 
-        if (!portfolio.assets[symbol]) {
-          portfolio.assets[symbol] = {
-            symbol,
-            name: meta.name,
-            icon: meta.icon,
-            amount: 0,
-            valueUSD: 0,
-            priceUSD: price
-          };
-        }
+  console.log("DEBUG:", symbol, price, amount); // TEMP DEBUG
 
-        portfolio.assets[symbol].amount += amount;
-        portfolio.assets[symbol].valueUSD += valueUSD;
+  if (!portfolio.assets[symbol]) {
+    portfolio.assets[symbol] = {
+      symbol,
+      name: meta.name,
+      icon: meta.icon,
+      amount: 0,
+      valueUSD: 0,
+      priceUSD: price
+    };
+  }
 
-        portfolio.totalUSD += valueUSD;
+  portfolio.assets[symbol].amount += amount;
+  portfolio.assets[symbol].valueUSD += valueUSD;
 
-        if (symbol === "XLM") {
-          portfolio.totalXLM += amount;
-        }
-      }
+  portfolio.totalUSD += valueUSD;
+
+  if (symbol === "XLM") {
+    portfolio.totalXLM += amount;
+  }
+}
     }
 
     return portfolio;
