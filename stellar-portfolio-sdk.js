@@ -28,12 +28,12 @@ window.StellarPortfolio = (() => {
       icon: "https://cdn-icons-png.flaticon.com/512/6001/6001368.png",
       type: "token"
     },
-    yHELIX: {
+    YHELIX: {
       name: "Yield Helix",
       icon: "https://cdn-icons-png.flaticon.com/512/6001/6001368.png",
       type: "token"
     },
-    yXLM: {
+    YXLM: {
       name: "Yield XLM",
       icon: "https://raw.githubusercontent.com/stellar/stellar-icons/main/png/stellar.png",
       type: "token"
@@ -45,80 +45,112 @@ window.StellarPortfolio = (() => {
   // ----------------------------
   const PRICE_CACHE = {
     XLM: null,
-    USDC: 1
+    COINGECKO: {},
+    TIMESTAMP: {}
   };
 
+  const CACHE_TTL = 60 * 1000; // 1 min
+
   // ----------------------------
-  // FETCH XLM PRICE
+  // NORMALIZE TOKEN SYMBOL
   // ----------------------------
-  async function fetchXLMPrice() {
+  function normalize(symbol) {
+    if (!symbol) return null;
+    return String(symbol)
+      .toUpperCase()
+      .trim()
+      .split(":")[0]
+      .split("-")[0];
+  }
+
+  // ----------------------------
+  // COINGECKO PRICE FETCH
+  // ----------------------------
+  async function fetchCoinGeckoPrice(id) {
     try {
+      const now = Date.now();
+
+      if (
+        PRICE_CACHE.COINGECKO[id] &&
+        PRICE_CACHE.TIMESTAMP[id] &&
+        now - PRICE_CACHE.TIMESTAMP[id] < CACHE_TTL
+      ) {
+        return PRICE_CACHE.COINGECKO[id];
+      }
+
       const res = await fetch(
-        "https://api.coingecko.com/api/v3/simple/price?ids=stellar&vs_currencies=usd"
+        `https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=usd`
       );
+
       const data = await res.json();
-      return data.stellar.usd;
-    } catch (error) {
-      console.error("Failed to fetch XLM price:", error);
+      const price = data?.[id]?.usd ?? null;
+
+      PRICE_CACHE.COINGECKO[id] = price;
+      PRICE_CACHE.TIMESTAMP[id] = now;
+
+      return price;
+    } catch (e) {
+      console.error("CoinGecko error:", e);
       return null;
     }
   }
 
   // ----------------------------
-  // GET METADATA HELPER
+  // XLM PRICE
   // ----------------------------
-  function getMeta(symbol, isNative = false) {
-    return TOKEN_METADATA[symbol] || {
-      name: symbol,
-      icon: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10' fill='%23ccc'/%3E%3C/svg%3E",
-      type: isNative ? "native" : "token"
-    };
+  async function getXLMPrice() {
+    if (PRICE_CACHE.XLM) return PRICE_CACHE.XLM;
+
+    const price = await fetchCoinGeckoPrice("stellar");
+    PRICE_CACHE.XLM = price;
+    return price;
   }
 
   // ----------------------------
-  // HYBRID PRICING ENGINE
+  // TOKEN PRICE ENGINE (HYBRID)
   // ----------------------------
   async function getLivePrice(symbol) {
-    if (!symbol) return null;
+    const clean = normalize(symbol);
+    if (!clean) return null;
 
-    // STEP 1: HARD NORMALIZATION
-    const clean = String(symbol)
-      .toUpperCase()
-      .trim()
-      .split(":")[0]
-      .split("-")[0];
-
-    // STEP 2: XLM live price
-    if (clean === "XLM") {
-      if (!PRICE_CACHE.XLM) {
-        PRICE_CACHE.XLM = await fetchXLMPrice();
-      }
-      return PRICE_CACHE.XLM;
-    }
-
-    // STEP 3: stablecoin
+    // Stablecoin
     if (clean === "USDC") return 1;
 
-    // STEP 4: manual pricing registry
+    // Native XLM
+    if (clean === "XLM") {
+      return await getXLMPrice();
+    }
+
+    // Yield XLM alias
+    if (clean === "YXLM") {
+      return await getXLMPrice();
+    }
+
+    // Manual fallback prices (only for small ecosystem tokens)
     const MANUAL_PRICES = {
       AQUA: 0.0032,
       HELIX: 0.015,
       FELIX: 0.08,
-      yHELIX: 0.015,    // Same as HELIX (assume 1:1 yield)
-      yXLM: null         // Gets XLM price dynamically
+      YHELIX: 0.015
     };
 
-    // Special case: yXLM should track XLM price
-    if (clean === "yXLM") {
-      if (!PRICE_CACHE.XLM) {
-        PRICE_CACHE.XLM = await fetchXLMPrice();
-      }
-      return PRICE_CACHE.XLM;
+    if (MANUAL_PRICES[clean] !== undefined) {
+      return MANUAL_PRICES[clean];
     }
 
-    const price = MANUAL_PRICES[clean];
-    console.log("PRICE CHECK:", clean, price);
-    return price ?? null;
+    // Try CoinGecko fallback for known majors
+    const COINGECKO_MAP = {
+      ETH: "ethereum",
+      BTC: "bitcoin",
+      XRP: "ripple"
+    };
+
+    if (COINGECKO_MAP[clean]) {
+      return await fetchCoinGeckoPrice(COINGECKO_MAP[clean]);
+    }
+
+    console.warn("No price found for:", clean);
+    return null;
   }
 
   // ----------------------------
@@ -129,47 +161,55 @@ window.StellarPortfolio = (() => {
       const res = await fetch(
         `https://horizon.stellar.org/accounts/${publicKey}`
       );
-      if (!res.ok) throw new Error(`Account not found: ${publicKey}`);
+      if (!res.ok) throw new Error("Account not found");
+
       const data = await res.json();
-      return data.balances;
+      return data.balances || [];
     } catch (error) {
-      console.error("Failed to fetch balances:", error);
+      console.error("Balance fetch error:", error);
       return [];
     }
+  }
+
+  // ----------------------------
+  // METADATA
+  // ----------------------------
+  function getMeta(symbol, isNative) {
+    const clean = normalize(symbol);
+
+    return TOKEN_METADATA[clean] || {
+      name: clean || "Unknown",
+      icon:
+        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10' fill='%23ccc'/%3E%3C/svg%3E",
+      type: isNative ? "native" : "token"
+    };
   }
 
   // ----------------------------
   // PORTFOLIO ENGINE
   // ----------------------------
   async function getPortfolio(addresses = []) {
-    let portfolio = {
+    const portfolio = {
       wallets: addresses.length,
       totalUSD: 0,
       totalXLM: 0,
       assets: {}
     };
 
-    // Fetch balances for all addresses
     for (let address of addresses) {
       const balances = await fetchStellarBalances(address);
 
       for (let b of balances) {
         const isNative = b.asset_type === "native";
-        // 1. ALWAYS normalize FIRST
-        let symbol = isNative ? "XLM" : b.asset_code;
-        symbol = String(symbol)
-          .toUpperCase()
-          .trim()
-          .split(":")[0]; // removes issuer part
+        const symbol = normalize(isNative ? "XLM" : b.asset_code);
 
         const amount = parseFloat(b.balance);
         const meta = getMeta(symbol, isNative);
 
-        // 2. NOW pricing - MUST be before calculation
         const price = await getLivePrice(symbol);
-        const valueUSD = price !== null && price !== undefined ? amount * price : 0;
 
-        console.log("DEBUG:", symbol, "price:", price, "amount:", amount, "valueUSD:", valueUSD);
+        const valueUSD =
+          price !== null && !isNaN(price) ? amount * price : 0;
 
         if (!portfolio.assets[symbol]) {
           portfolio.assets[symbol] = {
@@ -183,10 +223,10 @@ window.StellarPortfolio = (() => {
           };
         }
 
-        // CRITICAL: Add to existing values
         portfolio.assets[symbol].totalAmount += amount;
         portfolio.assets[symbol].totalValueUSD += valueUSD;
-        portfolio.assets[symbol].priceUSD = price; // Always update with latest price
+        portfolio.assets[symbol].priceUSD = price;
+
         portfolio.totalUSD += valueUSD;
 
         if (symbol === "XLM") {
@@ -199,10 +239,11 @@ window.StellarPortfolio = (() => {
   }
 
   // ----------------------------
-  // UI LAYER
+  // UI RENDER
   // ----------------------------
   async function renderPortfolio(container, addresses) {
     const data = await getPortfolio(addresses);
+
     const assets = Object.values(data.assets)
       .filter(a => a.totalAmount > 0)
       .sort((a, b) => b.totalValueUSD - a.totalValueUSD);
@@ -227,14 +268,20 @@ window.StellarPortfolio = (() => {
         margin:10px 0;
         border-radius:10px;
       `;
+
       card.innerHTML = `
-        <img src="${a.icon}" width="28" height="28" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Ccircle cx=%2212%22 cy=%2212%22 r=%2210%22 fill=%22%23ccc%22/%3E%3C/svg%3E'" />
+        <img src="${a.icon}" width="28" height="28" />
         <div>
           <strong>${a.name}</strong><br/>
           ${a.totalAmount.toFixed(2)} ${a.symbol}<br/>
-          ${a.priceUSD ? "$" + a.priceUSD.toFixed(4) + " × $" + a.totalValueUSD.toFixed(2) : "Unpriced"}
+          ${
+            a.priceUSD
+              ? `$${a.priceUSD.toFixed(4)} • $${a.totalValueUSD.toFixed(2)}`
+              : "Unpriced"
+          }
         </div>
       `;
+
       container.appendChild(card);
     });
   }
