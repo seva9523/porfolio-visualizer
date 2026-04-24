@@ -1,8 +1,5 @@
 window.StellarPortfolio = (() => {
 
-  // ----------------------------
-  // TOKEN METADATA REGISTRY
-  // ----------------------------
   const TOKEN_METADATA = {
     XLM: {
       name: "Stellar Lumens",
@@ -32,15 +29,11 @@ window.StellarPortfolio = (() => {
 
   async function fetchAccount(address) {
     const res = await fetch(`https://horizon.stellar.org/accounts/${address}`);
-
-    if (!res.ok) {
-      throw new Error(`Account error: ${address}`);
-    }
-
+    if (!res.ok) throw new Error("Account not found: " + address);
     return await res.json();
   }
 
-  function getTokenMeta(symbol, isNative) {
+  function getMeta(symbol, isNative) {
     if (isNative) return TOKEN_METADATA.XLM;
 
     return TOKEN_METADATA[symbol] || {
@@ -61,14 +54,12 @@ window.StellarPortfolio = (() => {
       assets: {}
     };
 
-    for (let address of addresses) {
-
+    for (let addr of addresses) {
       let data;
 
       try {
-        data = await fetchAccount(address);
+        data = await fetchAccount(addr);
       } catch (e) {
-        console.warn("Skipping invalid wallet:", address);
         continue;
       }
 
@@ -78,8 +69,7 @@ window.StellarPortfolio = (() => {
         const symbol = isNative ? "XLM" : b.asset_code;
         const amount = parseFloat(b.balance);
 
-        const meta = getTokenMeta(symbol, isNative);
-
+        const meta = getMeta(symbol, isNative);
         const valueUSD = isNative ? amount * xlmPrice : 0;
 
         if (!portfolio.assets[symbol]) {
@@ -88,8 +78,7 @@ window.StellarPortfolio = (() => {
             name: meta.name,
             icon: meta.icon,
             amount: 0,
-            valueUSD: 0,
-            type: meta.type
+            valueUSD: 0
           };
         }
 
@@ -106,8 +95,51 @@ window.StellarPortfolio = (() => {
     return portfolio;
   }
 
+  // 🧠 NEW: UI RENDER LAYER
+  async function renderPortfolio(container, addresses) {
+
+    const data = await getPortfolio(addresses);
+    const assets = Object.values(data.assets);
+
+    container.innerHTML = "";
+
+    const summary = document.createElement("div");
+    summary.innerHTML = `
+      <h3>Total Value: $${data.totalUSD.toFixed(2)}</h3>
+      <p>Wallets: ${data.wallets}</p>
+    `;
+
+    container.appendChild(summary);
+
+    assets.forEach(a => {
+
+      const card = document.createElement("div");
+      card.style = `
+        display:flex;
+        align-items:center;
+        gap:10px;
+        border:1px solid #ddd;
+        padding:10px;
+        margin:10px 0;
+        border-radius:8px;
+      `;
+
+      card.innerHTML = `
+        <img src="${a.icon}" width="30" height="30" />
+        <div>
+          <strong>${a.name}</strong><br/>
+          ${a.amount.toFixed(2)}<br/>
+          $${a.valueUSD.toFixed(2)}
+        </div>
+      `;
+
+      container.appendChild(card);
+    });
+  }
+
   return {
-    getPortfolio
+    getPortfolio,
+    renderPortfolio
   };
 
 })();
