@@ -1,70 +1,42 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Stellar Portfolio Demo</title>
+  <title>Stellar Portfolio Infra Demo</title>
 </head>
 
 <body style="font-family: Arial; padding: 40px; max-width: 800px; margin: auto;">
 
-  <h1>Portfolio SDK Demo</h1>
+  <h1>Stellar Portfolio SDK Demo</h1>
 
-  <textarea id="addresses" placeholder="Enter wallets (one per line)"
-    style="width:100%; height:100px; padding:10px;"></textarea>
+  <p>Enter wallet addresses (one per line):</p>
 
-  <button onclick="runDemo()" style="width:100%; padding:12px; margin-top:10px;">
+  <textarea id="wallets" style="width:100%; height:120px; padding:10px;"></textarea>
+
+  <button onclick="run()" style="width:100%; padding:12px; margin-top:10px;">
     Load Portfolio
   </button>
 
-  <p id="status"></p>
+  <div id="app" style="margin-top:20px;"></div>
 
-  <div id="output"></div>
-
-  <!-- Your SDK -->
   <script src="./stellar-portfolio-sdk.js"></script>
 
   <script>
-    async function runDemo() {
-      const raw = document.getElementById("addresses").value;
-      const status = document.getElementById("status");
-      const output = document.getElementById("output");
+    async function run() {
+      const raw = document.getElementById("wallets").value;
 
-      output.innerHTML = "";
+      const addresses = raw
+        .split("\n")
+        .map(x => x.trim())
+        .filter(Boolean);
 
-      const addresses = raw.split("\n").map(a => a.trim()).filter(Boolean);
+      const container = document.getElementById("app");
 
-      if (addresses.length === 0) {
-        status.innerText = "Add at least one wallet";
+      if (!addresses.length) {
+        container.innerHTML = "Please enter at least one wallet";
         return;
       }
 
-      status.innerText = "Loading...";
-
-      try {
-        const data = await StellarPortfolio.getPortfolio(addresses);
-
-        status.innerText = "Loaded ✔";
-
-        const assets = Object.values(data.assets);
-
-        assets.forEach(a => {
-          const card = document.createElement("div");
-          card.style = "border:1px solid #ddd; padding:12px; margin:10px 0; display:flex; align-items:center; gap:10px;";
-
-          card.innerHTML = `
-            <img src="${a.icon}" width="30" height="30" />
-            <div>
-              <strong>${a.name}</strong><br/>
-              ${a.amount.toFixed(2)} ${a.symbol} <br/>
-              $${a.valueUSD.toFixed(2)}
-            </div>
-          `;
-
-          output.appendChild(card);
-        });
-
-      } catch (e) {
-        status.innerText = "Error: " + e.message;
-      }
+      await StellarPortfolio.renderPortfolio(container, addresses);
     }
   </script>
 
