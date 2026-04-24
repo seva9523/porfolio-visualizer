@@ -1,4 +1,4 @@
-const StellarPortfolio = (() => {
+window.StellarPortfolio = (() => {
 
   // ----------------------------
   // TOKEN METADATA REGISTRY
