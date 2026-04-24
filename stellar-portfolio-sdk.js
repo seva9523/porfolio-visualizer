@@ -1,83 +1,52 @@
 window.StellarPortfolio = (() => {
-  // ----------------------------
+
+  // ============================
   // TOKEN METADATA
-  // ----------------------------
+  // ============================
   const TOKEN_METADATA = {
-    XLM: {
-      name: "Stellar Lumens",
-      icon: "https://raw.githubusercontent.com/stellar/stellar-icons/main/png/stellar.png",
-      type: "native"
-    },
-    USDC: {
-      name: "USD Coin",
-      icon: "https://cryptologos.cc/logos/usd-coin-usdc-logo.png",
-      type: "token"
-    },
-    AQUA: {
-      name: "Aqua Token",
-      icon: "https://aqua.network/logo.png",
-      type: "token"
-    },
-    HELIX: {
-      name: "Helix Token",
-      icon: "https://cdn-icons-png.flaticon.com/512/6001/6001368.png",
-      type: "token"
-    },
-    FELIX: {
-      name: "Felix Token",
-      icon: "https://cdn-icons-png.flaticon.com/512/6001/6001368.png",
-      type: "token"
-    },
-    YHELIX: {
-      name: "Yield Helix",
-      icon: "https://cdn-icons-png.flaticon.com/512/6001/6001368.png",
-      type: "token"
-    },
-    YXLM: {
-      name: "Yield XLM",
-      icon: "https://raw.githubusercontent.com/stellar/stellar-icons/main/png/stellar.png",
-      type: "token"
-    }
+    XLM: { name: "Stellar Lumens", icon: "https://raw.githubusercontent.com/stellar/stellar-icons/main/png/stellar.png", type: "native" },
+    USDC: { name: "USD Coin", icon: "https://cryptologos.cc/logos/usd-coin-usdc-logo.png", type: "token" },
+    AQUA: { name: "Aqua Token", icon: "https://aqua.network/logo.png", type: "token" },
+    HELIX: { name: "Helix Token", icon: "https://cdn-icons-png.flaticon.com/512/6001/6001368.png", type: "token" },
+    FELIX: { name: "Felix Token", icon: "https://cdn-icons-png.flaticon.com/512/6001/6001368.png", type: "token" },
+    YHELIX: { name: "Yield Helix", icon: "https://cdn-icons-png.flaticon.com/512/6001/6001368.png", type: "token" },
+    YXLM: { name: "Yield XLM", icon: "https://raw.githubusercontent.com/stellar/stellar-icons/main/png/stellar.png", type: "token" }
   };
 
-  // ----------------------------
-  // PRICE CACHE
-  // ----------------------------
-  const PRICE_CACHE = {
-    XLM: null,
-    COINGECKO: {},
-    TIMESTAMP: {}
+  // ============================
+  // CACHE
+  // ============================
+  const CACHE = {
+    prices: {},
+    timestamp: {},
+    xlm: null
   };
 
-  const CACHE_TTL = 60 * 1000; // 1 min
+  const CACHE_TTL = 60 * 1000;
 
-  // ----------------------------
-  // NORMALIZE TOKEN SYMBOL
-  // ----------------------------
+  // ============================
+  // NORMALIZATION (FIXED)
+  // ============================
   function normalize(symbol) {
     if (!symbol) return null;
+
     return String(symbol)
       .toUpperCase()
       .trim()
-      .split(":")[0]
-      .split("-")[0];
+      .replace(/[^A-Z0-9]/g, "");
   }
 
-  // ----------------------------
-  // COINGECKO PRICE FETCH
-  // ----------------------------
-  async function fetchCoinGeckoPrice(id) {
+  // ============================
+  // COINGECKO FETCH
+  // ============================
+  async function fetchCoinGecko(id) {
+    const now = Date.now();
+
+    if (CACHE.prices[id] && CACHE.timestamp[id] && now - CACHE.timestamp[id] < CACHE_TTL) {
+      return CACHE.prices[id];
+    }
+
     try {
-      const now = Date.now();
-
-      if (
-        PRICE_CACHE.COINGECKO[id] &&
-        PRICE_CACHE.TIMESTAMP[id] &&
-        now - PRICE_CACHE.TIMESTAMP[id] < CACHE_TTL
-      ) {
-        return PRICE_CACHE.COINGECKO[id];
-      }
-
       const res = await fetch(
         `https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=usd`
       );
@@ -85,8 +54,8 @@ window.StellarPortfolio = (() => {
       const data = await res.json();
       const price = data?.[id]?.usd ?? null;
 
-      PRICE_CACHE.COINGECKO[id] = price;
-      PRICE_CACHE.TIMESTAMP[id] = now;
+      CACHE.prices[id] = price;
+      CACHE.timestamp[id] = now;
 
       return price;
     } catch (e) {
@@ -95,20 +64,21 @@ window.StellarPortfolio = (() => {
     }
   }
 
-  // ----------------------------
+  // ============================
   // XLM PRICE
-  // ----------------------------
+  // ============================
   async function getXLMPrice() {
-    if (PRICE_CACHE.XLM) return PRICE_CACHE.XLM;
+    if (CACHE.xlm) return CACHE.xlm;
 
-    const price = await fetchCoinGeckoPrice("stellar");
-    PRICE_CACHE.XLM = price;
+    const price = await fetchCoinGecko("stellar");
+    CACHE.xlm = price;
+
     return price;
   }
 
-  // ----------------------------
-  // TOKEN PRICE ENGINE (HYBRID)
-  // ----------------------------
+  // ============================
+  // PRICE ENGINE (PRODUCTION)
+  // ============================
   async function getLivePrice(symbol) {
     const clean = normalize(symbol);
     if (!clean) return null;
@@ -116,64 +86,59 @@ window.StellarPortfolio = (() => {
     // Stablecoin
     if (clean === "USDC") return 1;
 
-    // Native XLM
-    if (clean === "XLM") {
+    // XLM + aliases
+    if (clean === "XLM" || clean === "YXLM") {
       return await getXLMPrice();
     }
 
-    // Yield XLM alias
-    if (clean === "YXLM") {
-      return await getXLMPrice();
-    }
-
-    // Manual fallback prices (only for small ecosystem tokens)
-    const MANUAL_PRICES = {
+    // Internal ecosystem tokens (manual fallback)
+    const INTERNAL_PRICES = {
       AQUA: 0.0032,
       HELIX: 0.015,
       FELIX: 0.08,
       YHELIX: 0.015
     };
 
-    if (MANUAL_PRICES[clean] !== undefined) {
-      return MANUAL_PRICES[clean];
+    if (INTERNAL_PRICES[clean] !== undefined) {
+      return INTERNAL_PRICES[clean];
     }
 
-    // Try CoinGecko fallback for known majors
+    // Major external tokens via CoinGecko mapping
     const COINGECKO_MAP = {
       ETH: "ethereum",
       BTC: "bitcoin",
-      XRP: "ripple"
+      XRP: "ripple",
+      USDT: "tether"
     };
 
     if (COINGECKO_MAP[clean]) {
-      return await fetchCoinGeckoPrice(COINGECKO_MAP[clean]);
+      return await fetchCoinGecko(COINGECKO_MAP[clean]);
     }
 
-    console.warn("No price found for:", clean);
+    // FINAL FALLBACK: unknown asset
+    console.warn("⚠️ Unpriced asset:", clean);
     return null;
   }
 
-  // ----------------------------
-  // FETCH STELLAR BALANCES
-  // ----------------------------
-  async function fetchStellarBalances(publicKey) {
+  // ============================
+  // STELLAR BALANCES
+  // ============================
+  async function fetchBalances(address) {
     try {
-      const res = await fetch(
-        `https://horizon.stellar.org/accounts/${publicKey}`
-      );
+      const res = await fetch(`https://horizon.stellar.org/accounts/${address}`);
       if (!res.ok) throw new Error("Account not found");
 
       const data = await res.json();
       return data.balances || [];
-    } catch (error) {
-      console.error("Balance fetch error:", error);
+    } catch (e) {
+      console.error("Balance fetch error:", e);
       return [];
     }
   }
 
-  // ----------------------------
+  // ============================
   // METADATA
-  // ----------------------------
+  // ============================
   function getMeta(symbol, isNative) {
     const clean = normalize(symbol);
 
@@ -185,21 +150,22 @@ window.StellarPortfolio = (() => {
     };
   }
 
-  // ----------------------------
+  // ============================
   // PORTFOLIO ENGINE
-  // ----------------------------
+  // ============================
   async function getPortfolio(addresses = []) {
     const portfolio = {
       wallets: addresses.length,
       totalUSD: 0,
       totalXLM: 0,
-      assets: {}
+      assets: {},
+      unpriced: []
     };
 
-    for (let address of addresses) {
-      const balances = await fetchStellarBalances(address);
+    for (const address of addresses) {
+      const balances = await fetchBalances(address);
 
-      for (let b of balances) {
+      for (const b of balances) {
         const isNative = b.asset_type === "native";
         const symbol = normalize(isNative ? "XLM" : b.asset_code);
 
@@ -207,9 +173,12 @@ window.StellarPortfolio = (() => {
         const meta = getMeta(symbol, isNative);
 
         const price = await getLivePrice(symbol);
+        const value = price ? amount * price : null;
 
-        const valueUSD =
-          price !== null && !isNaN(price) ? amount * price : 0;
+        // Track unpriced assets (IMPORTANT FIX)
+        if (price === null) {
+          portfolio.unpriced.push(symbol);
+        }
 
         if (!portfolio.assets[symbol]) {
           portfolio.assets[symbol] = {
@@ -219,15 +188,20 @@ window.StellarPortfolio = (() => {
             totalAmount: 0,
             totalValueUSD: 0,
             priceUSD: price,
-            type: meta.type
+            type: meta.type,
+            isUnpriced: false
           };
         }
 
         portfolio.assets[symbol].totalAmount += amount;
-        portfolio.assets[symbol].totalValueUSD += valueUSD;
         portfolio.assets[symbol].priceUSD = price;
 
-        portfolio.totalUSD += valueUSD;
+        if (value !== null) {
+          portfolio.assets[symbol].totalValueUSD += value;
+          portfolio.totalUSD += value;
+        } else {
+          portfolio.assets[symbol].isUnpriced = true;
+        }
 
         if (symbol === "XLM") {
           portfolio.totalXLM += amount;
@@ -238,14 +212,13 @@ window.StellarPortfolio = (() => {
     return portfolio;
   }
 
-  // ----------------------------
-  // UI RENDER
-  // ----------------------------
+  // ============================
+  // RENDER UI
+  // ============================
   async function renderPortfolio(container, addresses) {
     const data = await getPortfolio(addresses);
 
     const assets = Object.values(data.assets)
-      .filter(a => a.totalAmount > 0)
       .sort((a, b) => b.totalValueUSD - a.totalValueUSD);
 
     container.innerHTML = "";
@@ -259,6 +232,7 @@ window.StellarPortfolio = (() => {
 
     assets.forEach(a => {
       const card = document.createElement("div");
+
       card.style = `
         display:flex;
         align-items:center;
@@ -269,16 +243,20 @@ window.StellarPortfolio = (() => {
         border-radius:10px;
       `;
 
+      const priceDisplay = a.priceUSD
+        ? `$${a.priceUSD.toFixed(4)}`
+        : "⚠️ Unpriced";
+
+      const valueDisplay = a.isUnpriced
+        ? "No USD value available"
+        : `$${a.totalValueUSD.toFixed(2)}`;
+
       card.innerHTML = `
         <img src="${a.icon}" width="28" height="28" />
         <div>
           <strong>${a.name}</strong><br/>
           ${a.totalAmount.toFixed(2)} ${a.symbol}<br/>
-          ${
-            a.priceUSD
-              ? `$${a.priceUSD.toFixed(4)} • $${a.totalValueUSD.toFixed(2)}`
-              : "Unpriced"
-          }
+          ${priceDisplay} • ${valueDisplay}
         </div>
       `;
 
@@ -289,6 +267,7 @@ window.StellarPortfolio = (() => {
   return {
     getPortfolio,
     renderPortfolio,
-    fetchStellarBalances
+    fetchBalances
   };
+
 })();
