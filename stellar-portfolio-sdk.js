@@ -1,5 +1,8 @@
 window.StellarPortfolio = (() => {
 
+  // ----------------------------
+  // TOKEN METADATA
+  // ----------------------------
   const TOKEN_METADATA = {
     XLM: {
       name: "Stellar Lumens",
@@ -18,15 +21,43 @@ window.StellarPortfolio = (() => {
     }
   };
 
-  const COINGECKO_URL =
-    "https://api.coingecko.com/api/v3/simple/price?ids=stellar&vs_currencies=usd";
+  // ----------------------------
+  // PRICING ENGINE
+  // ----------------------------
+  const PRICE_CACHE = {
+    XLM: null,
+    USDC: 1
+  };
 
-  async function getXLMPrice() {
-    const res = await fetch(COINGECKO_URL);
+  async function fetchXLMPrice() {
+    const res = await fetch(
+      "https://api.coingecko.com/api/v3/simple/price?ids=stellar&vs_currencies=usd"
+    );
     const data = await res.json();
     return data.stellar.usd;
   }
 
+  async function getPrice(symbol) {
+
+    // 1. Native XLM price (live)
+    if (symbol === "XLM") {
+      if (!PRICE_CACHE.XLM) {
+        PRICE_CACHE.XLM = await fetchXLMPrice();
+      }
+      return PRICE_CACHE.XLM;
+    }
+
+    // 2. Stablecoins
+    if (symbol === "USDC") return 1;
+
+    // 3. Unknown tokens (fallback logic)
+    // NOTE: real infra would use DEX / orderbook / oracle later
+    return 0;
+  }
+
+  // ----------------------------
+  // STELLAR DATA FETCH
+  // ----------------------------
   async function fetchAccount(address) {
     const res = await fetch(`https://horizon.stellar.org/accounts/${address}`);
     if (!res.ok) throw new Error("Account not found: " + address);
@@ -43,9 +74,10 @@ window.StellarPortfolio = (() => {
     };
   }
 
+  // ----------------------------
+  // CORE PORTFOLIO ENGINE
+  // ----------------------------
   async function getPortfolio(addresses = []) {
-
-    const xlmPrice = await getXLMPrice();
 
     let portfolio = {
       wallets: addresses.length,
@@ -55,6 +87,7 @@ window.StellarPortfolio = (() => {
     };
 
     for (let addr of addresses) {
+
       let data;
 
       try {
@@ -63,14 +96,16 @@ window.StellarPortfolio = (() => {
         continue;
       }
 
-      data.balances.forEach(b => {
+      for (let b of data.balances) {
 
         const isNative = b.asset_type === "native";
         const symbol = isNative ? "XLM" : b.asset_code;
         const amount = parseFloat(b.balance);
 
         const meta = getMeta(symbol, isNative);
-        const valueUSD = isNative ? amount * xlmPrice : 0;
+        const price = await getPrice(symbol);
+
+        const valueUSD = amount * price;
 
         if (!portfolio.assets[symbol]) {
           portfolio.assets[symbol] = {
@@ -85,31 +120,35 @@ window.StellarPortfolio = (() => {
         portfolio.assets[symbol].amount += amount;
         portfolio.assets[symbol].valueUSD += valueUSD;
 
-        if (isNative) {
+        portfolio.totalUSD += valueUSD;
+
+        if (symbol === "XLM") {
           portfolio.totalXLM += amount;
-          portfolio.totalUSD += valueUSD;
         }
-      });
+      }
     }
 
     return portfolio;
   }
 
-  // 🧠 NEW: UI RENDER LAYER
+  // ----------------------------
+  // UI RENDER LAYER
+  // ----------------------------
   async function renderPortfolio(container, addresses) {
 
     const data = await getPortfolio(addresses);
-    const assets = Object.values(data.assets);
+    const assets = Object.values(data.assets)
+      .filter(a => a.amount > 0)
+      .sort((a, b) => b.valueUSD - a.valueUSD);
 
     container.innerHTML = "";
 
-    const summary = document.createElement("div");
-    summary.innerHTML = `
-      <h3>Total Value: $${data.totalUSD.toFixed(2)}</h3>
+    const header = document.createElement("div");
+    header.innerHTML = `
+      <h2>Total Portfolio: $${data.totalUSD.toFixed(2)}</h2>
       <p>Wallets: ${data.wallets}</p>
     `;
-
-    container.appendChild(summary);
+    container.appendChild(header);
 
     assets.forEach(a => {
 
@@ -121,14 +160,14 @@ window.StellarPortfolio = (() => {
         border:1px solid #ddd;
         padding:10px;
         margin:10px 0;
-        border-radius:8px;
+        border-radius:10px;
       `;
 
       card.innerHTML = `
-        <img src="${a.icon}" width="30" height="30" />
+        <img src="${a.icon}" width="28" height="28" />
         <div>
           <strong>${a.name}</strong><br/>
-          ${a.amount.toFixed(2)}<br/>
+          ${a.amount.toFixed(2)} ${a.symbol}<br/>
           $${a.valueUSD.toFixed(2)}
         </div>
       `;
