@@ -7,14 +7,14 @@
 <body style="font-family: Arial; padding: 40px; max-width: 700px; margin: auto;">
 
   <h1>Stellar Portfolio Infra</h1>
-  <p>Developer-grade portfolio data layer for Stellar wallets</p>
+  <p>Standardized portfolio data layer for Stellar builders</p>
 
   <input id="address" placeholder="Enter Stellar wallet (G...)" 
     style="padding:12px; width:100%; margin-bottom:10px;" />
 
   <button onclick="fetchPortfolio()" 
     style="padding:12px; width:100%; cursor:pointer;">
-    Fetch Portfolio Data
+    Fetch Portfolio
   </button>
 
   <p id="status" style="margin-top:20px;"></p>
@@ -42,7 +42,7 @@ async function fetchPortfolio() {
     const priceData = await priceRes.json();
     const xlmPrice = priceData.stellar.usd;
 
-    // Get wallet data
+    // Fetch wallet
     const res = await fetch(`https://horizon.stellar.org/accounts/${address}`);
 
     if (!res.ok) {
@@ -57,30 +57,40 @@ async function fetchPortfolio() {
 
     let portfolio = {
       address: address,
-      assets: [],
       totalXLM: 0,
-      totalUSD: 0
+      totalUSD: 0,
+      assets: []
     };
 
     data.balances.forEach(b => {
-      let asset = b.asset_type === "native" ? "XLM" : b.asset_code;
+
+      let isNative = b.asset_type === "native";
+
+      let symbol = isNative ? "XLM" : b.asset_code;
+      let name = isNative ? "Stellar Lumens" : b.asset_code;
       let amount = parseFloat(b.balance);
 
-      let valueUSD = asset === "XLM" ? amount * xlmPrice : 0;
+      let priceUSD = isNative ? xlmPrice : 0; // placeholder for future token pricing
+      let valueUSD = isNative ? amount * xlmPrice : 0;
 
-      portfolio.assets.push({
-        asset: asset,
+      const asset = {
+        symbol: symbol,
+        name: name,
         amount: amount,
-        valueUSD: valueUSD
-      });
+        priceUSD: priceUSD,
+        valueUSD: valueUSD,
+        type: isNative ? "native" : "token"
+      };
 
-      if (asset === "XLM") {
+      portfolio.assets.push(asset);
+
+      if (isNative) {
         portfolio.totalXLM += amount;
         portfolio.totalUSD += valueUSD;
       }
     });
 
-    status.innerText = "Portfolio loaded";
+    status.innerText = "Portfolio normalized";
 
     output.innerText = JSON.stringify(portfolio, null, 2);
 
