@@ -8,7 +8,7 @@ window.StellarPortfolio = (() => {
       name: "Stellar Lumens",
       icon: "https://raw.githubusercontent.com/stellar/stellar-icons/main/png/stellar.png",
       type: "native"
-    }, 
+    },
     USDC: {
       name: "USD Coin",
       icon: "https://cryptologos.cc/logos/usd-coin-usdc-logo.png",
@@ -40,7 +40,7 @@ window.StellarPortfolio = (() => {
   };
 
   // ----------------------------
-  // LIVE PRICE (COINGECKO)
+  // FETCH XLM PRICE
   // ----------------------------
   async function fetchXLMPrice() {
     const res = await fetch(
@@ -50,9 +50,14 @@ window.StellarPortfolio = (() => {
     return data.stellar.usd;
   }
 
+  // ----------------------------
+  // HYBRID PRICING ENGINE
+  // ----------------------------
   async function getLivePrice(symbol) {
 
-    // 1. Native asset (live market)
+    if (!symbol) return null;
+
+    // XLM live price
     if (symbol === "XLM") {
       if (!PRICE_CACHE.XLM) {
         PRICE_CACHE.XLM = await fetchXLMPrice();
@@ -60,26 +65,21 @@ window.StellarPortfolio = (() => {
       return PRICE_CACHE.XLM;
     }
 
-    // 2. Stablecoin rule
+    // stablecoin
     if (symbol === "USDC") return 1;
 
-    // 3. Manual registry (hybrid layer)
+    // manual pricing layer
     const MANUAL_PRICES = {
       AQUA: 0.0032,
       HELIX: 0.015,
       FELIX: 0.08
     };
 
-    if (MANUAL_PRICES[symbol] !== undefined) {
-      return MANUAL_PRICES[symbol];
-    }
-
-    // 4. Unknown tokens → no fake pricing
-    return null;
+    return MANUAL_PRICES[symbol] ?? null;
   }
 
   // ----------------------------
-  // STELLAR DATA
+  // STELLAR API
   // ----------------------------
   async function fetchAccount(address) {
     const res = await fetch(`https://horizon.stellar.org/accounts/${address}`);
@@ -122,13 +122,21 @@ window.StellarPortfolio = (() => {
       for (let b of data.balances) {
 
         const isNative = b.asset_type === "native";
-        const symbol = isNative ? "XLM" : b.asset_code;
+
+        // ----------------------------
+        // FIX 1: SYMBOL NORMALIZATION
+        // ----------------------------
+        let symbol = isNative ? "XLM" : b.asset_code;
+        symbol = symbol?.toUpperCase().split(":")[0].trim();
+
         const amount = parseFloat(b.balance);
-
         const meta = getMeta(symbol, isNative);
-        const price = await getLivePrice(symbol);
 
-        const valueUSD = price !== null ? amount * price : 0;
+        // ----------------------------
+        // FIX 2: SAFE PRICING
+        // ----------------------------
+        const price = await getLivePrice(symbol);
+        const valueUSD = price ? amount * price : 0;
 
         if (!portfolio.assets[symbol]) {
           portfolio.assets[symbol] = {
@@ -193,7 +201,7 @@ window.StellarPortfolio = (() => {
         <div>
           <strong>${a.name}</strong><br/>
           ${a.amount.toFixed(2)} ${a.symbol}<br/>
-          ${a.priceUSD !== null ? "$" + a.valueUSD.toFixed(2) : "Unpriced"}
+          ${a.priceUSD ? "$" + a.valueUSD.toFixed(2) : "Unpriced"}
         </div>
       `;
 
