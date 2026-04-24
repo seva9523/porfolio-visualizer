@@ -53,15 +53,18 @@ window.StellarPortfolio = (() => {
   // ----------------------------
   // HYBRID PRICING ENGINE
   // ----------------------------
-  async function getLivePrice(symbol) {
+async function getLivePrice(symbol) {
 
   if (!symbol) return null;
 
-  const clean = symbol
+  // STEP 1: HARD NORMALIZATION
+  const clean = String(symbol)
     .toUpperCase()
     .trim()
-    .split(":")[0];
+    .split(":")[0]
+    .split("-")[0];
 
+  // STEP 2: XLM live price
   if (clean === "XLM") {
     if (!PRICE_CACHE.XLM) {
       PRICE_CACHE.XLM = await fetchXLMPrice();
@@ -69,8 +72,10 @@ window.StellarPortfolio = (() => {
     return PRICE_CACHE.XLM;
   }
 
+  // STEP 3: stablecoin
   if (clean === "USDC") return 1;
 
+  // STEP 4: manual pricing registry
   const MANUAL_PRICES = {
     AQUA: 0.0032,
     HELIX: 0.015,
@@ -79,10 +84,12 @@ window.StellarPortfolio = (() => {
 
   const price = MANUAL_PRICES[clean];
 
-  console.log("LOOKUP:", clean, price);
+  // DEBUG (IMPORTANT — keep for now)
+  console.log("PRICE CHECK:", clean, price);
 
   return price ?? null;
 }
+  
   // ----------------------------
   // STELLAR API
   // ----------------------------
