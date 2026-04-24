@@ -18,17 +18,30 @@ window.StellarPortfolio = (() => {
       name: "Aqua Token",
       icon: "https://aqua.network/logo.png",
       type: "token"
+    },
+    HELIX: {
+      name: "Helix Token",
+      icon: "https://cdn-icons-png.flaticon.com/512/6001/6001368.png",
+      type: "token"
+    },
+    FELIX: {
+      name: "Felix Token",
+      icon: "https://cdn-icons-png.flaticon.com/512/6001/6001368.png",
+      type: "token"
     }
   };
 
   // ----------------------------
-  // PRICING ENGINE
+  // PRICE CACHE
   // ----------------------------
   const PRICE_CACHE = {
     XLM: null,
     USDC: 1
   };
 
+  // ----------------------------
+  // LIVE PRICE (COINGECKO)
+  // ----------------------------
   async function fetchXLMPrice() {
     const res = await fetch(
       "https://api.coingecko.com/api/v3/simple/price?ids=stellar&vs_currencies=usd"
@@ -37,9 +50,9 @@ window.StellarPortfolio = (() => {
     return data.stellar.usd;
   }
 
-  async function getPrice(symbol) {
+  async function getLivePrice(symbol) {
 
-    // 1. Native XLM price (live)
+    // 1. Native asset (live market)
     if (symbol === "XLM") {
       if (!PRICE_CACHE.XLM) {
         PRICE_CACHE.XLM = await fetchXLMPrice();
@@ -47,16 +60,26 @@ window.StellarPortfolio = (() => {
       return PRICE_CACHE.XLM;
     }
 
-    // 2. Stablecoins
+    // 2. Stablecoin rule
     if (symbol === "USDC") return 1;
 
-    // 3. Unknown tokens (fallback logic)
-    // NOTE: real infra would use DEX / orderbook / oracle later
-    return 0;
+    // 3. Manual registry (hybrid layer)
+    const MANUAL_PRICES = {
+      AQUA: 0.0032,
+      HELIX: 0.015,
+      FELIX: 0.08
+    };
+
+    if (MANUAL_PRICES[symbol] !== undefined) {
+      return MANUAL_PRICES[symbol];
+    }
+
+    // 4. Unknown tokens → no fake pricing
+    return null;
   }
 
   // ----------------------------
-  // STELLAR DATA FETCH
+  // STELLAR DATA
   // ----------------------------
   async function fetchAccount(address) {
     const res = await fetch(`https://horizon.stellar.org/accounts/${address}`);
@@ -75,7 +98,7 @@ window.StellarPortfolio = (() => {
   }
 
   // ----------------------------
-  // CORE PORTFOLIO ENGINE
+  // PORTFOLIO ENGINE
   // ----------------------------
   async function getPortfolio(addresses = []) {
 
@@ -103,9 +126,9 @@ window.StellarPortfolio = (() => {
         const amount = parseFloat(b.balance);
 
         const meta = getMeta(symbol, isNative);
-        const price = await getPrice(symbol);
+        const price = await getLivePrice(symbol);
 
-        const valueUSD = amount * price;
+        const valueUSD = price !== null ? amount * price : 0;
 
         if (!portfolio.assets[symbol]) {
           portfolio.assets[symbol] = {
@@ -113,7 +136,8 @@ window.StellarPortfolio = (() => {
             name: meta.name,
             icon: meta.icon,
             amount: 0,
-            valueUSD: 0
+            valueUSD: 0,
+            priceUSD: price
           };
         }
 
@@ -132,11 +156,12 @@ window.StellarPortfolio = (() => {
   }
 
   // ----------------------------
-  // UI RENDER LAYER
+  // UI LAYER
   // ----------------------------
   async function renderPortfolio(container, addresses) {
 
     const data = await getPortfolio(addresses);
+
     const assets = Object.values(data.assets)
       .filter(a => a.amount > 0)
       .sort((a, b) => b.valueUSD - a.valueUSD);
@@ -168,7 +193,7 @@ window.StellarPortfolio = (() => {
         <div>
           <strong>${a.name}</strong><br/>
           ${a.amount.toFixed(2)} ${a.symbol}<br/>
-          $${a.valueUSD.toFixed(2)}
+          ${a.priceUSD !== null ? "$" + a.valueUSD.toFixed(2) : "Unpriced"}
         </div>
       `;
 
