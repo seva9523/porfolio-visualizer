@@ -3,24 +3,45 @@
 <head>
   <title>Stellar Portfolio Viewer</title>
 </head>
-<body style="font-family: Arial; padding: 40px;">
+
+<body style="font-family: Arial; padding: 40px; max-width: 600px; margin: auto;">
 
   <h1>Stellar Portfolio Viewer</h1>
+  <p>Paste a Stellar wallet address to view assets</p>
 
-  <input id="address" placeholder="Enter Stellar wallet (G...)" style="padding:10px; width:400px;" />
-  <button onclick="fetchPortfolio()" style="padding:10px;">View Portfolio</button>
+  <input id="address" placeholder="Enter Stellar wallet (G...)" 
+    style="padding:12px; width:100%; margin-bottom:10px;" />
 
-  <p id="status"></p>
+  <button onclick="fetchPortfolio()" 
+    style="padding:12px; width:100%; cursor:pointer;">
+    View Portfolio
+  </button>
 
-  <ul id="results"></ul>
+  <button onclick="useSample()" style="margin-top:10px;">
+    Use Sample Wallet
+  </button>
+
+  <p id="status" style="margin-top:20px;"></p>
+
+  <ul id="results" style="margin-top:10px;"></ul>
 
   <script>
+    function useSample() {
+      document.getElementById("address").value = "GBRPYHIL2CI3XH3KZ5OZJ6B6WZ4K6M7F3T7N5U6Z4X3A2B1C";
+    }
+
     async function fetchPortfolio() {
       const address = document.getElementById("address").value;
       const status = document.getElementById("status");
       const results = document.getElementById("results");
 
       results.innerHTML = "";
+
+      if (!address) {
+        status.innerText = "Please enter a wallet address";
+        return;
+      }
+
       status.innerText = "Loading...";
 
       try {
@@ -32,15 +53,20 @@
           return;
         }
 
-        status.innerText = "Assets:";
+        let totalAssets = 0;
 
         data.balances.forEach(b => {
           let asset = b.asset_type === "native" ? "XLM" : b.asset_code;
+          let amount = parseFloat(b.balance);
+
+          totalAssets++;
 
           const li = document.createElement("li");
-          li.innerText = asset + ": " + parseFloat(b.balance).toFixed(2);
+          li.innerText = asset + ": " + amount.toFixed(2);
           results.appendChild(li);
         });
+
+        status.innerText = `Found ${totalAssets} assets`;
 
       } catch (e) {
         status.innerText = "Error fetching data";
