@@ -8,7 +8,7 @@ window.StellarPortfolio = (() => {
       name: "Stellar Lumens",
       icon: "https://raw.githubusercontent.com/stellar/stellar-icons/main/png/stellar.png",
       type: "native"
-    },
+    }, 
     USDC: {
       name: "USD Coin",
       icon: "https://cryptologos.cc/logos/usd-coin-usdc-logo.png",
