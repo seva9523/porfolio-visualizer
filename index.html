@@ -1,22 +1,52 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>WealthView</title>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0b0f19">
-  <meta http-equiv="refresh" content="0; url=library.html">
-  <script>location.replace('library.html');</script>
+  <title>Stellar Portfolio Viewer</title>
 </head>
-<body>
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(()=>{});
-    });
-  }
-</script>
+<body style="font-family: Arial; padding: 40px;">
+
+  <h1>Stellar Portfolio Viewer</h1>
+
+  <input id="address" placeholder="Enter Stellar wallet (G...)" style="padding:10px; width:400px;" />
+  <button onclick="fetchPortfolio()" style="padding:10px;">View Portfolio</button>
+
+  <p id="status"></p>
+
+  <ul id="results"></ul>
+
+  <script>
+    async function fetchPortfolio() {
+      const address = document.getElementById("address").value;
+      const status = document.getElementById("status");
+      const results = document.getElementById("results");
+
+      results.innerHTML = "";
+      status.innerText = "Loading...";
+
+      try {
+        const res = await fetch(`https://horizon.stellar.org/accounts/${address}`);
+        const data = await res.json();
+
+        if (data.status === 404) {
+          status.innerText = "Wallet not found";
+          return;
+        }
+
+        status.innerText = "Assets:";
+
+        data.balances.forEach(b => {
+          let asset = b.asset_type === "native" ? "XLM" : b.asset_code;
+
+          const li = document.createElement("li");
+          li.innerText = asset + ": " + parseFloat(b.balance).toFixed(2);
+          results.appendChild(li);
+        });
+
+      } catch (e) {
+        status.innerText = "Error fetching data";
+      }
+    }
+  </script>
 
 </body>
 </html>
