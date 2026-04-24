@@ -149,40 +149,69 @@ window.StellarPortfolio = (() => {
   }
 
   // ============================
-  // PRICE ENGINE (FINAL FIXED)
   // ============================
-  async function getPrice(symbol) {
-    const s = norm(symbol);
+// FINAL UNIFIED PRICE ENGINE
+// ============================
+async function getPrice(symbol) {
+  const s = norm(symbol);
+  if (!s) return null;
 
-    if (!s) return null;
+  // ----------------------------
+  // STEP 1: XLM BASE
+  // ----------------------------
+  if (s === "XLM") return await xlmPrice();
 
-    // stablecoins
-    if (isStable(s)) {
-      const c = STABLES[s];
-      const rate = await fx(c);
-      return c === "USD" ? 1 : rate;
-    }
+  // ----------------------------
+  // STEP 2: STABLECOINS VIA DEX (NOT FX)
+// ----------------------------
+  const stableOverrides = {
+    USDC: "USDC",
+    USDT: "USDT",
+    PYUSD: "PYUSD",
+    EURC: "EURC",
+    EURX: "EURC",
+    GBPX: "GBPX"
+  };
 
-    // XLM
-    if (s === "XLM") return await xlmPrice();
+  if (stableOverrides[s]) {
+    const dex = await geckoPrice(s);
+    if (dex !== null) return dex;
 
-    // CoinGecko majors
-    const cg = {
-      BTC: "bitcoin",
-      ETH: "ethereum",
-      XRP: "ripple"
-    };
-
-    if (cg[s]) {
-      return await coinGecko(cg[s]);
-    }
-
-    // 🔥 PRIMARY: GeckoTerminal (POOL BASED)
-    const gt = await geckoPrice(s);
-    if (gt !== null) return gt;
-
-    return null;
+    // fallback ONLY if no liquidity exists
+    return 1;
   }
+
+  // ----------------------------
+  // STEP 3: WRAPPED YIELDS (CRITICAL FIX)
+// ----------------------------
+  if (s.startsWith("Y")) {
+    const underlying = s.replace("Y", "");
+
+    const basePrice = await getPrice(underlying);
+
+    // yield tokens inherit value of underlying
+    return basePrice;
+  }
+
+  // ----------------------------
+  // STEP 4: MAJORS
+  // ----------------------------
+  const cg = {
+    BTC: "bitcoin",
+    ETH: "ethereum",
+    XRP: "ripple"
+  };
+
+  if (cg[s]) return await coinGecko(cg[s]);
+
+  // ----------------------------
+  // STEP 5: PRIMARY DEX
+  // ----------------------------
+  const dex = await geckoPrice(s);
+  if (dex !== null) return dex;
+
+  return null;
+}
 
   // ============================
   // BALANCES
