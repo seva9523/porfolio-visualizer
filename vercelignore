@@ -1,8 +1,0 @@
-# Ignore Python build files - we handle Python in /api folder separately
-pyproject.toml
-uv.lock
-requirements.txt
-.python-version
-*.pyc
-__pycache__/
-.venv/
