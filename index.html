@@ -77,6 +77,7 @@
       display: flex;
       gap: 8px;
       margin-top: 8px;
+      flex-wrap: wrap;
     }
 
     button {
@@ -86,6 +87,7 @@
       font-weight: 700;
       border: 1px solid var(--border);
       cursor: pointer;
+      min-width: 140px;
     }
 
     .primary-btn {
@@ -153,7 +155,7 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 560px;
+      min-width: 700px;
     }
 
     th, td {
@@ -173,6 +175,11 @@
     tbody tr:hover { background: rgba(91, 140, 255, 0.08); }
     tbody tr:last-child td { border-bottom: none; }
 
+    .num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
     .empty {
       text-align: center;
       color: var(--muted);
@@ -181,6 +188,7 @@
 
     @media (max-width: 760px) {
       .actions { flex-direction: column; }
+      .actions button { width: 100%; }
       .metrics { grid-template-columns: 1fr; }
       body { padding: 8px; }
     }
@@ -204,6 +212,7 @@
       <div class="actions">
         <button id="aggregateBtn" class="primary-btn" onclick="fetchPortfolio()">Aggregate Portfolio</button>
         <button id="shareBtn" class="secondary-btn" onclick="copyShareLink()">Copy Share Link</button>
+        <button id="exportBtn" class="secondary-btn" onclick="exportTreasuryJson()">Export JSON</button>
       </div>
 
       <div id="status" class="status"></div>
@@ -220,12 +229,13 @@
         <thead>
           <tr>
             <th>Asset</th>
-            <th>Amount</th>
-            <th>USD value</th>
+            <th class="num">Amount</th>
+            <th class="num">USD value</th>
+            <th class="num">Allocation %</th>
           </tr>
         </thead>
         <tbody id="assetTableBody">
-          <tr><td class="empty" colspan="3">No portfolio data yet.</td></tr>
+          <tr><td class="empty" colspan="4">No portfolio data yet.</td></tr>
         </tbody>
       </table>
     </section>
@@ -235,6 +245,9 @@
     const statusEl = document.getElementById("status");
     const buttonEl = document.getElementById("aggregateBtn");
     const addressesEl = document.getElementById("addresses");
+
+    // stores latest aggregated result for export
+    let latestAggregated = null;
 
     function setStatus(message, type = "info") {
       statusEl.textContent = message;
@@ -257,7 +270,7 @@
         .filter(Boolean);
     }
 
-    // Wallet addresses sync into URL: ?wallets=GABC,GDEF,GHIJ
+    // Wallet addresses sync into URL params: ?wallets=GABC,GDEF,GHIJ
     function updateUrlWithWallets(addresses) {
       const url = new URL(window.location.href);
 
@@ -271,7 +284,7 @@
       return url.toString();
     }
 
-    // Auto-load wallets from URL on page load
+    // On page load: auto-load wallets from URL
     function loadWalletsFromUrl() {
       const params = new URLSearchParams(window.location.search);
       const walletsParam = params.get("wallets");
@@ -289,7 +302,7 @@
       return addresses;
     }
 
-    // Copy current treasury URL + subtle confirmation
+    // Copy current treasury URL with subtle confirmation
     async function copyShareLink() {
       const addresses = getAddressesFromInput();
 
@@ -308,6 +321,49 @@
       }
     }
 
+    // Export aggregated treasury state as JSON file
+    function exportTreasuryJson() {
+      if (!latestAggregated) {
+        setStatus("Aggregate portfolio first, then export JSON.", "error");
+        return;
+      }
+
+      const assetsArray = Object.values(latestAggregated.assets)
+        .sort((a, b) => b.totalValueUSD - a.totalValueUSD)
+        .map(asset => {
+          const allocationPercent = latestAggregated.totalUSD > 0
+            ? (asset.totalValueUSD / latestAggregated.totalUSD) * 100
+            : 0;
+
+          return {
+            symbol: asset.symbol,
+            amount: asset.totalAmount,
+            usdValue: asset.totalValueUSD,
+            allocationPercent
+          };
+        });
+
+      const exportData = {
+        walletCount: latestAggregated.wallets,
+        totalXLM: latestAggregated.totalXLM,
+        totalUSD: latestAggregated.totalUSD,
+        assets: assetsArray
+      };
+
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "wealthview-treasury.json";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      URL.revokeObjectURL(url);
+      setStatus("Treasury JSON exported");
+    }
+
     function renderDashboard(data) {
       document.getElementById("walletCount").textContent = data.wallets;
       document.getElementById("totalXLM").textContent = formatNumber(data.totalXLM, 4);
@@ -316,16 +372,23 @@
       const body = document.getElementById("assetTableBody");
       const rows = Object.values(data.assets)
         .sort((a, b) => b.totalValueUSD - a.totalValueUSD)
-        .map(asset => `
-          <tr>
-            <td>${asset.symbol}</td>
-            <td>${formatNumber(asset.totalAmount, 6)}</td>
-            <td>${formatCurrency(asset.totalValueUSD)}</td>
-          </tr>
-        `)
+        .map(asset => {
+          const allocationPercent = data.totalUSD > 0
+            ? (asset.totalValueUSD / data.totalUSD) * 100
+            : 0;
+
+          return `
+            <tr>
+              <td>${asset.symbol}</td>
+              <td class="num">${formatNumber(asset.totalAmount, 6)}</td>
+              <td class="num">${formatCurrency(asset.totalValueUSD)}</td>
+              <td class="num">${formatNumber(allocationPercent, 2)}%</td>
+            </tr>
+          `;
+        })
         .join("");
 
-      body.innerHTML = rows || '<tr><td class="empty" colspan="3">No asset balances found.</td></tr>';
+      body.innerHTML = rows || '<tr><td class="empty" colspan="4">No asset balances found.</td></tr>';
     }
 
     async function fetchPortfolio() {
@@ -394,6 +457,7 @@
           });
         }
 
+        latestAggregated = aggregated;
         renderDashboard(aggregated);
         setStatus("Aggregation complete.");
       } catch (error) {
