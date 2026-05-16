@@ -3,192 +3,239 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Stellar Portfolio Dashboard</title>
+  <title>WealthView | Stellar Treasury Aggregation</title>
   <style>
     :root {
-      --bg: #f6f8fb;
-      --surface: #ffffff;
-      --text: #102038;
-      --muted: #5f6f86;
-      --primary: #2f6dff;
-      --primary-soft: #eaf0ff;
-      --danger: #c0392b;
-      --border: #dfe5f0;
-      --shadow: 0 8px 24px rgba(16, 32, 56, 0.08);
-      --radius: 14px;
+      --bg: #0B0F19;
+      --surface: #121826;
+      --surface-2: #0f1522;
+      --border: #212a3d;
+      --text: #F5F7FA;
+      --muted: #8A94A6;
+      --accent: #14F195;
+      --accent-2: #5B8CFF;
+      --danger: #ff6b6b;
+      --danger-soft: rgba(255, 107, 107, 0.14);
+      --radius: 6px;
     }
 
     * { box-sizing: border-box; }
 
     body {
       margin: 0;
-      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
-      line-height: 1.45;
-      padding: 20px;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.35;
+      padding: 10px;
     }
 
-    .container {
-      max-width: 980px;
-      margin: 0 auto;
+    .container { max-width: 1120px; margin: 0 auto; }
+
+    header { margin-bottom: 8px; }
+    h1 { margin: 0; font-size: 16px; letter-spacing: 0.02em; }
+    .subtitle {
+      margin: 2px 0 0;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
     }
 
-    h1 { margin: 0 0 8px; font-size: clamp(1.5rem, 2vw, 2rem); }
-    .subtitle { margin: 0 0 20px; color: var(--muted); }
-
-    .panel {
+    .controls, .metric, .table-wrap {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 16px;
-      margin-bottom: 16px;
+    }
+
+    .controls { padding: 8px; margin-bottom: 8px; }
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 11px;
+      margin-bottom: 6px;
     }
 
     textarea {
       width: 100%;
-      min-height: 130px;
+      min-height: 88px;
       resize: vertical;
-      border-radius: 10px;
       border: 1px solid var(--border);
-      padding: 12px;
-      font: inherit;
+      border-radius: 4px;
+      background: var(--surface-2);
       color: var(--text);
-      background: #fbfcff;
+      padding: 8px;
+      font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      outline: none;
+    }
+
+    textarea:focus { border-color: var(--accent-2); }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      flex-wrap: wrap;
     }
 
     button {
-      width: 100%;
-      margin-top: 12px;
-      border: none;
-      border-radius: 10px;
-      padding: 12px 16px;
-      font: inherit;
-      font-weight: 600;
-      color: #fff;
-      background: var(--primary);
+      padding: 8px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid var(--border);
       cursor: pointer;
+      min-width: 140px;
     }
 
-    button:disabled { opacity: 0.65; cursor: not-allowed; }
-
-    .secondary {
-      background: #ffffff;
-      color: var(--primary);
-      border: 1px solid var(--primary);
+    .primary-btn {
+      background: var(--accent);
+      color: #052015;
+      border-color: #10c97e;
     }
 
-    .secondary:hover {
-      background: var(--primary-soft);
+    .primary-btn:hover { filter: brightness(1.05); }
+
+    .secondary-btn {
+      background: transparent;
+      color: var(--text);
+      border-color: #31405f;
     }
+
+    .secondary-btn:hover {
+      background: rgba(91, 140, 255, 0.08);
+      border-color: var(--accent-2);
+    }
+
+    button:disabled { opacity: .6; cursor: not-allowed; }
 
     .status {
-      margin-top: 12px;
-      padding: 10px;
-      border-radius: 10px;
-      background: var(--primary-soft);
-      color: var(--text);
       display: none;
+      margin-top: 8px;
+      padding: 6px 8px;
+      font-size: 12px;
+      border: 1px solid #26304a;
+      border-radius: 4px;
+      color: #b7c8ea;
+      background: rgba(91, 140, 255, 0.1);
     }
 
     .status.error {
-      background: #ffe9e7;
       color: var(--danger);
-      border: 1px solid #ffd0cc;
+      background: var(--danger-soft);
+      border-color: rgba(255, 107, 107, .3);
     }
 
-    .api-usage {
-      margin-top: 10px;
-      font-size: 12px;
-      color: var(--muted);
-      border-top: 1px dashed var(--border);
-      padding-top: 8px;
-    }
-
-    .api-usage code {
-      color: #1d3ea8;
-      background: #f0f4ff;
-      border: 1px solid #d7e3ff;
-      padding: 2px 6px;
-      border-radius: 6px;
-    }
-
-    .cards {
+    .metrics {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      margin-bottom: 16px;
+      gap: 8px;
+      margin-bottom: 8px;
     }
 
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 14px;
+    .metric { padding: 7px 8px; }
+
+    .k {
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .07em;
     }
 
-    .label { font-size: 0.85rem; color: var(--muted); margin-bottom: 8px; }
-    .value { font-size: 1.3rem; font-weight: 700; }
-
-    .table-wrap {
-      overflow-x: auto;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
+    .v {
+      margin-top: 4px;
+      font-size: 16px;
+      font-weight: 700;
     }
 
-    table { width: 100%; border-collapse: collapse; min-width: 520px; }
-    th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
-    th { font-size: 0.85rem; color: var(--muted); font-weight: 600; }
+    .table-wrap { overflow: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 700px;
+    }
+
+    th, td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #1b2538;
+      text-align: left;
+    }
+
+    th {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      background: #0f1522;
+    }
+
+    tbody tr:hover { background: rgba(91, 140, 255, 0.08); }
     tbody tr:last-child td { border-bottom: none; }
+
+    .num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
 
     .empty {
       text-align: center;
-      padding: 18px;
       color: var(--muted);
+      padding: 14px;
     }
 
     @media (max-width: 760px) {
-      body { padding: 14px; }
-      .cards { grid-template-columns: 1fr; }
+      .actions { flex-direction: column; }
+      .actions button { width: 100%; }
+      .metrics { grid-template-columns: 1fr; }
+      body { padding: 8px; }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Stellar Portfolio Dashboard</h1>
-    <p class="subtitle">Aggregate multiple Stellar wallets and review balances with XLM USD pricing from CoinGecko.</p>
+    <header>
+      <h1>WealthView</h1>
+      <p class="subtitle">Stellar Treasury Aggregation</p>
+    </header>
 
-    <section class="panel">
-      <textarea id="addresses" placeholder="Enter wallet addresses (one per line)"></textarea>
-      <button id="aggregateBtn" onclick="fetchPortfolio()">Aggregate Portfolio</button>
-      <button id="shareBtn" class="secondary" onclick="copyShareLink()">Copy Share Link</button>
-      <div id="status" class="status"></div>
-      <div class="api-usage">
-        API: <code>/api/aggregate?wallets=GABC,GDEF</code>
+    <section class="controls">
+      <div class="label-row">
+        <span>Wallet Input</span>
+        <span>One wallet per line</span>
       </div>
+
+      <textarea id="addresses" placeholder="GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"></textarea>
+
+      <div class="actions">
+        <button id="aggregateBtn" class="primary-btn" onclick="fetchPortfolio()">Aggregate Portfolio</button>
+        <button id="shareBtn" class="secondary-btn" onclick="copyShareLink()">Copy Share Link</button>
+        <button id="exportBtn" class="secondary-btn" onclick="exportTreasuryJson()">Export JSON</button>
+      </div>
+
+      <div id="status" class="status"></div>
     </section>
 
-    <section class="cards" id="summaryCards">
-      <article class="card"><div class="label">Wallet count</div><div class="value" id="walletCount">0</div></article>
-      <article class="card"><div class="label">Total XLM</div><div class="value" id="totalXLM">0</div></article>
-      <article class="card"><div class="label">Total USD value</div><div class="value" id="totalUSD">$0.00</div></article>
+    <section class="metrics" id="summaryCards">
+      <article class="metric"><div class="k">Wallet count</div><div class="v" id="walletCount">0</div></article>
+      <article class="metric"><div class="k">Total XLM</div><div class="v" id="totalXLM">0</div></article>
+      <article class="metric"><div class="k">Total USD</div><div class="v" id="totalUSD">$0.00</div></article>
     </section>
 
     <section class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th>Asset symbol</th>
-            <th>Total amount</th>
-            <th>USD value</th>
+            <th>Asset</th>
+            <th class="num">Amount</th>
+            <th class="num">USD value</th>
+            <th class="num">Allocation %</th>
           </tr>
         </thead>
         <tbody id="assetTableBody">
-          <tr><td class="empty" colspan="3">No portfolio data yet.</td></tr>
+          <tr><td class="empty" colspan="4">No portfolio data yet.</td></tr>
         </tbody>
       </table>
     </section>
@@ -198,6 +245,9 @@
     const statusEl = document.getElementById("status");
     const buttonEl = document.getElementById("aggregateBtn");
     const addressesEl = document.getElementById("addresses");
+
+    // stores latest aggregated result for export
+    let latestAggregated = null;
 
     function setStatus(message, type = "info") {
       statusEl.textContent = message;
@@ -214,20 +264,27 @@
     }
 
     function getAddressesFromInput() {
-      return addressesEl.value.split("\n").map(a => a.trim()).filter(Boolean);
+      return addressesEl.value
+        .split("\n")
+        .map(a => a.trim())
+        .filter(Boolean);
     }
 
+    // Wallet addresses sync into URL params: ?wallets=GABC,GDEF,GHIJ
     function updateUrlWithWallets(addresses) {
       const url = new URL(window.location.href);
+
       if (addresses.length) {
         url.searchParams.set("wallets", addresses.join(","));
       } else {
         url.searchParams.delete("wallets");
       }
+
       window.history.replaceState({}, "", url);
       return url.toString();
     }
 
+    // On page load: auto-load wallets from URL
     function loadWalletsFromUrl() {
       const params = new URLSearchParams(window.location.search);
       const walletsParam = params.get("wallets");
@@ -245,20 +302,66 @@
       return addresses;
     }
 
+    // Copy current treasury URL with subtle confirmation
     async function copyShareLink() {
       const addresses = getAddressesFromInput();
+
       if (addresses.length === 0) {
         setStatus("Enter wallet addresses first, then copy the link.", "error");
         return;
       }
 
       const shareUrl = updateUrlWithWallets(addresses);
+
       try {
         await navigator.clipboard.writeText(shareUrl);
         setStatus("Share link copied");
       } catch (error) {
         setStatus(`Copy failed. Use this URL manually: ${shareUrl}`, "error");
       }
+    }
+
+    // Export aggregated treasury state as JSON file
+    function exportTreasuryJson() {
+      if (!latestAggregated) {
+        setStatus("Aggregate portfolio first, then export JSON.", "error");
+        return;
+      }
+
+      const assetsArray = Object.values(latestAggregated.assets)
+        .sort((a, b) => b.totalValueUSD - a.totalValueUSD)
+        .map(asset => {
+          const allocationPercent = latestAggregated.totalUSD > 0
+            ? (asset.totalValueUSD / latestAggregated.totalUSD) * 100
+            : 0;
+
+          return {
+            symbol: asset.symbol,
+            amount: asset.totalAmount,
+            usdValue: asset.totalValueUSD,
+            allocationPercent
+          };
+        });
+
+      const exportData = {
+        walletCount: latestAggregated.wallets,
+        totalXLM: latestAggregated.totalXLM,
+        totalUSD: latestAggregated.totalUSD,
+        assets: assetsArray
+      };
+
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "wealthview-treasury.json";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      URL.revokeObjectURL(url);
+      setStatus("Treasury JSON exported");
     }
 
     function renderDashboard(data) {
@@ -269,16 +372,23 @@
       const body = document.getElementById("assetTableBody");
       const rows = Object.values(data.assets)
         .sort((a, b) => b.totalValueUSD - a.totalValueUSD)
-        .map(asset => `
-          <tr>
-            <td>${asset.symbol}</td>
-            <td>${formatNumber(asset.totalAmount, 6)}</td>
-            <td>${formatCurrency(asset.totalValueUSD)}</td>
-          </tr>
-        `)
+        .map(asset => {
+          const allocationPercent = data.totalUSD > 0
+            ? (asset.totalValueUSD / data.totalUSD) * 100
+            : 0;
+
+          return `
+            <tr>
+              <td>${asset.symbol}</td>
+              <td class="num">${formatNumber(asset.totalAmount, 6)}</td>
+              <td class="num">${formatCurrency(asset.totalValueUSD)}</td>
+              <td class="num">${formatNumber(allocationPercent, 2)}%</td>
+            </tr>
+          `;
+        })
         .join("");
 
-      body.innerHTML = rows || '<tr><td class="empty" colspan="3">No asset balances found.</td></tr>';
+      body.innerHTML = rows || '<tr><td class="empty" colspan="4">No asset balances found.</td></tr>';
     }
 
     async function fetchPortfolio() {
@@ -312,14 +422,17 @@
 
         for (const addr of addresses) {
           const res = await fetch(`https://horizon.stellar.org/accounts/${addr}`);
+
           if (!res.ok) {
             console.log("Skipping invalid wallet:", addr);
             continue;
           }
 
           const data = await res.json();
+
           data.balances.forEach((b) => {
             const isNative = b.asset_type === "native";
+
             const symbol = isNative ? "XLM" : (b.asset_code || "UNKNOWN");
             const amount = parseFloat(b.balance) || 0;
 
@@ -344,9 +457,11 @@
           });
         }
 
+        latestAggregated = aggregated;
         renderDashboard(aggregated);
         setStatus("Aggregation complete.");
       } catch (error) {
+        console.error(error);
         setStatus(`Error: ${error.message}`, "error");
       } finally {
         buttonEl.disabled = false;
