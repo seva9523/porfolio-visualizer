@@ -4,6 +4,7 @@ export default async function handler(req, res) {
   }
 
   const walletsParam = req.query.wallets;
+
   if (!walletsParam || typeof walletsParam !== "string") {
     return res.status(400).json({ error: "Missing wallets query parameter." });
   }
@@ -34,7 +35,7 @@ export default async function handler(req, res) {
       return res.status(502).json({ error: "Unexpected CoinGecko price response." });
     }
 
-    // Reuse existing aggregation logic pattern
+    // Reuse existing Stellar aggregation logic pattern
     const aggregated = {
       walletCount: wallets.length,
       totalXLM: 0,
@@ -45,8 +46,10 @@ export default async function handler(req, res) {
     for (const addr of wallets) {
       const accountRes = await fetch(`https://horizon.stellar.org/accounts/${addr}`);
 
-      // Keep behavior lightweight: skip invalid wallets
-      if (!accountRes.ok) continue;
+      // Preserve existing behavior: skip invalid wallets
+      if (!accountRes.ok) {
+        continue;
+      }
 
       const data = await accountRes.json();
 
