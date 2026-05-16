@@ -1,94 +1,496 @@
-<script>
-  // ...keep everything else unchanged above...
-
-  function renderDashboard(data) {
-    document.getElementById("walletCount").textContent = data.wallets ?? data.walletCount ?? 0;
-    document.getElementById("totalXLM").textContent = formatNumber(data.totalXLM || 0, 4);
-    document.getElementById("totalUSD").textContent = formatCurrency(data.totalUSD || 0);
-
-    const assetsSource = Array.isArray(data.assets)
-      ? data.assets.map((a) => ({
-          symbol: a.symbol,
-          totalAmount: a.amount,
-          totalValueUSD: a.usdValue,
-          allocationPercent: a.allocationPercent
-        }))
-      : Object.values(data.assets || {}).map((a) => ({
-          symbol: a.symbol,
-          totalAmount: a.totalAmount,
-          totalValueUSD: a.totalValueUSD,
-          allocationPercent:
-            (data.totalUSD || 0) > 0 ? (a.totalValueUSD / data.totalUSD) * 100 : 0
-        }));
-
-    const rows = assetsSource
-      .sort((a, b) => (b.totalValueUSD || 0) - (a.totalValueUSD || 0))
-      .map((asset) => `
-        <tr>
-          <td>${asset.symbol}</td>
-          <td class="num">${formatNumber(asset.totalAmount || 0, 6)}</td>
-          <td class="num">${formatCurrency(asset.totalValueUSD || 0)}</td>
-          <td class="num">${formatNumber(asset.allocationPercent || 0, 2)}%</td>
-        </tr>
-      `)
-      .join("");
-
-    const body = document.getElementById("assetTableBody");
-    body.innerHTML = rows || '<tr><td class="empty" colspan="4">No asset balances found.</td></tr>';
-  }
-
-  async function fetchPortfolio() {
-    const addresses = getAddressesFromInput();
-
-    if (addresses.length === 0) {
-      setStatus("Enter at least one wallet address.", "error");
-      return;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WealthView | Stellar Treasury Aggregation</title>
+  <style>
+    :root {
+      --bg: #0B0F19;
+      --surface: #121826;
+      --surface-2: #0f1522;
+      --border: #212a3d;
+      --text: #F5F7FA;
+      --muted: #8A94A6;
+      --accent: #14F195;
+      --accent-2: #5B8CFF;
+      --danger: #ff6b6b;
+      --danger-soft: rgba(255, 107, 107, 0.14);
+      --radius: 6px;
     }
 
-    buttonEl.disabled = true;
-    updateUrlWithWallets(addresses);
-    setStatus("Loading portfolios...");
+    * { box-sizing: border-box; }
 
-    try {
-      const walletsParam = encodeURIComponent(addresses.join(","));
-      const apiRes = await fetch(`/api/aggregate?wallets=${walletsParam}`);
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.35;
+      padding: 10px;
+    }
 
-      if (!apiRes.ok) {
-        let msg = "API aggregation failed.";
-        try {
-          const errJson = await apiRes.json();
-          msg = errJson?.error || msg;
-        } catch (_) {}
-        throw new Error(msg);
+    .container { max-width: 1120px; margin: 0 auto; }
+
+    header { margin-bottom: 8px; }
+    h1 { margin: 0; font-size: 16px; letter-spacing: 0.02em; }
+    .subtitle {
+      margin: 2px 0 0;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .controls, .metric, .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .controls { padding: 8px; margin-bottom: 8px; }
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 11px;
+      margin-bottom: 6px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 88px;
+      resize: vertical;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--surface-2);
+      color: var(--text);
+      padding: 8px;
+      font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      outline: none;
+    }
+
+    textarea:focus { border-color: var(--accent-2); }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 8px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      min-width: 140px;
+    }
+
+    .primary-btn {
+      background: var(--accent);
+      color: #052015;
+      border-color: #10c97e;
+    }
+
+    .primary-btn:hover { filter: brightness(1.05); }
+
+    .secondary-btn {
+      background: transparent;
+      color: var(--text);
+      border-color: #31405f;
+    }
+
+    .secondary-btn:hover {
+      background: rgba(91, 140, 255, 0.08);
+      border-color: var(--accent-2);
+    }
+
+    button:disabled { opacity: .6; cursor: not-allowed; }
+
+    .status {
+      display: none;
+      margin-top: 8px;
+      padding: 6px 8px;
+      font-size: 12px;
+      border: 1px solid #26304a;
+      border-radius: 4px;
+      color: #b7c8ea;
+      background: rgba(91, 140, 255, 0.1);
+    }
+
+    .status.error {
+      color: var(--danger);
+      background: var(--danger-soft);
+      border-color: rgba(255, 107, 107, .3);
+    }
+
+    .api-usage {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px dashed #2a3550;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .api-usage code {
+      background: var(--surface-2);
+      color: #b9c9ef;
+      border: 1px solid #22314a;
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 11px;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .metric { padding: 7px 8px; }
+
+    .k {
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+    }
+
+    .v {
+      margin-top: 4px;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .table-wrap { overflow: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 700px;
+    }
+
+    th, td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #1b2538;
+      text-align: left;
+    }
+
+    th {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      background: #0f1522;
+    }
+
+    tbody tr:hover { background: rgba(91, 140, 255, 0.08); }
+    tbody tr:last-child td { border-bottom: none; }
+
+    .num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 14px;
+    }
+
+    @media (max-width: 760px) {
+      .actions { flex-direction: column; }
+      .actions button { width: 100%; }
+      .metrics { grid-template-columns: 1fr; }
+      body { padding: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>WealthView</h1>
+      <p class="subtitle">Stellar Treasury Aggregation</p>
+    </header>
+
+    <section class="controls">
+      <div class="label-row">
+        <span>Wallet Input</span>
+        <span>One wallet per line</span>
+      </div>
+
+      <textarea id="addresses" placeholder="GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"></textarea>
+
+      <div class="actions">
+        <button id="aggregateBtn" class="primary-btn" onclick="fetchPortfolio()">Aggregate Portfolio</button>
+        <button id="shareBtn" class="secondary-btn" onclick="copyShareLink()">Copy Share Link</button>
+        <button id="exportBtn" class="secondary-btn" onclick="exportTreasuryJson()">Export JSON</button>
+      </div>
+
+      <div id="status" class="status"></div>
+
+      <div class="api-usage">
+        Public API endpoint:
+        <code>/api/aggregate?wallets=GABC,GDEF,GHIJ</code>
+      </div>
+    </section>
+
+    <section class="metrics" id="summaryCards">
+      <article class="metric"><div class="k">Wallet count</div><div class="v" id="walletCount">0</div></article>
+      <article class="metric"><div class="k">Total XLM</div><div class="v" id="totalXLM">0</div></article>
+      <article class="metric"><div class="k">Total USD</div><div class="v" id="totalUSD">$0.00</div></article>
+    </section>
+
+    <section class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Asset</th>
+            <th class="num">Amount</th>
+            <th class="num">USD value</th>
+            <th class="num">Allocation %</th>
+          </tr>
+        </thead>
+        <tbody id="assetTableBody">
+          <tr><td class="empty" colspan="4">No portfolio data yet.</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <script>
+    const statusEl = document.getElementById("status");
+    const buttonEl = document.getElementById("aggregateBtn");
+    const addressesEl = document.getElementById("addresses");
+
+    // stores latest aggregated result for export
+    let latestAggregated = null;
+
+    function setStatus(message, type = "info") {
+      statusEl.textContent = message;
+      statusEl.classList.toggle("error", type === "error");
+      statusEl.style.display = message ? "block" : "none";
+    }
+
+    function formatNumber(value, digits = 2) {
+      return Number(value).toLocaleString(undefined, { maximumFractionDigits: digits });
+    }
+
+    function formatCurrency(value) {
+      return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(value);
+    }
+
+    function getAddressesFromInput() {
+      return addressesEl.value
+        .split("\n")
+        .map(a => a.trim())
+        .filter(Boolean);
+    }
+
+    // Wallet addresses sync into URL params: ?wallets=GABC,GDEF,GHIJ
+    function updateUrlWithWallets(addresses) {
+      const url = new URL(window.location.href);
+
+      if (addresses.length) {
+        url.searchParams.set("wallets", addresses.join(","));
+      } else {
+        url.searchParams.delete("wallets");
       }
 
-      const apiData = await apiRes.json();
+      window.history.replaceState({}, "", url);
+      return url.toString();
+    }
 
-      // keep export compatibility with existing shape
-      latestAggregated = {
-        wallets: apiData.walletCount,
-        totalXLM: apiData.totalXLM,
-        totalUSD: apiData.totalUSD,
-        assets: (apiData.assets || []).reduce((acc, a) => {
-          acc[a.symbol] = {
-            symbol: a.symbol,
-            totalAmount: a.amount,
-            totalValueUSD: a.usdValue,
-            type: a.symbol === "XLM" ? "native" : "token"
+    // On page load: auto-load wallets from URL
+    function loadWalletsFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const walletsParam = params.get("wallets");
+      if (!walletsParam) return [];
+
+      const addresses = walletsParam
+        .split(",")
+        .map(a => a.trim())
+        .filter(Boolean);
+
+      if (addresses.length) {
+        addressesEl.value = addresses.join("\n");
+      }
+
+      return addresses;
+    }
+
+    // Copy current treasury URL with subtle confirmation
+    async function copyShareLink() {
+      const addresses = getAddressesFromInput();
+
+      if (addresses.length === 0) {
+        setStatus("Enter wallet addresses first, then copy the link.", "error");
+        return;
+      }
+
+      const shareUrl = updateUrlWithWallets(addresses);
+
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setStatus("Share link copied");
+      } catch (error) {
+        setStatus(`Copy failed. Use this URL manually: ${shareUrl}`, "error");
+      }
+    }
+
+    // Export aggregated treasury state as JSON file
+    function exportTreasuryJson() {
+      if (!latestAggregated) {
+        setStatus("Aggregate portfolio first, then export JSON.", "error");
+        return;
+      }
+
+      const assetsArray = Object.values(latestAggregated.assets)
+        .sort((a, b) => b.totalValueUSD - a.totalValueUSD)
+        .map(asset => {
+          const allocationPercent = latestAggregated.totalUSD > 0
+            ? (asset.totalValueUSD / latestAggregated.totalUSD) * 100
+            : 0;
+
+          return {
+            symbol: asset.symbol,
+            amount: asset.totalAmount,
+            usdValue: asset.totalValueUSD,
+            allocationPercent
           };
-          return acc;
-        }, {})
+        });
+
+      const exportData = {
+        walletCount: latestAggregated.wallets,
+        totalXLM: latestAggregated.totalXLM,
+        totalUSD: latestAggregated.totalUSD,
+        assets: assetsArray
       };
 
-      renderDashboard(apiData);
-      setStatus("Aggregation complete.");
-    } catch (error) {
-      console.error(error);
-      setStatus(`Error: ${error.message}`, "error");
-    } finally {
-      buttonEl.disabled = false;
-    }
-  }
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
 
-  // ...keep everything else unchanged below...
-</script>
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "wealthview-treasury.json";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      URL.revokeObjectURL(url);
+      setStatus("Treasury JSON exported");
+    }
+
+    function renderDashboard(data) {
+      // supports both frontend and API shapes
+      const walletCount = data.walletCount ?? data.wallets ?? 0;
+      document.getElementById("walletCount").textContent = walletCount;
+      document.getElementById("totalXLM").textContent = formatNumber(data.totalXLM || 0, 4);
+      document.getElementById("totalUSD").textContent = formatCurrency(data.totalUSD || 0);
+
+      const assetsNormalized = Array.isArray(data.assets)
+        ? data.assets.map(asset => ({
+            symbol: asset.symbol,
+            totalAmount: asset.amount,
+            totalValueUSD: asset.usdValue,
+            allocationPercent: asset.allocationPercent
+          }))
+        : Object.values(data.assets || {}).map(asset => {
+            const allocationPercent = (data.totalUSD || 0) > 0
+              ? (asset.totalValueUSD / data.totalUSD) * 100
+              : 0;
+
+            return {
+              symbol: asset.symbol,
+              totalAmount: asset.totalAmount,
+              totalValueUSD: asset.totalValueUSD,
+              allocationPercent
+            };
+          });
+
+      const body = document.getElementById("assetTableBody");
+      const rows = assetsNormalized
+        .sort((a, b) => (b.totalValueUSD || 0) - (a.totalValueUSD || 0))
+        .map(asset => `
+          <tr>
+            <td>${asset.symbol}</td>
+            <td class="num">${formatNumber(asset.totalAmount || 0, 6)}</td>
+            <td class="num">${formatCurrency(asset.totalValueUSD || 0)}</td>
+            <td class="num">${formatNumber(asset.allocationPercent || 0, 2)}%</td>
+          </tr>
+        `)
+        .join("");
+
+      body.innerHTML = rows || '<tr><td class="empty" colspan="4">No asset balances found.</td></tr>';
+    }
+
+    async function fetchPortfolio() {
+      const addresses = getAddressesFromInput();
+
+      if (addresses.length === 0) {
+        setStatus("Enter at least one wallet address.", "error");
+        return;
+      }
+
+      buttonEl.disabled = true;
+      updateUrlWithWallets(addresses);
+      setStatus("Loading portfolios...");
+
+      try {
+        // frontend now uses lightweight public API endpoint
+        const walletsParam = encodeURIComponent(addresses.join(","));
+        const apiRes = await fetch(`/api/aggregate?wallets=${walletsParam}`);
+
+        if (!apiRes.ok) {
+          let message = "API aggregation failed";
+          try {
+            const err = await apiRes.json();
+            message = err?.error || message;
+          } catch (_) {}
+          throw new Error(message);
+        }
+
+        const apiData = await apiRes.json();
+
+        // keep export behavior compatible with existing export logic
+        latestAggregated = {
+          wallets: apiData.walletCount,
+          totalXLM: apiData.totalXLM,
+          totalUSD: apiData.totalUSD,
+          assets: (apiData.assets || []).reduce((acc, asset) => {
+            acc[asset.symbol] = {
+              symbol: asset.symbol,
+              totalAmount: asset.amount,
+              totalValueUSD: asset.usdValue,
+              type: asset.symbol === "XLM" ? "native" : "token"
+            };
+            return acc;
+          }, {})
+        };
+
+        renderDashboard(apiData);
+        setStatus("Aggregation complete.");
+      } catch (error) {
+        console.error(error);
+        setStatus(`Error: ${error.message}`, "error");
+      } finally {
+        buttonEl.disabled = false;
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const addresses = loadWalletsFromUrl();
+      if (addresses.length) {
+        fetchPortfolio();
+      }
+    });
+  </script>
+</body>
+</html>
