@@ -128,6 +128,26 @@
       border-color: rgba(255, 107, 107, .3);
     }
 
+    /* ADDED: API usage helper */
+    .api-usage {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px dashed #2a3550;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .api-usage code {
+      background: var(--surface-2);
+      color: #b9c9ef;
+      border: 1px solid #22314a;
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 11px;
+    }
+
     .metrics {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -216,6 +236,12 @@
       </div>
 
       <div id="status" class="status"></div>
+
+      <!-- ADDED: simple API usage section -->
+      <div class="api-usage">
+        Public API endpoint:
+        <code>/api/aggregate?wallets=GABC,GDEF,GHIJ</code>
+      </div>
     </section>
 
     <section class="metrics" id="summaryCards">
