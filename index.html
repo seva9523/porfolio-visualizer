@@ -46,6 +46,58 @@
       margin-bottom: 16px;
     }
 
+    .landing-lead {
+      margin: 0 0 16px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: var(--primary-soft);
+      color: var(--text);
+      border: 1px solid #d7e3ff;
+      font-weight: 600;
+    }
+
+    .landing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .landing-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    .landing-card h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .landing-card p,
+    .landing-card li {
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    .landing-card ul {
+      margin: 0;
+      padding-left: 18px;
+      display: grid;
+      gap: 6px;
+    }
+
+    code {
+      background: #f0f4ff;
+      color: #1d3ea8;
+      border: 1px solid #d7e3ff;
+      border-radius: 6px;
+      padding: 1px 6px;
+      font-size: 0.85em;
+    }
+
     textarea {
       width: 100%;
       min-height: 130px;
@@ -138,6 +190,7 @@
     @media (max-width: 760px) {
       body { padding: 14px; }
       .cards { grid-template-columns: 1fr; }
+      .landing-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -145,6 +198,40 @@
   <div class="container">
     <h1>Stellar Portfolio Dashboard</h1>
     <p class="subtitle">Aggregate multiple Stellar wallets and review balances with XLM USD pricing from CoinGecko.</p>
+
+    <!-- Landing section -->
+    <section class="panel">
+      <p class="landing-lead">Aggregate and visualize multiple Stellar wallets in one view.</p>
+
+      <div class="landing-grid">
+        <article class="landing-card">
+          <h3>How it works</h3>
+          <ul>
+            <li>Paste one or more Stellar wallet addresses.</li>
+            <li>The app fetches balances from Stellar Horizon.</li>
+            <li>XLM balances are priced in USD using CoinGecko.</li>
+          </ul>
+        </article>
+
+        <article class="landing-card">
+          <h3>Use cases</h3>
+          <ul>
+            <li>Track multi-wallet treasury in one place.</li>
+            <li>Share portfolio snapshots with your team.</li>
+            <li>Monitor XLM exposure and USD value quickly.</li>
+          </ul>
+        </article>
+
+        <article class="landing-card">
+          <h3>Example treasury view</h3>
+          <p>
+            Open a prefilled dashboard with a URL like
+            <code>?wallets=GABC...,GDEF...</code>
+            and the app will auto-load those wallets.
+          </p>
+        </article>
+      </div>
+    </section>
 
     <section class="panel">
       <textarea id="addresses" placeholder="Enter wallet addresses (one per line)"></textarea>
