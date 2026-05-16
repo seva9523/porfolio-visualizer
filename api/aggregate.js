@@ -1,11 +1,11 @@
 export default async function handler(req, res) {
   if (req.method && req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).json({ error: "Method not allowed. Use GET." });
   }
 
   const walletsParam = req.query.wallets;
   if (!walletsParam || typeof walletsParam !== "string") {
-    return res.status(400).json({ error: "Missing wallets query param" });
+    return res.status(400).json({ error: "Missing wallets query parameter." });
   }
 
   const wallets = walletsParam
@@ -14,23 +14,27 @@ export default async function handler(req, res) {
     .filter(Boolean);
 
   if (wallets.length === 0) {
-    return res.status(400).json({ error: "At least one wallet is required" });
+    return res.status(400).json({ error: "At least one wallet is required." });
   }
 
   try {
-    // Same pricing source as UI logic
-    const priceRes = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=stellar&vs_currencies=usd");
+    // Keep CoinGecko XLM pricing
+    const priceRes = await fetch(
+      "https://api.coingecko.com/api/v3/simple/price?ids=stellar&vs_currencies=usd"
+    );
+
     if (!priceRes.ok) {
-      return res.status(502).json({ error: "Unable to fetch XLM price from CoinGecko" });
+      return res.status(502).json({ error: "Unable to fetch XLM price from CoinGecko." });
     }
 
     const priceData = await priceRes.json();
     const xlmPrice = priceData?.stellar?.usd;
+
     if (typeof xlmPrice !== "number") {
-      return res.status(502).json({ error: "Unexpected CoinGecko price response" });
+      return res.status(502).json({ error: "Unexpected CoinGecko price response." });
     }
 
-    // Same aggregation pattern as UI logic
+    // Reuse existing aggregation logic pattern
     const aggregated = {
       walletCount: wallets.length,
       totalXLM: 0,
@@ -40,10 +44,9 @@ export default async function handler(req, res) {
 
     for (const addr of wallets) {
       const accountRes = await fetch(`https://horizon.stellar.org/accounts/${addr}`);
-      if (!accountRes.ok) {
-        // keep behavior lightweight: skip invalid wallets
-        continue;
-      }
+
+      // Keep behavior lightweight: skip invalid wallets
+      if (!accountRes.ok) continue;
 
       const data = await accountRes.json();
 
@@ -73,11 +76,17 @@ export default async function handler(req, res) {
 
     const assets = Object.values(aggregated.assets)
       .sort((a, b) => b.usdValue - a.usdValue)
-      .map((asset) => ({
-        symbol: asset.symbol,
-        amount: asset.amount,
-        usdValue: asset.usdValue
-      }));
+      .map((asset) => {
+        const allocationPercent =
+          aggregated.totalUSD > 0 ? (asset.usdValue / aggregated.totalUSD) * 100 : 0;
+
+        return {
+          symbol: asset.symbol,
+          amount: asset.amount,
+          usdValue: asset.usdValue,
+          allocationPercent
+        };
+      });
 
     return res.status(200).json({
       walletCount: aggregated.walletCount,
@@ -87,7 +96,7 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     return res.status(500).json({
-      error: "Aggregation failed",
+      error: "Aggregation failed.",
       details: error.message
     });
   }
