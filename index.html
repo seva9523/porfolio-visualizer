@@ -237,6 +237,7 @@
       <textarea id="addresses" placeholder="Enter wallet addresses (one per line)"></textarea>
       <button id="aggregateBtn" onclick="fetchPortfolio()">Aggregate Portfolio</button>
       <button id="shareBtn" class="secondary" onclick="copyShareLink()">Copy Share Link</button>
+      <button id="exportBtn" class="secondary" onclick="exportTreasuryJson()">Export JSON</button>
       <div id="status" class="status"></div>
     </section>
 
@@ -266,6 +267,9 @@
     const statusEl = document.getElementById("status");
     const buttonEl = document.getElementById("aggregateBtn");
     const addressesEl = document.getElementById("addresses");
+
+    // holds the latest aggregated result for export
+    let latestAggregated = null;
 
     function setStatus(message, type = "info") {
       statusEl.textContent = message;
@@ -327,6 +331,48 @@
       } catch (error) {
         setStatus(`Copy failed. Use this URL manually: ${shareUrl}`, "error");
       }
+    }
+
+    function exportTreasuryJson() {
+      if (!latestAggregated) {
+        setStatus("Aggregate portfolio first, then export JSON.", "error");
+        return;
+      }
+
+      const assetsArray = Object.values(latestAggregated.assets)
+        .sort((a, b) => b.totalValueUSD - a.totalValueUSD)
+        .map(asset => {
+          const allocationPercent = latestAggregated.totalUSD > 0
+            ? (asset.totalValueUSD / latestAggregated.totalUSD) * 100
+            : 0;
+
+          return {
+            symbol: asset.symbol,
+            amount: asset.totalAmount,
+            usdValue: asset.totalValueUSD,
+            allocationPercent
+          };
+        });
+
+      const exportData = {
+        walletCount: latestAggregated.wallets,
+        totalXLM: latestAggregated.totalXLM,
+        totalUSD: latestAggregated.totalUSD,
+        assets: assetsArray
+      };
+
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "wealthview-treasury.json";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      URL.revokeObjectURL(url);
+      setStatus("Treasury JSON exported");
     }
 
     function renderDashboard(data) {
@@ -412,6 +458,7 @@
           });
         }
 
+        latestAggregated = aggregated;
         renderDashboard(aggregated);
         setStatus("Aggregation complete.");
       } catch (error) {
