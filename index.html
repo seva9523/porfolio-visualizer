@@ -1,9 +1,9 @@
  (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
 diff --git a/index.html b/index.html
-index ed4fd6dd5f1cb5ab869c15b9413b61ac1cfdc0cd..bfa229377b47bd4344a02b34eea1bdf84ba83b18 100644
+index ed4fd6dd5f1cb5ab869c15b9413b61ac1cfdc0cd..553c7dbe95441a9a57401e704a7eb20e8a72641f 100644
 --- a/index.html
 +++ b/index.html
-@@ -1,111 +1,491 @@
+@@ -1,111 +1,432 @@
  <!DOCTYPE html>
 -<html>
 +<html lang="en">
@@ -12,108 +12,67 @@ index ed4fd6dd5f1cb5ab869c15b9413b61ac1cfdc0cd..bfa229377b47bd4344a02b34eea1bdf8
 -</head>
 +  <meta charset="UTF-8" />
 +  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-+  <title>Stellar Portfolio Dashboard</title>
++  <title>WealthView | Stellar Treasury Aggregation</title>
 +  <style>
 +    :root {
-+      --bg: #f3f6fc;
-+      --surface: #ffffff;
-+      --surface-soft: #f9fbff;
-+      --text: #14233d;
-+      --muted: #5f6f86;
-+      --primary: #315efb;
-+      --primary-deep: #2646c3;
-+      --primary-soft: #e9efff;
-+      --danger: #b42318;
-+      --danger-soft: #ffe9e7;
-+      --border: #dbe4f2;
-+      --border-strong: #c7d4ea;
-+      --shadow-sm: 0 4px 16px rgba(20, 35, 61, 0.08);
-+      --shadow-lg: 0 14px 38px rgba(20, 35, 61, 0.12);
-+      --radius-lg: 16px;
-+      --radius-md: 12px;
-+      --radius-sm: 10px;
-+    }
-+
-+    * { box-sizing: border-box; }
-+
-+    body {
-+      margin: 0;
-+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-+      background: radial-gradient(circle at 10% 0%, #e9efff 0%, transparent 35%), var(--bg);
-+      color: var(--text);
-+      line-height: 1.45;
-+      padding: 22px;
-+    }
-+
-+    .container {
-+      max-width: 1040px;
-+      margin: 0 auto;
-+    }
-+
-+    .hero {
-+      background: linear-gradient(145deg, #112347 0%, #193767 60%, #1f4580 100%);
-+      color: #fff;
-+      border-radius: 24px;
-+      padding: clamp(20px, 3vw, 34px);
-+      box-shadow: var(--shadow-lg);
-+      margin-bottom: 18px;
++      --bg: #0a0f1a;
++      --surface: #0f1726;
++      --surface-2: #131d30;
++      --text: #dce6ff;
++      --muted: #8fa0bf;
++      --primary: #4f7dff;
++      --primary-soft: rgba(79, 125, 255, 0.12);
++      --border: #21314d;
++      --danger: #ff6b6b;
++      --danger-soft: rgba(255, 107, 107, 0.14);
++      --success: #49d6a3;
++      --radius: 10px;
 +    }
  
 -<body style="font-family: Arial; padding: 40px; max-width: 800px; margin: auto;">
-+    .hero h1 {
-+      margin: 0 0 10px;
-+      font-size: clamp(1.6rem, 3vw, 2.3rem);
-+      letter-spacing: -0.02em;
-+    }
-+
-+    .hero .lead {
-+      margin: 0;
-+      font-size: clamp(1rem, 1.3vw, 1.1rem);
-+      color: #d8e5ff;
-+    }
++    * { box-sizing: border-box; }
  
 -  <h1>Stellar Portfolio Infra</h1>
 -  <p>Multi-wallet portfolio aggregation for Stellar builders</p>
-+    .hero .statement {
-+      margin-top: 14px;
-+      display: inline-block;
-+      background: rgba(255, 255, 255, 0.13);
-+      border: 1px solid rgba(255, 255, 255, 0.25);
-+      border-radius: 999px;
-+      padding: 8px 14px;
-+      font-size: 0.95rem;
-+      color: #ffffff;
++    body {
++      margin: 0;
++      background: var(--bg);
++      color: var(--text);
++      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
++      line-height: 1.4;
++      padding: 14px;
 +    }
  
 -  <textarea id="addresses" placeholder="Enter wallet addresses (one per line)"
 -    style="width:100%; height:120px; padding:10px;"></textarea>
-+    .info-grid {
-+      display: grid;
-+      grid-template-columns: repeat(3, minmax(0, 1fr));
-+      gap: 12px;
-+      margin-bottom: 16px;
++    .container {
++      max-width: 1080px;
++      margin: 0 auto;
 +    }
  
 -  <button onclick="fetchPortfolio()" 
 -    style="padding:12px; width:100%; margin-top:10px; cursor:pointer;">
 -    Aggregate Portfolio
 -  </button>
-+    .info-card, .panel, .card, .table-wrap {
-+      background: var(--surface);
-+      border: 1px solid var(--border);
-+      border-radius: var(--radius-lg);
-+      box-shadow: var(--shadow-sm);
++    header {
++      margin-bottom: 12px;
 +    }
  
 -  <p id="status" style="margin-top:20px;"></p>
-+    .info-card {
-+      padding: 16px;
++    h1 {
++      margin: 0;
++      font-size: 1.1rem;
++      letter-spacing: 0.02em;
++      font-weight: 700;
 +    }
  
 -  <pre id="jsonOutput" style="background:#111; color:#0f0; padding:15px; margin-top:20px; overflow:auto;"></pre>
-+    .info-card h3 {
-+      margin: 0 0 10px;
-+      font-size: 1rem;
++    .subtitle {
++      margin: 2px 0 0;
++      color: var(--muted);
++      font-size: 0.8rem;
++      letter-spacing: 0.03em;
++      text-transform: uppercase;
 +    }
  
 -<script>
@@ -121,60 +80,82 @@ index ed4fd6dd5f1cb5ab869c15b9413b61ac1cfdc0cd..bfa229377b47bd4344a02b34eea1bdf8
 -  const raw = document.getElementById("addresses").value;
 -  const status = document.getElementById("status");
 -  const output = document.getElementById("jsonOutput");
-+    .info-card p,
-+    .info-card li {
-+      color: var(--muted);
-+      font-size: 0.95rem;
++    .controls {
++      background: var(--surface);
++      border: 1px solid var(--border);
++      border-radius: var(--radius);
++      padding: 10px;
++      margin-bottom: 10px;
 +    }
  
 -  output.innerText = "";
-+    .info-card ul {
-+      margin: 0;
-+      padding-left: 18px;
-+      display: grid;
-+      gap: 7px;
++    .label-row {
++      display: flex;
++      justify-content: space-between;
++      gap: 8px;
++      margin-bottom: 8px;
++      font-size: 0.78rem;
++      color: var(--muted);
 +    }
  
 -  const addresses = raw
 -    .split("\n")
 -    .map(a => a.trim())
 -    .filter(a => a.length > 0);
-+    .panel {
-+      padding: 16px;
-+      margin-bottom: 16px;
++    textarea {
++      width: 100%;
++      min-height: 96px;
++      border: 1px solid var(--border);
++      border-radius: 8px;
++      background: var(--surface-2);
++      color: var(--text);
++      font: 500 0.88rem/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
++      padding: 10px;
++      resize: vertical;
++      outline: none;
 +    }
  
 -  if (addresses.length === 0) {
 -    status.innerText = "Enter at least one wallet address";
 -    return;
 -  }
-+    .input-header {
-+      display: flex;
-+      justify-content: space-between;
-+      align-items: center;
-+      margin-bottom: 10px;
-+      gap: 8px;
++    textarea:focus {
++      border-color: var(--primary);
++      box-shadow: 0 0 0 3px var(--primary-soft);
 +    }
  
 -  status.innerText = "Loading portfolios...";
-+    .input-header strong { font-size: 0.96rem; }
-+    .input-header span { color: var(--muted); font-size: 0.86rem; }
++    .actions {
++      display: flex;
++      gap: 8px;
++      margin-top: 8px;
++    }
++
++    button {
++      border: 1px solid var(--border);
++      border-radius: 8px;
++      padding: 9px 12px;
++      font-size: 0.84rem;
++      font-weight: 600;
++      cursor: pointer;
++      color: var(--text);
++      background: var(--surface-2);
++    }
++
++    .primary-btn {
++      background: var(--primary);
++      border-color: #3f66d6;
++      color: #fff;
++    }
  
 -  try {
 -    // XLM price
 -    const priceRes = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=stellar&vs_currencies=usd");
 -    const priceData = await priceRes.json();
 -    const xlmPrice = priceData.stellar.usd;
-+    textarea {
-+      width: 100%;
-+      min-height: 130px;
-+      resize: vertical;
-+      border-radius: var(--radius-md);
-+      border: 1px solid var(--border-strong);
-+      padding: 12px;
-+      font: inherit;
-+      color: var(--text);
-+      background: var(--surface-soft);
++    button:disabled {
++      opacity: 0.6;
++      cursor: not-allowed;
 +    }
  
 -    let aggregated = {
@@ -183,185 +164,145 @@ index ed4fd6dd5f1cb5ab869c15b9413b61ac1cfdc0cd..bfa229377b47bd4344a02b34eea1bdf8
 -      totalUSD: 0,
 -      assets: {}
 -    };
-+    .actions {
-+      display: grid;
-+      grid-template-columns: 1fr 1fr;
-+      gap: 10px;
-+      margin-top: 12px;
++    .status {
++      margin-top: 8px;
++      font-size: 0.8rem;
++      padding: 7px 9px;
++      border-radius: 8px;
++      border: 1px solid transparent;
++      background: var(--primary-soft);
++      display: none;
 +    }
  
 -    // Process each wallet
 -    for (let addr of addresses) {
-+    button {
-+      border: none;
-+      border-radius: var(--radius-sm);
-+      padding: 12px 16px;
-+      font: inherit;
-+      font-weight: 600;
-+      cursor: pointer;
-+      transition: 0.2s ease;
++    .status.error {
++      color: var(--danger);
++      background: var(--danger-soft);
++      border-color: rgba(255, 107, 107, 0.3);
 +    }
  
 -      const res = await fetch(`https://horizon.stellar.org/accounts/${addr}`);
-+    .primary-btn {
-+      color: #fff;
-+      background: var(--primary);
-+    }
-+
-+    .primary-btn:hover { background: var(--primary-deep); }
-+
-+    .secondary {
-+      background: #fff;
-+      color: var(--primary);
-+      border: 1px solid var(--primary);
-+    }
-+
-+    .secondary:hover { background: var(--primary-soft); }
-+
-+    button:disabled { opacity: 0.6; cursor: not-allowed; }
-+
-+    .status {
-+      margin-top: 12px;
-+      padding: 10px;
-+      border-radius: var(--radius-sm);
-+      background: var(--primary-soft);
-+      color: var(--text);
-+      display: none;
-+      border: 1px solid #d3ddff;
-+    }
-+
-+    .status.error {
-+      background: var(--danger-soft);
-+      color: var(--danger);
-+      border: 1px solid #ffd0cc;
-+    }
-+
-+    .cards {
-+      display: grid;
-+      grid-template-columns: repeat(3, minmax(0, 1fr));
-+      gap: 12px;
-+      margin-bottom: 16px;
-+    }
-+
-+    .card {
-+      padding: 14px;
-+    }
-+
-+    .label { font-size: 0.85rem; color: var(--muted); margin-bottom: 8px; }
-+    .value { font-size: 1.35rem; font-weight: 750; letter-spacing: -0.01em; }
-+
-+    .table-wrap {
-+      overflow-x: auto;
-+    }
-+
-+    table { width: 100%; border-collapse: collapse; min-width: 520px; }
-+    th, td { padding: 13px 12px; text-align: left; border-bottom: 1px solid var(--border); }
-+    th {
-+      font-size: 0.8rem;
-+      text-transform: uppercase;
-+      letter-spacing: 0.05em;
-+      color: var(--muted);
-+      font-weight: 650;
-+      background: #f7f9ff;
-+    }
-+    tbody tr:hover { background: #fafcff; }
-+    tbody tr:last-child td { border-bottom: none; }
-+
-+    .empty {
-+      text-align: center;
-+      padding: 18px;
-+      color: var(--muted);
-+    }
-+
-+    code {
-+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-+      background: #eef3ff;
-+      color: #2340a7;
-+      border: 1px solid #d7e2ff;
-+      border-radius: 6px;
-+      padding: 1px 6px;
++    .status:not(.error) {
++      color: #b9c9ef;
++      border-color: rgba(79, 125, 255, 0.24);
 +    }
  
 -      if (!res.ok) {
 -        console.log("Skipping invalid wallet:", addr);
 -        continue;
-+    @media (max-width: 860px) {
-+      .info-grid, .cards { grid-template-columns: 1fr; }
-+      .actions { grid-template-columns: 1fr; }
++    .metrics {
++      display: grid;
++      grid-template-columns: repeat(3, minmax(0, 1fr));
++      gap: 8px;
++      margin-bottom: 10px;
 +    }
 +
-+    @media (max-width: 640px) {
-+      body { padding: 12px; }
-+      .hero { border-radius: 18px; }
-+      .panel, .info-card, .card, .table-wrap { border-radius: 12px; }
-+      .input-header { flex-direction: column; align-items: flex-start; }
++    .metric {
++      border: 1px solid var(--border);
++      background: var(--surface);
++      border-radius: 8px;
++      padding: 8px 10px;
++    }
++
++    .metric .k {
++      color: var(--muted);
++      font-size: 0.74rem;
++      text-transform: uppercase;
++      letter-spacing: 0.03em;
++      margin-bottom: 4px;
++    }
++
++    .metric .v {
++      font-size: 1.03rem;
++      font-weight: 700;
++      letter-spacing: 0.01em;
++      color: #eff4ff;
++    }
++
++    .table-wrap {
++      border: 1px solid var(--border);
++      border-radius: var(--radius);
++      overflow: auto;
++      background: var(--surface);
++    }
++
++    table {
++      width: 100%;
++      border-collapse: collapse;
++      min-width: 560px;
++    }
++
++    th,
++    td {
++      padding: 10px;
++      text-align: left;
++      border-bottom: 1px solid #1b2942;
++      font-size: 0.86rem;
++    }
++
++    th {
++      color: #9bb0d6;
++      text-transform: uppercase;
++      letter-spacing: 0.04em;
++      font-size: 0.72rem;
++      background: #0d1525;
++    }
++
++    tbody tr:hover {
++      background: #111c2f;
++    }
++
++    tbody tr:last-child td {
++      border-bottom: none;
++    }
++
++    .empty {
++      color: var(--muted);
++      text-align: center;
++      padding: 16px;
++    }
++
++    @media (max-width: 760px) {
++      body { padding: 10px; }
++      .actions { flex-direction: column; }
++      .metrics { grid-template-columns: 1fr; }
++      th, td { padding: 9px; }
 +    }
 +  </style>
 +</head>
 +<body>
 +  <div class="container">
-+    <section class="hero">
-+      <h1>Stellar Portfolio Dashboard</h1>
-+      <p class="lead">Track, understand, and share your multi-wallet Stellar portfolio in a clean operational view.</p>
-+      <span class="statement">Aggregate and visualize multiple Stellar wallets in one view.</span>
-+    </section>
++    <header>
++      <h1>WealthView</h1>
++      <p class="subtitle">Stellar Treasury Aggregation</p>
++    </header>
 +
-+    <section class="info-grid">
-+      <article class="info-card">
-+        <h3>How it works</h3>
-+        <ul>
-+          <li>Paste one or more Stellar wallet addresses.</li>
-+          <li>The app fetches balances from Stellar Horizon.</li>
-+          <li>XLM balances are converted to USD via CoinGecko pricing.</li>
-+        </ul>
-+      </article>
-+
-+      <article class="info-card">
-+        <h3>Use cases</h3>
-+        <ul>
-+          <li>DAO and startup treasury monitoring.</li>
-+          <li>Shared finance view across operations wallets.</li>
-+          <li>Fast portfolio snapshots for investor updates.</li>
-+        </ul>
-+      </article>
-+
-+      <article class="info-card">
-+        <h3>Example treasury view</h3>
-+        <p>
-+          Open a shareable URL like
-+          <code>?wallets=GABC...,GDEF...</code>
-+          to load a pre-filled combined portfolio dashboard.
-+        </p>
-+      </article>
-+    </section>
-+
-+    <section class="panel">
-+      <div class="input-header">
-+        <strong>Wallet addresses</strong>
-+        <span>One wallet per line. Invalid wallets are skipped automatically.</span>
++    <section class="controls">
++      <div class="label-row">
++        <span>Wallet Input</span>
++        <span>One address per line</span>
 +      </div>
 +      <textarea id="addresses" placeholder="GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"></textarea>
-+
 +      <div class="actions">
 +        <button id="aggregateBtn" class="primary-btn" onclick="fetchPortfolio()">Aggregate Portfolio</button>
-+        <button id="shareBtn" class="secondary" onclick="copyShareLink()">Copy Share Link</button>
++        <button id="shareBtn" onclick="copyShareLink()">Copy Share Link</button>
 +      </div>
-+
 +      <div id="status" class="status"></div>
 +    </section>
 +
-+    <section class="cards" id="summaryCards">
-+      <article class="card"><div class="label">Wallet count</div><div class="value" id="walletCount">0</div></article>
-+      <article class="card"><div class="label">Total XLM</div><div class="value" id="totalXLM">0</div></article>
-+      <article class="card"><div class="label">Total USD value</div><div class="value" id="totalUSD">$0.00</div></article>
++    <section class="metrics" id="summaryCards">
++      <article class="metric"><div class="k">Wallet count</div><div class="v" id="walletCount">0</div></article>
++      <article class="metric"><div class="k">Total XLM</div><div class="v" id="totalXLM">0</div></article>
++      <article class="metric"><div class="k">Total USD</div><div class="v" id="totalUSD">$0.00</div></article>
 +    </section>
 +
 +    <section class="table-wrap">
 +      <table>
 +        <thead>
 +          <tr>
-+            <th>Asset symbol</th>
-+            <th>Total amount</th>
++            <th>Asset</th>
++            <th>Amount</th>
 +            <th>USD value</th>
 +          </tr>
 +        </thead>
@@ -422,20 +363,29 @@ index ed4fd6dd5f1cb5ab869c15b9413b61ac1cfdc0cd..bfa229377b47bd4344a02b34eea1bdf8
 +      if (addresses.length) {
 +        addressesEl.value = addresses.join("\n");
 +      }
- 
--        let symbol = isNative ? "XLM" : b.asset_code;
--        let amount = parseFloat(b.balance);
++
 +      return addresses;
 +    }
  
--        let priceUSD = isNative ? xlmPrice : 0;
--        let valueUSD = isNative ? amount * xlmPrice : 0;
+-        let symbol = isNative ? "XLM" : b.asset_code;
+-        let amount = parseFloat(b.balance);
 +    async function copyShareLink() {
 +      const addresses = getAddressesFromInput();
 +      if (addresses.length === 0) {
 +        setStatus("Enter wallet addresses first, then copy the link.", "error");
 +        return;
 +      }
+ 
+-        let priceUSD = isNative ? xlmPrice : 0;
+-        let valueUSD = isNative ? amount * xlmPrice : 0;
++      const shareUrl = updateUrlWithWallets(addresses);
++      try {
++        await navigator.clipboard.writeText(shareUrl);
++        setStatus("Share link copied to clipboard.");
++      } catch (error) {
++        setStatus(`Copy failed. Use this URL manually: ${shareUrl}`, "error");
++      }
++    }
  
 -        // INIT asset bucket if not exists
 -        if (!aggregated.assets[symbol]) {
@@ -446,27 +396,13 @@ index ed4fd6dd5f1cb5ab869c15b9413b61ac1cfdc0cd..bfa229377b47bd4344a02b34eea1bdf8
 -            type: isNative ? "native" : "token"
 -          };
 -        }
-+      const shareUrl = updateUrlWithWallets(addresses);
-+      try {
-+        await navigator.clipboard.writeText(shareUrl);
-+        setStatus("Share link copied to clipboard.");
-+      } catch (error) {
-+        setStatus(`Copy failed. Use this URL manually: ${shareUrl}`, "error");
-+      }
-+    }
- 
--        aggregated.assets[symbol].totalAmount += amount;
--        aggregated.assets[symbol].totalValueUSD += valueUSD;
 +    function renderDashboard(data) {
 +      document.getElementById("walletCount").textContent = data.wallets;
 +      document.getElementById("totalXLM").textContent = formatNumber(data.totalXLM, 4);
 +      document.getElementById("totalUSD").textContent = formatCurrency(data.totalUSD);
  
--        if (isNative) {
--          aggregated.totalXLM += amount;
--          aggregated.totalUSD += valueUSD;
--        }
--      });
+-        aggregated.assets[symbol].totalAmount += amount;
+-        aggregated.assets[symbol].totalValueUSD += valueUSD;
 +      const body = document.getElementById("assetTableBody");
 +      const rows = Object.values(data.assets)
 +        .sort((a, b) => b.totalValueUSD - a.totalValueUSD)
@@ -478,7 +414,12 @@ index ed4fd6dd5f1cb5ab869c15b9413b61ac1cfdc0cd..bfa229377b47bd4344a02b34eea1bdf8
 +          </tr>
 +        `)
 +        .join("");
-+
+ 
+-        if (isNative) {
+-          aggregated.totalXLM += amount;
+-          aggregated.totalUSD += valueUSD;
+-        }
+-      });
 +      body.innerHTML = rows || '<tr><td class="empty" colspan="3">No asset balances found.</td></tr>';
      }
  
@@ -499,18 +440,12 @@ index ed4fd6dd5f1cb5ab869c15b9413b61ac1cfdc0cd..bfa229377b47bd4344a02b34eea1bdf8
 +        // Keep CoinGecko XLM pricing
 +        const priceRes = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=stellar&vs_currencies=usd");
 +        if (!priceRes.ok) throw new Error("Unable to fetch XLM price from CoinGecko.");
- 
--    output.innerText = JSON.stringify(aggregated, null, 2);
++
 +        const priceData = await priceRes.json();
 +        const xlmPrice = priceData?.stellar?.usd;
 +        if (typeof xlmPrice !== "number") throw new Error("Unexpected CoinGecko price response.");
  
--  } catch (e) {
--    status.innerText = "Error: " + e.message;
--    console.log(e);
--  }
--}
--</script>
+-    output.innerText = JSON.stringify(aggregated, null, 2);
 +        // Keep existing Stellar wallet aggregation logic
 +        const aggregated = {
 +          wallets: addresses.length,
@@ -519,13 +454,19 @@ index ed4fd6dd5f1cb5ab869c15b9413b61ac1cfdc0cd..bfa229377b47bd4344a02b34eea1bdf8
 +          assets: {}
 +        };
  
+-  } catch (e) {
+-    status.innerText = "Error: " + e.message;
+-    console.log(e);
+-  }
+-}
+-</script>
 +        for (const addr of addresses) {
 +          const res = await fetch(`https://horizon.stellar.org/accounts/${addr}`);
 +          if (!res.ok) {
 +            console.log("Skipping invalid wallet:", addr);
 +            continue;
 +          }
-+
+ 
 +          const data = await res.json();
 +          data.balances.forEach((b) => {
 +            const isNative = b.asset_type === "native";
