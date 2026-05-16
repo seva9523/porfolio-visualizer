@@ -73,6 +73,16 @@
 
     button:disabled { opacity: 0.65; cursor: not-allowed; }
 
+    .secondary {
+      background: #ffffff;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+    }
+
+    .secondary:hover {
+      background: var(--primary-soft);
+    }
+
     .status {
       margin-top: 12px;
       padding: 10px;
@@ -139,6 +149,7 @@
     <section class="panel">
       <textarea id="addresses" placeholder="Enter wallet addresses (one per line)"></textarea>
       <button id="aggregateBtn" onclick="fetchPortfolio()">Aggregate Portfolio</button>
+      <button id="shareBtn" class="secondary" onclick="copyShareLink()">Copy Share Link</button>
       <div id="status" class="status"></div>
     </section>
 
@@ -167,6 +178,7 @@
   <script>
     const statusEl = document.getElementById("status");
     const buttonEl = document.getElementById("aggregateBtn");
+    const addressesEl = document.getElementById("addresses");
 
     function setStatus(message, type = "info") {
       statusEl.textContent = message;
@@ -180,6 +192,54 @@
 
     function formatCurrency(value) {
       return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(value);
+    }
+
+    function getAddressesFromInput() {
+      return addressesEl.value.split("\n").map(a => a.trim()).filter(Boolean);
+    }
+
+    function updateUrlWithWallets(addresses) {
+      const url = new URL(window.location.href);
+      if (addresses.length) {
+        url.searchParams.set("wallets", addresses.join(","));
+      } else {
+        url.searchParams.delete("wallets");
+      }
+      window.history.replaceState({}, "", url);
+      return url.toString();
+    }
+
+    function loadWalletsFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const walletsParam = params.get("wallets");
+      if (!walletsParam) return [];
+
+      const addresses = walletsParam
+        .split(",")
+        .map(a => a.trim())
+        .filter(Boolean);
+
+      if (addresses.length) {
+        addressesEl.value = addresses.join("\n");
+      }
+
+      return addresses;
+    }
+
+    async function copyShareLink() {
+      const addresses = getAddressesFromInput();
+      if (addresses.length === 0) {
+        setStatus("Enter wallet addresses first, then copy the link.", "error");
+        return;
+      }
+
+      const shareUrl = updateUrlWithWallets(addresses);
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setStatus("Share link copied to clipboard.");
+      } catch (error) {
+        setStatus(`Copy failed. Use this URL manually: ${shareUrl}`, "error");
+      }
     }
 
     function renderDashboard(data) {
@@ -203,8 +263,7 @@
     }
 
     async function fetchPortfolio() {
-      const raw = document.getElementById("addresses").value;
-      const addresses = raw.split("\n").map(a => a.trim()).filter(Boolean);
+      const addresses = getAddressesFromInput();
 
       if (addresses.length === 0) {
         setStatus("Enter at least one wallet address.", "error");
@@ -212,6 +271,7 @@
       }
 
       buttonEl.disabled = true;
+      updateUrlWithWallets(addresses);
       setStatus("Loading portfolios...");
 
       try {
@@ -274,6 +334,13 @@
         buttonEl.disabled = false;
       }
     }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const addresses = loadWalletsFromUrl();
+      if (addresses.length) {
+        fetchPortfolio();
+      }
+    });
   </script>
 </body>
 </html>
