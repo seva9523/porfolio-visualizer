@@ -222,7 +222,7 @@
       padding: 14px;
     }
 
-    .api-docs {
+    .api-docs, .example-views, .developer-api, .quick-start {
       margin-top: 8px;
       border: 1px solid var(--border);
       border-radius: var(--radius);
@@ -230,7 +230,7 @@
       padding: 8px;
     }
 
-    .api-docs h2 {
+    .api-docs h2, .example-views h2, .developer-api h2, .quick-start h2 {
       margin: 0 0 8px;
       font-size: 13px;
       letter-spacing: 0.04em;
@@ -238,20 +238,20 @@
       color: var(--muted);
     }
 
-    .api-grid {
+    .api-grid, .dev-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 8px;
     }
 
-    .api-item {
+    .api-item, .dev-item {
       background: var(--surface-2);
       border: 1px solid #22314a;
       border-radius: 4px;
       padding: 8px;
     }
 
-    .api-item strong {
+    .api-item strong, .dev-item strong {
       display: block;
       margin-bottom: 6px;
       font-size: 11px;
@@ -260,7 +260,7 @@
       letter-spacing: .05em;
     }
 
-    .api-item code, .api-item pre {
+    .api-item code, .api-item pre, .dev-item code, .dev-item pre {
       margin: 0;
       white-space: pre-wrap;
       word-break: break-word;
@@ -268,28 +268,12 @@
       color: #b9c9ef;
     }
 
-    .api-item ul {
+    .api-item ul, .dev-item ul {
       margin: 0;
       padding-left: 16px;
       color: #b9c9ef;
       font-size: 12px;
       line-height: 1.45;
-    }
-
-    .example-views {
-      margin-top: 8px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--surface);
-      padding: 8px;
-    }
-
-    .example-views h2 {
-      margin: 0 0 8px;
-      font-size: 13px;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: var(--muted);
     }
 
     .preset-row {
@@ -327,22 +311,6 @@
       letter-spacing: .03em;
     }
 
-    .developer-api {
-      margin-top: 8px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--surface);
-      padding: 8px;
-    }
-
-    .developer-api h2 {
-      margin: 0;
-      font-size: 13px;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
     .developer-api .sub {
       margin: 4px 0 8px;
       color: var(--muted);
@@ -350,30 +318,54 @@
       line-height: 1.4;
     }
 
-    .dev-grid {
+    /* Quick Start */
+    .quick-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 8px;
     }
 
-    .dev-item {
+    .quick-item {
       background: var(--surface-2);
       border: 1px solid #22314a;
       border-radius: 4px;
       padding: 8px;
     }
 
-    .dev-item strong {
-      display: block;
+    .quick-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
       margin-bottom: 6px;
+    }
+
+    .quick-head strong {
+      margin: 0;
       font-size: 11px;
       color: var(--muted);
       text-transform: uppercase;
       letter-spacing: .05em;
     }
 
-    .dev-item code,
-    .dev-item pre {
+    .copy-btn {
+      min-width: 0;
+      padding: 4px 8px;
+      font-size: 10px;
+      line-height: 1;
+      border-radius: 4px;
+      border: 1px solid #31405f;
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .copy-btn:hover {
+      background: rgba(91, 140, 255, 0.08);
+      border-color: var(--accent-2);
+    }
+
+    .quick-item pre {
       margin: 0;
       white-space: pre-wrap;
       word-break: break-word;
@@ -381,17 +373,12 @@
       color: #b9c9ef;
     }
 
-    .dev-item ul {
-      margin: 0;
-      padding-left: 16px;
-      color: #b9c9ef;
-      font-size: 12px;
-      line-height: 1.45;
+    @media (max-width: 900px) {
+      .quick-grid { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 760px) {
-      .api-grid { grid-template-columns: 1fr; }
-      .dev-grid { grid-template-columns: 1fr; }
+      .api-grid, .dev-grid { grid-template-columns: 1fr; }
       .preset-row { grid-template-columns: 1fr; }
       .actions { flex-direction: column; }
       .actions button { width: 100%; }
@@ -562,6 +549,51 @@
         </article>
       </div>
     </section>
+
+    <!-- NEW: Quick Start -->
+    <section class="quick-start">
+      <h2>Quick Start</h2>
+      <div class="quick-grid">
+        <article class="quick-item">
+          <div class="quick-head">
+            <strong>cURL</strong>
+            <button class="copy-btn" onclick="copySnippet('snippet-curl')">Copy</button>
+          </div>
+          <pre id="snippet-curl">curl "https://YOUR-DOMAIN/api/aggregate?wallets=GBRPYHIL2C6C6M4B7RO6KQDKR3S7VJDK7R5C6M2FJ4E7QO5X4A7W3Z2R,GDQP2KPQGKIHYJGXNUIYOMHARUARCA6FGF7Q3X3J5S2M6W2N2X6J5YVQ"</pre>
+        </article>
+
+        <article class="quick-item">
+          <div class="quick-head">
+            <strong>JavaScript fetch</strong>
+            <button class="copy-btn" onclick="copySnippet('snippet-js')">Copy</button>
+          </div>
+          <pre id="snippet-js">const wallets = [
+  "GBRPYHIL2C6C6M4B7RO6KQDKR3S7VJDK7R5C6M2FJ4E7QO5X4A7W3Z2R",
+  "GDQP2KPQGKIHYJGXNUIYOMHARUARCA6FGF7Q3X3J5S2M6W2N2X6J5YVQ"
+];
+const url = `/api/aggregate?wallets=${encodeURIComponent(wallets.join(","))}`;
+const result = await fetch(url).then(r => r.json());
+console.log(result);</pre>
+        </article>
+
+        <article class="quick-item">
+          <div class="quick-head">
+            <strong>Python requests</strong>
+            <button class="copy-btn" onclick="copySnippet('snippet-py')">Copy</button>
+          </div>
+          <pre id="snippet-py">import requests
+
+wallets = ",".join([
+  "GBRPYHIL2C6C6M4B7RO6KQDKR3S7VJDK7R5C6M2FJ4E7QO5X4A7W3Z2R",
+  "GDQP2KPQGKIHYJGXNUIYOMHARUARCA6FGF7Q3X3J5S2M6W2N2X6J5YVQ"
+])
+
+url = f"https://YOUR-DOMAIN/api/aggregate?wallets={wallets}"
+data = requests.get(url, timeout=20).json()
+print(data)</pre>
+        </article>
+      </div>
+    </section>
   </div>
 
   <script>
@@ -669,6 +701,17 @@
         setStatus("Share link copied");
       } catch (error) {
         setStatus(`Copy failed. Use this URL manually: ${shareUrl}`, "error");
+      }
+    }
+
+    async function copySnippet(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      try {
+        await navigator.clipboard.writeText(el.innerText);
+        setStatus("Snippet copied");
+      } catch (error) {
+        setStatus("Snippet copy failed", "error");
       }
     }
 
