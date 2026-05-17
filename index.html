@@ -205,6 +205,58 @@
       padding: 14px;
     }
 
+    /* NEW: Example Treasury Views */
+    .presets {
+      margin-top: 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      padding: 8px;
+    }
+
+    .presets h2 {
+      margin: 0 0 8px;
+      font-size: 13px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .preset-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .preset-btn {
+      width: 100%;
+      min-width: 0;
+      margin: 0;
+      text-align: left;
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid #22314a;
+      border-radius: 4px;
+      padding: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .preset-btn:hover {
+      background: rgba(91, 140, 255, 0.08);
+      border-color: var(--accent-2);
+    }
+
+    .preset-meta {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: .03em;
+    }
+
     .api-docs {
       margin-top: 8px;
       border: 1px solid var(--border);
@@ -261,6 +313,7 @@
 
     @media (max-width: 760px) {
       .api-grid { grid-template-columns: 1fr; }
+      .preset-row { grid-template-columns: 1fr; }
       .actions { flex-direction: column; }
       .actions button { width: 100%; }
       .metrics { grid-template-columns: 1fr; }
@@ -317,6 +370,27 @@
           <tr><td class="empty" colspan="4">No portfolio data yet.</td></tr>
         </tbody>
       </table>
+    </section>
+
+    <!-- NEW: Example Treasury Views -->
+    <section class="presets">
+      <h2>Example Treasury Views</h2>
+      <div class="preset-row">
+        <button class="preset-btn" onclick="loadPreset('startup')">
+          Startup Treasury
+          <span class="preset-meta">3 wallets • ops + payroll + reserve</span>
+        </button>
+
+        <button class="preset-btn" onclick="loadPreset('grant')">
+          Grant Treasury
+          <span class="preset-meta">3 wallets • disbursement + escrow + reporting</span>
+        </button>
+
+        <button class="preset-btn" onclick="loadPreset('dao')">
+          DAO Treasury
+          <span class="preset-meta">4 wallets • main + multisig + ops + incentives</span>
+        </button>
+      </div>
     </section>
 
     <section class="api-docs">
@@ -376,6 +450,26 @@
     // stores latest aggregated result for export
     let latestAggregated = null;
 
+    // NEW: Preset wallet sets (replace with real wallets anytime)
+    const TREASURY_PRESETS = {
+      startup: [
+        "GCFX7RZFAKESTARTUPWALLET0000000000000000000000000001",
+        "GCFX7RZFAKESTARTUPWALLET0000000000000000000000000002",
+        "GCFX7RZFAKESTARTUPWALLET0000000000000000000000000003"
+      ],
+      grant: [
+        "GCFX7RZFAKEGRANTWALLET000000000000000000000000000001",
+        "GCFX7RZFAKEGRANTWALLET000000000000000000000000000002",
+        "GCFX7RZFAKEGRANTWALLET000000000000000000000000000003"
+      ],
+      dao: [
+        "GCFX7RZFAKEDAOWALLET00000000000000000000000000000001",
+        "GCFX7RZFAKEDAOWALLET00000000000000000000000000000002",
+        "GCFX7RZFAKEDAOWALLET00000000000000000000000000000003",
+        "GCFX7RZFAKEDAOWALLET00000000000000000000000000000004"
+      ]
+    };
+
     function setStatus(message, type = "info") {
       statusEl.textContent = message;
       statusEl.classList.toggle("error", type === "error");
@@ -427,6 +521,18 @@
       }
 
       return addresses;
+    }
+
+    // NEW: load preset and aggregate using existing logic
+    function loadPreset(presetName) {
+      const wallets = TREASURY_PRESETS[presetName];
+      if (!wallets || wallets.length === 0) {
+        setStatus("Preset not available.", "error");
+        return;
+      }
+
+      addressesEl.value = wallets.join("\n");
+      fetchPortfolio(); // reuse existing aggregation flow (also updates URL state)
     }
 
     // Copy current treasury URL with subtle confirmation
