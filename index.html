@@ -205,7 +205,62 @@
       padding: 14px;
     }
 
+    .api-docs {
+      margin-top: 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      padding: 8px;
+    }
+
+    .api-docs h2 {
+      margin: 0 0 8px;
+      font-size: 13px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .api-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .api-item {
+      background: var(--surface-2);
+      border: 1px solid #22314a;
+      border-radius: 4px;
+      padding: 8px;
+    }
+
+    .api-item strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .api-item code, .api-item pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      color: #b9c9ef;
+    }
+
+    .api-item ul {
+      margin: 0;
+      padding-left: 16px;
+      color: #b9c9ef;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
     @media (max-width: 760px) {
+      .api-grid { grid-template-columns: 1fr; }
       .actions { flex-direction: column; }
       .actions button { width: 100%; }
       .metrics { grid-template-columns: 1fr; }
@@ -262,6 +317,54 @@
           <tr><td class="empty" colspan="4">No portfolio data yet.</td></tr>
         </tbody>
       </table>
+    </section>
+
+    <section class="api-docs">
+      <h2>API</h2>
+      <div class="api-grid">
+        <article class="api-item">
+          <strong>1) Endpoint example</strong>
+          <code>GET /api/aggregate?wallets=GABC,GDEF</code>
+        </article>
+
+        <article class="api-item">
+          <strong>2) Query parameter</strong>
+          <code>wallets: comma-separated Stellar public addresses</code>
+        </article>
+
+        <article class="api-item">
+          <strong>3) Example API request</strong>
+          <pre>curl "https://YOUR-DOMAIN/api/aggregate?wallets=GABC,GDEF"</pre>
+        </article>
+
+        <article class="api-item">
+          <strong>4) Example JSON response</strong>
+          <pre>{
+  "walletCount": 2,
+  "totalXLM": 1234.56,
+  "totalUSD": 145.67,
+  "assets": [
+    {
+      "symbol": "XLM",
+      "amount": 1234.56,
+      "usdValue": 145.67,
+      "allocationPercent": 100
+    }
+  ]
+}</pre>
+        </article>
+
+        <article class="api-item" style="grid-column: 1 / -1;">
+          <strong>5) Features</strong>
+          <ul>
+            <li>Lightweight public GET endpoint</li>
+            <li>No database, no authentication</li>
+            <li>Skips invalid wallets gracefully</li>
+            <li>CoinGecko XLM/USD pricing + Horizon account aggregation</li>
+            <li>Deterministic JSON structure for integrations</li>
+          </ul>
+        </article>
+      </div>
     </section>
   </div>
 
