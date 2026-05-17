@@ -205,7 +205,7 @@
       padding: 14px;
     }
 
-    /* NEW: Example Treasury Views */
+    /* Example Treasury Views */
     .presets {
       margin-top: 8px;
       border: 1px solid var(--border);
@@ -311,8 +311,72 @@
       line-height: 1.45;
     }
 
+    /* NEW: Compact Developer API */
+    .developer-api {
+      margin-top: 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      padding: 8px;
+    }
+
+    .developer-api h2 {
+      margin: 0;
+      font-size: 13px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .developer-api .sub {
+      margin: 4px 0 8px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
+    .dev-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .dev-item {
+      background: var(--surface-2);
+      border: 1px solid #22314a;
+      border-radius: 4px;
+      padding: 8px;
+    }
+
+    .dev-item strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .dev-item code,
+    .dev-item pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      color: #b9c9ef;
+    }
+
+    .dev-item ul {
+      margin: 0;
+      padding-left: 16px;
+      color: #b9c9ef;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
     @media (max-width: 760px) {
       .api-grid { grid-template-columns: 1fr; }
+      .dev-grid { grid-template-columns: 1fr; }
       .preset-row { grid-template-columns: 1fr; }
       .actions { flex-direction: column; }
       .actions button { width: 100%; }
@@ -372,7 +436,6 @@
       </table>
     </section>
 
-    <!-- NEW: Example Treasury Views -->
     <section class="presets">
       <h2>Example Treasury Views</h2>
       <div class="preset-row">
@@ -440,6 +503,46 @@
         </article>
       </div>
     </section>
+
+    <!-- NEW: Developer API -->
+    <section class="developer-api">
+      <h2>Developer API</h2>
+      <p class="sub">Aggregate multiple Stellar wallets into a unified treasury view.</p>
+
+      <div class="dev-grid">
+        <article class="dev-item">
+          <strong>Endpoint</strong>
+          <code>GET /api/aggregate?wallets=GABC,GDEF</code>
+        </article>
+
+        <article class="dev-item">
+          <strong>Features</strong>
+          <ul>
+            <li>Multi-wallet aggregation</li>
+            <li>Treasury exports</li>
+            <li>Shareable treasury states</li>
+            <li>XLM pricing</li>
+          </ul>
+        </article>
+
+        <article class="dev-item" style="grid-column: 1 / -1;">
+          <strong>Example JSON response</strong>
+          <pre>{
+  "walletCount": 2,
+  "totalXLM": 12400,
+  "totalUSD": 5300,
+  "assets": [
+    {
+      "symbol": "XLM",
+      "amount": 10000,
+      "usdValue": 4200,
+      "allocationPercent": 79
+    }
+  ]
+}</pre>
+        </article>
+      </div>
+    </section>
   </div>
 
   <script>
@@ -450,7 +553,7 @@
     // stores latest aggregated result for export
     let latestAggregated = null;
 
-    // NEW: Preset wallet sets (replace with real wallets anytime)
+    // Preset wallet sets (replace with real wallets anytime)
     const TREASURY_PRESETS = {
       startup: [
         "GCFX7RZFAKESTARTUPWALLET0000000000000000000000000001",
@@ -523,7 +626,7 @@
       return addresses;
     }
 
-    // NEW: load preset and aggregate using existing logic
+    // load preset and aggregate using existing logic
     function loadPreset(presetName) {
       const wallets = TREASURY_PRESETS[presetName];
       if (!wallets || wallets.length === 0) {
