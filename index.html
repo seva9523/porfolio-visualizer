@@ -128,6 +128,23 @@
       border-color: rgba(255, 107, 107, .3);
     }
 
+    .api-health {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 11px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .api-health-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px rgba(20, 241, 149, 0.45);
+    }
+
     .api-usage {
       margin-top: 8px;
       padding-top: 8px;
@@ -405,6 +422,11 @@
       </div>
 
       <div id="status" class="status"></div>
+
+      <div class="api-health">
+        <span class="api-health-dot"></span>
+        <span>API Online</span>
+      </div>
 
       <div class="api-usage">
         Public API endpoint:
