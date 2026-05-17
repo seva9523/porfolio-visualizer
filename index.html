@@ -318,7 +318,6 @@
       line-height: 1.4;
     }
 
-    /* Quick Start */
     .quick-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -450,17 +449,14 @@
           <strong>1) Endpoint example</strong>
           <code>GET /api/aggregate?wallets=GABC,GDEF</code>
         </article>
-
         <article class="api-item">
           <strong>2) Query parameter</strong>
           <code>wallets: comma-separated Stellar public addresses</code>
         </article>
-
         <article class="api-item">
           <strong>3) Example API request</strong>
           <pre>curl "https://YOUR-DOMAIN/api/aggregate?wallets=GABC,GDEF"</pre>
         </article>
-
         <article class="api-item">
           <strong>4) Example JSON response</strong>
           <pre>{
@@ -477,7 +473,6 @@
   ]
 }</pre>
         </article>
-
         <article class="api-item" style="grid-column: 1 / -1;">
           <strong>5) Features</strong>
           <ul>
@@ -498,12 +493,10 @@
           Startup Treasury
           <span class="preset-meta">ops + payroll + reserve</span>
         </button>
-
         <button class="preset-btn" onclick="loadPreset('grant')">
           Grant Treasury
           <span class="preset-meta">disbursement + escrow + reporting</span>
         </button>
-
         <button class="preset-btn" onclick="loadPreset('dao')">
           DAO Treasury
           <span class="preset-meta">main + multisig + ops + incentives</span>
@@ -514,13 +507,11 @@
     <section class="developer-api">
       <h2>Developer API</h2>
       <p class="sub">Aggregate multiple Stellar wallets into a unified treasury view.</p>
-
       <div class="dev-grid">
         <article class="dev-item">
           <strong>Endpoint</strong>
           <code>GET /api/aggregate?wallets=GABC,GDEF</code>
         </article>
-
         <article class="dev-item">
           <strong>Features</strong>
           <ul>
@@ -530,7 +521,6 @@
             <li>XLM pricing</li>
           </ul>
         </article>
-
         <article class="dev-item" style="grid-column: 1 / -1;">
           <strong>Example JSON response</strong>
           <pre>{
@@ -550,7 +540,6 @@
       </div>
     </section>
 
-    <!-- NEW: Quick Start -->
     <section class="quick-start">
       <h2>Quick Start</h2>
       <div class="quick-grid">
@@ -559,7 +548,7 @@
             <strong>cURL</strong>
             <button class="copy-btn" onclick="copySnippet('snippet-curl')">Copy</button>
           </div>
-          <pre id="snippet-curl">curl "https://YOUR-DOMAIN/api/aggregate?wallets=GBRPYHIL2C6C6M4B7RO6KQDKR3S7VJDK7R5C6M2FJ4E7QO5X4A7W3Z2R,GDQP2KPQGKIHYJGXNUIYOMHARUARCA6FGF7Q3X3J5S2M6W2N2X6J5YVQ"</pre>
+          <pre id="snippet-curl">curl "https://YOUR-DOMAIN/api/aggregate?wallets=GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA,GBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"</pre>
         </article>
 
         <article class="quick-item">
@@ -568,8 +557,8 @@
             <button class="copy-btn" onclick="copySnippet('snippet-js')">Copy</button>
           </div>
           <pre id="snippet-js">const wallets = [
-  "GBRPYHIL2C6C6M4B7RO6KQDKR3S7VJDK7R5C6M2FJ4E7QO5X4A7W3Z2R",
-  "GDQP2KPQGKIHYJGXNUIYOMHARUARCA6FGF7Q3X3J5S2M6W2N2X6J5YVQ"
+  "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+  "GBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
 ];
 const url = `/api/aggregate?wallets=${encodeURIComponent(wallets.join(","))}`;
 const result = await fetch(url).then(r => r.json());
@@ -584,8 +573,8 @@ console.log(result);</pre>
           <pre id="snippet-py">import requests
 
 wallets = ",".join([
-  "GBRPYHIL2C6C6M4B7RO6KQDKR3S7VJDK7R5C6M2FJ4E7QO5X4A7W3Z2R",
-  "GDQP2KPQGKIHYJGXNUIYOMHARUARCA6FGF7Q3X3J5S2M6W2N2X6J5YVQ"
+  "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+  "GBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
 ])
 
 url = f"https://YOUR-DOMAIN/api/aggregate?wallets={wallets}"
@@ -604,60 +593,34 @@ print(data)</pre>
     // stores latest aggregated result for export
     let latestAggregated = null;
 
-    // Real wallet presets (public Stellar accounts)
-// Safer preset source: your own known-good wallets
-// Edit these once with wallets you trust/use.
-const USER_TREASURY_PRESETS = {
-  startup: [
-    "GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-    "GYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY"
-  ],
-  grant: [
-    "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-    "GBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
-  ],
-  dao: [
-    "GCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
-    "GDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
-    "GEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"
-  ]
-};
+    // SAFER: your own known-good wallet presets (replace with your real wallets)
+    const USER_TREASURY_PRESETS = {
+      startup: [
+        "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "GBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+      ],
+      grant: [
+        "GCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+        "GDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"
+      ],
+      dao: [
+        "GEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE",
+        "GFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+        "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG"
+      ]
+    };
 
-// strict-ish validation aligned with API
-function isLikelyStellarPublicKey(value) {
-  return typeof value === "string" && /^G[A-Z2-7]{55}$/.test(value);
-}
+    function isLikelyStellarPublicKey(value) {
+      return typeof value === "string" && /^G[A-Z2-7]{55}$/.test(value);
+    }
 
-// sanitize preset wallets before load
-function getSafePresetWallets(presetName) {
-  const wallets = USER_TREASURY_PRESETS[presetName] || [];
-  const cleaned = wallets.map(w => w.trim()).filter(Boolean);
-
-  const unique = [...new Set(cleaned)];
-  const invalid = unique.filter(w => !isLikelyStellarPublicKey(w));
-
-  return { unique, invalid };
-}
-
-function loadPreset(presetName) {
-  const { unique, invalid } = getSafePresetWallets(presetName);
-
-  if (unique.length === 0) {
-    setStatus(`Preset "${presetName}" is empty. Add wallets in USER_TREASURY_PRESETS.`, "error");
-    return;
-  }
-
-  if (invalid.length > 0) {
-    setStatus(
-      `Preset "${presetName}" has invalid wallet format. Fix preset values before loading.`,
-      "error"
-    );
-    return;
-  }
-
-  addressesEl.value = unique.join("\n");
-  fetchPortfolio(); // reuses existing logic + URL update
-}
+    function getSafePresetWallets(presetName) {
+      const wallets = USER_TREASURY_PRESETS[presetName] || [];
+      const cleaned = wallets.map(w => w.trim()).filter(Boolean);
+      const unique = [...new Set(cleaned)];
+      const invalid = unique.filter(w => !isLikelyStellarPublicKey(w));
+      return { unique, invalid };
+    }
 
     function setStatus(message, type = "info") {
       statusEl.textContent = message;
@@ -682,13 +645,11 @@ function loadPreset(presetName) {
 
     function updateUrlWithWallets(addresses) {
       const url = new URL(window.location.href);
-
       if (addresses.length) {
         url.searchParams.set("wallets", addresses.join(","));
       } else {
         url.searchParams.delete("wallets");
       }
-
       window.history.replaceState({}, "", url);
       return url.toString();
     }
@@ -711,13 +672,19 @@ function loadPreset(presetName) {
     }
 
     function loadPreset(presetName) {
-      const wallets = TREASURY_PRESETS[presetName];
-      if (!wallets || wallets.length === 0) {
-        setStatus("Preset not available.", "error");
+      const { unique, invalid } = getSafePresetWallets(presetName);
+
+      if (unique.length === 0) {
+        setStatus(`Preset "${presetName}" is empty. Add wallets in USER_TREASURY_PRESETS.`, "error");
         return;
       }
 
-      addressesEl.value = wallets.join("\n");
+      if (invalid.length > 0) {
+        setStatus(`Preset "${presetName}" has invalid wallet format. Fix preset values before loading.`, "error");
+        return;
+      }
+
+      addressesEl.value = unique.join("\n");
       fetchPortfolio();
     }
 
@@ -745,7 +712,7 @@ function loadPreset(presetName) {
       try {
         await navigator.clipboard.writeText(el.innerText);
         setStatus("Snippet copied");
-      } catch (error) {
+      } catch {
         setStatus("Snippet copy failed", "error");
       }
     }
@@ -854,7 +821,7 @@ function loadPreset(presetName) {
           let message = "API aggregation failed";
           try {
             const err = await apiRes.json();
-            message = err?.error || message;
+            message = err?.message || err?.error || message;
           } catch (_) {}
           throw new Error(message);
         }
