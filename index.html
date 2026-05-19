@@ -74,6 +74,8 @@
       background: #ffe9e7; color: var(--danger); border: 1px solid #ffd0cc;
     }
 
+    .input-help, .share-help { margin-top: 8px; color: var(--muted); font-size: 12px; }
+
     .api-health {
       margin-top: 8px; display: inline-flex; align-items: center; gap: 6px;
       font-size: 12px; color: var(--muted);
@@ -129,8 +131,13 @@
       background: #0f1522; border: 1px solid #22314a; border-radius: 4px; padding: 8px;
     }
 
-    .workflow-card button { margin: 0; border-radius: 8px; padding: 8px 10px; }
-    .workflow-card p { margin: 8px 0 0; color: #b9c9ef; font-size: 12px; }
+    .workflow-card button {
+      margin: 0; border-radius: 8px; padding: 8px 10px;
+    }
+
+    .workflow-card p {
+      margin: 8px 0 0; color: #b9c9ef; font-size: 12px;
+    }
 
     .api-docs,
     .workflow-section {
@@ -144,7 +151,9 @@
       text-transform: uppercase; color: var(--muted);
     }
 
-    .api-intro { margin: 0 0 8px; color: var(--muted); font-size: 12px; }
+    .api-intro {
+      margin: 0 0 8px; color: var(--muted); font-size: 12px;
+    }
 
     .api-item strong {
       display: block; margin-bottom: 6px; font-size: 11px;
@@ -177,8 +186,10 @@
 
     <section class="panel">
       <textarea id="addresses" placeholder="Enter wallet addresses (one per line)"></textarea>
+      <div class="input-help">Paste comma-separated Stellar public wallet addresses. Example: GBXXX..., GDXXX...</div>
       <button id="aggregateBtn" onclick="fetchPortfolio()">Aggregate Portfolio</button>
-      <button id="shareBtn" class="secondary" onclick="copyShareLink()">Copy Share Link</button>
+      <button id="shareBtn" class="secondary" onclick="copyShareLink()">Generate Share Link</button>
+      <div class="share-help">Treasury states can be shared through URLs without accounts.</div>
       <div id="status" class="status"></div>
       <div class="api-health"><span class="api-health-dot"></span><span>API Online</span></div>
       <div class="api-usage">
@@ -208,21 +219,27 @@
     </section>
 
     <section class="workflow-section">
-      <h2>Treasury Workflows</h2>
+      <h2>Example Treasury Aggregations</h2>
+      <p class="api-intro">Demo operational treasury groupings built from public Stellar wallets.</p>
       <div class="workflow-grid">
         <article class="workflow-card">
           <button class="secondary" onclick="loadWorkflow('startup')">Startup Treasury</button>
-          <p>Operational + reserve treasury monitoring</p>
+          <p>Demo • Sample aggregation • Public example wallets<br>Operational + reserve treasury aggregation</p>
         </article>
         <article class="workflow-card">
           <button class="secondary" onclick="loadWorkflow('grant')">Grant Treasury</button>
-          <p>Public grant reserve aggregation</p>
+          <p>Demo • Sample aggregation • Public example wallets<br>Public grant reserve aggregation example</p>
         </article>
         <article class="workflow-card">
           <button class="secondary" onclick="loadWorkflow('dao')">DAO Treasury</button>
-          <p>Multi-wallet treasury exposure view</p>
+          <p>Demo • Sample aggregation • Public example wallets<br>Multi-wallet treasury exposure demonstration</p>
         </article>
       </div>
+    </section>
+
+    <section class="workflow-section">
+      <h2>How Treasury States Work</h2>
+      <p class="api-intro">Wallets are encoded into the URL query string, so treasury views are shareable and reproducible. No accounts or server-side storage are required. URLs act as treasury state snapshots.</p>
     </section>
 
     <section class="api-docs">
@@ -289,10 +306,12 @@
     const REAL_WALLET_A = "GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52";
     const REAL_WALLET_B = "GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4";
 
+    const REAL_WALLET_C = "GBVOL67KJY4M4Y5KQZ2WM4K3LFG5UVMTH4NQJFPB5H6TM65KQ6P4YJNY";
+
     const TREASURY_WORKFLOWS = {
       startup: [REAL_WALLET_A, REAL_WALLET_B],
-      grant: [REAL_WALLET_B, REAL_WALLET_A],
-      dao: [REAL_WALLET_A, REAL_WALLET_B]
+      grant: [REAL_WALLET_B, REAL_WALLET_C],
+      dao: [REAL_WALLET_A, REAL_WALLET_C]
     };
 
     function setStatus(message, type = "info") {
@@ -362,7 +381,7 @@
       const shareUrl = updateUrlWithWallets(addresses);
       try {
         await navigator.clipboard.writeText(shareUrl);
-        setStatus("Share link copied to clipboard.");
+        setStatus("Share link copied");
       } catch (error) {
         setStatus(`Copy failed. Use this URL manually: ${shareUrl}`, "error");
       }
