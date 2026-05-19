@@ -3,25 +3,63 @@ const ASSET_TO_COINGECKO = {
   USDZ: "usdz"
 };
 
+const VERSION = "1.0.0";
+const CACHE_TTL_MS = 60 * 1000;
+const responseCache = new Map();
+
 const normalizeAssetCode = (code) => (code || "").trim().toUpperCase();
+
+function cacheKeyFromWallets(wallets) {
+  return wallets.slice().sort().join(",");
+}
+
+function setInfraHeaders(res, cacheStatus) {
+  res.setHeader("X-WealthView-Version", VERSION);
+  res.setHeader("X-Cache-Status", cacheStatus);
+}
+
+function successPayload(payload) {
+  return {
+    success: true,
+    timestamp: new Date().toISOString(),
+    version: VERSION,
+    walletCount: payload.walletCount,
+    totalXLM: payload.totalXLM,
+    totalUSD: payload.totalUSD,
+    pricedAssets: payload.pricedAssets,
+    unpricedAssets: payload.unpricedAssets,
+    assets: payload.assets,
+    errors: payload.errors
+  };
+}
+
+function errorPayload(error, message, details = {}) {
+  return {
+    success: false,
+    timestamp: new Date().toISOString(),
+    version: VERSION,
+    walletCount: 0,
+    totalXLM: 0,
+    totalUSD: 0,
+    pricedAssets: [],
+    unpricedAssets: [],
+    assets: [],
+    errors: [{ error, message, ...details }]
+  };
+}
 
 export default async function handler(req, res) {
   if (req.method && req.method !== "GET") {
-    return res.status(405).json({
-      success: false,
-      error: "Method not allowed",
-      message: "Use GET"
-    });
+    setInfraHeaders(res, "MISS");
+    return res.status(405).json(errorPayload("Method not allowed", "Use GET"));
   }
 
   const walletsParam = req.query.wallets;
-
   if (!walletsParam || typeof walletsParam !== "string") {
-    return res.status(400).json({
-      success: false,
-      error: "Missing wallets query param",
-      message: "Use /api/aggregate?wallets=GABC,GDEF"
-    });
+    setInfraHeaders(res, "MISS");
+    return res
+      .status(400)
+      .json(errorPayload("Missing wallets query param", "Use /api/aggregate?wallets=<wallet1>,<wallet2>"));
   }
 
   const wallets = walletsParam
@@ -30,27 +68,31 @@ export default async function handler(req, res) {
     .filter(Boolean);
 
   if (wallets.length === 0) {
-    return res.status(400).json({
-      success: false,
-      error: "At least one wallet is required",
-      message: "wallets query param is empty"
-    });
+    setInfraHeaders(res, "MISS");
+    return res.status(400).json(errorPayload("At least one wallet is required", "wallets query param is empty"));
+  }
+
+  const key = cacheKeyFromWallets(wallets);
+  const cached = responseCache.get(key);
+  const now = Date.now();
+
+  if (cached && now - cached.cachedAt < CACHE_TTL_MS) {
+    setInfraHeaders(res, "HIT");
+    return res.status(200).json(cached.payload);
   }
 
   try {
     const allBalances = [];
+    const errors = [];
 
-    // 1) Pull balances from Horizon
     for (const addr of wallets) {
       const accountRes = await fetch(`https://horizon.stellar.org/accounts/${addr}`);
-
       if (!accountRes.ok) {
-        // keep behavior lightweight: skip non-resolving wallets
+        errors.push({ wallet: addr, error: "Wallet fetch failed", status: accountRes.status });
         continue;
       }
 
       const data = await accountRes.json();
-
       (data.balances || []).forEach((b) => {
         const isNative = b.asset_type === "native";
         const symbol = isNative ? "XLM" : normalizeAssetCode(b.asset_code || "UNKNOWN");
@@ -59,7 +101,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // 2) Identify symbols and resolve coin ids
     const symbols = [...new Set(allBalances.map((b) => b.symbol))];
     const geckoIds = [...new Set(symbols.map((s) => ASSET_TO_COINGECKO[s]).filter(Boolean))];
 
@@ -69,19 +110,15 @@ export default async function handler(req, res) {
       const priceRes = await fetch(
         `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(ids)}&vs_currencies=usd`
       );
-
       if (!priceRes.ok) {
-        return res.status(502).json({
-          success: false,
-          error: "Pricing API failed",
-          message: "Unable to fetch CoinGecko prices"
-        });
+        setInfraHeaders(res, "MISS");
+        return res
+          .status(502)
+          .json(errorPayload("Pricing API failed", "Unable to fetch CoinGecko prices", { status: priceRes.status }));
       }
-
       priceMap = await priceRes.json();
     }
 
-    // 3) Aggregate balances per symbol
     const assetsBySymbol = {};
     let totalXLM = 0;
     let totalUSD = 0;
@@ -96,7 +133,6 @@ export default async function handler(req, res) {
       if (symbol === "XLM") totalXLM += amount;
     });
 
-    // 4) Apply prices where available
     Object.values(assetsBySymbol).forEach((asset) => {
       const geckoId = ASSET_TO_COINGECKO[asset.symbol];
       const usdPrice = geckoId ? priceMap?.[geckoId]?.usd : undefined;
@@ -106,39 +142,34 @@ export default async function handler(req, res) {
         totalUSD += asset.usdValue;
         pricedAssets.push(asset.symbol);
       } else {
-        asset.usdValue = null; // explicit fallback
+        asset.usdValue = null;
         unpricedAssets.push(asset.symbol);
       }
     });
 
-    // 5) Build final asset array
     const assets = Object.values(assetsBySymbol)
       .map((asset) => ({
         ...asset,
-        allocationPercent:
-          asset.usdValue !== null && totalUSD > 0
-            ? (asset.usdValue / totalUSD) * 100
-            : null
+        allocationPercent: asset.usdValue !== null && totalUSD > 0 ? (asset.usdValue / totalUSD) * 100 : null
       }))
       .sort((a, b) => (b.usdValue ?? -1) - (a.usdValue ?? -1));
 
-    return res.status(200).json({
-      success: true,
+    const payload = successPayload({
       walletCount: wallets.length,
       totalXLM,
       totalUSD,
-      assets,
       pricedAssets,
       unpricedAssets,
-      metadata: {
-        assetToCoinGecko: ASSET_TO_COINGECKO
-      }
+      assets,
+      errors
     });
+
+    responseCache.set(key, { cachedAt: now, payload });
+
+    setInfraHeaders(res, "MISS");
+    return res.status(200).json(payload);
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: "Aggregation failed",
-      message: error.message
-    });
+    setInfraHeaders(res, "MISS");
+    return res.status(500).json(errorPayload("Aggregation failed", error.message));
   }
 }
