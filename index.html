@@ -111,7 +111,7 @@
       border: 1px solid #ffd0cc;
     }
 
-    .input-help, .share-help, .save-help {
+    .input-help, .share-help, .save-help, .button-help {
       margin-top: 8px;
       color: var(--muted);
       font-size: 12px;
@@ -320,11 +320,12 @@
           <div class="actions">
             <button id="aggregateBtn" onclick="fetchPortfolio()">Aggregate Portfolio</button>
             <button id="shareBtn" class="secondary" onclick="copyShareLink()">Generate Share Link</button>
-            <button id="saveStateBtn" class="secondary" onclick="saveTreasuryState()">Save Treasury State</button>
+            <button id="snapshotBtn" class="secondary" onclick="downloadTreasurySnapshot()">Download Treasury Snapshot</button>
           </div>
 
           <div class="share-help">Treasury states can be shared through URLs without accounts.</div>
           <div class="save-help">No account required. The treasury state is stored in the URL.</div>
+          <div class="button-help">Share Link reopens this treasury view. Snapshot downloads a timestamped report. Export JSON provides raw developer data.</div>
 
           <div id="status" class="status"></div>
           <div class="api-health"><span class="api-health-dot"></span><span>API Online</span></div>
@@ -554,26 +555,55 @@ print(requests.get(url).json())</pre>
       const shareUrl = updateUrlWithWallets(addresses);
       try {
         await navigator.clipboard.writeText(shareUrl);
-        setStatus("Share link copied");
+        setStatus("Share link copied.");
       } catch (error) {
         setStatus(`Copy failed. Use this URL manually: ${shareUrl}`, "error");
       }
     }
 
-    async function saveTreasuryState() {
-      const addresses = getAddressesFromInput();
-      if (addresses.length === 0) {
-        setStatus("Enter wallet addresses first, then save treasury state.", "error");
+    function buildApiUrl(addresses) {
+      const base = `${window.location.origin}/api/aggregate`;
+      const walletsParam = encodeURIComponent(addresses.join(","));
+      return `${base}?wallets=${walletsParam}`;
+    }
+
+    async function downloadTreasurySnapshot() {
+      if (!latestAggregated) {
+        setStatus("Aggregate wallets before downloading snapshot.", "error");
         return;
       }
 
-      const savedUrl = updateUrlWithWallets(addresses);
-      try {
-        await navigator.clipboard.writeText(savedUrl);
-        setStatus("Treasury state saved as shareable URL");
-      } catch (error) {
-        setStatus(`Save failed. Bookmark this URL manually: ${savedUrl}`, "error");
-      }
+      const wallets = getAddressesFromInput();
+      const shareUrl = updateUrlWithWallets(wallets);
+      const apiUrl = buildApiUrl(wallets);
+
+      const snapshot = {
+        app: "WealthView",
+        snapshotType: "stellar_treasury_snapshot",
+        timestamp: new Date().toISOString(),
+        wallets,
+        shareUrl,
+        apiUrl,
+        summary: {
+          walletCount: latestAggregated.walletCount || 0,
+          totalXLM: latestAggregated.totalXLM || 0,
+          totalUSD: latestAggregated.totalUSD || 0
+        },
+        assets: Array.isArray(latestAggregated.assets) ? latestAggregated.assets : []
+      };
+
+      const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "wealthview-treasury-snapshot.json";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      URL.revokeObjectURL(url);
+      setStatus("Treasury snapshot downloaded.");
     }
 
     function exportTreasuryJson() {
@@ -582,24 +612,11 @@ print(requests.get(url).json())</pre>
         return;
       }
 
-      const assetsArray = Array.isArray(latestAggregated.assets)
-        ? latestAggregated.assets.map(asset => ({
-            symbol: asset.symbol,
-            amount: asset.amount,
-            usdValue: asset.usdValue,
-            allocationPercent: asset.allocationPercent
-          }))
-        : [];
-
       const exportData = {
         walletCount: latestAggregated.walletCount || 0,
         totalXLM: latestAggregated.totalXLM || 0,
         totalUSD: latestAggregated.totalUSD || 0,
-        assets: assetsArray,
-        pricedAssets: latestAggregated.pricedAssets || [],
-        unpricedAssets: latestAggregated.unpricedAssets || [],
-        timestamp: latestAggregated.timestamp || null,
-        version: latestAggregated.version || null
+        assets: Array.isArray(latestAggregated.assets) ? latestAggregated.assets : []
       };
 
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
