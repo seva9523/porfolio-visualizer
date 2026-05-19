@@ -26,33 +26,63 @@
       background: var(--bg);
       color: var(--text);
       line-height: 1.45;
-      padding: 20px;
+      padding: 16px;
     }
 
-    .container { max-width: 980px; margin: 0 auto; }
+    .container {
+      width: 100%;
+      max-width: 1500px;
+      margin: 0 auto;
+    }
+
     h1 { margin: 0 0 8px; font-size: clamp(1.5rem, 2vw, 2rem); }
     .subtitle { margin: 0; color: var(--muted); }
-    .positioning { margin: 10px 0 20px; color: var(--muted); font-size: 0.95rem; }
+    .positioning { margin: 10px 0 16px; color: var(--muted); font-size: 0.95rem; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 360px minmax(520px, 1fr) 360px;
+      gap: 18px;
+      align-items: start;
+    }
 
     .panel {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      padding: 16px;
-      margin-bottom: 16px;
+      padding: 12px;
+      margin-bottom: 12px;
     }
 
     textarea {
-      width: 100%; min-height: 130px; resize: vertical;
-      border-radius: 10px; border: 1px solid var(--border); padding: 12px;
-      font: inherit; color: var(--text); background: #fbfcff;
+      width: 100%;
+      min-height: 130px;
+      resize: vertical;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      padding: 12px;
+      font: inherit;
+      color: var(--text);
+      background: #fbfcff;
+    }
+
+    .actions {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
     }
 
     button {
-      width: 100%; margin-top: 12px; border: none; border-radius: 10px;
-      padding: 12px 16px; font: inherit; font-weight: 600;
-      color: #fff; background: var(--primary); cursor: pointer;
+      width: 100%;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font: inherit;
+      font-weight: 600;
+      color: #fff;
+      background: var(--primary);
+      cursor: pointer;
     }
 
     button:disabled { opacity: 0.65; cursor: not-allowed; }
@@ -66,115 +96,211 @@
     .secondary:hover { background: var(--primary-soft); }
 
     .status {
-      margin-top: 12px; padding: 10px; border-radius: 10px;
-      background: var(--primary-soft); color: var(--text); display: none;
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 10px;
+      background: var(--primary-soft);
+      color: var(--text);
+      display: none;
+      font-size: 13px;
     }
 
     .status.error {
-      background: #ffe9e7; color: var(--danger); border: 1px solid #ffd0cc;
+      background: #ffe9e7;
+      color: var(--danger);
+      border: 1px solid #ffd0cc;
     }
 
-    .input-help, .share-help { margin-top: 8px; color: var(--muted); font-size: 12px; }
+    .input-help, .share-help, .save-help {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
 
     .api-health {
-      margin-top: 8px; display: inline-flex; align-items: center; gap: 6px;
-      font-size: 12px; color: var(--muted);
+      margin-top: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--muted);
     }
 
     .api-health-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: #1db954; box-shadow: 0 0 8px rgba(29,185,84,0.45);
-    }
-
-    .api-usage {
-      margin-top: 10px; font-size: 12px; color: var(--muted);
-      border-top: 1px dashed var(--border); padding-top: 8px;
-    }
-
-    .api-usage code {
-      color: #1d3ea8; background: #f0f4ff;
-      border: 1px solid #d7e3ff; padding: 2px 6px; border-radius: 6px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #1db954;
+      box-shadow: 0 0 8px rgba(29,185,84,0.45);
     }
 
     .cards {
-      display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px; margin-bottom: 16px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
     }
 
     .card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); box-shadow: var(--shadow); padding: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 12px;
     }
 
-    .label { font-size: 0.85rem; color: var(--muted); margin-bottom: 8px; }
-    .value { font-size: 1.3rem; font-weight: 700; }
+    .label {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .value {
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
 
     .table-wrap {
-      overflow-x: auto; background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); box-shadow: var(--shadow);
+      overflow-x: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
     }
 
     table { width: 100%; border-collapse: collapse; min-width: 620px; }
-    th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
-    th { font-size: 0.85rem; color: var(--muted); font-weight: 600; }
+    th, td {
+      padding: 11px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    th { font-size: 0.82rem; color: var(--muted); font-weight: 600; }
     tbody tr:last-child td { border-bottom: none; }
 
     .empty { text-align: center; padding: 18px; color: var(--muted); }
 
     .workflow-grid,
     .api-grid {
-      display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
     }
 
     .workflow-card,
     .api-item {
-      background: #0f1522; border: 1px solid #22314a; border-radius: 4px; padding: 8px;
+      background: #0f1522;
+      border: 1px solid #22314a;
+      border-radius: 6px;
+      padding: 8px;
     }
 
     .workflow-card button {
-      margin: 0; border-radius: 8px; padding: 8px 10px;
+      margin: 0;
+      border-radius: 8px;
+      padding: 8px 10px;
     }
 
     .workflow-card p {
-      margin: 8px 0 0; color: #b9c9ef; font-size: 12px;
+      margin: 8px 0 0;
+      color: #b9c9ef;
+      font-size: 12px;
     }
 
     .api-docs,
     .workflow-section {
-      margin-top: 8px; border: 1px solid var(--border); border-radius: var(--radius);
-      background: var(--surface); padding: 8px;
+      margin-top: 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      padding: 10px;
     }
 
     .api-docs h2,
     .workflow-section h2 {
-      margin: 0 0 8px; font-size: 13px; letter-spacing: 0.04em;
-      text-transform: uppercase; color: var(--muted);
+      margin: 0 0 8px;
+      font-size: 13px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
     }
 
     .api-intro {
-      margin: 0 0 8px; color: var(--muted); font-size: 12px;
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 12px;
     }
 
     .api-item strong {
-      display: block; margin-bottom: 6px; font-size: 11px;
-      color: var(--muted); text-transform: uppercase; letter-spacing: .05em;
+      display: block;
+      margin-bottom: 6px;
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .05em;
     }
 
     .api-item code, .api-item pre {
-      margin: 0; white-space: pre-wrap; word-break: break-word;
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
       font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       color: #b9c9ef;
     }
 
     .api-item ul {
-      margin: 0; padding-left: 16px; color: #b9c9ef; font-size: 12px; line-height: 1.45;
+      margin: 0;
+      padding-left: 16px;
+      color: #b9c9ef;
+      font-size: 12px;
+      line-height: 1.45;
     }
 
-    @media (max-width: 760px) {
-      body { padding: 14px; }
+    .right-col .workflow-section,
+    .right-col .api-docs {
+      margin-top: 0;
+      margin-bottom: 12px;
+    }
+
+    .left-col .workflow-section {
+      margin-top: 0;
+    }
+
+    .export-wrap {
+      margin-top: 12px;
+    }
+
+    @media (max-width: 1200px) {
+      .layout {
+        grid-template-columns: 320px minmax(0, 1fr);
+      }
+      .right-col {
+        grid-column: 1 / -1;
+      }
+      .right-col-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .right-col-grid > * {
+        margin: 0;
+      }
+    }
+
+    @media (max-width: 1000px) {
+      .layout {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      .left-col { order: 1; }
+      .mid-col { order: 2; }
+      .left-col .workflow-section { order: 3; }
+      .right-col { order: 4; }
+
       .cards { grid-template-columns: 1fr; }
-      .workflow-grid,
-      .api-grid { grid-template-columns: 1fr; }
+      .right-col-grid { grid-template-columns: 1fr; }
+      body { padding: 12px; }
     }
   </style>
 </head>
@@ -184,86 +310,99 @@
     <p class="subtitle">Aggregate multiple Stellar wallets and review balances with XLM USD pricing from CoinGecko.</p>
     <p class="positioning">Aggregate multiple Stellar treasury wallets into a unified operational portfolio view.</p>
 
-    <section class="panel">
-      <textarea id="addresses" placeholder="Enter wallet addresses (one per line)"></textarea>
-      <div class="input-help">Paste comma-separated Stellar public wallet addresses. Example: GBXXX..., GDXXX...</div>
-      <button id="aggregateBtn" onclick="fetchPortfolio()">Aggregate Portfolio</button>
-      <button id="shareBtn" class="secondary" onclick="copyShareLink()">Generate Share Link</button>
-      <div class="share-help">Treasury states can be shared through URLs without accounts.</div>
-      <div id="status" class="status"></div>
-      <div class="api-health"><span class="api-health-dot"></span><span>API Online</span></div>
-      <div class="api-usage">
-        API: <code>/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4</code>
+    <div class="layout">
+      <!-- LEFT COLUMN: controls + examples -->
+      <div class="left-col">
+        <section class="panel">
+          <textarea id="addresses" placeholder="Enter wallet addresses (one per line)"></textarea>
+          <div class="input-help">Paste comma-separated Stellar public wallet addresses. Example: GBXXX..., GDXXX...</div>
+
+          <div class="actions">
+            <button id="aggregateBtn" onclick="fetchPortfolio()">Aggregate Portfolio</button>
+            <button id="shareBtn" class="secondary" onclick="copyShareLink()">Generate Share Link</button>
+            <button id="saveStateBtn" class="secondary" onclick="saveTreasuryState()">Save Treasury State</button>
+          </div>
+
+          <div class="share-help">Treasury states can be shared through URLs without accounts.</div>
+          <div class="save-help">No account required. The treasury state is stored in the URL.</div>
+
+          <div id="status" class="status"></div>
+          <div class="api-health"><span class="api-health-dot"></span><span>API Online</span></div>
+        </section>
+
+        <section class="workflow-section">
+          <h2>Example Treasury Aggregations</h2>
+          <p class="api-intro">Demo operational treasury groupings built from public Stellar wallets.</p>
+          <div class="workflow-grid">
+            <article class="workflow-card">
+              <button class="secondary" onclick="loadWorkflow('startup')">Startup Treasury</button>
+              <p>Demo • Sample aggregation • Public example wallets<br>Operational + reserve treasury aggregation</p>
+            </article>
+            <article class="workflow-card">
+              <button class="secondary" onclick="loadWorkflow('grant')">Grant Treasury</button>
+              <p>Demo • Sample aggregation • Public example wallets<br>Public grant reserve aggregation example</p>
+            </article>
+            <article class="workflow-card">
+              <button class="secondary" onclick="loadWorkflow('dao')">DAO Treasury</button>
+              <p>Demo • Sample aggregation • Public example wallets<br>Multi-wallet treasury exposure demonstration</p>
+            </article>
+          </div>
+        </section>
       </div>
-    </section>
 
-    <section class="cards" id="summaryCards">
-      <article class="card"><div class="label">Wallet count</div><div class="value" id="walletCount">0</div></article>
-      <article class="card"><div class="label">Total XLM</div><div class="value" id="totalXLM">0</div></article>
-      <article class="card"><div class="label">Total USD value</div><div class="value" id="totalUSD">$0.00</div></article>
-    </section>
+      <!-- MIDDLE COLUMN: summary + table + export -->
+      <div class="mid-col">
+        <section class="cards" id="summaryCards">
+          <article class="card"><div class="label">Wallet count</div><div class="value" id="walletCount">0</div></article>
+          <article class="card"><div class="label">Total XLM</div><div class="value" id="totalXLM">0</div></article>
+          <article class="card"><div class="label">Total USD value</div><div class="value" id="totalUSD">$0.00</div></article>
+        </section>
 
-    <section class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Asset symbol</th>
-            <th>Total amount</th>
-            <th>USD value</th>
-          </tr>
-        </thead>
-        <tbody id="assetTableBody">
-          <tr><td class="empty" colspan="3">No portfolio data yet.</td></tr>
-        </tbody>
-      </table>
-    </section>
+        <section class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Asset symbol</th>
+                <th>Total amount</th>
+                <th>USD value</th>
+              </tr>
+            </thead>
+            <tbody id="assetTableBody">
+              <tr><td class="empty" colspan="3">No portfolio data yet.</td></tr>
+            </tbody>
+          </table>
+        </section>
 
-    <section class="workflow-section">
-      <h2>Example Treasury Aggregations</h2>
-      <p class="api-intro">Demo operational treasury groupings built from public Stellar wallets.</p>
-      <div class="workflow-grid">
-        <article class="workflow-card">
-          <button class="secondary" onclick="loadWorkflow('startup')">Startup Treasury</button>
-          <p>Demo • Sample aggregation • Public example wallets<br>Operational + reserve treasury aggregation</p>
-        </article>
-        <article class="workflow-card">
-          <button class="secondary" onclick="loadWorkflow('grant')">Grant Treasury</button>
-          <p>Demo • Sample aggregation • Public example wallets<br>Public grant reserve aggregation example</p>
-        </article>
-        <article class="workflow-card">
-          <button class="secondary" onclick="loadWorkflow('dao')">DAO Treasury</button>
-          <p>Demo • Sample aggregation • Public example wallets<br>Multi-wallet treasury exposure demonstration</p>
-        </article>
+        <div class="export-wrap">
+          <button id="exportBtn" class="secondary" onclick="exportTreasuryJson()">Export JSON</button>
+        </div>
       </div>
-    </section>
 
-    <section class="workflow-section">
-      <h2>How Treasury States Work</h2>
-      <p class="api-intro">Wallets are encoded into the URL query string, so treasury views are shareable and reproducible. No accounts or server-side storage are required. URLs act as treasury state snapshots.</p>
-    </section>
+      <!-- RIGHT COLUMN: API docs + quick start + how states work -->
+      <div class="right-col">
+        <div class="right-col-grid">
+          <section class="api-docs">
+            <h2>API</h2>
+            <p class="api-intro">APIs allow software and external tools to access WealthView treasury data programmatically.</p>
+            <div class="api-grid">
+              <article class="api-item">
+                <strong>Endpoint example</strong>
+                <code>GET /api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4</code>
+              </article>
 
-    <section class="api-docs">
-      <h2>API</h2>
-      <p class="api-intro">APIs allow software and external tools to access WealthView treasury data programmatically.</p>
-      <div class="api-grid">
-        <article class="api-item">
-          <strong>Endpoint example</strong>
-          <code>GET /api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4</code>
-        </article>
+              <article class="api-item">
+                <strong>Query parameter</strong>
+                <code>wallets: Comma-separated Stellar public wallet addresses used for treasury aggregation.</code>
+              </article>
 
-        <article class="api-item">
-          <strong>Query parameter</strong>
-          <code>wallets: Comma-separated Stellar public wallet addresses used for treasury aggregation.</code>
-        </article>
+              <article class="api-item">
+                <strong>Example API request</strong>
+                <pre>curl "https://YOUR-DOMAIN/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4"</pre>
+              </article>
 
-        <article class="api-item">
-          <strong>Example API request</strong>
-          <pre>curl "https://YOUR-DOMAIN/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4"</pre>
-        </article>
-
-        <article class="api-item">
-          <strong>Example JSON response</strong>
-          <pre>{
+              <article class="api-item">
+                <strong>Example JSON response</strong>
+                <pre>{
   "success": true,
   "timestamp": "2026-05-19T12:00:00.000Z",
   "version": "1.0.0",
@@ -282,20 +421,50 @@
   ],
   "errors": []
 }</pre>
-        </article>
+              </article>
 
-        <article class="api-item" style="grid-column: 1 / -1;">
-          <strong>Features</strong>
-          <ul>
-            <li>Lightweight public GET endpoint</li>
-            <li>No database, no authentication</li>
-            <li>Skips invalid wallets gracefully</li>
-            <li>CoinGecko XLM/USD pricing + Horizon account aggregation</li>
-            <li>Deterministic JSON structure for integrations</li>
-          </ul>
-        </article>
+              <article class="api-item">
+                <strong>Features</strong>
+                <ul>
+                  <li>Lightweight public GET endpoint</li>
+                  <li>No database, no authentication</li>
+                  <li>Skips invalid wallets gracefully</li>
+                  <li>CoinGecko XLM/USD pricing + Horizon account aggregation</li>
+                  <li>Deterministic JSON structure for integrations</li>
+                </ul>
+              </article>
+            </div>
+          </section>
+
+          <section class="api-docs">
+            <h2>Quick Start</h2>
+            <div class="api-grid">
+              <article class="api-item">
+                <strong>cURL</strong>
+                <pre>curl "https://YOUR-DOMAIN/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4"</pre>
+              </article>
+              <article class="api-item">
+                <strong>JavaScript</strong>
+                <pre>const r = await fetch("/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4");
+const data = await r.json();
+console.log(data);</pre>
+              </article>
+              <article class="api-item">
+                <strong>Python</strong>
+                <pre>import requests
+url = "https://YOUR-DOMAIN/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4"
+print(requests.get(url).json())</pre>
+              </article>
+            </div>
+          </section>
+
+          <section class="workflow-section">
+            <h2>How Treasury States Work</h2>
+            <p class="api-intro">Wallets are encoded into the URL query string, so treasury views are shareable and reproducible. No accounts or server-side storage are required. URLs act as treasury state snapshots.</p>
+          </section>
+        </div>
       </div>
-    </section>
+    </div>
   </div>
 
   <script>
@@ -305,7 +474,6 @@
 
     const REAL_WALLET_A = "GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52";
     const REAL_WALLET_B = "GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4";
-
     const REAL_WALLET_C = "GBVOL67KJY4M4Y5KQZ2WM4K3LFG5UVMTH4NQJFPB5H6TM65KQ6P4YJNY";
 
     const TREASURY_WORKFLOWS = {
@@ -313,6 +481,8 @@
       grant: [REAL_WALLET_B, REAL_WALLET_C],
       dao: [REAL_WALLET_A, REAL_WALLET_C]
     };
+
+    let latestAggregated = null;
 
     function setStatus(message, type = "info") {
       statusEl.textContent = message;
@@ -329,7 +499,10 @@
     }
 
     function getAddressesFromInput() {
-      return addressesEl.value.split("\n").map(a => a.trim()).filter(Boolean);
+      return addressesEl.value
+        .split(/[\n,]/)
+        .map(a => a.trim())
+        .filter(Boolean);
     }
 
     function updateUrlWithWallets(addresses) {
@@ -385,6 +558,62 @@
       } catch (error) {
         setStatus(`Copy failed. Use this URL manually: ${shareUrl}`, "error");
       }
+    }
+
+    async function saveTreasuryState() {
+      const addresses = getAddressesFromInput();
+      if (addresses.length === 0) {
+        setStatus("Enter wallet addresses first, then save treasury state.", "error");
+        return;
+      }
+
+      const savedUrl = updateUrlWithWallets(addresses);
+      try {
+        await navigator.clipboard.writeText(savedUrl);
+        setStatus("Treasury state saved as shareable URL");
+      } catch (error) {
+        setStatus(`Save failed. Bookmark this URL manually: ${savedUrl}`, "error");
+      }
+    }
+
+    function exportTreasuryJson() {
+      if (!latestAggregated) {
+        setStatus("Aggregate portfolio first, then export JSON.", "error");
+        return;
+      }
+
+      const assetsArray = Array.isArray(latestAggregated.assets)
+        ? latestAggregated.assets.map(asset => ({
+            symbol: asset.symbol,
+            amount: asset.amount,
+            usdValue: asset.usdValue,
+            allocationPercent: asset.allocationPercent
+          }))
+        : [];
+
+      const exportData = {
+        walletCount: latestAggregated.walletCount || 0,
+        totalXLM: latestAggregated.totalXLM || 0,
+        totalUSD: latestAggregated.totalUSD || 0,
+        assets: assetsArray,
+        pricedAssets: latestAggregated.pricedAssets || [],
+        unpricedAssets: latestAggregated.unpricedAssets || [],
+        timestamp: latestAggregated.timestamp || null,
+        version: latestAggregated.version || null
+      };
+
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "wealthview-treasury.json";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      URL.revokeObjectURL(url);
+      setStatus("Treasury JSON exported");
     }
 
     function renderDashboard(data) {
@@ -443,14 +672,14 @@
         }
 
         const apiData = await apiRes.json();
+        latestAggregated = apiData;
         renderDashboard(apiData);
 
         const priced = Array.isArray(apiData.pricedAssets) ? apiData.pricedAssets.join(", ") : "";
         const unpriced = Array.isArray(apiData.unpricedAssets) ? apiData.unpricedAssets.join(", ") : "";
-        const detail = [
-          priced ? `Priced: ${priced}` : "",
-          unpriced ? `Unpriced: ${unpriced}` : ""
-        ].filter(Boolean).join(" | ");
+        const detail = [priced ? `Priced: ${priced}` : "", unpriced ? `Unpriced: ${unpriced}` : ""]
+          .filter(Boolean)
+          .join(" | ");
 
         setStatus(detail ? `Aggregation complete. ${detail}` : "Aggregation complete.");
       } catch (error) {
