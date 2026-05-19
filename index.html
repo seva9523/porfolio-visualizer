@@ -3,226 +3,155 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WealthView | Stellar Treasury Aggregation</title>
+  <title>Stellar Portfolio Dashboard</title>
   <style>
     :root {
-      --bg: #0B0F19;
-      --surface: #121826;
-      --surface-2: #0f1522;
-      --border: #212a3d;
-      --text: #F5F7FA;
-      --muted: #8A94A6;
-      --accent: #14F195;
-      --accent-2: #5B8CFF;
-      --danger: #ff6b6b;
-      --danger-soft: rgba(255, 107, 107, 0.14);
-      --radius: 6px;
+      --bg: #f6f8fb;
+      --surface: #ffffff;
+      --text: #102038;
+      --muted: #5f6f86;
+      --primary: #2f6dff;
+      --primary-soft: #eaf0ff;
+      --danger: #c0392b;
+      --border: #dfe5f0;
+      --shadow: 0 8px 24px rgba(16, 32, 56, 0.08);
+      --radius: 14px;
     }
 
     * { box-sizing: border-box; }
 
     body {
       margin: 0;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
-      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-      font-size: 14px;
-      line-height: 1.35;
-      padding: 10px;
+      line-height: 1.45;
+      padding: 20px;
     }
 
-    .container { max-width: 1120px; margin: 0 auto; }
-
-    header { margin-bottom: 8px; }
-    h1 { margin: 0; font-size: 16px; letter-spacing: 0.02em; }
-    .subtitle {
-      margin: 2px 0 0;
-      color: var(--muted);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: .06em;
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
     }
 
-    .controls, .metric, .table-wrap {
+    h1 { margin: 0 0 8px; font-size: clamp(1.5rem, 2vw, 2rem); }
+    .subtitle { margin: 0 0 20px; color: var(--muted); }
+
+    .panel {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-    }
-
-    .controls { padding: 8px; margin-bottom: 8px; }
-    .label-row {
-      display: flex;
-      justify-content: space-between;
-      color: var(--muted);
-      font-size: 11px;
-      margin-bottom: 6px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+      margin-bottom: 16px;
     }
 
     textarea {
       width: 100%;
-      min-height: 88px;
+      min-height: 130px;
       resize: vertical;
+      border-radius: 10px;
       border: 1px solid var(--border);
-      border-radius: 4px;
-      background: var(--surface-2);
+      padding: 12px;
+      font: inherit;
       color: var(--text);
-      padding: 8px;
-      font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      outline: none;
-    }
-
-    textarea:focus { border-color: var(--accent-2); }
-
-    .actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 8px;
-      flex-wrap: wrap;
+      background: #fbfcff;
     }
 
     button {
-      padding: 8px 10px;
-      border-radius: 4px;
-      font-size: 12px;
-      font-weight: 700;
-      border: 1px solid var(--border);
+      width: 100%;
+      margin-top: 12px;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font: inherit;
+      font-weight: 600;
+      color: #fff;
+      background: var(--primary);
       cursor: pointer;
-      min-width: 140px;
     }
 
-    .primary-btn {
-      background: var(--accent);
-      color: #052015;
-      border-color: #10c97e;
+    button:disabled { opacity: 0.65; cursor: not-allowed; }
+
+    .secondary {
+      background: #ffffff;
+      color: var(--primary);
+      border: 1px solid var(--primary);
     }
 
-    .primary-btn:hover { filter: brightness(1.05); }
-
-    .secondary-btn {
-      background: transparent;
-      color: var(--text);
-      border-color: #31405f;
+    .secondary:hover {
+      background: var(--primary-soft);
     }
-
-    .secondary-btn:hover {
-      background: rgba(91, 140, 255, 0.08);
-      border-color: var(--accent-2);
-    }
-
-    button:disabled { opacity: .6; cursor: not-allowed; }
 
     .status {
+      margin-top: 12px;
+      padding: 10px;
+      border-radius: 10px;
+      background: var(--primary-soft);
+      color: var(--text);
       display: none;
-      margin-top: 8px;
-      padding: 6px 8px;
-      font-size: 12px;
-      border: 1px solid #26304a;
-      border-radius: 4px;
-      color: #b7c8ea;
-      background: rgba(91, 140, 255, 0.1);
     }
 
     .status.error {
+      background: #ffe9e7;
       color: var(--danger);
-      background: var(--danger-soft);
-      border-color: rgba(255, 107, 107, .3);
-    }
-
-    .api-health {
-      margin-top: 6px;
-      color: var(--muted);
-      font-size: 11px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .api-health-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--accent);
-      box-shadow: 0 0 8px rgba(20, 241, 149, 0.45);
+      border: 1px solid #ffd0cc;
     }
 
     .api-usage {
-      margin-top: 8px;
-      padding-top: 8px;
-      border-top: 1px dashed #2a3550;
+      margin-top: 10px;
+      font-size: 12px;
       color: var(--muted);
-      font-size: 11px;
-      line-height: 1.5;
+      border-top: 1px dashed var(--border);
+      padding-top: 8px;
     }
 
     .api-usage code {
-      background: var(--surface-2);
-      color: #b9c9ef;
-      border: 1px solid #22314a;
-      border-radius: 4px;
-      padding: 1px 6px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size: 11px;
+      color: #1d3ea8;
+      background: #f0f4ff;
+      border: 1px solid #d7e3ff;
+      padding: 2px 6px;
+      border-radius: 6px;
     }
 
-    .metrics {
+    .cards {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 8px;
-      margin-bottom: 8px;
+      gap: 12px;
+      margin-bottom: 16px;
     }
 
-    .metric { padding: 7px 8px; }
-
-    .k {
-      color: var(--muted);
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: .07em;
-    }
-
-    .v {
-      margin-top: 4px;
-      font-size: 16px;
-      font-weight: 700;
-    }
-
-    .table-wrap { overflow: auto; }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 700px;
-    }
-
-    th, td {
-      padding: 9px 10px;
-      border-bottom: 1px solid #1b2538;
-      text-align: left;
-    }
-
-    th {
-      font-size: 10px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: .07em;
-      background: #0f1522;
-    }
-
-    tbody tr:hover { background: rgba(91, 140, 255, 0.08); }
-    tbody tr:last-child td { border-bottom: none; }
-
-    .num {
-      text-align: right;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .empty {
-      text-align: center;
-      color: var(--muted);
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
       padding: 14px;
     }
 
-    .api-docs, .example-views, .developer-api, .quick-start {
+    .label { font-size: 0.85rem; color: var(--muted); margin-bottom: 8px; }
+    .value { font-size: 1.3rem; font-weight: 700; }
+
+    .table-wrap {
+      overflow-x: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    table { width: 100%; border-collapse: collapse; min-width: 520px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
+    th { font-size: 0.85rem; color: var(--muted); font-weight: 600; }
+    tbody tr:last-child td { border-bottom: none; }
+
+    .empty {
+      text-align: center;
+      padding: 18px;
+      color: var(--muted);
+    }
+
+    .api-docs {
       margin-top: 8px;
       border: 1px solid var(--border);
       border-radius: var(--radius);
@@ -230,7 +159,7 @@
       padding: 8px;
     }
 
-    .api-docs h2, .example-views h2, .developer-api h2, .quick-start h2 {
+    .api-docs h2 {
       margin: 0 0 8px;
       font-size: 13px;
       letter-spacing: 0.04em;
@@ -238,20 +167,20 @@
       color: var(--muted);
     }
 
-    .api-grid, .dev-grid {
+    .api-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 8px;
     }
 
-    .api-item, .dev-item {
-      background: var(--surface-2);
+    .api-item {
+      background: #0f1522;
       border: 1px solid #22314a;
       border-radius: 4px;
       padding: 8px;
     }
 
-    .api-item strong, .dev-item strong {
+    .api-item strong {
       display: block;
       margin-bottom: 6px;
       font-size: 11px;
@@ -260,7 +189,7 @@
       letter-spacing: .05em;
     }
 
-    .api-item code, .api-item pre, .dev-item code, .dev-item pre {
+    .api-item code, .api-item pre {
       margin: 0;
       white-space: pre-wrap;
       word-break: break-word;
@@ -268,7 +197,7 @@
       color: #b9c9ef;
     }
 
-    .api-item ul, .dev-item ul {
+    .api-item ul {
       margin: 0;
       padding-left: 16px;
       color: #b9c9ef;
@@ -276,168 +205,45 @@
       line-height: 1.45;
     }
 
-    .preset-row {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 8px;
-    }
-
-    .preset-btn {
-      width: 100%;
-      min-width: 0;
-      margin: 0;
-      text-align: left;
-      background: var(--surface-2);
-      color: var(--text);
-      border: 1px solid #22314a;
-      border-radius: 4px;
-      padding: 8px;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .preset-btn:hover {
-      background: rgba(91, 140, 255, 0.08);
-      border-color: var(--accent-2);
-    }
-
-    .preset-meta {
-      display: block;
-      margin-top: 3px;
-      color: var(--muted);
-      font-size: 10px;
-      font-weight: 500;
-      letter-spacing: .03em;
-    }
-
-    .developer-api .sub {
-      margin: 4px 0 8px;
-      color: var(--muted);
-      font-size: 11px;
-      line-height: 1.4;
-    }
-
-    .quick-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 8px;
-    }
-
-    .quick-item {
-      background: var(--surface-2);
-      border: 1px solid #22314a;
-      border-radius: 4px;
-      padding: 8px;
-    }
-
-    .quick-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 6px;
-    }
-
-    .quick-head strong {
-      margin: 0;
-      font-size: 11px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: .05em;
-    }
-
-    .copy-btn {
-      min-width: 0;
-      padding: 4px 8px;
-      font-size: 10px;
-      line-height: 1;
-      border-radius: 4px;
-      border: 1px solid #31405f;
-      background: transparent;
-      color: var(--text);
-      cursor: pointer;
-    }
-
-    .copy-btn:hover {
-      background: rgba(91, 140, 255, 0.08);
-      border-color: var(--accent-2);
-    }
-
-    .quick-item pre {
-      margin: 0;
-      white-space: pre-wrap;
-      word-break: break-word;
-      font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      color: #b9c9ef;
-    }
-
-    @media (max-width: 900px) {
-      .quick-grid { grid-template-columns: 1fr; }
-    }
-
     @media (max-width: 760px) {
-      .api-grid, .dev-grid { grid-template-columns: 1fr; }
-      .preset-row { grid-template-columns: 1fr; }
-      .actions { flex-direction: column; }
-      .actions button { width: 100%; }
-      .metrics { grid-template-columns: 1fr; }
-      body { padding: 8px; }
+      .api-grid { grid-template-columns: 1fr; }
+      body { padding: 14px; }
+      .cards { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <header>
-      <h1>WealthView</h1>
-      <p class="subtitle">Stellar Treasury Aggregation</p>
-    </header>
+    <h1>Stellar Portfolio Dashboard</h1>
+    <p class="subtitle">Aggregate multiple Stellar wallets and review balances with XLM USD pricing from CoinGecko.</p>
 
-    <section class="controls">
-      <div class="label-row">
-        <span>Wallet Input</span>
-        <span>One wallet per line</span>
-      </div>
-
-      <textarea id="addresses" placeholder="GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"></textarea>
-
-      <div class="actions">
-        <button id="aggregateBtn" class="primary-btn" onclick="fetchPortfolio()">Aggregate Portfolio</button>
-        <button id="shareBtn" class="secondary-btn" onclick="copyShareLink()">Copy Share Link</button>
-        <button id="exportBtn" class="secondary-btn" onclick="exportTreasuryJson()">Export JSON</button>
-      </div>
-
+    <section class="panel">
+      <textarea id="addresses" placeholder="Enter wallet addresses (one per line)"></textarea>
+      <button id="aggregateBtn" onclick="fetchPortfolio()">Aggregate Portfolio</button>
+      <button id="shareBtn" class="secondary" onclick="copyShareLink()">Copy Share Link</button>
       <div id="status" class="status"></div>
-
-      <div class="api-health">
-        <span class="api-health-dot"></span>
-        <span>API Online</span>
-      </div>
-
       <div class="api-usage">
-        Public API endpoint:
-        <code>/api/aggregate?wallets=GABC,GDEF,GHIJ</code>
+        API: <code>/api/aggregate?wallets=GABC,GDEF</code>
       </div>
     </section>
 
-    <section class="metrics" id="summaryCards">
-      <article class="metric"><div class="k">Wallet count</div><div class="v" id="walletCount">0</div></article>
-      <article class="metric"><div class="k">Total XLM</div><div class="v" id="totalXLM">0</div></article>
-      <article class="metric"><div class="k">Total USD</div><div class="v" id="totalUSD">$0.00</div></article>
+    <section class="cards" id="summaryCards">
+      <article class="card"><div class="label">Wallet count</div><div class="value" id="walletCount">0</div></article>
+      <article class="card"><div class="label">Total XLM</div><div class="value" id="totalXLM">0</div></article>
+      <article class="card"><div class="label">Total USD value</div><div class="value" id="totalUSD">$0.00</div></article>
     </section>
 
     <section class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th>Asset</th>
-            <th class="num">Amount</th>
-            <th class="num">USD value</th>
-            <th class="num">Allocation %</th>
+            <th>Asset symbol</th>
+            <th>Total amount</th>
+            <th>USD value</th>
           </tr>
         </thead>
         <tbody id="assetTableBody">
-          <tr><td class="empty" colspan="4">No portfolio data yet.</td></tr>
+          <tr><td class="empty" colspan="3">No portfolio data yet.</td></tr>
         </tbody>
       </table>
     </section>
@@ -449,14 +255,17 @@
           <strong>1) Endpoint example</strong>
           <code>GET /api/aggregate?wallets=GABC,GDEF</code>
         </article>
+
         <article class="api-item">
           <strong>2) Query parameter</strong>
           <code>wallets: comma-separated Stellar public addresses</code>
         </article>
+
         <article class="api-item">
           <strong>3) Example API request</strong>
           <pre>curl "https://YOUR-DOMAIN/api/aggregate?wallets=GABC,GDEF"</pre>
         </article>
+
         <article class="api-item">
           <strong>4) Example JSON response</strong>
           <pre>{
@@ -473,6 +282,7 @@
   ]
 }</pre>
         </article>
+
         <article class="api-item" style="grid-column: 1 / -1;">
           <strong>5) Features</strong>
           <ul>
@@ -485,145 +295,12 @@
         </article>
       </div>
     </section>
-
-    <section class="example-views">
-      <h2>Example Treasury Views</h2>
-      <div class="preset-row">
-        <button class="preset-btn" onclick="loadPreset('startup')">
-          Startup Treasury
-          <span class="preset-meta">ops + payroll + reserve</span>
-        </button>
-        <button class="preset-btn" onclick="loadPreset('grant')">
-          Grant Treasury
-          <span class="preset-meta">disbursement + escrow + reporting</span>
-        </button>
-        <button class="preset-btn" onclick="loadPreset('dao')">
-          DAO Treasury
-          <span class="preset-meta">main + multisig + ops + incentives</span>
-        </button>
-      </div>
-    </section>
-
-    <section class="developer-api">
-      <h2>Developer API</h2>
-      <p class="sub">Aggregate multiple Stellar wallets into a unified treasury view.</p>
-      <div class="dev-grid">
-        <article class="dev-item">
-          <strong>Endpoint</strong>
-          <code>GET /api/aggregate?wallets=GABC,GDEF</code>
-        </article>
-        <article class="dev-item">
-          <strong>Features</strong>
-          <ul>
-            <li>Multi-wallet aggregation</li>
-            <li>Treasury exports</li>
-            <li>Shareable treasury states</li>
-            <li>XLM pricing</li>
-          </ul>
-        </article>
-        <article class="dev-item" style="grid-column: 1 / -1;">
-          <strong>Example JSON response</strong>
-          <pre>{
-  "walletCount": 2,
-  "totalXLM": 12400,
-  "totalUSD": 5300,
-  "assets": [
-    {
-      "symbol": "XLM",
-      "amount": 10000,
-      "usdValue": 4200,
-      "allocationPercent": 79
-    }
-  ]
-}</pre>
-        </article>
-      </div>
-    </section>
-
-    <section class="quick-start">
-      <h2>Quick Start</h2>
-      <div class="quick-grid">
-        <article class="quick-item">
-          <div class="quick-head">
-            <strong>cURL</strong>
-            <button class="copy-btn" onclick="copySnippet('snippet-curl')">Copy</button>
-          </div>
-          <pre id="snippet-curl">curl "https://YOUR-DOMAIN/api/aggregate?wallets=GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA,GBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"</pre>
-        </article>
-
-        <article class="quick-item">
-          <div class="quick-head">
-            <strong>JavaScript fetch</strong>
-            <button class="copy-btn" onclick="copySnippet('snippet-js')">Copy</button>
-          </div>
-          <pre id="snippet-js">const wallets = [
-  "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-  "GBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
-];
-const url = `/api/aggregate?wallets=${encodeURIComponent(wallets.join(","))}`;
-const result = await fetch(url).then(r => r.json());
-console.log(result);</pre>
-        </article>
-
-        <article class="quick-item">
-          <div class="quick-head">
-            <strong>Python requests</strong>
-            <button class="copy-btn" onclick="copySnippet('snippet-py')">Copy</button>
-          </div>
-          <pre id="snippet-py">import requests
-
-wallets = ",".join([
-  "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-  "GBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
-])
-
-url = f"https://YOUR-DOMAIN/api/aggregate?wallets={wallets}"
-data = requests.get(url, timeout=20).json()
-print(data)</pre>
-        </article>
-      </div>
-    </section>
   </div>
 
   <script>
     const statusEl = document.getElementById("status");
     const buttonEl = document.getElementById("aggregateBtn");
     const addressesEl = document.getElementById("addresses");
-
-    // stores latest aggregated result for export
-    let latestAggregated = null;
-
-    // SAFER: your own known-good wallet presets (replace with your real wallets)
-const USER_TREASURY_PRESETS = {
-  startup: [
-    "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-    "GBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
-    "GCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
-  ],
-  grant: [
-    "GDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
-    "GEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE",
-    "GFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
-  ],
-  dao: [
-    "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
-    "GHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH",
-    "GIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
-    "GJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ"
-  ]
-};
-
-    function isLikelyStellarPublicKey(value) {
-      return typeof value === "string" && /^G[A-Z2-7]{55}$/.test(value);
-    }
-
-    function getSafePresetWallets(presetName) {
-      const wallets = USER_TREASURY_PRESETS[presetName] || [];
-      const cleaned = wallets.map(w => w.trim()).filter(Boolean);
-      const unique = [...new Set(cleaned)];
-      const invalid = unique.filter(w => !isLikelyStellarPublicKey(w));
-      return { unique, invalid };
-    }
 
     function setStatus(message, type = "info") {
       statusEl.textContent = message;
@@ -640,10 +317,7 @@ const USER_TREASURY_PRESETS = {
     }
 
     function getAddressesFromInput() {
-      return addressesEl.value
-        .split("\n")
-        .map(a => a.trim())
-        .filter(Boolean);
+      return addressesEl.value.split("\n").map(a => a.trim()).filter(Boolean);
     }
 
     function updateUrlWithWallets(addresses) {
@@ -674,92 +348,20 @@ const USER_TREASURY_PRESETS = {
       return addresses;
     }
 
-    function loadPreset(presetName) {
-      const { unique, invalid } = getSafePresetWallets(presetName);
-
-      if (unique.length === 0) {
-        setStatus(`Preset "${presetName}" is empty. Add wallets in USER_TREASURY_PRESETS.`, "error");
-        return;
-      }
-
-      if (invalid.length > 0) {
-        setStatus(`Preset "${presetName}" has invalid wallet format. Fix preset values before loading.`, "error");
-        return;
-      }
-
-      addressesEl.value = unique.join("\n");
-      fetchPortfolio();
-    }
-
     async function copyShareLink() {
       const addresses = getAddressesFromInput();
-
       if (addresses.length === 0) {
         setStatus("Enter wallet addresses first, then copy the link.", "error");
         return;
       }
 
       const shareUrl = updateUrlWithWallets(addresses);
-
       try {
         await navigator.clipboard.writeText(shareUrl);
-        setStatus("Share link copied");
+        setStatus("Share link copied to clipboard.");
       } catch (error) {
         setStatus(`Copy failed. Use this URL manually: ${shareUrl}`, "error");
       }
-    }
-
-    async function copySnippet(id) {
-      const el = document.getElementById(id);
-      if (!el) return;
-      try {
-        await navigator.clipboard.writeText(el.innerText);
-        setStatus("Snippet copied");
-      } catch {
-        setStatus("Snippet copy failed", "error");
-      }
-    }
-
-    function exportTreasuryJson() {
-      if (!latestAggregated) {
-        setStatus("Aggregate portfolio first, then export JSON.", "error");
-        return;
-      }
-
-      const assetsArray = Object.values(latestAggregated.assets)
-        .sort((a, b) => b.totalValueUSD - a.totalValueUSD)
-        .map(asset => {
-          const allocationPercent = latestAggregated.totalUSD > 0
-            ? (asset.totalValueUSD / latestAggregated.totalUSD) * 100
-            : 0;
-
-          return {
-            symbol: asset.symbol,
-            amount: asset.totalAmount,
-            usdValue: asset.totalValueUSD,
-            allocationPercent
-          };
-        });
-
-      const exportData = {
-        walletCount: latestAggregated.wallets,
-        totalXLM: latestAggregated.totalXLM,
-        totalUSD: latestAggregated.totalUSD,
-        assets: assetsArray
-      };
-
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "wealthview-treasury.json";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-
-      URL.revokeObjectURL(url);
-      setStatus("Treasury JSON exported");
     }
 
     function renderDashboard(data) {
@@ -773,35 +375,28 @@ const USER_TREASURY_PRESETS = {
             symbol: asset.symbol,
             totalAmount: asset.amount,
             totalValueUSD: asset.usdValue,
-            allocationPercent: asset.allocationPercent
+            priced: asset.usdValue !== null && asset.usdValue !== undefined
           }))
-        : Object.values(data.assets || {}).map(asset => {
-            const allocationPercent = (data.totalUSD || 0) > 0
-              ? (asset.totalValueUSD / data.totalUSD) * 100
-              : 0;
-
-            return {
-              symbol: asset.symbol,
-              totalAmount: asset.totalAmount,
-              totalValueUSD: asset.totalValueUSD,
-              allocationPercent
-            };
-          });
+        : Object.values(data.assets || {}).map(asset => ({
+            symbol: asset.symbol,
+            totalAmount: asset.totalAmount,
+            totalValueUSD: asset.totalValueUSD,
+            priced: asset.totalValueUSD !== null && asset.totalValueUSD !== undefined
+          }));
 
       const body = document.getElementById("assetTableBody");
       const rows = assetsNormalized
-        .sort((a, b) => (b.totalValueUSD || 0) - (a.totalValueUSD || 0))
+        .sort((a, b) => (b.totalValueUSD ?? -1) - (a.totalValueUSD ?? -1))
         .map(asset => `
           <tr>
             <td>${asset.symbol}</td>
-            <td class="num">${formatNumber(asset.totalAmount || 0, 6)}</td>
-            <td class="num">${formatCurrency(asset.totalValueUSD || 0)}</td>
-            <td class="num">${formatNumber(asset.allocationPercent || 0, 2)}%</td>
+            <td>${formatNumber(asset.totalAmount || 0, 6)}</td>
+            <td>${asset.priced ? formatCurrency(asset.totalValueUSD || 0) : "Price unavailable"}</td>
           </tr>
         `)
         .join("");
 
-      body.innerHTML = rows || '<tr><td class="empty" colspan="4">No asset balances found.</td></tr>';
+      body.innerHTML = rows || '<tr><td class="empty" colspan="3">No asset balances found.</td></tr>';
     }
 
     async function fetchPortfolio() {
@@ -830,22 +425,6 @@ const USER_TREASURY_PRESETS = {
         }
 
         const apiData = await apiRes.json();
-
-        latestAggregated = {
-          wallets: apiData.walletCount,
-          totalXLM: apiData.totalXLM,
-          totalUSD: apiData.totalUSD,
-          assets: (apiData.assets || []).reduce((acc, asset) => {
-            acc[asset.symbol] = {
-              symbol: asset.symbol,
-              totalAmount: asset.amount,
-              totalValueUSD: asset.usdValue,
-              type: asset.symbol === "XLM" ? "native" : "token"
-            };
-            return acc;
-          }, {})
-        };
-
         renderDashboard(apiData);
         setStatus("Aggregation complete.");
       } catch (error) {
