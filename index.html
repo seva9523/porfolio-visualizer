@@ -29,13 +29,10 @@
       padding: 20px;
     }
 
-    .container {
-      max-width: 980px;
-      margin: 0 auto;
-    }
-
+    .container { max-width: 980px; margin: 0 auto; }
     h1 { margin: 0 0 8px; font-size: clamp(1.5rem, 2vw, 2rem); }
-    .subtitle { margin: 0 0 20px; color: var(--muted); }
+    .subtitle { margin: 0; color: var(--muted); }
+    .positioning { margin: 10px 0 20px; color: var(--muted); font-size: 0.95rem; }
 
     .panel {
       background: var(--surface);
@@ -47,28 +44,15 @@
     }
 
     textarea {
-      width: 100%;
-      min-height: 130px;
-      resize: vertical;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      padding: 12px;
-      font: inherit;
-      color: var(--text);
-      background: #fbfcff;
+      width: 100%; min-height: 130px; resize: vertical;
+      border-radius: 10px; border: 1px solid var(--border); padding: 12px;
+      font: inherit; color: var(--text); background: #fbfcff;
     }
 
     button {
-      width: 100%;
-      margin-top: 12px;
-      border: none;
-      border-radius: 10px;
-      padding: 12px 16px;
-      font: inherit;
-      font-weight: 600;
-      color: #fff;
-      background: var(--primary);
-      cursor: pointer;
+      width: 100%; margin-top: 12px; border: none; border-radius: 10px;
+      padding: 12px 16px; font: inherit; font-weight: 600;
+      color: #fff; background: var(--primary); cursor: pointer;
     }
 
     button:disabled { opacity: 0.65; cursor: not-allowed; }
@@ -79,136 +63,109 @@
       border: 1px solid var(--primary);
     }
 
-    .secondary:hover {
-      background: var(--primary-soft);
-    }
+    .secondary:hover { background: var(--primary-soft); }
 
     .status {
-      margin-top: 12px;
-      padding: 10px;
-      border-radius: 10px;
-      background: var(--primary-soft);
-      color: var(--text);
-      display: none;
+      margin-top: 12px; padding: 10px; border-radius: 10px;
+      background: var(--primary-soft); color: var(--text); display: none;
     }
 
     .status.error {
-      background: #ffe9e7;
-      color: var(--danger);
-      border: 1px solid #ffd0cc;
+      background: #ffe9e7; color: var(--danger); border: 1px solid #ffd0cc;
+    }
+
+    .api-health {
+      margin-top: 8px; display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--muted);
+    }
+
+    .api-health-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #1db954; box-shadow: 0 0 8px rgba(29,185,84,0.45);
     }
 
     .api-usage {
-      margin-top: 10px;
-      font-size: 12px;
-      color: var(--muted);
-      border-top: 1px dashed var(--border);
-      padding-top: 8px;
+      margin-top: 10px; font-size: 12px; color: var(--muted);
+      border-top: 1px dashed var(--border); padding-top: 8px;
     }
 
     .api-usage code {
-      color: #1d3ea8;
-      background: #f0f4ff;
-      border: 1px solid #d7e3ff;
-      padding: 2px 6px;
-      border-radius: 6px;
+      color: #1d3ea8; background: #f0f4ff;
+      border: 1px solid #d7e3ff; padding: 2px 6px; border-radius: 6px;
     }
 
     .cards {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      margin-bottom: 16px;
+      display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px; margin-bottom: 16px;
     }
 
     .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 14px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow); padding: 14px;
     }
 
     .label { font-size: 0.85rem; color: var(--muted); margin-bottom: 8px; }
     .value { font-size: 1.3rem; font-weight: 700; }
 
     .table-wrap {
-      overflow-x: auto;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
+      overflow-x: auto; background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow);
     }
 
-    table { width: 100%; border-collapse: collapse; min-width: 520px; }
+    table { width: 100%; border-collapse: collapse; min-width: 620px; }
     th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
     th { font-size: 0.85rem; color: var(--muted); font-weight: 600; }
     tbody tr:last-child td { border-bottom: none; }
 
-    .empty {
-      text-align: center;
-      padding: 18px;
-      color: var(--muted);
-    }
+    .empty { text-align: center; padding: 18px; color: var(--muted); }
 
-    .api-docs {
-      margin-top: 8px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--surface);
-      padding: 8px;
-    }
-
-    .api-docs h2 {
-      margin: 0 0 8px;
-      font-size: 13px;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
+    .workflow-grid,
     .api-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
+      display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;
     }
 
+    .workflow-card,
     .api-item {
-      background: #0f1522;
-      border: 1px solid #22314a;
-      border-radius: 4px;
-      padding: 8px;
+      background: #0f1522; border: 1px solid #22314a; border-radius: 4px; padding: 8px;
     }
+
+    .workflow-card button { margin: 0; border-radius: 8px; padding: 8px 10px; }
+    .workflow-card p { margin: 8px 0 0; color: #b9c9ef; font-size: 12px; }
+
+    .api-docs,
+    .workflow-section {
+      margin-top: 8px; border: 1px solid var(--border); border-radius: var(--radius);
+      background: var(--surface); padding: 8px;
+    }
+
+    .api-docs h2,
+    .workflow-section h2 {
+      margin: 0 0 8px; font-size: 13px; letter-spacing: 0.04em;
+      text-transform: uppercase; color: var(--muted);
+    }
+
+    .api-intro { margin: 0 0 8px; color: var(--muted); font-size: 12px; }
 
     .api-item strong {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 11px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: .05em;
+      display: block; margin-bottom: 6px; font-size: 11px;
+      color: var(--muted); text-transform: uppercase; letter-spacing: .05em;
     }
 
     .api-item code, .api-item pre {
-      margin: 0;
-      white-space: pre-wrap;
-      word-break: break-word;
+      margin: 0; white-space: pre-wrap; word-break: break-word;
       font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       color: #b9c9ef;
     }
 
     .api-item ul {
-      margin: 0;
-      padding-left: 16px;
-      color: #b9c9ef;
-      font-size: 12px;
-      line-height: 1.45;
+      margin: 0; padding-left: 16px; color: #b9c9ef; font-size: 12px; line-height: 1.45;
     }
 
     @media (max-width: 760px) {
-      .api-grid { grid-template-columns: 1fr; }
       body { padding: 14px; }
       .cards { grid-template-columns: 1fr; }
+      .workflow-grid,
+      .api-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -216,14 +173,16 @@
   <div class="container">
     <h1>Stellar Portfolio Dashboard</h1>
     <p class="subtitle">Aggregate multiple Stellar wallets and review balances with XLM USD pricing from CoinGecko.</p>
+    <p class="positioning">Aggregate multiple Stellar treasury wallets into a unified operational portfolio view.</p>
 
     <section class="panel">
       <textarea id="addresses" placeholder="Enter wallet addresses (one per line)"></textarea>
       <button id="aggregateBtn" onclick="fetchPortfolio()">Aggregate Portfolio</button>
       <button id="shareBtn" class="secondary" onclick="copyShareLink()">Copy Share Link</button>
       <div id="status" class="status"></div>
+      <div class="api-health"><span class="api-health-dot"></span><span>API Online</span></div>
       <div class="api-usage">
-        API: <code>/api/aggregate?wallets=GABC,GDEF</code>
+        API: <code>/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4</code>
       </div>
     </section>
 
@@ -248,30 +207,54 @@
       </table>
     </section>
 
+    <section class="workflow-section">
+      <h2>Treasury Workflows</h2>
+      <div class="workflow-grid">
+        <article class="workflow-card">
+          <button class="secondary" onclick="loadWorkflow('startup')">Startup Treasury</button>
+          <p>Operational + reserve treasury monitoring</p>
+        </article>
+        <article class="workflow-card">
+          <button class="secondary" onclick="loadWorkflow('grant')">Grant Treasury</button>
+          <p>Public grant reserve aggregation</p>
+        </article>
+        <article class="workflow-card">
+          <button class="secondary" onclick="loadWorkflow('dao')">DAO Treasury</button>
+          <p>Multi-wallet treasury exposure view</p>
+        </article>
+      </div>
+    </section>
+
     <section class="api-docs">
       <h2>API</h2>
+      <p class="api-intro">APIs allow software and external tools to access WealthView treasury data programmatically.</p>
       <div class="api-grid">
         <article class="api-item">
-          <strong>1) Endpoint example</strong>
-          <code>GET /api/aggregate?wallets=GABC,GDEF</code>
+          <strong>Endpoint example</strong>
+          <code>GET /api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4</code>
         </article>
 
         <article class="api-item">
-          <strong>2) Query parameter</strong>
-          <code>wallets: comma-separated Stellar public addresses</code>
+          <strong>Query parameter</strong>
+          <code>wallets: Comma-separated Stellar public wallet addresses used for treasury aggregation.</code>
         </article>
 
         <article class="api-item">
-          <strong>3) Example API request</strong>
-          <pre>curl "https://YOUR-DOMAIN/api/aggregate?wallets=GABC,GDEF"</pre>
+          <strong>Example API request</strong>
+          <pre>curl "https://YOUR-DOMAIN/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4"</pre>
         </article>
 
         <article class="api-item">
-          <strong>4) Example JSON response</strong>
+          <strong>Example JSON response</strong>
           <pre>{
+  "success": true,
+  "timestamp": "2026-05-19T12:00:00.000Z",
+  "version": "1.0.0",
   "walletCount": 2,
   "totalXLM": 1234.56,
   "totalUSD": 145.67,
+  "pricedAssets": ["XLM", "USDZ"],
+  "unpricedAssets": [],
   "assets": [
     {
       "symbol": "XLM",
@@ -279,12 +262,13 @@
       "usdValue": 145.67,
       "allocationPercent": 100
     }
-  ]
+  ],
+  "errors": []
 }</pre>
         </article>
 
         <article class="api-item" style="grid-column: 1 / -1;">
-          <strong>5) Features</strong>
+          <strong>Features</strong>
           <ul>
             <li>Lightweight public GET endpoint</li>
             <li>No database, no authentication</li>
@@ -301,6 +285,15 @@
     const statusEl = document.getElementById("status");
     const buttonEl = document.getElementById("aggregateBtn");
     const addressesEl = document.getElementById("addresses");
+
+    const REAL_WALLET_A = "GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52";
+    const REAL_WALLET_B = "GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4";
+
+    const TREASURY_WORKFLOWS = {
+      startup: [REAL_WALLET_A, REAL_WALLET_B],
+      grant: [REAL_WALLET_B, REAL_WALLET_A],
+      dao: [REAL_WALLET_A, REAL_WALLET_B]
+    };
 
     function setStatus(message, type = "info") {
       statusEl.textContent = message;
@@ -348,6 +341,17 @@
       return addresses;
     }
 
+    function loadWorkflow(name) {
+      const wallets = TREASURY_WORKFLOWS[name];
+      if (!wallets || wallets.length === 0) {
+        setStatus("Workflow wallets unavailable.", "error");
+        return;
+      }
+
+      addressesEl.value = wallets.join("\n");
+      fetchPortfolio();
+    }
+
     async function copyShareLink() {
       const addresses = getAddressesFromInput();
       if (addresses.length === 0) {
@@ -365,7 +369,7 @@
     }
 
     function renderDashboard(data) {
-      const walletCount = data.walletCount ?? data.wallets ?? 0;
+      const walletCount = data.walletCount ?? 0;
       document.getElementById("walletCount").textContent = walletCount;
       document.getElementById("totalXLM").textContent = formatNumber(data.totalXLM || 0, 4);
       document.getElementById("totalUSD").textContent = formatCurrency(data.totalUSD || 0);
@@ -377,12 +381,7 @@
             totalValueUSD: asset.usdValue,
             priced: asset.usdValue !== null && asset.usdValue !== undefined
           }))
-        : Object.values(data.assets || {}).map(asset => ({
-            symbol: asset.symbol,
-            totalAmount: asset.totalAmount,
-            totalValueUSD: asset.totalValueUSD,
-            priced: asset.totalValueUSD !== null && asset.totalValueUSD !== undefined
-          }));
+        : [];
 
       const body = document.getElementById("assetTableBody");
       const rows = assetsNormalized
@@ -426,7 +425,15 @@
 
         const apiData = await apiRes.json();
         renderDashboard(apiData);
-        setStatus("Aggregation complete.");
+
+        const priced = Array.isArray(apiData.pricedAssets) ? apiData.pricedAssets.join(", ") : "";
+        const unpriced = Array.isArray(apiData.unpricedAssets) ? apiData.unpricedAssets.join(", ") : "";
+        const detail = [
+          priced ? `Priced: ${priced}` : "",
+          unpriced ? `Unpriced: ${unpriced}` : ""
+        ].filter(Boolean).join(" | ");
+
+        setStatus(detail ? `Aggregation complete. ${detail}` : "Aggregation complete.");
       } catch (error) {
         console.error(error);
         setStatus(`Error: ${error.message}`, "error");
