@@ -107,9 +107,15 @@
 
     .layout {
       display: grid;
-      grid-template-columns: 360px minmax(640px, 1fr) 360px;
+      grid-template-columns: 320px minmax(760px, 1fr) 320px;
       gap: 18px;
       align-items: start;
+    }
+
+    .left-col, .mid-col, .right-col {
+      align-self: start;
+      height: fit-content;
+      min-width: 0;
     }
 
     .panel {
@@ -118,7 +124,7 @@
       border-radius: var(--wv-radius-lg);
       padding: 14px;
       position: relative;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
 
     .panel::before {
@@ -228,31 +234,6 @@
       letter-spacing: .08em;
     }
 
-    .workflow-grid, .api-grid { display: grid; gap: 8px; }
-
-    .workflow-card {
-      border: 1px solid var(--wv-border);
-      border-radius: var(--wv-radius-md);
-      background: #fffef9;
-      padding: 10px;
-    }
-
-    .pill {
-      display: inline-block;
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: .06em;
-      text-transform: uppercase;
-      padding: 3px 6px;
-      border-radius: 999px;
-      background: var(--wv-yellow-soft);
-      border: 1px solid rgba(15,15,15,0.25);
-      margin-bottom: 6px;
-    }
-
-    .workflow-card p { margin: 8px 0 0; color: var(--wv-muted); font-size: 12px; }
-
-    /* ===== SUMMARY CARDS FIX ===== */
     .cards {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -302,16 +283,16 @@
       line-height: 1.15;
       white-space: normal;
     }
-    /* ===== /SUMMARY CARDS FIX ===== */
 
     .table-wrap {
       background: var(--wv-white);
       border: 1px solid var(--wv-border);
       border-radius: var(--wv-radius-lg);
       overflow: auto;
+      min-height: 340px;
     }
 
-    table { width: 100%; border-collapse: collapse; min-width: 700px; }
+    table { width: 100%; border-collapse: collapse; min-width: 760px; }
     th, td { padding: 11px; border-bottom: 1px solid var(--wv-border); text-align: left; font-size: 13px; }
     th { background: #f5f2e8; font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--wv-muted); }
     tbody tr:hover { background: rgba(0, 46, 93, 0.04); }
@@ -326,6 +307,8 @@
       padding: 12px;
       color: #e7ecf5;
       margin-bottom: 12px;
+      max-height: 76vh;
+      overflow: auto;
     }
 
     .api-panel h2 {
@@ -340,17 +323,34 @@
       border: 1px solid rgba(183, 172, 232, 0.22);
       border-radius: var(--wv-radius-sm);
       background: rgba(0, 46, 93, 0.35);
-      padding: 8px;
       margin-bottom: 8px;
+      overflow: hidden;
     }
 
-    .api-item strong {
-      display: block;
-      color: var(--wv-yellow-soft);
+    details.api-item summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 8px;
       font-size: 10px;
+      font-weight: 800;
       text-transform: uppercase;
       letter-spacing: .08em;
-      margin-bottom: 6px;
+      color: var(--wv-yellow-soft);
+      background: rgba(0, 46, 93, 0.45);
+    }
+
+    details.api-item summary::-webkit-details-marker { display: none; }
+    details.api-item summary::after {
+      content: "＋";
+      float: right;
+      color: #7ce1eb;
+      font-size: 12px;
+    }
+    details.api-item[open] summary::after { content: "−"; }
+
+    .api-item-body {
+      padding: 8px;
+      border-top: 1px solid rgba(183, 172, 232, 0.22);
     }
 
     .api-item code, .api-item pre {
@@ -363,10 +363,14 @@
 
     .api-item ul { margin: 0; padding-left: 16px; color: #d3dcf0; font-size: 12px; }
 
+    @media (max-width: 1480px) {
+      .layout { grid-template-columns: 300px minmax(640px, 1fr) 300px; }
+    }
+
     @media (max-width: 1160px) {
-      .layout { grid-template-columns: 340px minmax(0, 1fr); }
+      .layout { grid-template-columns: 300px minmax(0, 1fr); }
       .right-col { grid-column: 1 / -1; }
-      .right-col-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .api-panel { max-height: none; }
     }
 
     @media (max-width: 1000px) {
@@ -374,10 +378,10 @@
       .layout { grid-template-columns: 1fr; }
       .left-col { order: 1; }
       .mid-col { order: 2; }
-      .examples-panel { order: 3; }
-      .right-col { order: 4; }
+      .right-col { order: 3; }
       .cards { grid-template-columns: 1fr; }
-      .right-col-grid { grid-template-columns: 1fr; }
+      .api-panel { max-height: none; }
+      table { min-width: 680px; }
     }
   </style>
 </head>
@@ -402,6 +406,7 @@
             <button id="aggregateBtn" class="primary-btn" onclick="fetchPortfolio()">Aggregate Portfolio</button>
             <button id="shareBtn" class="secondary-btn" onclick="copyShareLink()">Generate Share Link</button>
             <button id="snapshotBtn" class="secondary-btn" onclick="downloadTreasurySnapshot()">Download Treasury Snapshot</button>
+            <button id="exportBtn" class="secondary-btn" onclick="exportTreasuryJson()">Export JSON</button>
           </div>
 
           <div class="helper-text">Treasury states can be shared through URLs without accounts.</div>
@@ -410,28 +415,6 @@
 
           <div id="status" class="status"></div>
           <div class="api-health"><span class="api-health-dot"></span><span>API Online</span></div>
-        </section>
-
-        <section class="panel examples-panel">
-          <h2 class="section-title">Example Treasury Aggregations</h2>
-          <p class="input-help">Demo operational treasury groupings built from public Stellar wallets.</p>
-          <div class="workflow-grid">
-            <article class="workflow-card">
-              <span class="pill">Demo</span>
-              <button class="secondary-btn" onclick="loadWorkflow('startup')">Startup Treasury</button>
-              <p>Operational + reserve treasury aggregation</p>
-            </article>
-            <article class="workflow-card">
-              <span class="pill">Sample</span>
-              <button class="secondary-btn" onclick="loadWorkflow('grant')">Grant Treasury</button>
-              <p>Public grant reserve aggregation example</p>
-            </article>
-            <article class="workflow-card">
-              <span class="pill">Demo</span>
-              <button class="secondary-btn" onclick="loadWorkflow('dao')">DAO Treasury</button>
-              <p>Multi-wallet treasury exposure demonstration</p>
-            </article>
-          </div>
         </section>
       </div>
 
@@ -456,33 +439,38 @@
             </tbody>
           </table>
         </section>
-
-        <div style="margin-top:12px;">
-          <button id="exportBtn" class="secondary-btn" onclick="exportTreasuryJson()">Export JSON</button>
-        </div>
       </div>
 
       <div class="right-col">
-        <div class="right-col-grid">
-          <section class="api-panel">
-            <h2>Developer API</h2>
-            <p class="api-intro">APIs allow software and external tools to access WealthView treasury data programmatically.</p>
-            <div class="api-grid">
-              <article class="api-item">
-                <strong>Endpoint example</strong>
-                <code>GET /api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4</code>
-              </article>
-              <article class="api-item">
-                <strong>Query parameter</strong>
-                <code>wallets: Comma-separated Stellar public wallet addresses used for treasury aggregation.</code>
-              </article>
-              <article class="api-item">
-                <strong>Example API request</strong>
-                <pre>curl "https://YOUR-DOMAIN/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4"</pre>
-              </article>
-              <article class="api-item">
-                <strong>Example JSON response</strong>
-                <pre>{
+        <section class="api-panel">
+          <h2>Developer API</h2>
+          <p class="api-intro">APIs allow software and external tools to access WealthView treasury data programmatically.</p>
+
+          <details class="api-item" open>
+            <summary>Endpoint example</summary>
+            <div class="api-item-body">
+              <code>GET /api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4</code>
+            </div>
+          </details>
+
+          <details class="api-item">
+            <summary>Query parameter</summary>
+            <div class="api-item-body">
+              <code>wallets: Comma-separated Stellar public wallet addresses used for treasury aggregation.</code>
+            </div>
+          </details>
+
+          <details class="api-item">
+            <summary>Example API request</summary>
+            <div class="api-item-body">
+              <pre>curl "https://YOUR-DOMAIN/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4"</pre>
+            </div>
+          </details>
+
+          <details class="api-item">
+            <summary>Example JSON response</summary>
+            <div class="api-item-body">
+              <pre>{
   "success": true,
   "timestamp": "2026-05-19T12:00:00.000Z",
   "version": "1.0.0",
@@ -501,47 +489,25 @@
   ],
   "errors": []
 }</pre>
-              </article>
-              <article class="api-item">
-                <strong>Features</strong>
-                <ul>
-                  <li>Lightweight public GET endpoint</li>
-                  <li>No database, no authentication</li>
-                  <li>Skips invalid wallets gracefully</li>
-                  <li>CoinGecko XLM/USD pricing + Horizon account aggregation</li>
-                  <li>Deterministic JSON structure for integrations</li>
-                </ul>
-              </article>
             </div>
-          </section>
+          </details>
 
-          <section class="api-panel">
-            <h2>Quick Start</h2>
-            <div class="api-grid">
-              <article class="api-item">
-                <strong>cURL</strong>
-                <pre>curl "https://YOUR-DOMAIN/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4"</pre>
-              </article>
-              <article class="api-item">
-                <strong>JavaScript</strong>
-                <pre>const r = await fetch("/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4");
-const data = await r.json();
-console.log(data);</pre>
-              </article>
-              <article class="api-item">
-                <strong>Python</strong>
-                <pre>import requests
-url = "https://YOUR-DOMAIN/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4"
-print(requests.get(url).json())</pre>
-              </article>
+          <details class="api-item">
+            <summary>Quick Start</summary>
+            <div class="api-item-body">
+              <pre>curl "https://YOUR-DOMAIN/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4"</pre>
+              <pre>const r = await fetch("/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4");
+const data = await r.json();</pre>
             </div>
-          </section>
+          </details>
 
-          <section class="panel" style="margin-bottom:0;">
-            <h2 class="section-title">How Treasury States Work</h2>
-            <p class="input-help">Wallets are encoded into the URL query string, so treasury views are shareable and reproducible. No accounts or server-side storage are required. URLs act as treasury state snapshots.</p>
-          </section>
-        </div>
+          <details class="api-item">
+            <summary>How Treasury States Work</summary>
+            <div class="api-item-body">
+              <code>Wallets are encoded into the URL query string, so treasury views are shareable and reproducible. No accounts or server-side storage are required. URLs act as treasury state snapshots.</code>
+            </div>
+          </details>
+        </section>
       </div>
     </div>
   </div>
@@ -550,16 +516,6 @@ print(requests.get(url).json())</pre>
     const statusEl = document.getElementById("status");
     const buttonEl = document.getElementById("aggregateBtn");
     const addressesEl = document.getElementById("addresses");
-
-    const REAL_WALLET_A = "GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52";
-    const REAL_WALLET_B = "GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4";
-    const REAL_WALLET_C = "GBVOL67KJY4M4Y5KQZ2WM4K3LFG5UVMTH4NQJFPB5H6TM65KQ6P4YJNY";
-
-    const TREASURY_WORKFLOWS = {
-      startup: [REAL_WALLET_A, REAL_WALLET_B],
-      grant: [REAL_WALLET_B, REAL_WALLET_C],
-      dao: [REAL_WALLET_A, REAL_WALLET_C]
-    };
 
     let latestAggregated = null;
 
@@ -577,7 +533,6 @@ print(requests.get(url).json())</pre>
       return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(value);
     }
 
-    // compact visual formatting only for summary cards
     function formatCompactNumber(value, maxFractionDigits = 2) {
       const num = Number(value) || 0;
       return new Intl.NumberFormat(undefined, {
@@ -631,17 +586,6 @@ print(requests.get(url).json())</pre>
       }
 
       return addresses;
-    }
-
-    function loadWorkflow(name) {
-      const wallets = TREASURY_WORKFLOWS[name];
-      if (!wallets || wallets.length === 0) {
-        setStatus("Workflow wallets unavailable.", "error");
-        return;
-      }
-
-      addressesEl.value = wallets.join("\n");
-      fetchPortfolio();
     }
 
     async function copyShareLink() {
@@ -741,7 +685,6 @@ print(requests.get(url).json())</pre>
       const totalXLMEl = document.getElementById("totalXLM");
       const totalUSDEl = document.getElementById("totalUSD");
 
-      // compact display + full value in tooltip
       walletCountEl.textContent = formatNumber(walletCount, 0);
       walletCountEl.title = formatNumber(walletCount, 0);
 
