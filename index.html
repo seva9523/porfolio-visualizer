@@ -3,19 +3,28 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Stellar Portfolio Dashboard</title>
+  <title>WealthView | Stellar Treasury Aggregation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Lora:wght@600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #f6f8fb;
-      --surface: #ffffff;
-      --text: #102038;
-      --muted: #5f6f86;
-      --primary: #2f6dff;
-      --primary-soft: #eaf0ff;
-      --danger: #c0392b;
-      --border: #dfe5f0;
-      --shadow: 0 8px 24px rgba(16, 32, 56, 0.08);
-      --radius: 14px;
+      --wv-black: #0f0f0f;
+      --wv-offwhite: #f6f7f8;
+      --wv-white: #ffffff;
+      --wv-yellow: #fdda24;
+      --wv-yellow-soft: #fff5a8;
+      --wv-neutral: #d6d2c4;
+      --wv-muted: rgba(15, 15, 15, 0.62);
+      --wv-border: rgba(15, 15, 15, 0.14);
+      --wv-border-strong: rgba(15, 15, 15, 0.28);
+      --wv-teal: #00a7b5;
+      --wv-deepblue: #002e5d;
+      --wv-lavender: #b7ace8;
+      --wv-danger: #b42318;
+      --wv-radius-lg: 22px;
+      --wv-radius-md: 16px;
+      --wv-radius-sm: 10px;
     }
 
     * { box-sizing: border-box; }
@@ -23,98 +32,174 @@
     body {
       margin: 0;
       font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      color: var(--wv-black);
+      background:
+        radial-gradient(circle at 12% 8%, rgba(253, 218, 36, 0.24), rgba(253, 218, 36, 0) 34%),
+        radial-gradient(circle at 88% 16%, rgba(183, 172, 232, 0.20), rgba(183, 172, 232, 0) 36%),
+        radial-gradient(circle at 75% 90%, rgba(0, 167, 181, 0.12), rgba(0, 167, 181, 0) 40%),
+        radial-gradient(rgba(15, 15, 15, 0.045) 0.6px, transparent 0.6px),
+        var(--wv-offwhite);
+      background-size: auto, auto, auto, 16px 16px, auto;
+      padding: 20px;
       line-height: 1.45;
-      padding: 16px;
     }
 
     .container {
       width: 100%;
-      max-width: 1500px;
+      max-width: 1520px;
       margin: 0 auto;
     }
 
-    h1 { margin: 0 0 8px; font-size: clamp(1.5rem, 2vw, 2rem); }
-    .subtitle { margin: 0; color: var(--muted); }
-    .positioning { margin: 10px 0 16px; color: var(--muted); font-size: 0.95rem; }
+    .header {
+      background: rgba(255,255,255,0.8);
+      border: 1px solid var(--wv-border);
+      border-radius: var(--wv-radius-lg);
+      padding: 18px 20px 14px;
+      margin-bottom: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header::after {
+      content: "";
+      position: absolute;
+      left: 20px;
+      right: 20px;
+      bottom: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--wv-yellow), var(--wv-yellow-soft));
+      border-radius: 99px;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+
+    .title {
+      margin: 0;
+      font-family: Lora, Georgia, "Times New Roman", serif;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      font-size: clamp(1.9rem, 3vw, 2.6rem);
+      color: var(--wv-black);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 10px;
+      background: var(--wv-yellow);
+      border: 1px solid rgba(15,15,15,0.35);
+      color: var(--wv-black);
+      white-space: nowrap;
+    }
+
+    .subtitle { margin: 0 0 2px; font-size: 14px; color: var(--wv-muted); text-transform: uppercase; letter-spacing: .08em; }
+    .positioning { margin: 0; color: rgba(15,15,15,0.8); font-size: 14px; }
 
     .layout {
       display: grid;
-      grid-template-columns: 360px minmax(520px, 1fr) 360px;
+      grid-template-columns: 360px minmax(640px, 1fr) 360px;
       gap: 18px;
       align-items: start;
     }
 
     .panel {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 12px;
-      margin-bottom: 12px;
+      background: var(--wv-white);
+      border: 1px solid var(--wv-border);
+      border-radius: var(--wv-radius-lg);
+      padding: 14px;
+      position: relative;
+      margin-bottom: 14px;
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      top: 0;
+      height: 3px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--wv-yellow), transparent);
     }
 
     textarea {
       width: 100%;
       min-height: 130px;
       resize: vertical;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      padding: 12px;
-      font: inherit;
-      color: var(--text);
-      background: #fbfcff;
+      border-radius: var(--wv-radius-sm);
+      border: 1px solid var(--wv-border-strong);
+      padding: 11px;
+      color: var(--wv-black);
+      background: #fbfaf4;
+      font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      outline: none;
     }
 
-    .actions {
-      display: grid;
-      gap: 8px;
-      margin-top: 10px;
+    textarea:focus {
+      border-color: rgba(15, 15, 15, 0.55);
+      box-shadow: 0 0 0 3px rgba(253, 218, 36, 0.28);
     }
+
+    .input-help, .helper-text, .button-help {
+      margin-top: 8px;
+      color: var(--wv-muted);
+      font-size: 12px;
+    }
+
+    .actions { display: grid; gap: 8px; margin-top: 10px; }
 
     button {
       width: 100%;
-      border: none;
-      border-radius: 10px;
+      border-radius: var(--wv-radius-sm);
       padding: 10px 12px;
-      font: inherit;
-      font-weight: 600;
-      color: #fff;
-      background: var(--primary);
+      border: 1px solid var(--wv-black);
       cursor: pointer;
+      font: 700 13px/1.2 Inter, sans-serif;
+      transition: transform .15s ease, background-color .15s ease, border-color .15s ease;
     }
 
-    button:disabled { opacity: 0.65; cursor: not-allowed; }
-
-    .secondary {
-      background: #ffffff;
-      color: var(--primary);
-      border: 1px solid var(--primary);
+    .primary-btn {
+      background: var(--wv-yellow);
+      color: var(--wv-black);
     }
 
-    .secondary:hover { background: var(--primary-soft); }
+    .primary-btn:hover { transform: translateY(-1px); background: #f3cd14; }
+
+    .secondary-btn {
+      background: var(--wv-white);
+      color: var(--wv-black);
+      border-color: var(--wv-border-strong);
+    }
+
+    .secondary-btn:hover { background: #f1f1ef; }
+
+    button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
     .status {
       margin-top: 10px;
-      padding: 10px;
-      border-radius: 10px;
-      background: var(--primary-soft);
-      color: var(--text);
+      padding: 9px 10px;
+      border-radius: var(--wv-radius-sm);
+      font-size: 12px;
+      border: 1px solid rgba(0, 46, 93, 0.3);
+      color: var(--wv-deepblue);
+      background: rgba(0, 46, 93, 0.07);
       display: none;
-      font-size: 13px;
     }
 
     .status.error {
-      background: #ffe9e7;
-      color: var(--danger);
-      border: 1px solid #ffd0cc;
-    }
-
-    .input-help, .share-help, .save-help, .button-help {
-      margin-top: 8px;
-      color: var(--muted);
-      font-size: 12px;
+      color: var(--wv-danger);
+      border-color: rgba(180, 35, 24, 0.32);
+      background: rgba(180, 35, 24, 0.08);
     }
 
     .api-health {
@@ -123,16 +208,49 @@
       align-items: center;
       gap: 6px;
       font-size: 12px;
-      color: var(--muted);
+      color: var(--wv-muted);
     }
 
     .api-health-dot {
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background: #1db954;
-      box-shadow: 0 0 8px rgba(29,185,84,0.45);
+      background: var(--wv-teal);
+      box-shadow: 0 0 0 2px rgba(0, 167, 181, 0.2);
     }
+
+    .section-title {
+      margin: 0 0 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--wv-muted);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .workflow-grid, .api-grid { display: grid; gap: 8px; }
+
+    .workflow-card {
+      border: 1px solid var(--wv-border);
+      border-radius: var(--wv-radius-md);
+      background: #fffef9;
+      padding: 10px;
+    }
+
+    .pill {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      padding: 3px 6px;
+      border-radius: 999px;
+      background: var(--wv-yellow-soft);
+      border: 1px solid rgba(15,15,15,0.25);
+      margin-bottom: 6px;
+    }
+
+    .workflow-card p { margin: 8px 0 0; color: var(--wv-muted); font-size: 12px; }
 
     .cards {
       display: grid;
@@ -142,216 +260,158 @@
     }
 
     .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
+      background: var(--wv-white);
+      border: 1px solid var(--wv-border);
+      border-radius: var(--wv-radius-md);
       padding: 12px;
+      position: relative;
     }
 
-    .label {
-      font-size: 0.82rem;
-      color: var(--muted);
-      margin-bottom: 6px;
+    .card::before {
+      content: "";
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      top: 0;
+      height: 3px;
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--wv-yellow), var(--wv-teal));
     }
 
-    .value {
-      font-size: 1.2rem;
-      font-weight: 700;
-    }
+    .label { font-size: 11px; color: var(--wv-muted); text-transform: uppercase; letter-spacing: .07em; }
+    .value { font-size: 1.4rem; font-weight: 800; margin-top: 4px; color: var(--wv-black); }
 
     .table-wrap {
-      overflow-x: auto;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
+      background: var(--wv-white);
+      border: 1px solid var(--wv-border);
+      border-radius: var(--wv-radius-lg);
+      overflow: auto;
     }
 
-    table { width: 100%; border-collapse: collapse; min-width: 620px; }
-    th, td {
-      padding: 11px;
-      text-align: left;
-      border-bottom: 1px solid var(--border);
-      font-size: 14px;
-    }
-    th { font-size: 0.82rem; color: var(--muted); font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; min-width: 700px; }
+    th, td { padding: 11px; border-bottom: 1px solid var(--wv-border); text-align: left; font-size: 13px; }
+    th { background: #f5f2e8; font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--wv-muted); }
+    tbody tr:hover { background: rgba(0, 46, 93, 0.04); }
     tbody tr:last-child td { border-bottom: none; }
+    td:nth-child(3) { color: var(--wv-deepblue); font-weight: 700; }
+    .empty { text-align: center; color: var(--wv-muted); padding: 16px; }
 
-    .empty { text-align: center; padding: 18px; color: var(--muted); }
-
-    .workflow-grid,
-    .api-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 8px;
+    .api-panel {
+      background: #0f1117;
+      border: 1px solid rgba(253, 218, 36, 0.25);
+      border-radius: var(--wv-radius-lg);
+      padding: 12px;
+      color: #e7ecf5;
+      margin-bottom: 12px;
     }
 
-    .workflow-card,
+    .api-panel h2 {
+      margin: 0 0 8px;
+      color: var(--wv-yellow);
+      font: 700 18px/1.2 Lora, Georgia, serif;
+    }
+
+    .api-intro { margin: 0 0 8px; font-size: 12px; color: rgba(231,236,245,0.75); }
+
     .api-item {
-      background: #0f1522;
-      border: 1px solid #22314a;
-      border-radius: 6px;
+      border: 1px solid rgba(183, 172, 232, 0.22);
+      border-radius: var(--wv-radius-sm);
+      background: rgba(0, 46, 93, 0.35);
       padding: 8px;
-    }
-
-    .workflow-card button {
-      margin: 0;
-      border-radius: 8px;
-      padding: 8px 10px;
-    }
-
-    .workflow-card p {
-      margin: 8px 0 0;
-      color: #b9c9ef;
-      font-size: 12px;
-    }
-
-    .api-docs,
-    .workflow-section {
-      margin-top: 8px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--surface);
-      padding: 10px;
-    }
-
-    .api-docs h2,
-    .workflow-section h2 {
-      margin: 0 0 8px;
-      font-size: 13px;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    .api-intro {
-      margin: 0 0 8px;
-      color: var(--muted);
-      font-size: 12px;
+      margin-bottom: 8px;
     }
 
     .api-item strong {
       display: block;
-      margin-bottom: 6px;
-      font-size: 11px;
-      color: var(--muted);
+      color: var(--wv-yellow-soft);
+      font-size: 10px;
       text-transform: uppercase;
-      letter-spacing: .05em;
+      letter-spacing: .08em;
+      margin-bottom: 6px;
     }
 
     .api-item code, .api-item pre {
       margin: 0;
+      font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      color: #7ce1eb;
       white-space: pre-wrap;
       word-break: break-word;
-      font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      color: #b9c9ef;
     }
 
-    .api-item ul {
-      margin: 0;
-      padding-left: 16px;
-      color: #b9c9ef;
-      font-size: 12px;
-      line-height: 1.45;
-    }
+    .api-item ul { margin: 0; padding-left: 16px; color: #d3dcf0; font-size: 12px; }
 
-    .right-col .workflow-section,
-    .right-col .api-docs {
-      margin-top: 0;
-      margin-bottom: 12px;
-    }
-
-    .left-col .workflow-section {
-      margin-top: 0;
-    }
-
-    .export-wrap {
-      margin-top: 12px;
-    }
-
-    @media (max-width: 1200px) {
-      .layout {
-        grid-template-columns: 320px minmax(0, 1fr);
-      }
-      .right-col {
-        grid-column: 1 / -1;
-      }
-      .right-col-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-      }
-      .right-col-grid > * {
-        margin: 0;
-      }
+    @media (max-width: 1160px) {
+      .layout { grid-template-columns: 340px minmax(0, 1fr); }
+      .right-col { grid-column: 1 / -1; }
+      .right-col-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     }
 
     @media (max-width: 1000px) {
-      .layout {
-        grid-template-columns: 1fr;
-        gap: 12px;
-      }
-
+      body { padding: 12px; }
+      .layout { grid-template-columns: 1fr; }
       .left-col { order: 1; }
       .mid-col { order: 2; }
-      .left-col .workflow-section { order: 3; }
+      .examples-panel { order: 3; }
       .right-col { order: 4; }
-
       .cards { grid-template-columns: 1fr; }
       .right-col-grid { grid-template-columns: 1fr; }
-      body { padding: 12px; }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Stellar Portfolio Dashboard</h1>
-    <p class="subtitle">Aggregate multiple Stellar wallets and review balances with XLM USD pricing from CoinGecko.</p>
-    <p class="positioning">Aggregate multiple Stellar treasury wallets into a unified operational portfolio view.</p>
+    <header class="header">
+      <div class="header-top">
+        <h1 class="title">WealthView</h1>
+        <span class="badge">Built for Stellar treasury visibility</span>
+      </div>
+      <p class="subtitle">Stellar Treasury Aggregation</p>
+      <p class="positioning">Aggregate multiple Stellar treasury wallets into a unified operational portfolio view.</p>
+    </header>
 
     <div class="layout">
-      <!-- LEFT COLUMN: controls + examples -->
       <div class="left-col">
         <section class="panel">
           <textarea id="addresses" placeholder="Enter wallet addresses (one per line)"></textarea>
           <div class="input-help">Paste comma-separated Stellar public wallet addresses. Example: GBXXX..., GDXXX...</div>
 
           <div class="actions">
-            <button id="aggregateBtn" onclick="fetchPortfolio()">Aggregate Portfolio</button>
-            <button id="shareBtn" class="secondary" onclick="copyShareLink()">Generate Share Link</button>
-            <button id="snapshotBtn" class="secondary" onclick="downloadTreasurySnapshot()">Download Treasury Snapshot</button>
+            <button id="aggregateBtn" class="primary-btn" onclick="fetchPortfolio()">Aggregate Portfolio</button>
+            <button id="shareBtn" class="secondary-btn" onclick="copyShareLink()">Generate Share Link</button>
+            <button id="snapshotBtn" class="secondary-btn" onclick="downloadTreasurySnapshot()">Download Treasury Snapshot</button>
           </div>
 
-          <div class="share-help">Treasury states can be shared through URLs without accounts.</div>
-          <div class="save-help">No account required. The treasury state is stored in the URL.</div>
+          <div class="helper-text">Treasury states can be shared through URLs without accounts.</div>
+          <div class="helper-text">No account required. The treasury state is stored in the URL.</div>
           <div class="button-help">Share Link reopens this treasury view. Snapshot downloads a timestamped report. Export JSON provides raw developer data.</div>
 
           <div id="status" class="status"></div>
           <div class="api-health"><span class="api-health-dot"></span><span>API Online</span></div>
         </section>
 
-        <section class="workflow-section">
-          <h2>Example Treasury Aggregations</h2>
-          <p class="api-intro">Demo operational treasury groupings built from public Stellar wallets.</p>
+        <section class="panel examples-panel">
+          <h2 class="section-title">Example Treasury Aggregations</h2>
+          <p class="input-help">Demo operational treasury groupings built from public Stellar wallets.</p>
           <div class="workflow-grid">
             <article class="workflow-card">
-              <button class="secondary" onclick="loadWorkflow('startup')">Startup Treasury</button>
-              <p>Demo • Sample aggregation • Public example wallets<br>Operational + reserve treasury aggregation</p>
+              <span class="pill">Demo</span>
+              <button class="secondary-btn" onclick="loadWorkflow('startup')">Startup Treasury</button>
+              <p>Operational + reserve treasury aggregation</p>
             </article>
             <article class="workflow-card">
-              <button class="secondary" onclick="loadWorkflow('grant')">Grant Treasury</button>
-              <p>Demo • Sample aggregation • Public example wallets<br>Public grant reserve aggregation example</p>
+              <span class="pill">Sample</span>
+              <button class="secondary-btn" onclick="loadWorkflow('grant')">Grant Treasury</button>
+              <p>Public grant reserve aggregation example</p>
             </article>
             <article class="workflow-card">
-              <button class="secondary" onclick="loadWorkflow('dao')">DAO Treasury</button>
-              <p>Demo • Sample aggregation • Public example wallets<br>Multi-wallet treasury exposure demonstration</p>
+              <span class="pill">Demo</span>
+              <button class="secondary-btn" onclick="loadWorkflow('dao')">DAO Treasury</button>
+              <p>Multi-wallet treasury exposure demonstration</p>
             </article>
           </div>
         </section>
       </div>
 
-      <!-- MIDDLE COLUMN: summary + table + export -->
       <div class="mid-col">
         <section class="cards" id="summaryCards">
           <article class="card"><div class="label">Wallet count</div><div class="value" id="walletCount">0</div></article>
@@ -374,33 +434,29 @@
           </table>
         </section>
 
-        <div class="export-wrap">
-          <button id="exportBtn" class="secondary" onclick="exportTreasuryJson()">Export JSON</button>
+        <div style="margin-top:12px;">
+          <button id="exportBtn" class="secondary-btn" onclick="exportTreasuryJson()">Export JSON</button>
         </div>
       </div>
 
-      <!-- RIGHT COLUMN: API docs + quick start + how states work -->
       <div class="right-col">
         <div class="right-col-grid">
-          <section class="api-docs">
-            <h2>API</h2>
+          <section class="api-panel">
+            <h2>Developer API</h2>
             <p class="api-intro">APIs allow software and external tools to access WealthView treasury data programmatically.</p>
             <div class="api-grid">
               <article class="api-item">
                 <strong>Endpoint example</strong>
                 <code>GET /api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4</code>
               </article>
-
               <article class="api-item">
                 <strong>Query parameter</strong>
                 <code>wallets: Comma-separated Stellar public wallet addresses used for treasury aggregation.</code>
               </article>
-
               <article class="api-item">
                 <strong>Example API request</strong>
                 <pre>curl "https://YOUR-DOMAIN/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4"</pre>
               </article>
-
               <article class="api-item">
                 <strong>Example JSON response</strong>
                 <pre>{
@@ -423,7 +479,6 @@
   "errors": []
 }</pre>
               </article>
-
               <article class="api-item">
                 <strong>Features</strong>
                 <ul>
@@ -437,7 +492,7 @@
             </div>
           </section>
 
-          <section class="api-docs">
+          <section class="api-panel">
             <h2>Quick Start</h2>
             <div class="api-grid">
               <article class="api-item">
@@ -459,9 +514,9 @@ print(requests.get(url).json())</pre>
             </div>
           </section>
 
-          <section class="workflow-section">
-            <h2>How Treasury States Work</h2>
-            <p class="api-intro">Wallets are encoded into the URL query string, so treasury views are shareable and reproducible. No accounts or server-side storage are required. URLs act as treasury state snapshots.</p>
+          <section class="panel" style="margin-bottom:0;">
+            <h2 class="section-title">How Treasury States Work</h2>
+            <p class="input-help">Wallets are encoded into the URL query string, so treasury views are shareable and reproducible. No accounts or server-side storage are required. URLs act as treasury state snapshots.</p>
           </section>
         </div>
       </div>
