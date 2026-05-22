@@ -252,11 +252,13 @@
 
     .workflow-card p { margin: 8px 0 0; color: var(--wv-muted); font-size: 12px; }
 
+    /* ===== SUMMARY CARDS FIX ===== */
     .cards {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 10px;
       margin-bottom: 12px;
+      min-width: 0;
     }
 
     .card {
@@ -265,6 +267,8 @@
       border-radius: var(--wv-radius-md);
       padding: 12px;
       position: relative;
+      min-width: 0;
+      overflow: hidden;
     }
 
     .card::before {
@@ -278,8 +282,27 @@
       background: linear-gradient(90deg, var(--wv-yellow), var(--wv-teal));
     }
 
-    .label { font-size: 11px; color: var(--wv-muted); text-transform: uppercase; letter-spacing: .07em; }
-    .value { font-size: 1.4rem; font-weight: 800; margin-top: 4px; color: var(--wv-black); }
+    .label {
+      font-size: 11px;
+      color: var(--wv-muted);
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      min-width: 0;
+    }
+
+    .value {
+      font-size: clamp(1rem, 1.6vw, 1.8rem);
+      font-weight: 800;
+      margin-top: 4px;
+      color: var(--wv-black);
+      min-width: 0;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      line-height: 1.15;
+      white-space: normal;
+    }
+    /* ===== /SUMMARY CARDS FIX ===== */
 
     .table-wrap {
       background: var(--wv-white);
@@ -554,6 +577,27 @@ print(requests.get(url).json())</pre>
       return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(value);
     }
 
+    // compact visual formatting only for summary cards
+    function formatCompactNumber(value, maxFractionDigits = 2) {
+      const num = Number(value) || 0;
+      return new Intl.NumberFormat(undefined, {
+        notation: "compact",
+        compactDisplay: "short",
+        maximumFractionDigits: maxFractionDigits
+      }).format(num);
+    }
+
+    function formatCompactCurrency(value, maxFractionDigits = 2) {
+      const num = Number(value) || 0;
+      return new Intl.NumberFormat(undefined, {
+        style: "currency",
+        currency: "USD",
+        notation: "compact",
+        compactDisplay: "short",
+        maximumFractionDigits: maxFractionDigits
+      }).format(num);
+    }
+
     function getAddressesFromInput() {
       return addressesEl.value
         .split(/[\n,]/)
@@ -690,9 +734,22 @@ print(requests.get(url).json())</pre>
 
     function renderDashboard(data) {
       const walletCount = data.walletCount ?? 0;
-      document.getElementById("walletCount").textContent = walletCount;
-      document.getElementById("totalXLM").textContent = formatNumber(data.totalXLM || 0, 4);
-      document.getElementById("totalUSD").textContent = formatCurrency(data.totalUSD || 0);
+      const totalXLMRaw = Number(data.totalXLM || 0);
+      const totalUSDRaw = Number(data.totalUSD || 0);
+
+      const walletCountEl = document.getElementById("walletCount");
+      const totalXLMEl = document.getElementById("totalXLM");
+      const totalUSDEl = document.getElementById("totalUSD");
+
+      // compact display + full value in tooltip
+      walletCountEl.textContent = formatNumber(walletCount, 0);
+      walletCountEl.title = formatNumber(walletCount, 0);
+
+      totalXLMEl.textContent = formatCompactNumber(totalXLMRaw, 2);
+      totalXLMEl.title = formatNumber(totalXLMRaw, 6);
+
+      totalUSDEl.textContent = formatCompactCurrency(totalUSDRaw, 2);
+      totalUSDEl.title = formatCurrency(totalUSDRaw);
 
       const assetsNormalized = Array.isArray(data.assets)
         ? data.assets.map(asset => ({
