@@ -90,23 +90,23 @@
                   "success": true,
                   "timestamp": "2026-05-23T12:00:00.000Z",
                   "version": "1.0.0",
-                  "walletCount": 2,
-                  "totalXLM": 1234.56,
-                  "totalUSD": 145.67,
+                  "walletCount": 1,
+                  "totalXLM": 7497034208.294941,
+                  "totalUSD": 1102308747.31,
                   "pricedAssets": ["XLM", "USDZ"],
                   "unpricedAssets": [],
                   "assets": [
                     {
                       "symbol": "XLM",
-                      "amount": 1234.56,
-                      "usdValue": 145.67,
-                      "allocationPercent": 96.12
+                      "amount": 7497034208.294941,
+                      "usdValue": 1102303933.64,
+                      "allocationPercent": 99.9996
                     },
                     {
                       "symbol": "USDZ",
                       "amount": 5000,
-                      "usdValue": 5.89,
-                      "allocationPercent": 3.88
+                      "usdValue": 4813.67,
+                      "allocationPercent": 0.0004
                     }
                   ],
                   "errors": []
