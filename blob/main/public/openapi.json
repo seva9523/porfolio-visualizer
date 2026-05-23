@@ -1,0 +1,127 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "WealthView API",
+    "description": "Stellar treasury aggregation API for aggregating multiple Stellar wallet balances into a unified treasury view.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/",
+      "description": "Current deployment"
+    }
+  ],
+  "paths": {
+    "/api/aggregate": {
+      "get": {
+        "summary": "Aggregate Stellar treasury wallets",
+        "description": "Fetches wallet balances from Stellar Horizon and pricing data, then returns a unified treasury summary.",
+        "parameters": [
+          {
+            "name": "wallets",
+            "in": "query",
+            "required": true,
+            "description": "Comma-separated Stellar public wallet addresses.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful aggregation response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "timestamp": { "type": "string", "format": "date-time" },
+                    "version": { "type": "string" },
+                    "walletCount": { "type": "integer" },
+                    "totalXLM": { "type": "number" },
+                    "totalUSD": { "type": "number" },
+                    "pricedAssets": {
+                      "type": "array",
+                      "items": { "type": "string" }
+                    },
+                    "unpricedAssets": {
+                      "type": "array",
+                      "items": { "type": "string" }
+                    },
+                    "assets": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "symbol": { "type": "string" },
+                          "amount": { "type": "number" },
+                          "usdValue": { "type": ["number", "null"] },
+                          "allocationPercent": { "type": ["number", "null"] }
+                        }
+                      }
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "wallet": { "type": "string" },
+                          "message": { "type": "string" }
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "timestamp",
+                    "version",
+                    "walletCount",
+                    "totalXLM",
+                    "totalUSD",
+                    "pricedAssets",
+                    "unpricedAssets",
+                    "assets",
+                    "errors"
+                  ]
+                },
+                "example": {
+                  "success": true,
+                  "timestamp": "2026-05-23T12:00:00.000Z",
+                  "version": "1.0.0",
+                  "walletCount": 2,
+                  "totalXLM": 1234.56,
+                  "totalUSD": 145.67,
+                  "pricedAssets": ["XLM", "USDZ"],
+                  "unpricedAssets": [],
+                  "assets": [
+                    {
+                      "symbol": "XLM",
+                      "amount": 1234.56,
+                      "usdValue": 145.67,
+                      "allocationPercent": 96.12
+                    },
+                    {
+                      "symbol": "USDZ",
+                      "amount": 5000,
+                      "usdValue": 5.89,
+                      "allocationPercent": 3.88
+                    }
+                  ],
+                  "errors": []
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (missing or invalid wallets parameter)"
+          },
+          "500": {
+            "description": "Server-side aggregation error"
+          }
+        }
+      }
+    }
+  }
+}
