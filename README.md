@@ -139,3 +139,19 @@ Agents and external tools can consume treasury data directly:
 
 ```bash
 curl "https://YOUR-DOMAIN/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52"
+
+## MCP Support
+
+WealthView exposes:
+
+- REST API
+- OpenAPI spec
+- Agent manifest
+- MCP-compatible treasury tool
+
+Example:
+
+```js
+aggregate_stellar_treasury({
+  wallets: "G...,G..."
+})
