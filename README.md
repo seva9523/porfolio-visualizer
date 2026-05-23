@@ -127,6 +127,22 @@ Early-stage infrastructure prototype focused on:
 * developer usability
 * ecosystem tooling
 
+## MCP Support
+
+WealthView exposes:
+
+- REST API
+- OpenAPI spec
+- Agent manifest
+- MCP-compatible treasury tool
+
+Example:
+
+```js
+aggregate_stellar_treasury({
+  wallets: "G...,G..."
+})
+
 ## Agent usage
 
 Agents and external tools can consume treasury data directly:
@@ -142,19 +158,4 @@ curl "https://YOUR-DOMAIN/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4L
 
 
 
-### MCP Support
-
-WealthView exposes:
-
-- REST API
-- OpenAPI spec
-- Agent manifest
-- MCP-compatible treasury tool
-
-Example:
-
-```js
-aggregate_stellar_treasury({
-  wallets: "G...,G..."
-})
 
