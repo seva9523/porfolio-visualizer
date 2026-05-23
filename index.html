@@ -171,7 +171,7 @@
       border: 1px solid var(--wv-black);
       cursor: pointer;
       font: 700 13px/1.2 Inter, sans-serif;
-      transition: transform .15s ease, background-color .15s ease, border-color .15s ease;
+      transition: transform .15s ease, background-color .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease;
     }
 
     .primary-btn {
@@ -190,6 +190,49 @@
     .secondary-btn:hover { background: #f1f1ef; }
 
     button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    /* Share button success state */
+    #shareBtn {
+      position: relative;
+      overflow: hidden;
+    }
+
+    #shareBtn.share-success {
+      background: #00a7b5;
+      color: #ffffff;
+      border-color: #008997;
+      transform: scale(1.01);
+      box-shadow: 0 0 0 0 rgba(0, 167, 181, 0.25);
+      animation: sharePulse 0.7s ease;
+      cursor: pointer;
+    }
+
+    #shareBtn .share-btn-inner {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+    }
+
+    #shareBtn .share-check {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(2px) scale(0.75);
+      transition: opacity .2s ease, transform .2s ease;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    #shareBtn.share-success .share-check {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    @keyframes sharePulse {
+      0% { box-shadow: 0 0 0 0 rgba(0, 167, 181, 0.35); }
+      100% { box-shadow: 0 0 0 10px rgba(0, 167, 181, 0); }
+    }
 
     .status {
       margin-top: 10px;
@@ -405,7 +448,12 @@
 
           <div class="actions">
             <button id="aggregateBtn" class="primary-btn" onclick="fetchPortfolio()">Aggregate Portfolio</button>
-            <button id="shareBtn" class="secondary-btn" onclick="copyShareLink()">Generate Share Link</button>
+            <button id="shareBtn" class="secondary-btn" onclick="copyShareLink()" aria-live="polite">
+              <span class="share-btn-inner">
+                <span class="share-check" aria-hidden="true">✓</span>
+                <span id="shareBtnText">Generate Share Link</span>
+              </span>
+            </button>
             <button id="snapshotBtn" class="secondary-btn" onclick="downloadTreasurySnapshot()">Download Treasury Snapshot</button>
           </div>
 
@@ -531,8 +579,11 @@ console.log(data);</pre>
     const statusEl = document.getElementById("status");
     const buttonEl = document.getElementById("aggregateBtn");
     const addressesEl = document.getElementById("addresses");
+    const shareBtn = document.getElementById("shareBtn");
+    const shareBtnText = document.getElementById("shareBtnText");
 
     let latestAggregated = null;
+    let shareSuccessTimeout = null;
 
     function setStatus(message, type = "info") {
       statusEl.textContent = message;
@@ -600,6 +651,20 @@ console.log(data);</pre>
       return addresses;
     }
 
+    function showShareButtonSuccess() {
+      if (shareSuccessTimeout) clearTimeout(shareSuccessTimeout);
+
+      shareBtn.classList.add("share-success");
+      shareBtnText.textContent = "Share Link Copied";
+      shareBtn.setAttribute("aria-label", "Share Link Copied");
+
+      shareSuccessTimeout = setTimeout(() => {
+        shareBtn.classList.remove("share-success");
+        shareBtnText.textContent = "Generate Share Link";
+        shareBtn.setAttribute("aria-label", "Generate Share Link");
+      }, 2500);
+    }
+
     async function copyShareLink() {
       const addresses = getAddressesFromInput();
       if (addresses.length === 0) {
@@ -610,7 +675,8 @@ console.log(data);</pre>
       const shareUrl = updateUrlWithWallets(addresses);
       try {
         await navigator.clipboard.writeText(shareUrl);
-        setStatus("Share link copied.");
+        // old plain status feedback removed for success case
+        showShareButtonSuccess();
       } catch (error) {
         setStatus(`Copy failed. Use this URL manually: ${shareUrl}`, "error");
       }
