@@ -1,4 +1,3 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -106,11 +105,18 @@
     .subtitle { margin: 0 0 2px; font-size: 14px; color: var(--wv-muted); text-transform: uppercase; letter-spacing: .08em; }
     .positioning { margin: 0; color: rgba(15,15,15,0.8); font-size: 14px; }
 
+    /* Rebalanced layout after removing examples */
     .layout {
       display: grid;
-      grid-template-columns: 360px minmax(640px, 1fr) 360px;
+      grid-template-columns: 320px minmax(760px, 1fr) 320px;
       gap: 18px;
       align-items: start;
+    }
+
+    .left-col, .mid-col, .right-col {
+      min-width: 0;
+      align-self: start;
+      height: fit-content;
     }
 
     .panel {
@@ -119,7 +125,7 @@
       border-radius: var(--wv-radius-lg);
       padding: 14px;
       position: relative;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
 
     .panel::before {
@@ -220,39 +226,6 @@
       box-shadow: 0 0 0 2px rgba(0, 167, 181, 0.2);
     }
 
-    .section-title {
-      margin: 0 0 8px;
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--wv-muted);
-      text-transform: uppercase;
-      letter-spacing: .08em;
-    }
-
-    .workflow-grid, .api-grid { display: grid; gap: 8px; }
-
-    .workflow-card {
-      border: 1px solid var(--wv-border);
-      border-radius: var(--wv-radius-md);
-      background: #fffef9;
-      padding: 10px;
-    }
-
-    .pill {
-      display: inline-block;
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: .06em;
-      text-transform: uppercase;
-      padding: 3px 6px;
-      border-radius: 999px;
-      background: var(--wv-yellow-soft);
-      border: 1px solid rgba(15,15,15,0.25);
-      margin-bottom: 6px;
-    }
-
-    .workflow-card p { margin: 8px 0 0; color: var(--wv-muted); font-size: 12px; }
-
     .cards {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -282,35 +255,19 @@
       background: linear-gradient(90deg, var(--wv-yellow), var(--wv-teal));
     }
 
-    .label {
-      font-size: 11px;
-      color: var(--wv-muted);
-      text-transform: uppercase;
-      letter-spacing: .07em;
-      min-width: 0;
-    }
+    .label { font-size: 11px; color: var(--wv-muted); text-transform: uppercase; letter-spacing: .07em; }
+    .value { font-size: 1.4rem; font-weight: 800; margin-top: 4px; color: var(--wv-black); }
 
-    .value {
-      font-size: clamp(1rem, 1.6vw, 1.8rem);
-      font-weight: 800;
-      margin-top: 4px;
-      color: var(--wv-black);
-      min-width: 0;
-      max-width: 100%;
-      overflow-wrap: anywhere;
-      word-break: break-word;
-      line-height: 1.15;
-      white-space: normal;
-    }
-
+    /* table stays dominant */
     .table-wrap {
       background: var(--wv-white);
       border: 1px solid var(--wv-border);
       border-radius: var(--wv-radius-lg);
       overflow: auto;
+      min-height: 340px;
     }
 
-    table { width: 100%; border-collapse: collapse; min-width: 700px; }
+    table { width: 100%; border-collapse: collapse; min-width: 760px; }
     th, td { padding: 11px; border-bottom: 1px solid var(--wv-border); text-align: left; font-size: 13px; }
     th { background: #f5f2e8; font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--wv-muted); }
     tbody tr:hover { background: rgba(0, 46, 93, 0.04); }
@@ -325,6 +282,8 @@
       padding: 12px;
       color: #e7ecf5;
       margin-bottom: 12px;
+      max-height: 74vh;
+      overflow: auto;
     }
 
     .api-panel h2 {
@@ -362,10 +321,15 @@
 
     .api-item ul { margin: 0; padding-left: 16px; color: #d3dcf0; font-size: 12px; }
 
+    @media (max-width: 1320px) {
+      .layout { grid-template-columns: 300px minmax(620px, 1fr) 300px; }
+    }
+
     @media (max-width: 1160px) {
-      .layout { grid-template-columns: 340px minmax(0, 1fr); }
+      .layout { grid-template-columns: 300px minmax(0, 1fr); }
       .right-col { grid-column: 1 / -1; }
       .right-col-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .api-panel { max-height: none; }
     }
 
     @media (max-width: 1000px) {
@@ -373,10 +337,10 @@
       .layout { grid-template-columns: 1fr; }
       .left-col { order: 1; }
       .mid-col { order: 2; }
-      .examples-panel { order: 3; }
-      .right-col { order: 4; }
+      .right-col { order: 3; }
       .cards { grid-template-columns: 1fr; }
       .right-col-grid { grid-template-columns: 1fr; }
+      .api-panel { max-height: none; }
     }
   </style>
 </head>
@@ -409,28 +373,6 @@
 
           <div id="status" class="status"></div>
           <div class="api-health"><span class="api-health-dot"></span><span>API Online</span></div>
-        </section>
-
-        <section class="panel examples-panel">
-          <h2 class="section-title">Example Treasury Aggregations</h2>
-          <p class="input-help">Demo operational treasury groupings built from public Stellar wallets.</p>
-          <div class="workflow-grid">
-            <article class="workflow-card">
-              <span class="pill">Demo</span>
-              <button class="secondary-btn" onclick="loadWorkflow('startup')">Startup Treasury</button>
-              <p>Operational + reserve treasury aggregation</p>
-            </article>
-            <article class="workflow-card">
-              <span class="pill">Sample</span>
-              <button class="secondary-btn" onclick="loadWorkflow('grant')">Grant Treasury</button>
-              <p>Public grant reserve aggregation example</p>
-            </article>
-            <article class="workflow-card">
-              <span class="pill">Demo</span>
-              <button class="secondary-btn" onclick="loadWorkflow('dao')">DAO Treasury</button>
-              <p>Multi-wallet treasury exposure demonstration</p>
-            </article>
-          </div>
         </section>
       </div>
 
@@ -467,13 +409,12 @@
             <h2>Developer API</h2>
             <p class="api-intro">APIs allow software and external tools to access WealthView treasury data programmatically.</p>
 
-          <div class="api-item">
-            <strong>Agent-ready API</strong>
-            <div class="api-item-body">
+            <div class="api-item">
+              <strong>Agent-ready API</strong>
               <code>OpenAPI spec: /openapi.json</code><br>
               <code>Agent manifest: /agent.json</code>
             </div>
-          </div>
+
             <div class="api-grid">
               <article class="api-item">
                 <strong>Endpoint example</strong>
@@ -558,16 +499,6 @@ print(requests.get(url).json())</pre>
     const buttonEl = document.getElementById("aggregateBtn");
     const addressesEl = document.getElementById("addresses");
 
-    const REAL_WALLET_A = "GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52";
-    const REAL_WALLET_B = "GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4";
-    const REAL_WALLET_C = "GBVOL67KJY4M4Y5KQZ2WM4K3LFG5UVMTH4NQJFPB5H6TM65KQ6P4YJNY";
-
-    const TREASURY_WORKFLOWS = {
-      startup: [REAL_WALLET_A, REAL_WALLET_B],
-      grant: [REAL_WALLET_B, REAL_WALLET_C],
-      dao: [REAL_WALLET_A, REAL_WALLET_C]
-    };
-
     let latestAggregated = null;
 
     function setStatus(message, type = "info") {
@@ -582,27 +513,6 @@ print(requests.get(url).json())</pre>
 
     function formatCurrency(value) {
       return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(value);
-    }
-
-    // compact visual formatting only for summary cards
-    function formatCompactNumber(value, maxFractionDigits = 2) {
-      const num = Number(value) || 0;
-      return new Intl.NumberFormat(undefined, {
-        notation: "compact",
-        compactDisplay: "short",
-        maximumFractionDigits: maxFractionDigits
-      }).format(num);
-    }
-
-    function formatCompactCurrency(value, maxFractionDigits = 2) {
-      const num = Number(value) || 0;
-      return new Intl.NumberFormat(undefined, {
-        style: "currency",
-        currency: "USD",
-        notation: "compact",
-        compactDisplay: "short",
-        maximumFractionDigits: maxFractionDigits
-      }).format(num);
     }
 
     function getAddressesFromInput() {
@@ -638,17 +548,6 @@ print(requests.get(url).json())</pre>
       }
 
       return addresses;
-    }
-
-    function loadWorkflow(name) {
-      const wallets = TREASURY_WORKFLOWS[name];
-      if (!wallets || wallets.length === 0) {
-        setStatus("Workflow wallets unavailable.", "error");
-        return;
-      }
-
-      addressesEl.value = wallets.join("\n");
-      fetchPortfolio();
     }
 
     async function copyShareLink() {
@@ -740,23 +639,9 @@ print(requests.get(url).json())</pre>
     }
 
     function renderDashboard(data) {
-      const walletCount = data.walletCount ?? 0;
-      const totalXLMRaw = Number(data.totalXLM || 0);
-      const totalUSDRaw = Number(data.totalUSD || 0);
-
-      const walletCountEl = document.getElementById("walletCount");
-      const totalXLMEl = document.getElementById("totalXLM");
-      const totalUSDEl = document.getElementById("totalUSD");
-
-      // compact display + full value in tooltip
-      walletCountEl.textContent = formatNumber(walletCount, 0);
-      walletCountEl.title = formatNumber(walletCount, 0);
-
-      totalXLMEl.textContent = formatCompactNumber(totalXLMRaw, 2);
-      totalXLMEl.title = formatNumber(totalXLMRaw, 6);
-
-      totalUSDEl.textContent = formatCompactCurrency(totalUSDRaw, 2);
-      totalUSDEl.title = formatCurrency(totalUSDRaw);
+      document.getElementById("walletCount").textContent = formatNumber(data.walletCount ?? 0, 0);
+      document.getElementById("totalXLM").textContent = formatNumber(data.totalXLM || 0, 4);
+      document.getElementById("totalUSD").textContent = formatCurrency(data.totalUSD || 0);
 
       const assetsNormalized = Array.isArray(data.assets)
         ? data.assets.map(asset => ({
