@@ -105,7 +105,6 @@
     .subtitle { margin: 0 0 2px; font-size: 14px; color: var(--wv-muted); text-transform: uppercase; letter-spacing: .08em; }
     .positioning { margin: 0; color: rgba(15,15,15,0.8); font-size: 14px; }
 
-    /* Rebalanced layout after removing examples */
     .layout {
       display: grid;
       grid-template-columns: 320px minmax(760px, 1fr) 320px;
@@ -255,10 +254,27 @@
       background: linear-gradient(90deg, var(--wv-yellow), var(--wv-teal));
     }
 
-    .label { font-size: 11px; color: var(--wv-muted); text-transform: uppercase; letter-spacing: .07em; }
-    .value { font-size: 1.4rem; font-weight: 800; margin-top: 4px; color: var(--wv-black); }
+    .label {
+      font-size: 11px;
+      color: var(--wv-muted);
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      min-width: 0;
+    }
 
-    /* table stays dominant */
+    .value {
+      font-size: clamp(1rem, 1.6vw, 1.8rem);
+      font-weight: 800;
+      margin-top: 4px;
+      color: var(--wv-black);
+      min-width: 0;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      line-height: 1.1;
+      white-space: normal;
+    }
+
     .table-wrap {
       background: var(--wv-white);
       border: 1px solid var(--wv-border);
@@ -284,6 +300,7 @@
       margin-bottom: 12px;
       max-height: 74vh;
       overflow: auto;
+      height: fit-content;
     }
 
     .api-panel h2 {
@@ -298,17 +315,42 @@
       border: 1px solid rgba(183, 172, 232, 0.22);
       border-radius: var(--wv-radius-sm);
       background: rgba(0, 46, 93, 0.35);
-      padding: 8px;
       margin-bottom: 8px;
+      overflow: hidden;
     }
 
-    .api-item strong {
-      display: block;
+    details.api-item > summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 9px 10px;
       color: var(--wv-yellow-soft);
-      font-size: 10px;
+      font-size: 11px;
+      font-weight: 800;
       text-transform: uppercase;
       letter-spacing: .08em;
-      margin-bottom: 6px;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      background: rgba(0, 46, 93, 0.45);
+    }
+
+    details.api-item > summary::-webkit-details-marker { display: none; }
+
+    details.api-item > summary::after {
+      content: "＋";
+      color: #7ce1eb;
+      font-size: 13px;
+      line-height: 1;
+      font-weight: 800;
+    }
+
+    details.api-item[open] > summary::after { content: "−"; }
+
+    .api-item-body {
+      padding: 8px;
+      border-top: 1px solid rgba(183, 172, 232, 0.22);
     }
 
     .api-item code, .api-item pre {
@@ -409,27 +451,38 @@
             <h2>Developer API</h2>
             <p class="api-intro">APIs allow software and external tools to access WealthView treasury data programmatically.</p>
 
-            <div class="api-item">
-              <strong>Agent-ready API</strong>
-              <code>OpenAPI spec: /openapi.json</code><br>
-              <code>Agent manifest: /agent.json</code>
-            </div>
+            <details class="api-item" open>
+              <summary>Agent-ready API</summary>
+              <div class="api-item-body">
+                <code>OpenAPI spec: /openapi.json</code><br>
+                <code>Agent manifest: /agent.json</code>
+              </div>
+            </details>
 
-            <div class="api-grid">
-              <article class="api-item">
-                <strong>Endpoint example</strong>
+            <details class="api-item" open>
+              <summary>Endpoint example</summary>
+              <div class="api-item-body">
                 <code>GET /api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4</code>
-              </article>
-              <article class="api-item">
-                <strong>Query parameter</strong>
+              </div>
+            </details>
+
+            <details class="api-item">
+              <summary>Query parameter</summary>
+              <div class="api-item-body">
                 <code>wallets: Comma-separated Stellar public wallet addresses used for treasury aggregation.</code>
-              </article>
-              <article class="api-item">
-                <strong>Example API request</strong>
+              </div>
+            </details>
+
+            <details class="api-item">
+              <summary>Example API request</summary>
+              <div class="api-item-body">
                 <pre>curl "https://YOUR-DOMAIN/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4"</pre>
-              </article>
-              <article class="api-item">
-                <strong>Example JSON response</strong>
+              </div>
+            </details>
+
+            <details class="api-item">
+              <summary>Example JSON response</summary>
+              <div class="api-item-body">
                 <pre>{
   "success": true,
   "timestamp": "2026-05-19T12:00:00.000Z",
@@ -449,45 +502,25 @@
   ],
   "errors": []
 }</pre>
-              </article>
-              <article class="api-item">
-                <strong>Features</strong>
-                <ul>
-                  <li>Lightweight public GET endpoint</li>
-                  <li>No database, no authentication</li>
-                  <li>Skips invalid wallets gracefully</li>
-                  <li>CoinGecko XLM/USD pricing + Horizon account aggregation</li>
-                  <li>Deterministic JSON structure for integrations</li>
-                </ul>
-              </article>
-            </div>
-          </section>
+              </div>
+            </details>
 
-          <section class="api-panel">
-            <h2>Quick Start</h2>
-            <div class="api-grid">
-              <article class="api-item">
-                <strong>cURL</strong>
+            <details class="api-item">
+              <summary>Quick Start</summary>
+              <div class="api-item-body">
                 <pre>curl "https://YOUR-DOMAIN/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4"</pre>
-              </article>
-              <article class="api-item">
-                <strong>JavaScript</strong>
                 <pre>const r = await fetch("/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4");
 const data = await r.json();
 console.log(data);</pre>
-              </article>
-              <article class="api-item">
-                <strong>Python</strong>
-                <pre>import requests
-url = "https://YOUR-DOMAIN/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4"
-print(requests.get(url).json())</pre>
-              </article>
-            </div>
-          </section>
+              </div>
+            </details>
 
-          <section class="panel" style="margin-bottom:0;">
-            <h2 class="section-title">How Treasury States Work</h2>
-            <p class="input-help">Wallets are encoded into the URL query string, so treasury views are shareable and reproducible. No accounts or server-side storage are required. URLs act as treasury state snapshots.</p>
+            <details class="api-item">
+              <summary>How Treasury States Work</summary>
+              <div class="api-item-body">
+                <code>Wallets are encoded into the URL query string, so treasury views are shareable and reproducible. No accounts or server-side storage are required. URLs act as treasury state snapshots.</code>
+              </div>
+            </details>
           </section>
         </div>
       </div>
@@ -513,6 +546,23 @@ print(requests.get(url).json())</pre>
 
     function formatCurrency(value) {
       return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(value);
+    }
+
+    function formatCompactNumber(value) {
+      const num = Number(value) || 0;
+      if (Math.abs(num) >= 1_000_000_000) return `${(num / 1_000_000_000).toFixed(2).replace(/\.?0+$/, "")}B`;
+      if (Math.abs(num) >= 1_000_000) return `${(num / 1_000_000).toFixed(2).replace(/\.?0+$/, "")}M`;
+      if (Math.abs(num) >= 1_000) return `${(num / 1_000).toFixed(2).replace(/\.?0+$/, "")}K`;
+      return formatNumber(num, 2);
+    }
+
+    function formatCompactCurrency(value) {
+      const num = Number(value) || 0;
+      const abs = Math.abs(num);
+      if (abs >= 1_000_000_000) return `US$${(num / 1_000_000_000).toFixed(2).replace(/\.?0+$/, "")}B`;
+      if (abs >= 1_000_000) return `US$${(num / 1_000_000).toFixed(2).replace(/\.?0+$/, "")}M`;
+      if (abs >= 1_000) return `US$${(num / 1_000).toFixed(2).replace(/\.?0+$/, "")}K`;
+      return formatCurrency(num).replace("$", "US$");
     }
 
     function getAddressesFromInput() {
@@ -639,9 +689,22 @@ print(requests.get(url).json())</pre>
     }
 
     function renderDashboard(data) {
-      document.getElementById("walletCount").textContent = formatNumber(data.walletCount ?? 0, 0);
-      document.getElementById("totalXLM").textContent = formatNumber(data.totalXLM || 0, 4);
-      document.getElementById("totalUSD").textContent = formatCurrency(data.totalUSD || 0);
+      const walletCount = data.walletCount ?? 0;
+      const totalXLM = Number(data.totalXLM || 0);
+      const totalUSD = Number(data.totalUSD || 0);
+
+      const walletCountEl = document.getElementById("walletCount");
+      const totalXLMEl = document.getElementById("totalXLM");
+      const totalUSDEl = document.getElementById("totalUSD");
+
+      walletCountEl.textContent = formatNumber(walletCount, 0);
+      walletCountEl.title = formatNumber(walletCount, 0);
+
+      totalXLMEl.textContent = formatCompactNumber(totalXLM);
+      totalXLMEl.title = formatNumber(totalXLM, 6);
+
+      totalUSDEl.textContent = formatCompactCurrency(totalUSD);
+      totalUSDEl.title = formatCurrency(totalUSD).replace("$", "US$");
 
       const assetsNormalized = Array.isArray(data.assets)
         ? data.assets.map(asset => ({
