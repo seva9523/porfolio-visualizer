@@ -1,0 +1,20 @@
+{
+  "name": "WealthView MCP",
+  "description": "MCP-compatible Stellar treasury aggregation tool",
+  "tools": [
+    {
+      "name": "aggregate_stellar_treasury",
+      "description": "Aggregate multiple Stellar wallets into a unified treasury view",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "wallets": {
+            "type": "string",
+            "description": "Comma-separated Stellar public wallet addresses"
+          }
+        },
+        "required": ["wallets"]
+      }
+    }
+  ]
+}
