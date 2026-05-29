@@ -44,11 +44,7 @@
       line-height: 1.45;
     }
 
-    .container {
-      width: 100%;
-      max-width: 1520px;
-      margin: 0 auto;
-    }
+    .container { width: 100%; max-width: 1520px; margin: 0 auto; }
 
     .header {
       background: rgba(255,255,255,0.8);
@@ -112,13 +108,9 @@
       align-items: start;
     }
 
-    .left-col, .mid-col, .right-col {
-      min-width: 0;
-      align-self: start;
-      height: fit-content;
-    }
+    .left-col, .mid-col, .right-col { min-width: 0; align-self: start; height: fit-content; }
 
-    .panel {
+    .panel, .signals-panel {
       background: var(--wv-white);
       border: 1px solid var(--wv-border);
       border-radius: var(--wv-radius-lg);
@@ -127,7 +119,7 @@
       margin-bottom: 12px;
     }
 
-    .panel::before {
+    .panel::before, .signals-panel::before {
       content: "";
       position: absolute;
       left: 14px;
@@ -151,17 +143,8 @@
       outline: none;
     }
 
-    textarea:focus {
-      border-color: rgba(15, 15, 15, 0.55);
-      box-shadow: 0 0 0 3px rgba(253, 218, 36, 0.28);
-    }
-
-    .input-help, .helper-text, .button-help {
-      margin-top: 8px;
-      color: var(--wv-muted);
-      font-size: 12px;
-    }
-
+    textarea:focus { border-color: rgba(15, 15, 15, 0.55); box-shadow: 0 0 0 3px rgba(253, 218, 36, 0.28); }
+    .input-help, .helper-text, .button-help { margin-top: 8px; color: var(--wv-muted); font-size: 12px; }
     .actions { display: grid; gap: 8px; margin-top: 10px; }
 
     button {
@@ -174,29 +157,13 @@
       transition: transform .15s ease, background-color .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease;
     }
 
-    .primary-btn {
-      background: var(--wv-yellow);
-      color: var(--wv-black);
-    }
-
+    .primary-btn { background: var(--wv-yellow); color: var(--wv-black); }
     .primary-btn:hover { transform: translateY(-1px); background: #f3cd14; }
-
-    .secondary-btn {
-      background: var(--wv-white);
-      color: var(--wv-black);
-      border-color: var(--wv-border-strong);
-    }
-
+    .secondary-btn { background: var(--wv-white); color: var(--wv-black); border-color: var(--wv-border-strong); }
     .secondary-btn:hover { background: #f1f1ef; }
-
     button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
-    /* Share button success state */
-    #shareBtn {
-      position: relative;
-      overflow: hidden;
-    }
-
+    #shareBtn { position: relative; overflow: hidden; }
     #shareBtn.share-success {
       background: #00a7b5;
       color: #ffffff;
@@ -207,27 +174,9 @@
       cursor: pointer;
     }
 
-    #shareBtn .share-btn-inner {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      width: 100%;
-    }
-
-    #shareBtn .share-check {
-      display: inline-block;
-      opacity: 0;
-      transform: translateY(2px) scale(0.75);
-      transition: opacity .2s ease, transform .2s ease;
-      font-weight: 800;
-      line-height: 1;
-    }
-
-    #shareBtn.share-success .share-check {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
+    #shareBtn .share-btn-inner { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 100%; }
+    #shareBtn .share-check { display: inline-block; opacity: 0; transform: translateY(2px) scale(0.75); transition: opacity .2s ease, transform .2s ease; font-weight: 800; line-height: 1; }
+    #shareBtn.share-success .share-check { opacity: 1; transform: translateY(0) scale(1); }
 
     @keyframes sharePulse {
       0% { box-shadow: 0 0 0 0 rgba(0, 167, 181, 0.35); }
@@ -245,87 +194,31 @@
       display: none;
     }
 
-    .status.error {
-      color: var(--wv-danger);
-      border-color: rgba(180, 35, 24, 0.32);
-      background: rgba(180, 35, 24, 0.08);
-    }
+    .status.error { color: var(--wv-danger); border-color: rgba(180, 35, 24, 0.32); background: rgba(180, 35, 24, 0.08); }
+    .api-health { margin-top: 8px; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--wv-muted); }
+    .api-health-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--wv-teal); box-shadow: 0 0 0 2px rgba(0, 167, 181, 0.2); }
 
-    .api-health {
-      margin-top: 8px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      color: var(--wv-muted);
-    }
+    .cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; min-width: 0; }
+    .card { background: var(--wv-white); border: 1px solid var(--wv-border); border-radius: var(--wv-radius-md); padding: 12px; position: relative; min-width: 0; overflow: hidden; }
+    .card::before { content: ""; position: absolute; left: 12px; right: 12px; top: 0; height: 3px; border-radius: 99px; background: linear-gradient(90deg, var(--wv-yellow), var(--wv-teal)); }
+    .label { font-size: 11px; color: var(--wv-muted); text-transform: uppercase; letter-spacing: .07em; min-width: 0; }
+    .value { font-size: clamp(1rem, 1.6vw, 1.8rem); font-weight: 800; margin-top: 4px; color: var(--wv-black); min-width: 0; max-width: 100%; overflow-wrap: anywhere; word-break: break-word; line-height: 1.1; white-space: normal; }
 
-    .api-health-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--wv-teal);
-      box-shadow: 0 0 0 2px rgba(0, 167, 181, 0.2);
-    }
+    .signals-panel { padding-bottom: 10px; }
+    .signals-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+    .signals-title { margin: 0; color: var(--wv-black); font: 700 16px/1.2 Lora, Georgia, serif; }
+    .signals-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+    .signal-card { border: 1px solid var(--wv-border); border-radius: var(--wv-radius-sm); background: #fffef9; padding: 8px; min-width: 0; }
+    .signal-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+    .signal-label { color: var(--wv-muted); font-size: 10px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+    .signal-message { margin: 0; color: var(--wv-black); font-size: 12px; line-height: 1.35; }
+    .signal-badge { flex: 0 0 auto; border-radius: 999px; padding: 2px 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; border: 1px solid var(--wv-border-strong); }
+    .signal-badge.good { background: rgba(0, 167, 181, 0.12); color: #007886; border-color: rgba(0, 167, 181, 0.35); }
+    .signal-badge.watch { background: var(--wv-yellow-soft); color: var(--wv-black); border-color: rgba(15, 15, 15, 0.25); }
+    .signal-badge.info { background: rgba(0, 46, 93, 0.08); color: var(--wv-deepblue); border-color: rgba(0, 46, 93, 0.24); }
+    .signals-empty { margin: 0; color: var(--wv-muted); font-size: 13px; }
 
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-      margin-bottom: 12px;
-      min-width: 0;
-    }
-
-    .card {
-      background: var(--wv-white);
-      border: 1px solid var(--wv-border);
-      border-radius: var(--wv-radius-md);
-      padding: 12px;
-      position: relative;
-      min-width: 0;
-      overflow: hidden;
-    }
-
-    .card::before {
-      content: "";
-      position: absolute;
-      left: 12px;
-      right: 12px;
-      top: 0;
-      height: 3px;
-      border-radius: 99px;
-      background: linear-gradient(90deg, var(--wv-yellow), var(--wv-teal));
-    }
-
-    .label {
-      font-size: 11px;
-      color: var(--wv-muted);
-      text-transform: uppercase;
-      letter-spacing: .07em;
-      min-width: 0;
-    }
-
-    .value {
-      font-size: clamp(1rem, 1.6vw, 1.8rem);
-      font-weight: 800;
-      margin-top: 4px;
-      color: var(--wv-black);
-      min-width: 0;
-      max-width: 100%;
-      overflow-wrap: anywhere;
-      word-break: break-word;
-      line-height: 1.1;
-      white-space: normal;
-    }
-
-    .table-wrap {
-      background: var(--wv-white);
-      border: 1px solid var(--wv-border);
-      border-radius: var(--wv-radius-lg);
-      overflow: auto;
-      min-height: 340px;
-    }
-
+    .table-wrap { background: var(--wv-white); border: 1px solid var(--wv-border); border-radius: var(--wv-radius-lg); overflow: auto; min-height: 340px; }
     table { width: 100%; border-collapse: collapse; min-width: 760px; }
     th, td { padding: 11px; border-bottom: 1px solid var(--wv-border); text-align: left; font-size: 13px; }
     th { background: #f5f2e8; font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--wv-muted); }
@@ -334,80 +227,21 @@
     td:nth-child(3) { color: var(--wv-deepblue); font-weight: 700; }
     .empty { text-align: center; color: var(--wv-muted); padding: 16px; }
 
-    .api-panel {
-      background: #0f1117;
-      border: 1px solid rgba(253, 218, 36, 0.25);
-      border-radius: var(--wv-radius-lg);
-      padding: 12px;
-      color: #e7ecf5;
-      margin-bottom: 12px;
-      max-height: 74vh;
-      overflow: auto;
-      height: fit-content;
-    }
-
-    .api-panel h2 {
-      margin: 0 0 8px;
-      color: var(--wv-yellow);
-      font: 700 18px/1.2 Lora, Georgia, serif;
-    }
-
+    .api-panel { background: #0f1117; border: 1px solid rgba(253, 218, 36, 0.25); border-radius: var(--wv-radius-lg); padding: 12px; color: #e7ecf5; margin-bottom: 12px; max-height: 74vh; overflow: auto; height: fit-content; }
+    .api-panel h2 { margin: 0 0 8px; color: var(--wv-yellow); font: 700 18px/1.2 Lora, Georgia, serif; }
     .api-intro { margin: 0 0 8px; font-size: 12px; color: rgba(231,236,245,0.75); }
-
-    .api-item {
-      border: 1px solid rgba(183, 172, 232, 0.22);
-      border-radius: var(--wv-radius-sm);
-      background: rgba(0, 46, 93, 0.35);
-      margin-bottom: 8px;
-      overflow: hidden;
-    }
-
-    details.api-item > summary {
-      list-style: none;
-      cursor: pointer;
-      padding: 9px 10px;
-      color: var(--wv-yellow-soft);
-      font-size: 11px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      user-select: none;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      background: rgba(0, 46, 93, 0.45);
-    }
-
+    .api-item { border: 1px solid rgba(183, 172, 232, 0.22); border-radius: var(--wv-radius-sm); background: rgba(0, 46, 93, 0.35); margin-bottom: 8px; overflow: hidden; }
+    details.api-item > summary { list-style: none; cursor: pointer; padding: 9px 10px; color: var(--wv-yellow-soft); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; background: rgba(0, 46, 93, 0.45); }
     details.api-item > summary::-webkit-details-marker { display: none; }
-
-    details.api-item > summary::after {
-      content: "＋";
-      color: #7ce1eb;
-      font-size: 13px;
-      line-height: 1;
-      font-weight: 800;
-    }
-
+    details.api-item > summary::after { content: "＋"; color: #7ce1eb; font-size: 13px; line-height: 1; font-weight: 800; }
     details.api-item[open] > summary::after { content: "−"; }
-
-    .api-item-body {
-      padding: 8px;
-      border-top: 1px solid rgba(183, 172, 232, 0.22);
-    }
-
-    .api-item code, .api-item pre {
-      margin: 0;
-      font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      color: #7ce1eb;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-
+    .api-item-body { padding: 8px; border-top: 1px solid rgba(183, 172, 232, 0.22); }
+    .api-item code, .api-item pre { margin: 0; font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; color: #7ce1eb; white-space: pre-wrap; word-break: break-word; }
     .api-item ul { margin: 0; padding-left: 16px; color: #d3dcf0; font-size: 12px; }
 
     @media (max-width: 1320px) {
       .layout { grid-template-columns: 300px minmax(620px, 1fr) 300px; }
+      .signals-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
 
     @media (max-width: 1160px) {
@@ -424,6 +258,7 @@
       .mid-col { order: 2; }
       .right-col { order: 3; }
       .cards { grid-template-columns: 1fr; }
+      .signals-grid { grid-template-columns: 1fr; }
       .right-col-grid { grid-template-columns: 1fr; }
       .api-panel { max-height: none; }
     }
@@ -473,6 +308,15 @@
           <article class="card"><div class="label">Total USD value</div><div class="value" id="totalUSD">$0.00</div></article>
         </section>
 
+        <section class="signals-panel" aria-labelledby="treasurySignalsTitle">
+          <div class="signals-header">
+            <h2 class="signals-title" id="treasurySignalsTitle">Treasury Signals</h2>
+          </div>
+          <div id="signalsBody">
+            <p class="signals-empty">Aggregate wallets to generate treasury signals.</p>
+          </div>
+        </section>
+
         <section class="table-wrap">
           <table>
             <thead>
@@ -502,10 +346,10 @@
             <details class="api-item" open>
               <summary>Agent-ready API</summary>
               <div class="api-item-body">
-  <code>OpenAPI spec: /openapi.json</code><br>
-  <code>Agent manifest: /agent.json</code><br>
-  <code>MCP manifest: /mcp.json</code>
-</div>
+                <code>OpenAPI spec: /openapi.json</code><br>
+                <code>Agent manifest: /agent.json</code><br>
+                <code>MCP manifest: /mcp.json</code>
+              </div>
             </details>
 
             <details class="api-item" open>
@@ -582,8 +426,12 @@ console.log(data);</pre>
     const addressesEl = document.getElementById("addresses");
     const shareBtn = document.getElementById("shareBtn");
     const shareBtnText = document.getElementById("shareBtnText");
+    const signalsBodyEl = document.getElementById("signalsBody");
+
+    const STABLE_ASSET_SYMBOLS = ["USDC", "USDZ", "EURC", "USDT"];
 
     let latestAggregated = null;
+    let latestSignals = null;
     let shareSuccessTimeout = null;
 
     function setStatus(message, type = "info") {
@@ -676,7 +524,6 @@ console.log(data);</pre>
       const shareUrl = updateUrlWithWallets(addresses);
       try {
         await navigator.clipboard.writeText(shareUrl);
-        // old plain status feedback removed for success case
         showShareButtonSuccess();
       } catch (error) {
         setStatus(`Copy failed. Use this URL manually: ${shareUrl}`, "error");
@@ -689,6 +536,95 @@ console.log(data);</pre>
       return `${base}?wallets=${walletsParam}`;
     }
 
+    function generateTreasurySignals(aggregatedData) {
+      const assets = Array.isArray(aggregatedData?.assets) ? aggregatedData.assets : [];
+      const pricedAssets = assets.filter(asset => typeof asset.usdValue === "number" && asset.usdValue > 0);
+      const totalPricedValue = pricedAssets.reduce((sum, asset) => sum + asset.usdValue, 0);
+      const largestAsset = pricedAssets.slice().sort((a, b) => b.usdValue - a.usdValue)[0] || null;
+      const largestAssetShare = largestAsset && totalPricedValue > 0 ? (largestAsset.usdValue / totalPricedValue) * 100 : 0;
+      const unpricedCount = Array.isArray(aggregatedData?.unpricedAssets)
+        ? aggregatedData.unpricedAssets.length
+        : assets.filter(asset => asset.usdValue === null || asset.usdValue === undefined).length;
+      const stableValue = pricedAssets
+        .filter(asset => STABLE_ASSET_SYMBOLS.includes(String(asset.symbol || "").toUpperCase()))
+        .reduce((sum, asset) => sum + asset.usdValue, 0);
+      const stableShare = totalPricedValue > 0 ? (stableValue / totalPricedValue) * 100 : 0;
+      const walletCount = Number(aggregatedData?.walletCount || 0);
+      const walletConcentrationValue = walletCount === 1 && totalPricedValue > 0 ? 100 : null;
+
+      return {
+        assetConcentration: {
+          severity: largestAssetShare > 80 ? "watch" : "good",
+          label: "Asset Concentration",
+          message: largestAssetShare > 80
+            ? `High asset concentration: ${largestAsset.symbol} represents ${Math.round(largestAssetShare)}% of priced treasury value.`
+            : "Asset concentration looks balanced.",
+          value: Math.round(largestAssetShare)
+        },
+        walletConcentration: {
+          severity: walletConcentrationValue && walletConcentrationValue > 80 ? "watch" : "good",
+          label: "Wallet Concentration",
+          message: walletConcentrationValue && walletConcentrationValue > 80
+            ? `High wallet concentration: one wallet holds ${walletConcentrationValue}% of priced treasury value.`
+            : "Wallet distribution looks balanced.",
+          value: walletConcentrationValue
+        },
+        unpricedAssets: {
+          severity: unpricedCount > 0 ? "info" : "good",
+          label: "Unpriced Assets",
+          message: unpricedCount > 0
+            ? `${unpricedCount} ${unpricedCount === 1 ? "asset does" : "assets do"} not have pricing data.`
+            : "All detected assets are priced.",
+          value: unpricedCount
+        },
+        stableExposure: {
+          severity: stableShare > 0 ? "info" : "info",
+          label: "Stable Exposure",
+          message: stableShare > 0
+            ? `Stable asset exposure: ${Math.round(stableShare)}% of priced treasury value.`
+            : "No stable asset exposure detected.",
+          value: Math.round(stableShare)
+        },
+        idleTreasury: {
+          severity: largestAssetShare > 90 ? "watch" : "good",
+          label: "Idle Treasury Signal",
+          message: largestAssetShare > 90
+            ? "Potential idle treasury: most value is concentrated in one asset."
+            : "No simple idle treasury signal detected.",
+          value: largestAssetShare > 90
+        }
+      };
+    }
+
+    function renderTreasurySignals(signals) {
+      if (!signals) {
+        signalsBodyEl.innerHTML = '<p class="signals-empty">Aggregate wallets to generate treasury signals.</p>';
+        return;
+      }
+
+      const orderedSignals = [
+        signals.assetConcentration,
+        signals.walletConcentration,
+        signals.unpricedAssets,
+        signals.stableExposure,
+        signals.idleTreasury
+      ];
+
+      signalsBodyEl.innerHTML = `
+        <div class="signals-grid">
+          ${orderedSignals.map(signal => `
+            <article class="signal-card">
+              <div class="signal-top">
+                <span class="signal-label">${signal.label}</span>
+                <span class="signal-badge ${signal.severity}">${signal.severity}</span>
+              </div>
+              <p class="signal-message">${signal.message}</p>
+            </article>
+          `).join("")}
+        </div>
+      `;
+    }
+
     async function downloadTreasurySnapshot() {
       if (!latestAggregated) {
         setStatus("Aggregate wallets before downloading snapshot.", "error");
@@ -698,6 +634,7 @@ console.log(data);</pre>
       const wallets = getAddressesFromInput();
       const shareUrl = updateUrlWithWallets(wallets);
       const apiUrl = buildApiUrl(wallets);
+      const signals = latestSignals || generateTreasurySignals(latestAggregated);
 
       const snapshot = {
         app: "WealthView",
@@ -711,7 +648,8 @@ console.log(data);</pre>
           totalXLM: latestAggregated.totalXLM || 0,
           totalUSD: latestAggregated.totalUSD || 0
         },
-        assets: Array.isArray(latestAggregated.assets) ? latestAggregated.assets : []
+        assets: Array.isArray(latestAggregated.assets) ? latestAggregated.assets : [],
+        signals
       };
 
       const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: "application/json" });
@@ -824,7 +762,9 @@ console.log(data);</pre>
 
         const apiData = await apiRes.json();
         latestAggregated = apiData;
+        latestSignals = generateTreasurySignals(apiData);
         renderDashboard(apiData);
+        renderTreasurySignals(latestSignals);
 
         const priced = Array.isArray(apiData.pricedAssets) ? apiData.pricedAssets.join(", ") : "";
         const unpriced = Array.isArray(apiData.unpricedAssets) ? apiData.unpricedAssets.join(", ") : "";
