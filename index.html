@@ -207,12 +207,12 @@
     .signals-panel { padding-bottom: 10px; }
     .signals-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
     .signals-title { margin: 0; color: var(--wv-black); font: 700 16px/1.2 Lora, Georgia, serif; }
-    .signals-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
-    .signal-card { border: 1px solid var(--wv-border); border-radius: var(--wv-radius-sm); background: #fffef9; padding: 8px; min-width: 0; }
-    .signal-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
-    .signal-label { color: var(--wv-muted); font-size: 10px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
-    .signal-message { margin: 0; color: var(--wv-black); font-size: 12px; line-height: 1.35; }
-    .signal-badge { flex: 0 0 auto; border-radius: 999px; padding: 2px 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; border: 1px solid var(--wv-border-strong); }
+    .signals-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; align-items: stretch; }
+    .signal-card { border: 1px solid var(--wv-border); border-radius: var(--wv-radius-sm); background: #fffef9; padding: 10px; min-width: 0; min-height: 112px; display: flex; flex-direction: column; gap: 8px; }
+    .signal-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 0; min-width: 0; }
+    .signal-label { color: var(--wv-muted); font-size: 10px; font-weight: 800; letter-spacing: .07em; line-height: 1.25; text-transform: uppercase; min-width: 0; overflow-wrap: anywhere; }
+    .signal-message { margin: 0; color: var(--wv-black); font-size: 12px; line-height: 1.4; }
+    .signal-badge { flex: 0 0 auto; align-self: flex-start; border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 800; line-height: 1; text-transform: uppercase; letter-spacing: .04em; border: 1px solid var(--wv-border-strong); white-space: nowrap; }
     .signal-badge.good { background: rgba(0, 167, 181, 0.12); color: #007886; border-color: rgba(0, 167, 181, 0.35); }
     .signal-badge.watch { background: var(--wv-yellow-soft); color: var(--wv-black); border-color: rgba(15, 15, 15, 0.25); }
     .signal-badge.info { background: rgba(0, 46, 93, 0.08); color: var(--wv-deepblue); border-color: rgba(0, 46, 93, 0.24); }
