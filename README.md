@@ -2,7 +2,7 @@
 
 Lightweight Stellar treasury aggregation infrastructure.
 
-WealthView aggregates multiple Stellar wallets into a unified treasury operations layer with shareable treasury states, exportable portfolio data, and developer-friendly APIs.
+WealthView aggregates multiple Stellar wallets into a unified treasury operations layer with shareable treasury states, exportable portfolio data, Treasury Signals, and developer-friendly APIs.
 
 ---
 
@@ -11,11 +11,13 @@ WealthView aggregates multiple Stellar wallets into a unified treasury operation
 WealthView is a lightweight infrastructure tool for monitoring and aggregating Stellar treasury wallets in a single operational view.
 
 Instead of acting as a personal portfolio tracker, WealthView focuses on:
+
 - treasury visibility
 - multi-wallet aggregation
 - operational monitoring
 - reusable portfolio data
 - developer infrastructure
+- agent-ready treasury intelligence
 
 ---
 
@@ -23,139 +25,28 @@ Instead of acting as a personal portfolio tracker, WealthView focuses on:
 
 - Multi-wallet Stellar aggregation
 - Unified treasury portfolio view
+- Treasury Signals for concentration, pricing, stable exposure, and idle treasury checks
 - Shareable treasury URLs
+- Downloadable treasury snapshots
 - Exportable treasury JSON
 - Public aggregation API
-- Asset normalization
-- XLM pricing integration
-- Terminal-style operational interface
-
----
-
-## Example API
-
-### Request
-
-```bash
-GET /api/aggregate?wallets=GABC,GDEF
-````
-
-### Example Response
-
-```json
-{
-  "walletCount": 2,
-  "totalXLM": 12400,
-  "totalUSD": 5300,
-  "assets": [
-    {
-      "symbol": "XLM",
-      "amount": 10000,
-      "usdValue": 4200,
-      "allocationPercent": 79
-    }
-  ]
-}
-```
-
----
-
-## Example Use Cases
-
-### Treasury Operations
-
-Aggregate operational and reserve wallets into a single treasury view.
-
-### Grant Transparency
-
-Monitor public grant distribution wallets and ecosystem funds.
-
-### DAO Treasury Monitoring
-
-Track multi-wallet Stellar treasuries through a unified interface.
-
-### Ecosystem Reporting
-
-Standardize Stellar treasury portfolio data for dashboards and analytics tools.
-
----
-
-## Stack
-
-* Vanilla HTML/CSS/JavaScript
-* Stellar Horizon API
-* CoinGecko pricing API
-* Vercel deployment
-* Single-file lightweight architecture
-
----
-
-## Design Philosophy
-
-WealthView is intentionally:
-
-* lightweight
-* fast
-* operational
-* infrastructure-oriented
-* dependency-minimal
-
-The goal is to provide reusable Stellar treasury aggregation primitives rather than a feature-heavy dashboard platform.
-
----
-
-## Vision
-
-WealthView aims to become a reusable treasury aggregation and portfolio infrastructure layer for the Stellar ecosystem.
-
-Future directions include:
-
-* stable public APIs
-* treasury export tooling
-* developer integrations
-* ecosystem monitoring workflows
-* standardized Stellar treasury data schemas
-
----
-
-## Status
-
-Early-stage infrastructure prototype focused on:
-
-* treasury aggregation
-* operational UX
-* developer usability
-* ecosystem tooling
-
-## Agent usage
-
-Agents and external tools can consume treasury data directly:
-
-- Call `GET /api/aggregate?wallets=...` to aggregate one or more Stellar wallets.
-- OpenAPI specification is available at `/openapi.json`.
-- Agent manifest is available at `/agent.json`.
-
-### Example
-
-```bash
-curl "https://YOUR-DOMAIN/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52"
-
-
-## MCP Support
-
-WealthView exposes:
-
-- REST API
-- OpenAPI spec
+- Public Treasury Signals API
+- OpenAPI specification
 - Agent manifest
-- MCP-compatible treasury tool
+- MCP-compatible treasury tools
+- Asset normalization
+- XLM and supported token pricing integration
+- Stellar-native operational interface
 
-Example:
+---
 
-```js
-aggregate_stellar_treasury({
-  wallets: "G...,G..."
-})
+## Public APIs
 
+### Aggregation API
 
+Use the aggregation API to combine balances across one or more Stellar wallets.
 
+#### Request
+
+```bash
+GET /api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4
