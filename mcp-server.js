@@ -19,8 +19,8 @@ function normalizeWallets(input) {
   return wallets.length ? wallets : null;
 }
 
-async function callAggregateApi(wallets) {
-  const url = new URL('/api/aggregate', DEFAULT_BASE_URL);
+async function callWealthViewApi(path, wallets) {
+  const url = new URL(path, DEFAULT_BASE_URL);
   url.searchParams.set('wallets', wallets.join(','));
 
   const res = await fetch(url.toString());
@@ -73,6 +73,20 @@ async function handleRequest(req) {
               },
               required: ['wallets']
             }
+          },
+          {
+            name: 'get_treasury_signals',
+            description: 'Retrieve WealthView Treasury Signals for one or more Stellar wallets.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                wallets: {
+                  type: 'string',
+                  description: 'Comma-separated Stellar public wallet addresses'
+                }
+              },
+              required: ['wallets']
+            }
           }
         ]
       }
@@ -81,7 +95,7 @@ async function handleRequest(req) {
 
   if (method === 'tools/call') {
     const toolName = params?.name;
-    if (toolName !== 'aggregate_stellar_treasury') {
+    if (!['aggregate_stellar_treasury', 'get_treasury_signals'].includes(toolName)) {
       return makeError(id, `Unknown tool: ${toolName}`);
     }
 
@@ -93,7 +107,8 @@ async function handleRequest(req) {
     }
 
     try {
-      const aggregated = await callAggregateApi(wallets);
+      const apiPath = toolName === 'get_treasury_signals' ? '/api/signals' : '/api/aggregate';
+      const aggregated = await callWealthViewApi(apiPath, wallets);
       return {
         jsonrpc: '2.0',
         id,
