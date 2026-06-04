@@ -99,7 +99,36 @@
     }
 
     .subtitle { margin: 0 0 2px; font-size: 14px; color: var(--wv-muted); text-transform: uppercase; letter-spacing: .08em; }
-    .positioning { margin: 0; color: rgba(15,15,15,0.8); font-size: 14px; }
+    .positioning { margin: 0; color: rgba(15,15,15,0.8); font-size: 14px; max-width: 780px; }
+    .hero-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .infra-badge { display: inline-flex; align-items: center; border-radius: 999px; border: 1px solid var(--wv-border-strong); background: rgba(255,255,255,0.72); color: var(--wv-black); font-size: 11px; font-weight: 800; letter-spacing: .07em; padding: 5px 9px; text-transform: uppercase; }
+
+    .use-cases {
+      background: rgba(255,255,255,0.78);
+      border: 1px solid var(--wv-border);
+      border-radius: var(--wv-radius-lg);
+      padding: 14px;
+      margin-bottom: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .use-cases::before {
+      content: "";
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      top: 0;
+      height: 3px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--wv-yellow), transparent);
+    }
+
+    .section-title { margin: 0 0 10px; color: var(--wv-black); font: 700 18px/1.2 Lora, Georgia, serif; }
+    .use-case-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+    .use-case-card { background: var(--wv-white); border: 1px solid var(--wv-border); border-radius: var(--wv-radius-md); padding: 12px; min-width: 0; }
+    .use-case-card h3 { margin: 0 0 6px; color: var(--wv-black); font-size: 13px; line-height: 1.2; }
+    .use-case-card p { margin: 0; color: var(--wv-muted); font-size: 12px; line-height: 1.45; }
 
     .layout {
       display: grid;
@@ -243,6 +272,7 @@
 
     @media (max-width: 1320px) {
       .layout { grid-template-columns: 330px minmax(0, 1fr); }
+      .use-case-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .api-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
 
@@ -253,6 +283,7 @@
       .mid-col { order: 2; }
       .cards { grid-template-columns: 1fr; }
       .signals-grid { grid-template-columns: 1fr; }
+      .use-case-grid { grid-template-columns: 1fr; }
       .api-grid { grid-template-columns: 1fr; }
     }
   </style>
@@ -264,9 +295,37 @@
         <h1 class="title">WealthView</h1>
         <span class="badge">Built for Stellar treasury visibility</span>
       </div>
-      <p class="subtitle">Stellar Treasury Aggregation</p>
-      <p class="positioning">Aggregate multiple Stellar treasury wallets into a unified operational portfolio view.</p>
+      <p class="subtitle">Agent-Ready Treasury Infrastructure for Stellar</p>
+      <p class="positioning">Aggregate wallets, monitor treasury health, expose treasury data through APIs, and build AI-native treasury workflows on Stellar.</p>
+      <div class="hero-badges" aria-label="WealthView infrastructure capabilities">
+        <span class="infra-badge">REST API</span>
+        <span class="infra-badge">OpenAPI</span>
+        <span class="infra-badge">Agent Ready</span>
+        <span class="infra-badge">MCP Compatible</span>
+      </div>
     </header>
+
+    <section class="use-cases" aria-labelledby="builtForTitle">
+      <h2 class="section-title" id="builtForTitle">Built For</h2>
+      <div class="use-case-grid">
+        <article class="use-case-card">
+          <h3>Treasury Reporting</h3>
+          <p>Aggregate reserve, operations, and ecosystem wallets into a single reporting view.</p>
+        </article>
+        <article class="use-case-card">
+          <h3>Stablecoin Treasuries</h3>
+          <p>Monitor exposure across assets such as USDC, EURC, USDZ and other treasury reserves.</p>
+        </article>
+        <article class="use-case-card">
+          <h3>RWA Treasuries</h3>
+          <p>Track tokenized treasury and real-world asset allocations across Stellar wallets.</p>
+        </article>
+        <article class="use-case-card">
+          <h3>AI Agents</h3>
+          <p>Access treasury data through REST APIs, OpenAPI schemas, agent manifests, and MCP tools.</p>
+        </article>
+      </div>
+    </section>
 
     <div class="layout">
       <div class="left-col">
