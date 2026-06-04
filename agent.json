@@ -12,6 +12,10 @@
     "Check total Stellar treasury value",
     "Summarize asset allocation across wallets",
     "Identify unpriced treasury assets",
-    "Generate a treasury exposure summary"
+    "Generate a treasury exposure summary",
+    "Assess treasury concentration risk",
+    "Check stablecoin exposure",
+    "Detect unpriced assets",
+    "Generate treasury risk summary"
   ]
 }
