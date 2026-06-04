@@ -1,0 +1,21 @@
+{
+  "name": "WealthView",
+  "description": "Stellar treasury aggregation API for agents and developer tools.",
+  "primary_use_case": "Aggregate multiple Stellar wallets into a unified treasury view.",
+  "api": {
+    "openapi_url": "/openapi.json",
+    "endpoint": "/api/aggregate",
+    "method": "GET",
+    "query_parameter": "wallets"
+  },
+  "example_tasks": [
+    "Check total Stellar treasury value",
+    "Summarize asset allocation across wallets",
+    "Identify unpriced treasury assets",
+    "Generate a treasury exposure summary",
+    "Assess treasury concentration risk",
+    "Check stablecoin exposure",
+    "Detect unpriced assets",
+    "Generate treasury risk summary"
+  ]
+}

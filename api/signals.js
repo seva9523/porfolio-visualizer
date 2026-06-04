@@ -64,6 +64,9 @@ export default async function handler(req, res) {
     const aggregateUrl = new URL('/api/aggregate', getBaseUrl(req));
     aggregateUrl.searchParams.set('wallets', wallets.join(','));
     if (contracts.length > 0) aggregateUrl.searchParams.set('contracts', contracts.join(','));
+  try {
+    const aggregateUrl = new URL('/api/aggregate', getBaseUrl(req));
+    aggregateUrl.searchParams.set('wallets', wallets.join(','));
 
     const aggregateRes = await fetch(aggregateUrl.toString());
     let aggregateData;

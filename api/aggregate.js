@@ -34,6 +34,7 @@ export default async function handler(req, res) {
   }
 
   const walletsParam = normalizeQueryParam(req.query.wallets);
+  const walletsParam = req.query.wallets;
   if (!walletsParam || typeof walletsParam !== 'string') {
     return errorResponse(
       res,
@@ -45,6 +46,7 @@ export default async function handler(req, res) {
   }
 
   const wallets = parseCsvParam(walletsParam);
+  const wallets = walletsParam.split(',').map((w) => w.trim()).filter(Boolean);
   if (wallets.length === 0) {
     return errorResponse(res, 400, 'MISS', 'At least one wallet is required', 'wallets query param is empty');
   }
@@ -74,6 +76,7 @@ export default async function handler(req, res) {
   }
 
   const cacheKey = `${wallets.join(',')}|contracts:${contracts.join(',')}`;
+  const cacheKey = wallets.join(',');
   const hit = cache.get(cacheKey);
   if (hit && Date.now() - hit.at < CACHE_TTL_MS) {
     setCommonHeaders(res, 'HIT');
@@ -113,6 +116,8 @@ export default async function handler(req, res) {
         ...contracts.map((contractId) => CONTRACT_TO_COINGECKO[contractId])
       ].filter(Boolean))
     ];
+    const symbols = [...new Set(allBalances.map((b) => b.symbol))];
+    const geckoIds = [...new Set(symbols.map((s) => ASSET_TO_COINGECKO[s]).filter(Boolean))];
 
     let priceMap = {};
     if (geckoIds.length > 0) {

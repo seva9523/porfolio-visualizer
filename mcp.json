@@ -40,6 +40,9 @@
         "required": [
           "wallets"
         ]
+          }
+        },
+        "required": ["wallets"]
       }
     }
   ]

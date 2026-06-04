@@ -33,6 +33,18 @@ async function callWealthViewApi(path, wallets, contracts = []) {
   const url = new URL(path, DEFAULT_BASE_URL);
   url.searchParams.set('wallets', wallets.join(','));
   if (contracts.length) url.searchParams.set('contracts', contracts.join(','));
+function normalizeWallets(input) {
+  if (typeof input !== 'string') return null;
+  const wallets = input
+    .split(',')
+    .map((w) => w.trim())
+    .filter(Boolean);
+  return wallets.length ? wallets : null;
+}
+
+async function callWealthViewApi(path, wallets) {
+  const url = new URL(path, DEFAULT_BASE_URL);
+  url.searchParams.set('wallets', wallets.join(','));
 
   const res = await fetch(url.toString());
   let data;
@@ -122,6 +134,7 @@ async function handleRequest(req) {
     const contractInput = params?.arguments?.contracts;
     const wallets = normalizeWallets(walletInput);
     const contracts = normalizeContracts(contractInput);
+    const wallets = normalizeWallets(walletInput);
 
     if (!wallets) {
       return makeError(id, 'Invalid input: wallets must be a non-empty comma-separated string.');
@@ -134,6 +147,9 @@ async function handleRequest(req) {
     try {
       const apiPath = toolName === 'get_treasury_signals' ? '/api/signals' : '/api/aggregate';
       const aggregated = await callWealthViewApi(apiPath, wallets, contracts);
+    try {
+      const apiPath = toolName === 'get_treasury_signals' ? '/api/signals' : '/api/aggregate';
+      const aggregated = await callWealthViewApi(apiPath, wallets);
       return {
         jsonrpc: '2.0',
         id,
