@@ -24,6 +24,7 @@ export default async function handler(req, res) {
   }
 
   const walletsParam = Array.isArray(req.query.wallets) ? req.query.wallets.join(',') : req.query.wallets;
+  const contractsParam = Array.isArray(req.query.contracts) ? req.query.contracts.join(',') : req.query.contracts;
   if (!walletsParam || typeof walletsParam !== 'string') {
     return errorResponse(
       res,
@@ -48,6 +49,21 @@ export default async function handler(req, res) {
     );
   }
 
+  const contracts = (contractsParam || '').split(',').map((contractId) => contractId.trim()).filter(Boolean);
+  const malformedContracts = contracts.filter((contractId) => !/^C[A-Z2-7]{55}$/.test(contractId));
+  if (malformedContracts.length > 0) {
+    return errorResponse(
+      res,
+      400,
+      'Invalid contracts query param',
+      `Malformed Soroban contract ID${malformedContracts.length === 1 ? '' : 's'}: ${malformedContracts.join(', ')}`
+    );
+  }
+
+  try {
+    const aggregateUrl = new URL('/api/aggregate', getBaseUrl(req));
+    aggregateUrl.searchParams.set('wallets', wallets.join(','));
+    if (contracts.length > 0) aggregateUrl.searchParams.set('contracts', contracts.join(','));
   try {
     const aggregateUrl = new URL('/api/aggregate', getBaseUrl(req));
     aggregateUrl.searchParams.set('wallets', wallets.join(','));
@@ -76,6 +92,7 @@ export default async function handler(req, res) {
       success: true,
       timestamp: new Date().toISOString(),
       walletCount: aggregateData.walletCount || wallets.length,
+      ...(contracts.length > 0 ? { contracts } : {}),
       signals
     });
   } catch (error) {

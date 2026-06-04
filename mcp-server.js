@@ -10,6 +10,29 @@ function makeError(id, message) {
   return { jsonrpc: '2.0', id, error: { code: -32000, message } };
 }
 
+function normalizeCsv(input) {
+  if (input === undefined || input === null || input === '') return [];
+  if (typeof input !== 'string') return null;
+  return input
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function normalizeWallets(input) {
+  const wallets = normalizeCsv(input);
+  return wallets && wallets.length ? wallets : null;
+}
+
+function normalizeContracts(input) {
+  const contracts = normalizeCsv(input);
+  return contracts || null;
+}
+
+async function callWealthViewApi(path, wallets, contracts = []) {
+  const url = new URL(path, DEFAULT_BASE_URL);
+  url.searchParams.set('wallets', wallets.join(','));
+  if (contracts.length) url.searchParams.set('contracts', contracts.join(','));
 function normalizeWallets(input) {
   if (typeof input !== 'string') return null;
   const wallets = input
@@ -69,6 +92,10 @@ async function handleRequest(req) {
                 wallets: {
                   type: 'string',
                   description: 'Comma-separated Stellar public wallet addresses'
+                },
+                contracts: {
+                  type: 'string',
+                  description: 'Optional comma-separated SEP-41 / Soroban token contract IDs'
                 }
               },
               required: ['wallets']
@@ -83,6 +110,10 @@ async function handleRequest(req) {
                 wallets: {
                   type: 'string',
                   description: 'Comma-separated Stellar public wallet addresses'
+                },
+                contracts: {
+                  type: 'string',
+                  description: 'Optional comma-separated SEP-41 / Soroban token contract IDs'
                 }
               },
               required: ['wallets']
@@ -100,12 +131,22 @@ async function handleRequest(req) {
     }
 
     const walletInput = params?.arguments?.wallets;
+    const contractInput = params?.arguments?.contracts;
+    const wallets = normalizeWallets(walletInput);
+    const contracts = normalizeContracts(contractInput);
     const wallets = normalizeWallets(walletInput);
 
     if (!wallets) {
       return makeError(id, 'Invalid input: wallets must be a non-empty comma-separated string.');
     }
 
+    if (!contracts) {
+      return makeError(id, 'Invalid input: contracts must be an optional comma-separated string.');
+    }
+
+    try {
+      const apiPath = toolName === 'get_treasury_signals' ? '/api/signals' : '/api/aggregate';
+      const aggregated = await callWealthViewApi(apiPath, wallets, contracts);
     try {
       const apiPath = toolName === 'get_treasury_signals' ? '/api/signals' : '/api/aggregate';
       const aggregated = await callWealthViewApi(apiPath, wallets);

@@ -3,12 +3,18 @@ const ASSET_TO_COINGECKO = {
   USDZ: 'usdz'
 };
 
+const CONTRACT_TO_COINGECKO = {};
+
 const VERSION = '1.0.0';
 const CACHE_TTL_MS = 60 * 1000;
 const cache = globalThis.__wealthviewCache || new Map();
 globalThis.__wealthviewCache = cache;
 
 const normalizeAssetCode = (code) => (code || '').trim().toUpperCase();
+const normalizeQueryParam = (value) => (Array.isArray(value) ? value.join(',') : value);
+const parseCsvParam = (value) => (value || '').split(',').map((item) => item.trim()).filter(Boolean);
+const isStellarPublicKey = (value) => /^G[A-Z2-7]{55}$/.test(value);
+const isSorobanContractId = (value) => /^C[A-Z2-7]{55}$/.test(value);
 const nowIso = () => new Date().toISOString();
 
 function setCommonHeaders(res, cacheStatus) {
@@ -27,6 +33,7 @@ export default async function handler(req, res) {
     return errorResponse(res, 405, 'MISS', 'Method not allowed', 'Use GET');
   }
 
+  const walletsParam = normalizeQueryParam(req.query.wallets);
   const walletsParam = req.query.wallets;
   if (!walletsParam || typeof walletsParam !== 'string') {
     return errorResponse(
@@ -38,11 +45,37 @@ export default async function handler(req, res) {
     );
   }
 
+  const wallets = parseCsvParam(walletsParam);
   const wallets = walletsParam.split(',').map((w) => w.trim()).filter(Boolean);
   if (wallets.length === 0) {
     return errorResponse(res, 400, 'MISS', 'At least one wallet is required', 'wallets query param is empty');
   }
 
+  const malformedWallets = wallets.filter((wallet) => !isStellarPublicKey(wallet));
+  if (malformedWallets.length > 0) {
+    return errorResponse(
+      res,
+      400,
+      'MISS',
+      'Invalid wallets query param',
+      `Malformed Stellar public wallet address${malformedWallets.length === 1 ? '' : 'es'}: ${malformedWallets.join(', ')}`
+    );
+  }
+
+  const contractsParam = normalizeQueryParam(req.query.contracts);
+  const contracts = parseCsvParam(contractsParam);
+  const malformedContracts = contracts.filter((contractId) => !isSorobanContractId(contractId));
+  if (malformedContracts.length > 0) {
+    return errorResponse(
+      res,
+      400,
+      'MISS',
+      'Invalid contracts query param',
+      `Malformed Soroban contract ID${malformedContracts.length === 1 ? '' : 's'}: ${malformedContracts.join(', ')}`
+    );
+  }
+
+  const cacheKey = `${wallets.join(',')}|contracts:${contracts.join(',')}`;
   const cacheKey = wallets.join(',');
   const hit = cache.get(cacheKey);
   if (hit && Date.now() - hit.at < CACHE_TTL_MS) {
@@ -69,6 +102,20 @@ export default async function handler(req, res) {
       });
     }
 
+    contracts.forEach((contractId) => {
+      errors.push({
+        contractId,
+        message: 'SEP-41 contract querying requires Soroban RPC implementation; contract ID was validated but not queried.'
+      });
+    });
+
+    const symbols = [...new Set(allBalances.map((b) => b.symbol))];
+    const geckoIds = [
+      ...new Set([
+        ...symbols.map((s) => ASSET_TO_COINGECKO[s]),
+        ...contracts.map((contractId) => CONTRACT_TO_COINGECKO[contractId])
+      ].filter(Boolean))
+    ];
     const symbols = [...new Set(allBalances.map((b) => b.symbol))];
     const geckoIds = [...new Set(symbols.map((s) => ASSET_TO_COINGECKO[s]).filter(Boolean))];
 
@@ -126,6 +173,15 @@ export default async function handler(req, res) {
       assets,
       errors
     };
+
+    if (contracts.length > 0) {
+      payload.contracts = contracts;
+      payload.sep41 = {
+        supported: false,
+        requestedContracts: contracts,
+        message: 'SEP-41 contract IDs are accepted and validated, but live Soroban RPC balance querying is not enabled in this deployment yet.'
+      };
+    }
 
     cache.set(cacheKey, { at: Date.now(), payload });
     setCommonHeaders(res, 'MISS');

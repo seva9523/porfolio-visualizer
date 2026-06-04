@@ -174,6 +174,8 @@
     }
 
     textarea:focus { border-color: rgba(15, 15, 15, 0.55); box-shadow: 0 0 0 3px rgba(253, 218, 36, 0.28); }
+    .input-label { margin: 12px 0 6px; color: var(--wv-black); font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+    .contracts-input { min-height: 72px; }
     .input-help, .helper-text, .button-help { margin-top: 8px; color: var(--wv-muted); font-size: 12px; }
     .actions { display: grid; gap: 8px; margin-top: 10px; }
 
@@ -333,6 +335,10 @@
           <textarea id="addresses" placeholder="Enter wallet addresses (one per line)"></textarea>
           <div class="input-help">Paste comma-separated Stellar public wallet addresses. Example: GBXXX..., GDXXX...</div>
 
+          <div class="input-label">Soroban / SEP-41 Token Contracts (optional)</div>
+          <textarea id="contracts" class="contracts-input" placeholder="Paste comma-separated C... contract IDs"></textarea>
+          <div class="input-help">Optional. Add SEP-41 token contract IDs to include Soroban token balances.</div>
+
           <div class="actions">
             <button id="aggregateBtn" class="primary-btn" onclick="fetchPortfolio()">Aggregate Portfolio</button>
             <button id="shareBtn" class="secondary-btn" onclick="copyShareLink()" aria-live="polite">
@@ -388,6 +394,163 @@
           <button id="exportBtn" class="secondary-btn" onclick="exportTreasuryJson()">Export JSON</button>
         </div>
       </div>
+
+    </div>
+
+    <section class="api-panel">
+            <h2>Developer API</h2>
+            <p class="api-intro">APIs allow software and external tools to access WealthView treasury data programmatically.</p>
+
+            <div class="api-grid">
+              <details class="api-item">
+              <summary>Agent-ready API</summary>
+              <div class="api-item-body">
+                <code>Treasury Signals API: /api/signals</code><br>
+                <code>OpenAPI spec: /openapi.json</code><br>
+                <code>Agent manifest: /agent.json</code><br>
+                <code>MCP manifest: /mcp.json</code>
+              </div>
+            </details>
+
+            <details class="api-item">
+              <summary>Endpoint example</summary>
+              <div class="api-item-body">
+                <code>GET /api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4</code>
+              </div>
+            </details>
+
+            <details class="api-item">
+              <summary>Query parameter</summary>
+              <div class="api-item-body">
+                <code>wallets: Comma-separated Stellar public wallet addresses used for treasury aggregation.</code><br>
+                <code>contracts: Optional comma-separated SEP-41 / Soroban token contract IDs.</code>
+              </div>
+            </details>
+
+            <details class="api-item">
+              <summary>Example API request</summary>
+              <div class="api-item-body">
+                <pre>curl "https://YOUR-DOMAIN/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4"</pre>
+              </div>
+            </details>
+
+            <details class="api-item">
+              <summary>Example JSON response</summary>
+              <div class="api-item-body">
+                <pre>{
+  "success": true,
+  "timestamp": "2026-05-19T12:00:00.000Z",
+  "version": "1.0.0",
+  "walletCount": 2,
+  "totalXLM": 1234.56,
+  "totalUSD": 145.67,
+  "pricedAssets": ["XLM", "USDZ"],
+  "unpricedAssets": [],
+  "assets": [
+    {
+      "symbol": "XLM",
+      "amount": 1234.56,
+      "usdValue": 145.67,
+      "allocationPercent": 100
+    }
+  ],
+  "errors": []
+}</pre>
+              </div>
+            </details>
+
+            <details class="api-item">
+              <summary>Quick Start</summary>
+              <div class="api-item-body">
+                <pre>curl "https://YOUR-DOMAIN/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4"</pre>
+                <pre>const r = await fetch("/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4");
+const data = await r.json();
+console.log(data);</pre>
+              </div>
+            </details>
+
+              <details class="api-item">
+                <summary>How Treasury States Work</summary>
+                <div class="api-item-body">
+                  <code>Wallets are encoded into the URL query string, so treasury views are shareable and reproducible. No accounts or server-side storage are required. URLs act as treasury state snapshots.</code>
+                </div>
+              </details>
+            </div>
+    </section>
+  </div>
+
+  <script>
+    const statusEl = document.getElementById("status");
+    const buttonEl = document.getElementById("aggregateBtn");
+    const addressesEl = document.getElementById("addresses");
+    const contractsEl = document.getElementById("contracts");
+    const shareBtn = document.getElementById("shareBtn");
+    const shareBtnText = document.getElementById("shareBtnText");
+    const signalsBodyEl = document.getElementById("signalsBody");
+
+    const STABLE_ASSET_SYMBOLS = ["USDC", "USDZ", "EURC", "USDT"];
+
+    let latestAggregated = null;
+    let latestSignals = null;
+    let shareSuccessTimeout = null;
+
+    function setStatus(message, type = "info") {
+      statusEl.textContent = message;
+      statusEl.classList.toggle("error", type === "error");
+      statusEl.style.display = message ? "block" : "none";
+    }
+
+    function formatNumber(value, digits = 2) {
+      return Number(value).toLocaleString(undefined, { maximumFractionDigits: digits });
+    }
+
+    function formatCurrency(value) {
+      return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(value);
+    }
+
+    function formatCompactNumber(value) {
+      const num = Number(value) || 0;
+      if (Math.abs(num) >= 1_000_000_000) return `${(num / 1_000_000_000).toFixed(2).replace(/\.?0+$/, "")}B`;
+      if (Math.abs(num) >= 1_000_000) return `${(num / 1_000_000).toFixed(2).replace(/\.?0+$/, "")}M`;
+      if (Math.abs(num) >= 1_000) return `${(num / 1_000).toFixed(2).replace(/\.?0+$/, "")}K`;
+      return formatNumber(num, 2);
+    }
+
+    function formatCompactCurrency(value) {
+      const num = Number(value) || 0;
+      const abs = Math.abs(num);
+      if (abs >= 1_000_000_000) return `US$${(num / 1_000_000_000).toFixed(2).replace(/\.?0+$/, "")}B`;
+      if (abs >= 1_000_000) return `US$${(num / 1_000_000).toFixed(2).replace(/\.?0+$/, "")}M`;
+      if (abs >= 1_000) return `US$${(num / 1_000).toFixed(2).replace(/\.?0+$/, "")}K`;
+      return formatCurrency(num).replace("$", "US$");
+    }
+
+    function getAddressesFromInput() {
+      return addressesEl.value
+        .split(/[\n,]/)
+        .map(a => a.trim())
+        .filter(Boolean);
+    }
+
+    function getContractsFromInput() {
+      return contractsEl.value
+        .split(/[\n,]/)
+        .map(contract => contract.trim())
+        .filter(Boolean);
+    }
+
+    function updateUrlWithWallets(addresses, contracts = getContractsFromInput()) {
+      const url = new URL(window.location.href);
+      if (addresses.length) {
+        url.searchParams.set("wallets", addresses.join(","));
+      } else {
+        url.searchParams.delete("wallets");
+      }
+
+      if (contracts.length) {
+        url.searchParams.set("contracts", contracts.join(","));
+      } else {
+        url.searchParams.delete("contracts");
     </div>
 
     <section class="api-panel">
@@ -533,6 +696,27 @@ console.log(data);</pre>
       return url.toString();
     }
 
+      window.history.replaceState({}, "", url);
+      return url.toString();
+    }
+
+    function loadWalletsFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const walletsParam = params.get("wallets");
+      const contractsParam = params.get("contracts");
+      const addresses = walletsParam
+        ? walletsParam.split(",").map(a => a.trim()).filter(Boolean)
+        : [];
+      const contracts = contractsParam
+        ? contractsParam.split(",").map(contract => contract.trim()).filter(Boolean)
+        : [];
+
+      if (addresses.length) {
+        addressesEl.value = addresses.join("\n");
+      }
+
+      if (contracts.length) {
+        contractsEl.value = contracts.join("\n");
     function loadWalletsFromUrl() {
       const params = new URLSearchParams(window.location.search);
       const walletsParam = params.get("wallets");
@@ -556,6 +740,54 @@ console.log(data);</pre>
       shareBtn.classList.add("share-success");
       shareBtnText.textContent = "Share Link Copied";
       shareBtn.setAttribute("aria-label", "Share Link Copied");
+
+      shareSuccessTimeout = setTimeout(() => {
+        shareBtn.classList.remove("share-success");
+        shareBtnText.textContent = "Generate Share Link";
+        shareBtn.setAttribute("aria-label", "Generate Share Link");
+      }, 2500);
+    }
+
+    async function copyShareLink() {
+      const addresses = getAddressesFromInput();
+      const contracts = getContractsFromInput();
+      if (addresses.length === 0) {
+        setStatus("Enter wallet addresses first, then copy the link.", "error");
+        return;
+      }
+
+      const shareUrl = updateUrlWithWallets(addresses, contracts);
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        showShareButtonSuccess();
+      } catch (error) {
+        setStatus(`Copy failed. Use this URL manually: ${shareUrl}`, "error");
+      }
+    }
+
+    function buildApiUrl(addresses, contracts = []) {
+      const url = new URL(`${window.location.origin}/api/aggregate`);
+      url.searchParams.set("wallets", addresses.join(","));
+      if (contracts.length) url.searchParams.set("contracts", contracts.join(","));
+      return url.toString();
+    }
+
+    function generateTreasurySignals(aggregatedData) {
+      const assets = Array.isArray(aggregatedData?.assets) ? aggregatedData.assets : [];
+      const pricedAssets = assets.filter(asset => typeof asset.usdValue === "number" && asset.usdValue > 0);
+      const totalPricedValue = pricedAssets.reduce((sum, asset) => sum + asset.usdValue, 0);
+      const largestAsset = pricedAssets.slice().sort((a, b) => b.usdValue - a.usdValue)[0] || null;
+      const largestAssetShare = largestAsset && totalPricedValue > 0 ? (largestAsset.usdValue / totalPricedValue) * 100 : 0;
+      const unpricedCount = Array.isArray(aggregatedData?.unpricedAssets)
+        ? aggregatedData.unpricedAssets.length
+        : assets.filter(asset => asset.usdValue === null || asset.usdValue === undefined).length;
+      const stableValue = pricedAssets
+        .filter(asset => STABLE_ASSET_SYMBOLS.includes(String(asset.symbol || "").toUpperCase()))
+        .reduce((sum, asset) => sum + asset.usdValue, 0);
+      const stableShare = totalPricedValue > 0 ? (stableValue / totalPricedValue) * 100 : 0;
+      const walletCount = Number(aggregatedData?.walletCount || 0);
+      const walletConcentrationValue = walletCount === 1 && totalPricedValue > 0 ? 100 : null;
+
 
       shareSuccessTimeout = setTimeout(() => {
         shareBtn.classList.remove("share-success");
@@ -682,6 +914,9 @@ console.log(data);</pre>
       }
 
       const wallets = getAddressesFromInput();
+      const contracts = getContractsFromInput();
+      const shareUrl = updateUrlWithWallets(wallets, contracts);
+      const apiUrl = buildApiUrl(wallets, contracts);
       const shareUrl = updateUrlWithWallets(wallets);
       const apiUrl = buildApiUrl(wallets);
       const signals = latestSignals || generateTreasurySignals(latestAggregated);
@@ -691,6 +926,7 @@ console.log(data);</pre>
         snapshotType: "stellar_treasury_snapshot",
         timestamp: new Date().toISOString(),
         wallets,
+        contracts,
         shareUrl,
         apiUrl,
         summary: {
@@ -787,11 +1023,53 @@ console.log(data);</pre>
 
     async function fetchPortfolio() {
       const addresses = getAddressesFromInput();
+      const contracts = getContractsFromInput();
 
       if (addresses.length === 0) {
         setStatus("Enter at least one wallet address.", "error");
         return;
       }
+
+      buttonEl.disabled = true;
+      updateUrlWithWallets(addresses, contracts);
+      setStatus("Loading portfolios...");
+
+      try {
+        const apiUrl = new URL("/api/aggregate", window.location.origin);
+        apiUrl.searchParams.set("wallets", addresses.join(","));
+        if (contracts.length) apiUrl.searchParams.set("contracts", contracts.join(","));
+        const apiRes = await fetch(`${apiUrl.pathname}${apiUrl.search}`);
+
+        if (!apiRes.ok) {
+          let message = "API aggregation failed";
+          try {
+            const err = await apiRes.json();
+            message = err?.message || err?.error || message;
+          } catch (_) {}
+          throw new Error(message);
+        }
+
+        const apiData = await apiRes.json();
+        latestAggregated = apiData;
+        latestSignals = generateTreasurySignals(apiData);
+        renderDashboard(apiData);
+        renderTreasurySignals(latestSignals);
+
+        const priced = Array.isArray(apiData.pricedAssets) ? apiData.pricedAssets.join(", ") : "";
+        const unpriced = Array.isArray(apiData.unpricedAssets) ? apiData.unpricedAssets.join(", ") : "";
+        const detail = [priced ? `Priced: ${priced}` : "", unpriced ? `Unpriced: ${unpriced}` : ""]
+          .filter(Boolean)
+          .join(" | ");
+
+        setStatus(detail ? `Aggregation complete. ${detail}` : "Aggregation complete.");
+      } catch (error) {
+        console.error(error);
+        setStatus(`Error: ${error.message}`, "error");
+      } finally {
+        buttonEl.disabled = false;
+      }
+    }
+
 
       buttonEl.disabled = true;
       updateUrlWithWallets(addresses);
