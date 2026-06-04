@@ -426,7 +426,15 @@
 
         const apiData = await apiRes.json();
         renderDashboard(apiData);
-        setStatus("Aggregation complete.");
+
+        const priced = Array.isArray(apiData.pricedAssets) ? apiData.pricedAssets.join(", ") : "";
+        const unpriced = Array.isArray(apiData.unpricedAssets) ? apiData.unpricedAssets.join(", ") : "";
+        const detail = [
+          priced ? `Priced: ${priced}` : "",
+          unpriced ? `Unpriced: ${unpriced}` : ""
+        ].filter(Boolean).join(" | ");
+
+        setStatus(detail ? `Aggregation complete. ${detail}` : "Aggregation complete.");
       } catch (error) {
         console.error(error);
         setStatus(`Error: ${error.message}`, "error");
