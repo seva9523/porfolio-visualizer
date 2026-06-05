@@ -106,6 +106,24 @@ async function handleRequest(req) {
               },
               required: ['wallets']
             }
+          },
+          {
+            name: 'get_treasury_history',
+            description: 'Retrieve snapshot-based WealthView treasury history for one or more Stellar wallets.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                wallets: {
+                  type: 'string',
+                  description: 'Comma-separated Stellar public wallet addresses'
+                },
+                contracts: {
+                  type: 'string',
+                  description: 'Optional comma-separated SEP-41 / Soroban token contract IDs'
+                }
+              },
+              required: ['wallets']
+            }
           }
         ]
       }
@@ -114,7 +132,7 @@ async function handleRequest(req) {
 
   if (method === 'tools/call') {
     const toolName = params?.name;
-    if (!['aggregate_stellar_treasury', 'get_treasury_signals'].includes(toolName)) {
+    if (!['aggregate_stellar_treasury', 'get_treasury_signals', 'get_treasury_history'].includes(toolName)) {
       return makeError(id, `Unknown tool: ${toolName}`);
     }
 
@@ -132,7 +150,11 @@ async function handleRequest(req) {
     }
 
     try {
-      const apiPath = toolName === 'get_treasury_signals' ? '/api/signals' : '/api/aggregate';
+      const apiPath = toolName === 'get_treasury_signals'
+        ? '/api/signals'
+        : toolName === 'get_treasury_history'
+          ? '/api/history'
+          : '/api/aggregate';
       const aggregated = await callWealthViewApi(apiPath, wallets, contracts);
       return {
         jsonrpc: '2.0',
