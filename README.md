@@ -24,6 +24,7 @@ Instead of acting as a personal portfolio tracker, WealthView focuses on:
 ## Features
 
 - Multi-wallet Stellar aggregation
+- Optional user-provided SEP-41 / Soroban contract ID validation
 - Unified treasury portfolio view
 - Treasury Signals for concentration, pricing, stable exposure, and idle treasury checks
 - Shareable treasury URLs
