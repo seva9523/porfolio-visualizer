@@ -1,12 +1,13 @@
 {
   "name": "WealthView",
-  "description": "Stellar treasury aggregation API for agents and developer tools.",
+  "description": "Stellar treasury aggregation API for agents and developer tools, with optional user-provided SEP-41 / Soroban contract token support.",
   "primary_use_case": "Aggregate multiple Stellar wallets into a unified treasury view.",
   "api": {
     "openapi_url": "/openapi.json",
     "endpoint": "/api/aggregate",
     "method": "GET",
-    "query_parameter": "wallets"
+    "query_parameter": "wallets",
+    "optional_query_parameter": "contracts"
   },
   "example_tasks": [
     "Check total Stellar treasury value",
@@ -16,6 +17,7 @@
     "Assess treasury concentration risk",
     "Check stablecoin exposure",
     "Detect unpriced assets",
-    "Generate treasury risk summary"
+    "Generate treasury risk summary",
+    "Analyze optional SEP-41 contract token exposure"
   ]
 }
