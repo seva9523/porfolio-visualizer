@@ -1,3 +1,4 @@
+import { saveTreasurySnapshot } from '../lib/history.js';
 import { fetchSep41TokenBalances } from '../lib/sep41.js';
 
 const ASSET_TO_COINGECKO = {
@@ -75,11 +76,31 @@ export default async function handler(req, res) {
     );
   }
 
+  const shouldSaveSnapshot = String(req.query.saveSnapshot || '').toLowerCase() === 'true';
   const cacheKey = `${wallets.join(',')}|contracts:${contracts.join(',')}`;
   const hit = cache.get(cacheKey);
   if (hit && Date.now() - hit.at < CACHE_TTL_MS) {
+    const payload = { ...hit.payload };
+    if (shouldSaveSnapshot) {
+      try {
+        const savedSnapshot = await saveTreasurySnapshot({ wallets, contracts, aggregateResult: payload });
+        payload.snapshot = {
+          saved: savedSnapshot.saved,
+          timestamp: savedSnapshot.snapshot.timestamp,
+          historyKey: savedSnapshot.historyKey,
+          storage: savedSnapshot.storage,
+          ...(savedSnapshot.warning ? { warning: savedSnapshot.warning } : {})
+        };
+      } catch (error) {
+        payload.snapshot = {
+          saved: false,
+          warning: 'Snapshot storage unavailable',
+          message: error.message
+        };
+      }
+    }
     setCommonHeaders(res, 'HIT');
-    return res.status(200).json(hit.payload);
+    return res.status(200).json(payload);
   }
 
   try {
@@ -193,7 +214,26 @@ export default async function handler(req, res) {
       };
     }
 
-    cache.set(cacheKey, { at: Date.now(), payload });
+    if (shouldSaveSnapshot) {
+      try {
+        const savedSnapshot = await saveTreasurySnapshot({ wallets, contracts, aggregateResult: payload });
+        payload.snapshot = {
+          saved: savedSnapshot.saved,
+          timestamp: savedSnapshot.snapshot.timestamp,
+          historyKey: savedSnapshot.historyKey,
+          storage: savedSnapshot.storage,
+          ...(savedSnapshot.warning ? { warning: savedSnapshot.warning } : {})
+        };
+      } catch (error) {
+        payload.snapshot = {
+          saved: false,
+          warning: 'Snapshot storage unavailable',
+          message: error.message
+        };
+      }
+    }
+
+    cache.set(cacheKey, { at: Date.now(), payload: { ...payload, snapshot: undefined } });
     setCommonHeaders(res, 'MISS');
     return res.status(200).json(payload);
   } catch (error) {
