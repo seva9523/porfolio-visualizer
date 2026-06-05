@@ -15,7 +15,7 @@
     "/api/aggregate": {
       "get": {
         "summary": "Aggregate Stellar treasury wallets",
-        "description": "Aggregates Stellar Horizon balances for one or more wallets. Optional SEP-41 / Soroban contract IDs can be supplied for validated contract-token requests without changing classic Horizon aggregation behavior.",
+        "description": "Aggregates Stellar Horizon balances for one or more wallets. Optional SEP-41 / Soroban contract IDs can be supplied for read-only contract-token balance requests without changing classic Horizon aggregation behavior.",
         "parameters": [
           {
             "name": "wallets",
@@ -31,7 +31,7 @@
             "name": "contracts",
             "in": "query",
             "required": false,
-            "description": "Optional comma-separated SEP-41 / Soroban token contract IDs. Contract balances are only included when Soroban RPC support is enabled; otherwise IDs are validated and reported in metadata/errors.",
+            "description": "Optional comma-separated SEP-41 / Soroban token contract IDs. WealthView queries token metadata and balances using read-only Stellar RPC transaction simulation.",
             "schema": {
               "type": "string"
             },
@@ -105,7 +105,7 @@
             "name": "contracts",
             "in": "query",
             "required": false,
-            "description": "Optional comma-separated SEP-41 / Soroban token contract IDs. Contract balances are only included when Soroban RPC support is enabled; otherwise IDs are validated and reported in metadata/errors.",
+            "description": "Optional comma-separated SEP-41 / Soroban token contract IDs. WealthView queries token metadata and balances using read-only Stellar RPC transaction simulation.",
             "schema": {
               "type": "string"
             },
@@ -233,8 +233,17 @@
                   "type": "string"
                 }
               },
-              "message": {
-                "type": "string"
+              "queriedContracts": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "failedContracts": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
               }
             }
           }
