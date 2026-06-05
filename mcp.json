@@ -11,9 +11,35 @@
           "wallets": {
             "type": "string",
             "description": "Comma-separated Stellar public wallet addresses"
+          },
+          "contracts": {
+            "type": "string",
+            "description": "Optional comma-separated SEP-41 / Soroban token contract IDs"
           }
         },
-        "required": ["wallets"]
+        "required": [
+          "wallets"
+        ]
+      }
+    },
+    {
+      "name": "get_treasury_signals",
+      "description": "Retrieve WealthView Treasury Signals for one or more Stellar wallets",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "wallets": {
+            "type": "string",
+            "description": "Comma-separated Stellar public wallet addresses"
+          },
+          "contracts": {
+            "type": "string",
+            "description": "Optional comma-separated SEP-41 / Soroban token contract IDs"
+          }
+        },
+        "required": [
+          "wallets"
+        ]
       }
     }
   ]
