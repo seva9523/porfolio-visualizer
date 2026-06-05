@@ -1,3 +1,5 @@
+import { fetchSep41TokenBalances } from '../lib/sep41.js';
+
 const ASSET_TO_COINGECKO = {
   XLM: 'stellar',
   USDZ: 'usdz'
@@ -83,6 +85,8 @@ export default async function handler(req, res) {
   try {
     const allBalances = [];
     const errors = [];
+    let sourceAccountId = wallets[0];
+    let sourceAccountSequence = '0';
 
     for (const addr of wallets) {
       const accountRes = await fetch(`https://horizon.stellar.org/accounts/${addr}`);
@@ -91,20 +95,26 @@ export default async function handler(req, res) {
         continue;
       }
       const data = await accountRes.json();
+      if (data.sequence && sourceAccountSequence === '0') {
+        sourceAccountId = addr;
+        sourceAccountSequence = data.sequence;
+      }
       (data.balances || []).forEach((b) => {
         const isNative = b.asset_type === 'native';
         const symbol = isNative ? 'XLM' : normalizeAssetCode(b.asset_code || 'UNKNOWN');
         const amount = parseFloat(b.balance) || 0;
-        allBalances.push({ symbol, amount });
+        allBalances.push({ identity: symbol, symbol, amount });
       });
     }
 
-    contracts.forEach((contractId) => {
-      errors.push({
-        contractId,
-        message: 'SEP-41 contract querying requires Soroban RPC implementation; contract ID was validated but not queried.'
-      });
+    const sep41Result = await fetchSep41TokenBalances({
+      wallets,
+      contracts,
+      sourceAccountId,
+      sourceAccountSequence
     });
+    allBalances.push(...sep41Result.assets);
+    errors.push(...sep41Result.errors);
 
     const symbols = [...new Set(allBalances.map((b) => b.symbol))];
     const geckoIds = [
@@ -124,32 +134,36 @@ export default async function handler(req, res) {
       priceMap = await priceRes.json();
     }
 
-    const assetsBySymbol = {};
+    const assetsByIdentity = {};
     let totalXLM = 0;
     let totalUSD = 0;
     const pricedAssets = [];
     const unpricedAssets = [];
 
-    allBalances.forEach(({ symbol, amount }) => {
-      if (!assetsBySymbol[symbol]) assetsBySymbol[symbol] = { symbol, amount: 0, usdValue: null };
-      assetsBySymbol[symbol].amount += amount;
-      if (symbol === 'XLM') totalXLM += amount;
+    allBalances.forEach((balance) => {
+      const { identity = balance.symbol, symbol, amount } = balance;
+      if (!assetsByIdentity[identity]) {
+        const { identity: _identity, amount: _amount, usdValue: _usdValue, ...metadata } = balance;
+        assetsByIdentity[identity] = { ...metadata, symbol, amount: 0, usdValue: null };
+      }
+      assetsByIdentity[identity].amount += amount;
+      if (symbol === 'XLM' && !balance.contractId) totalXLM += amount;
     });
 
-    Object.values(assetsBySymbol).forEach((asset) => {
-      const geckoId = ASSET_TO_COINGECKO[asset.symbol];
+    Object.values(assetsByIdentity).forEach((asset) => {
+      const geckoId = asset.contractId ? CONTRACT_TO_COINGECKO[asset.contractId] : ASSET_TO_COINGECKO[asset.symbol];
       const usdPrice = geckoId ? priceMap?.[geckoId]?.usd : undefined;
       if (typeof usdPrice === 'number') {
         asset.usdValue = asset.amount * usdPrice;
         totalUSD += asset.usdValue;
-        pricedAssets.push(asset.symbol);
+        pricedAssets.push(asset.contractId ? `${asset.symbol} (${asset.contractId})` : asset.symbol);
       } else {
         asset.usdValue = null;
-        unpricedAssets.push(asset.symbol);
+        unpricedAssets.push(asset.contractId ? `${asset.symbol} (${asset.contractId})` : asset.symbol);
       }
     });
 
-    const assets = Object.values(assetsBySymbol)
+    const assets = Object.values(assetsByIdentity)
       .map((asset) => ({
         ...asset,
         allocationPercent: asset.usdValue !== null && totalUSD > 0 ? (asset.usdValue / totalUSD) * 100 : null
@@ -172,9 +186,10 @@ export default async function handler(req, res) {
     if (contracts.length > 0) {
       payload.contracts = contracts;
       payload.sep41 = {
-        supported: false,
+        supported: true,
         requestedContracts: contracts,
-        message: 'SEP-41 contract IDs are accepted and validated, but live Soroban RPC balance querying is not enabled in this deployment yet.'
+        queriedContracts: sep41Result.queriedContracts,
+        failedContracts: sep41Result.failedContracts
       };
     }
 
