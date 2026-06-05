@@ -41,6 +41,26 @@
           "wallets"
         ]
       }
+    },
+    {
+      "name": "get_treasury_history",
+      "description": "Retrieve snapshot-based WealthView treasury history for one or more Stellar wallets",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "wallets": {
+            "type": "string",
+            "description": "Comma-separated Stellar public wallet addresses"
+          },
+          "contracts": {
+            "type": "string",
+            "description": "Optional comma-separated SEP-41 / Soroban token contract IDs"
+          }
+        },
+        "required": [
+          "wallets"
+        ]
+      }
     }
   ]
 }
