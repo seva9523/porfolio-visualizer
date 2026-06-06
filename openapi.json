@@ -36,6 +36,16 @@
               "type": "string"
             },
             "example": "C..."
+          },
+          {
+            "name": "saveSnapshot",
+            "in": "query",
+            "required": false,
+            "description": "Optional. Set to true to save the aggregate result as a snapshot in the snapshot-based history store.",
+            "schema": {
+              "type": "boolean"
+            },
+            "example": true
           }
         ],
         "responses": {
@@ -163,6 +173,128 @@
           }
         }
       }
+    },
+    "/api/history": {
+      "get": {
+        "summary": "Retrieve snapshot-based treasury history",
+        "description": "Returns saved historical snapshots for the normalized wallet and optional SEP-41 contract set. This is snapshot-based history, not full blockchain historical indexing. Uses optional Vercel KV / Upstash REST storage when configured, otherwise an in-memory fallback.",
+        "parameters": [
+          {
+            "name": "wallets",
+            "in": "query",
+            "required": true,
+            "description": "Comma-separated Stellar public wallet addresses.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52"
+          },
+          {
+            "name": "contracts",
+            "in": "query",
+            "required": false,
+            "description": "Optional comma-separated SEP-41 / Soroban token contract IDs included in the history identity.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "C..."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful history response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryResponse"
+                },
+                "example": {
+                  "success": true,
+                  "wallets": [
+                    "GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52"
+                  ],
+                  "contracts": [],
+                  "historyKey": "wallets:GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52|contracts:",
+                  "snapshots": [],
+                  "count": 0,
+                  "storage": "vercel-kv-rest"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (missing or invalid wallets/contracts parameter)"
+          },
+          "500": {
+            "description": "Server-side history error"
+          }
+        }
+      }
+    },
+    "/api/snapshot": {
+      "post": {
+        "summary": "Save a treasury snapshot",
+        "description": "Runs the existing aggregation flow and saves a timestamped snapshot for the normalized wallet and optional contract set. Uses optional Vercel KV / Upstash REST storage when configured, otherwise an in-memory fallback; storage failure is non-fatal when a fallback snapshot can be returned.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SnapshotRequest"
+              },
+              "example": {
+                "wallets": [
+                  "GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52"
+                ],
+                "contracts": [
+                  "C..."
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Snapshot save response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotSaveResponse"
+                },
+                "example": {
+                  "success": true,
+                  "saved": true,
+                  "historyKey": "wallets:GBGI...|contracts:C...",
+                  "storage": "vercel-kv-rest",
+                  "snapshot": {
+                    "timestamp": "2026-06-05T12:00:00.000Z",
+                    "wallets": [
+                      "GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52"
+                    ],
+                    "contracts": [
+                      "C..."
+                    ],
+                    "totalUSD": 12345.67,
+                    "totalXLM": 1000,
+                    "assets": [],
+                    "pricedAssets": [
+                      "XLM"
+                    ],
+                    "unpricedAssets": [],
+                    "errors": []
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (missing or invalid body)"
+          },
+          "500": {
+            "description": "Server-side snapshot error"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -244,6 +376,31 @@
                 "items": {
                   "type": "string"
                 }
+              }
+            }
+          },
+          "snapshot": {
+            "type": "object",
+            "description": "Optional snapshot metadata when saveSnapshot=true is used.",
+            "properties": {
+              "saved": {
+                "type": "boolean"
+              },
+              "timestamp": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "historyKey": {
+                "type": "string"
+              },
+              "storage": {
+                "type": "string"
+              },
+              "warning": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
               }
             }
           }
@@ -406,6 +563,174 @@
           "severity",
           "value",
           "message"
+        ]
+      },
+      "TreasurySnapshot": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "wallets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "contracts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "totalUSD": {
+            "type": "number"
+          },
+          "totalXLM": {
+            "type": "number"
+          },
+          "assets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AggregatedAsset"
+            }
+          },
+          "pricedAssets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "unpricedAssets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WalletError"
+            }
+          },
+          "source": {
+            "type": "object"
+          },
+          "sep41": {
+            "type": "object"
+          }
+        }
+      },
+      "HistoryResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "wallets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "contracts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "historyKey": {
+            "type": "string"
+          },
+          "snapshots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TreasurySnapshot"
+            }
+          },
+          "count": {
+            "type": "integer"
+          },
+          "storage": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "wallets",
+          "contracts",
+          "historyKey",
+          "snapshots",
+          "count"
+        ]
+      },
+      "SnapshotRequest": {
+        "type": "object",
+        "properties": {
+          "wallets": {
+            "oneOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "contracts": {
+            "oneOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "required": [
+          "wallets"
+        ]
+      },
+      "SnapshotSaveResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "saved": {
+            "type": "boolean"
+          },
+          "historyKey": {
+            "type": "string"
+          },
+          "storage": {
+            "type": "string"
+          },
+          "warning": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "snapshot": {
+            "$ref": "#/components/schemas/TreasurySnapshot"
+          }
+        },
+        "required": [
+          "success",
+          "saved",
+          "snapshot"
         ]
       }
     }
