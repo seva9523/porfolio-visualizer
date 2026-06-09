@@ -1,915 +1,1472 @@
 <!DOCTYPE html>
+<html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>WealthView | Stellar Treasury Aggregation</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Lora:wght@600;700&display=swap" rel="stylesheet">
-<style>
-:root {
---wv-black: #0f0f0f;
---wv-offwhite: #f6f7f8;
---wv-white: #ffffff;
---wv-yellow: #fdda24;
---wv-yellow-soft: #fff5a8;
---wv-neutral: #d6d2c4;
---wv-muted: rgba(15, 15, 15, 0.62);
---wv-border: rgba(15, 15, 15, 0.14);
---wv-border-strong: rgba(15, 15, 15, 0.28);
---wv-teal: #00a7b5;
---wv-deepblue: #002e5d;
---wv-lavender: #b7ace8;
---wv-danger: #b42318;
---wv-radius-lg: 22px;
---wv-radius-md: 16px;
---wv-radius-sm: 10px;
-}
-* { box-sizing: border-box; }
-body {
-margin: 0;
-font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-color: var(--wv-black);
-background:
-radial-gradient(circle at 12% 8%, rgba(253, 218, 36, 0.24), rgba(253, 218, 36, 0) 34%),
-radial-gradient(circle at 88% 16%, rgba(183, 172, 232, 0.20), rgba(183, 172, 232, 0) 36%),
-radial-gradient(circle at 75% 90%, rgba(0, 167, 181, 0.12), rgba(0, 167, 181, 0) 40%),
-radial-gradient(rgba(15, 15, 15, 0.045) 0.6px, transparent 0.6px),
-var(--wv-offwhite);
-background-size: auto, auto, auto, 16px 16px, auto;
-padding: 20px;
-line-height: 1.45;
-}
-.container { width: 100%; max-width: 1520px; margin: 0 auto; }
-.header {
-background: rgba(255,255,255,0.8);
-border: 1px solid var(--wv-border);
-border-radius: var(--wv-radius-lg);
-padding: 18px 20px 14px;
-margin-bottom: 18px;
-position: relative;
-overflow: hidden;
-}
-.header::after {
-content: "";
-position: absolute;
-left: 20px;
-right: 20px;
-bottom: 0;
-height: 4px;
-background: linear-gradient(90deg, var(--wv-yellow), var(--wv-yellow-soft));
-border-radius: 99px;
-}
-.header-top {
-display: flex;
-align-items: center;
-justify-content: space-between;
-gap: 12px;
-flex-wrap: wrap;
-margin-bottom: 6px;
-}
-.title {
-margin: 0;
-font-family: Lora, Georgia, "Times New Roman", serif;
-font-weight: 700;
-letter-spacing: 0.01em;
-font-size: clamp(1.9rem, 3vw, 2.6rem);
-color: var(--wv-black);
-}
-.badge {
-display: inline-flex;
-align-items: center;
-border-radius: 999px;
-font-size: 12px;
-font-weight: 700;
-padding: 6px 10px;
-background: var(--wv-yellow);
-border: 1px solid rgba(15,15,15,0.35);
-color: var(--wv-black);
-white-space: nowrap;
-}
-.subtitle { margin: 0 0 2px; font-size: 14px; color: var(--wv-muted); text-transform: uppercase; letter-spacing: .08em; }
-.positioning { margin: 0; color: rgba(15,15,15,0.8); font-size: 14px; max-width: 780px; }
-.hero-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-.infra-badge { display: inline-flex; align-items: center; border-radius: 999px; border: 1px solid var(--wv-border-strong); background: rgba(255,255,255,0.72); color: var(--wv-black); font-size: 11px; font-weight: 800; letter-spacing: .07em; padding: 5px 9px; text-transform: uppercase; }
-.use-cases {
-background: rgba(255,255,255,0.78);
-border: 1px solid var(--wv-border);
-border-radius: var(--wv-radius-lg);
-padding: 14px;
-margin-bottom: 18px;
-position: relative;
-overflow: hidden;
-}
-.use-cases::before {
-content: "";
-position: absolute;
-left: 14px;
-right: 14px;
-top: 0;
-height: 3px;
-border-radius: 999px;
-background: linear-gradient(90deg, var(--wv-yellow), transparent);
-}
-.section-title { margin: 0 0 10px; color: var(--wv-black); font: 700 18px/1.2 Lora, Georgia, serif; }
-.use-case-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
-.use-case-card { background: var(--wv-white); border: 1px solid var(--wv-border); border-radius: var(--wv-radius-md); padding: 12px; min-width: 0; }
-.use-case-card h3 { margin: 0 0 6px; color: var(--wv-black); font-size: 13px; line-height: 1.2; }
-.use-case-card p { margin: 0; color: var(--wv-muted); font-size: 12px; line-height: 1.45; }
-.layout {
-display: grid;
-grid-template-columns: 360px minmax(0, 1fr);
-gap: 18px;
-align-items: start;
-margin-bottom: 18px;
-}
-.left-col, .mid-col { min-width: 0; align-self: start; height: fit-content; }
-.panel, .signals-panel {
-background: var(--wv-white);
-border: 1px solid var(--wv-border);
-border-radius: var(--wv-radius-lg);
-padding: 14px;
-position: relative;
-margin-bottom: 12px;
-}
-.panel::before, .signals-panel::before {
-content: "";
-position: absolute;
-left: 14px;
-right: 14px;
-top: 0;
-height: 3px;
-border-radius: 999px;
-background: linear-gradient(90deg, var(--wv-yellow), transparent);
-}
-textarea {
-width: 100%;
-min-height: 130px;
-resize: vertical;
-border-radius: var(--wv-radius-sm);
-border: 1px solid var(--wv-border-strong);
-padding: 11px;
-color: var(--wv-black);
-background: #fbfaf4;
-font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-outline: none;
-}
-textarea:focus { border-color: rgba(15, 15, 15, 0.55); box-shadow: 0 0 0 3px rgba(253, 218, 36, 0.28); }
-.input-label { margin: 12px 0 6px; color: var(--wv-black); font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
-.contracts-input { min-height: 72px; }
-.input-help, .helper-text, .button-help { margin-top: 8px; color: var(--wv-muted); font-size: 12px; }
-.actions { display: grid; gap: 8px; margin-top: 10px; }
-button {
-width: 100%;
-border-radius: var(--wv-radius-sm);
-padding: 10px 12px;
-border: 1px solid var(--wv-black);
-cursor: pointer;
-font: 700 13px/1.2 Inter, sans-serif;
-transition: transform .15s ease, background-color .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease;
-}
-.primary-btn { background: var(--wv-yellow); color: var(--wv-black); }
-.primary-btn:hover { transform: translateY(-1px); background: #f3cd14; }
-.secondary-btn { background: var(--wv-white); color: var(--wv-black); border-color: var(--wv-border-strong); }
-.secondary-btn:hover { background: #f1f1ef; }
-button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-#shareBtn { position: relative; overflow: hidden; }
-#shareBtn.share-success {
-background: #00a7b5;
-color: #ffffff;
-border-color: #008997;
-transform: scale(1.01);
-box-shadow: 0 0 0 0 rgba(0, 167, 181, 0.25);
-animation: sharePulse 0.7s ease;
-cursor: pointer;
-}
-#shareBtn .share-btn-inner { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 100%; }
-#shareBtn .share-check { display: inline-block; opacity: 0; transform: translateY(2px) scale(0.75); transition: opacity .2s ease, transform .2s ease; font-weight: 800; line-height: 1; }
-#shareBtn.share-success .share-check { opacity: 1; transform: translateY(0) scale(1); }
-@keyframes sharePulse {
-0% { box-shadow: 0 0 0 0 rgba(0, 167, 181, 0.35); }
-100% { box-shadow: 0 0 0 10px rgba(0, 167, 181, 0); }
-}
-.status {
-margin-top: 10px;
-padding: 9px 10px;
-border-radius: var(--wv-radius-sm);
-font-size: 12px;
-border: 1px solid rgba(0, 46, 93, 0.3);
-color: var(--wv-deepblue);
-background: rgba(0, 46, 93, 0.07);
-display: none;
-}
-.status.error { color: var(--wv-danger); border-color: rgba(180, 35, 24, 0.32); background: rgba(180, 35, 24, 0.08); }
-.api-health { margin-top: 8px; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--wv-muted); }
-.api-health-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--wv-teal); box-shadow: 0 0 0 2px rgba(0, 167, 181, 0.2); }
-.cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; min-width: 0; }
-.card { background: var(--wv-white); border: 1px solid var(--wv-border); border-radius: var(--wv-radius-md); padding: 12px; position: relative; min-width: 0; overflow: hidden; }
-.card::before { content: ""; position: absolute; left: 12px; right: 12px; top: 0; height: 3px; border-radius: 99px; background: linear-gradient(90deg, var(--wv-yellow), var(--wv-teal)); }
-.label { font-size: 11px; color: var(--wv-muted); text-transform: uppercase; letter-spacing: .07em; min-width: 0; }
-.value { font-size: clamp(1rem, 1.6vw, 1.8rem); font-weight: 800; margin-top: 4px; color: var(--wv-black); min-width: 0; max-width: 100%; overflow-wrap: anywhere; word-break: break-word; line-height: 1.1; white-space: normal; }
-.signals-panel { padding-bottom: 10px; }
-.signals-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
-.signals-title { margin: 0; color: var(--wv-black); font: 700 16px/1.2 Lora, Georgia, serif; }
-.signals-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; align-items: stretch; }
-.signal-card { border: 1px solid var(--wv-border); border-radius: var(--wv-radius-sm); background: #fffef9; padding: 10px; min-width: 0; min-height: 112px; display: flex; flex-direction: column; gap: 8px; }
-.signal-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 0; min-width: 0; }
-.signal-label { color: var(--wv-muted); font-size: 10px; font-weight: 800; letter-spacing: .07em; line-height: 1.25; text-transform: uppercase; min-width: 0; overflow-wrap: anywhere; }
-.signal-message { margin: 0; color: var(--wv-black); font-size: 12px; line-height: 1.4; }
-.signal-badge { flex: 0 0 auto; align-self: flex-start; border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 800; line-height: 1; text-transform: uppercase; letter-spacing: .04em; border: 1px solid var(--wv-border-strong); white-space: nowrap; }
-.signal-badge.good { background: rgba(0, 167, 181, 0.12); color: #007886; border-color: rgba(0, 167, 181, 0.35); }
-.signal-badge.watch { background: var(--wv-yellow-soft); color: var(--wv-black); border-color: rgba(15, 15, 15, 0.25); }
-.signal-badge.info { background: rgba(0, 46, 93, 0.08); color: var(--wv-deepblue); border-color: rgba(0, 46, 93, 0.24); }
-.signals-empty { margin: 0; color: var(--wv-muted); font-size: 13px; }
-.history-panel { padding-bottom: 12px; }
-.history-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
-.history-title { margin: 0; color: var(--wv-black); font: 700 16px/1.2 Lora, Georgia, serif; }
-.history-subtitle { margin: 3px 0 0; color: var(--wv-muted); font-size: 12px; max-width: 680px; }
-.history-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.history-actions .secondary-btn { width: auto; min-width: 132px; margin-top: 0; padding: 9px 12px; font-size: 12px; }
-.history-table-wrap { border: 1px solid var(--wv-border); border-radius: var(--wv-radius-sm); overflow: auto; background: #fffef9; }
-.history-table { min-width: 680px; }
-.history-table th, .history-table td { padding: 9px 10px; font-size: 12px; }
-.history-empty { margin: 0; color: var(--wv-muted); font-size: 13px; padding: 12px; border: 1px dashed var(--wv-border-strong); border-radius: var(--wv-radius-sm); background: #fffef9; }
-.table-wrap { background: var(--wv-white); border: 1px solid var(--wv-border); border-radius: var(--wv-radius-lg); overflow: auto; min-height: 340px; }
-table { width: 100%; border-collapse: collapse; min-width: 760px; }
-th, td { padding: 11px; border-bottom: 1px solid var(--wv-border); text-align: left; font-size: 13px; }
-th { background: #f5f2e8; font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--wv-muted); }
-tbody tr:hover { background: rgba(0, 46, 93, 0.04); }
-tbody tr:last-child td { border-bottom: none; }
-td:nth-child(3) { color: var(--wv-deepblue); font-weight: 700; }
-.empty { text-align: center; color: var(--wv-muted); padding: 16px; }
-.api-panel { background: #0f1117; border: 1px solid rgba(253, 218, 36, 0.25); border-radius: var(--wv-radius-lg); padding: 14px; color: #e7ecf5; margin-bottom: 12px; overflow: visible; height: fit-content; }
-.api-panel h2 { margin: 0 0 8px; color: var(--wv-yellow); font: 700 18px/1.2 Lora, Georgia, serif; }
-.api-intro { margin: 0 0 12px; font-size: 12px; color: rgba(231,236,245,0.75); }
-.api-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-items: start; }
-.api-item { border: 1px solid rgba(183, 172, 232, 0.22); border-radius: var(--wv-radius-sm); background: rgba(0, 46, 93, 0.35); margin-bottom: 0; overflow: hidden; min-width: 0; }
-details.api-item > summary { list-style: none; cursor: pointer; padding: 9px 10px; color: var(--wv-yellow-soft); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; background: rgba(0, 46, 93, 0.45); }
-details.api-item > summary::-webkit-details-marker { display: none; }
-details.api-item > summary::after { content: "＋"; color: #7ce1eb; font-size: 13px; line-height: 1; font-weight: 800; }
-details.api-item[open] > summary::after { content: "−"; }
-.api-item-body { padding: 8px; border-top: 1px solid rgba(183, 172, 232, 0.22); }
-.api-item code, .api-item pre { margin: 0; font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; color: #7ce1eb; white-space: pre-wrap; word-break: break-word; }
-.api-item ul { margin: 0; padding-left: 16px; color: #d3dcf0; font-size: 12px; }
-@media (max-width: 1320px) {
-.layout { grid-template-columns: 330px minmax(0, 1fr); }
-.use-case-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.api-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-@media (max-width: 1000px) {
-body { padding: 12px; }
-.layout { grid-template-columns: 1fr; }
-.left-col { order: 1; }
-.mid-col { order: 2; }
-.cards { grid-template-columns: 1fr; }
-.signals-grid { grid-template-columns: 1fr; }
-.use-case-grid { grid-template-columns: 1fr; }
-.api-grid { grid-template-columns: 1fr; }
-}
-</style>
+  <title>Stellar Portfolio Infra</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WealthView | Stellar Treasury Aggregation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Lora:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --wv-black: #0f0f0f;
+      --wv-offwhite: #f6f7f8;
+      --wv-white: #ffffff;
+      --wv-yellow: #fdda24;
+      --wv-yellow-soft: #fff5a8;
+      --wv-neutral: #d6d2c4;
+      --wv-muted: rgba(15, 15, 15, 0.62);
+      --wv-border: rgba(15, 15, 15, 0.14);
+      --wv-border-strong: rgba(15, 15, 15, 0.28);
+      --wv-teal: #00a7b5;
+      --wv-deepblue: #002e5d;
+      --wv-lavender: #b7ace8;
+      --wv-danger: #b42318;
+      --wv-radius-lg: 22px;
+      --wv-radius-md: 16px;
+      --wv-radius-sm: 10px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      color: var(--wv-black);
+      background:
+        radial-gradient(circle at 12% 8%, rgba(253, 218, 36, 0.24), rgba(253, 218, 36, 0) 34%),
+        radial-gradient(circle at 88% 16%, rgba(183, 172, 232, 0.20), rgba(183, 172, 232, 0) 36%),
+        radial-gradient(circle at 75% 90%, rgba(0, 167, 181, 0.12), rgba(0, 167, 181, 0) 40%),
+        radial-gradient(rgba(15, 15, 15, 0.045) 0.6px, transparent 0.6px),
+        var(--wv-offwhite);
+      background-size: auto, auto, auto, 16px 16px, auto;
+      padding: 20px;
+      line-height: 1.45;
+    }
+
+    .container { width: 100%; max-width: 1520px; margin: 0 auto; }
+
+    .header {
+      background: rgba(255,255,255,0.8);
+      border: 1px solid var(--wv-border);
+      border-radius: var(--wv-radius-lg);
+      padding: 18px 20px 14px;
+      margin-bottom: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header::after {
+      content: "";
+      position: absolute;
+      left: 20px;
+      right: 20px;
+      bottom: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--wv-yellow), var(--wv-yellow-soft));
+      border-radius: 99px;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+
+    .title {
+      margin: 0;
+      font-family: Lora, Georgia, "Times New Roman", serif;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      font-size: clamp(1.9rem, 3vw, 2.6rem);
+      color: var(--wv-black);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 10px;
+      background: var(--wv-yellow);
+      border: 1px solid rgba(15,15,15,0.35);
+      color: var(--wv-black);
+      white-space: nowrap;
+    }
+
+    .subtitle { margin: 0 0 2px; font-size: 14px; color: var(--wv-muted); text-transform: uppercase; letter-spacing: .08em; }
+    .positioning { margin: 0; color: rgba(15,15,15,0.8); font-size: 14px; max-width: 780px; }
+    .hero-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .infra-badge { display: inline-flex; align-items: center; border-radius: 999px; border: 1px solid var(--wv-border-strong); background: rgba(255,255,255,0.72); color: var(--wv-black); font-size: 11px; font-weight: 800; letter-spacing: .07em; padding: 5px 9px; text-transform: uppercase; }
+
+    .use-cases {
+      background: rgba(255,255,255,0.78);
+      border: 1px solid var(--wv-border);
+      border-radius: var(--wv-radius-lg);
+      padding: 14px;
+      margin-bottom: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .use-cases::before {
+      content: "";
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      top: 0;
+      height: 3px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--wv-yellow), transparent);
+    }
+
+    .section-title { margin: 0 0 10px; color: var(--wv-black); font: 700 18px/1.2 Lora, Georgia, serif; }
+    .use-case-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+    .use-case-card { background: var(--wv-white); border: 1px solid var(--wv-border); border-radius: var(--wv-radius-md); padding: 12px; min-width: 0; }
+    .use-case-card h3 { margin: 0 0 6px; color: var(--wv-black); font-size: 13px; line-height: 1.2; }
+    .use-case-card p { margin: 0; color: var(--wv-muted); font-size: 12px; line-height: 1.45; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 360px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+      margin-bottom: 18px;
+    }
+
+    .left-col, .mid-col { min-width: 0; align-self: start; height: fit-content; }
+
+    .panel, .signals-panel {
+      background: var(--wv-white);
+      border: 1px solid var(--wv-border);
+      border-radius: var(--wv-radius-lg);
+      padding: 14px;
+      position: relative;
+      margin-bottom: 12px;
+    }
+
+    .panel::before, .signals-panel::before {
+      content: "";
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      top: 0;
+      height: 3px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--wv-yellow), transparent);
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 130px;
+      resize: vertical;
+      border-radius: var(--wv-radius-sm);
+      border: 1px solid var(--wv-border-strong);
+      padding: 11px;
+      color: var(--wv-black);
+      background: #fbfaf4;
+      font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      outline: none;
+    }
+
+    textarea:focus { border-color: rgba(15, 15, 15, 0.55); box-shadow: 0 0 0 3px rgba(253, 218, 36, 0.28); }
+    .input-label { margin: 12px 0 6px; color: var(--wv-black); font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+    .contracts-input { min-height: 72px; }
+    .input-help, .helper-text, .button-help { margin-top: 8px; color: var(--wv-muted); font-size: 12px; }
+    .actions { display: grid; gap: 8px; margin-top: 10px; }
+
+    button {
+      width: 100%;
+      border-radius: var(--wv-radius-sm);
+      padding: 10px 12px;
+      border: 1px solid var(--wv-black);
+      cursor: pointer;
+      font: 700 13px/1.2 Inter, sans-serif;
+      transition: transform .15s ease, background-color .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease;
+    }
+
+    .primary-btn { background: var(--wv-yellow); color: var(--wv-black); }
+    .primary-btn:hover { transform: translateY(-1px); background: #f3cd14; }
+    .secondary-btn { background: var(--wv-white); color: var(--wv-black); border-color: var(--wv-border-strong); }
+    .secondary-btn:hover { background: #f1f1ef; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    #shareBtn { position: relative; overflow: hidden; }
+    #shareBtn.share-success {
+      background: #00a7b5;
+      color: #ffffff;
+      border-color: #008997;
+      transform: scale(1.01);
+      box-shadow: 0 0 0 0 rgba(0, 167, 181, 0.25);
+      animation: sharePulse 0.7s ease;
+      cursor: pointer;
+    }
+
+    #shareBtn .share-btn-inner { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 100%; }
+    #shareBtn .share-check { display: inline-block; opacity: 0; transform: translateY(2px) scale(0.75); transition: opacity .2s ease, transform .2s ease; font-weight: 800; line-height: 1; }
+    #shareBtn.share-success .share-check { opacity: 1; transform: translateY(0) scale(1); }
+
+    @keyframes sharePulse {
+      0% { box-shadow: 0 0 0 0 rgba(0, 167, 181, 0.35); }
+      100% { box-shadow: 0 0 0 10px rgba(0, 167, 181, 0); }
+    }
+
+    .status {
+      margin-top: 10px;
+      padding: 9px 10px;
+      border-radius: var(--wv-radius-sm);
+      font-size: 12px;
+      border: 1px solid rgba(0, 46, 93, 0.3);
+      color: var(--wv-deepblue);
+      background: rgba(0, 46, 93, 0.07);
+      display: none;
+    }
+
+    .status.error { color: var(--wv-danger); border-color: rgba(180, 35, 24, 0.32); background: rgba(180, 35, 24, 0.08); }
+    .api-health { margin-top: 8px; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--wv-muted); }
+    .api-health-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--wv-teal); box-shadow: 0 0 0 2px rgba(0, 167, 181, 0.2); }
+
+    .cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; min-width: 0; }
+    .card { background: var(--wv-white); border: 1px solid var(--wv-border); border-radius: var(--wv-radius-md); padding: 12px; position: relative; min-width: 0; overflow: hidden; }
+    .card::before { content: ""; position: absolute; left: 12px; right: 12px; top: 0; height: 3px; border-radius: 99px; background: linear-gradient(90deg, var(--wv-yellow), var(--wv-teal)); }
+    .label { font-size: 11px; color: var(--wv-muted); text-transform: uppercase; letter-spacing: .07em; min-width: 0; }
+    .value { font-size: clamp(1rem, 1.6vw, 1.8rem); font-weight: 800; margin-top: 4px; color: var(--wv-black); min-width: 0; max-width: 100%; overflow-wrap: anywhere; word-break: break-word; line-height: 1.1; white-space: normal; }
+
+    .signals-panel { padding-bottom: 10px; }
+    .signals-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+    .signals-title { margin: 0; color: var(--wv-black); font: 700 16px/1.2 Lora, Georgia, serif; }
+    .signals-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; align-items: stretch; }
+    .signal-card { border: 1px solid var(--wv-border); border-radius: var(--wv-radius-sm); background: #fffef9; padding: 10px; min-width: 0; min-height: 112px; display: flex; flex-direction: column; gap: 8px; }
+    .signal-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 0; min-width: 0; }
+    .signal-label { color: var(--wv-muted); font-size: 10px; font-weight: 800; letter-spacing: .07em; line-height: 1.25; text-transform: uppercase; min-width: 0; overflow-wrap: anywhere; }
+    .signal-message { margin: 0; color: var(--wv-black); font-size: 12px; line-height: 1.4; }
+    .signal-badge { flex: 0 0 auto; align-self: flex-start; border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 800; line-height: 1; text-transform: uppercase; letter-spacing: .04em; border: 1px solid var(--wv-border-strong); white-space: nowrap; }
+    .signal-badge.good { background: rgba(0, 167, 181, 0.12); color: #007886; border-color: rgba(0, 167, 181, 0.35); }
+    .signal-badge.watch { background: var(--wv-yellow-soft); color: var(--wv-black); border-color: rgba(15, 15, 15, 0.25); }
+    .signal-badge.info { background: rgba(0, 46, 93, 0.08); color: var(--wv-deepblue); border-color: rgba(0, 46, 93, 0.24); }
+    .signals-empty { margin: 0; color: var(--wv-muted); font-size: 13px; }
+
+    .history-panel { padding-bottom: 12px; }
+    .history-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+    .history-title { margin: 0; color: var(--wv-black); font: 700 16px/1.2 Lora, Georgia, serif; }
+    .history-subtitle { margin: 3px 0 0; color: var(--wv-muted); font-size: 12px; max-width: 680px; }
+    .history-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .history-actions .secondary-btn { width: auto; min-width: 132px; margin-top: 0; padding: 9px 12px; font-size: 12px; }
+    .history-table-wrap { border: 1px solid var(--wv-border); border-radius: var(--wv-radius-sm); overflow: auto; background: #fffef9; }
+    .history-table { min-width: 680px; }
+    .history-table th, .history-table td { padding: 9px 10px; font-size: 12px; }
+    .history-empty { margin: 0; color: var(--wv-muted); font-size: 13px; padding: 12px; border: 1px dashed var(--wv-border-strong); border-radius: var(--wv-radius-sm); background: #fffef9; }
+
+    .intelligence-panel { padding-bottom: 12px; }
+    .intelligence-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .intelligence-card { border: 1px solid var(--wv-border); border-radius: var(--wv-radius-sm); background: #fffef9; padding: 11px; min-width: 0; }
+    .intelligence-card.full { grid-column: 1 / -1; }
+    .intelligence-card h3 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--wv-muted); }
+    .health-score { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+    .health-score strong { font-size: clamp(1.7rem, 3vw, 2.6rem); line-height: 1; color: var(--wv-black); }
+    .intelligence-list { margin: 8px 0 0; padding-left: 18px; color: var(--wv-black); font-size: 12px; }
+    .intelligence-list li { margin: 4px 0; }
+    .metric-row { display: flex; justify-content: space-between; gap: 10px; border-top: 1px solid var(--wv-border); padding-top: 7px; margin-top: 7px; font-size: 12px; }
+    .metric-row span:first-child { color: var(--wv-muted); }
+    .alert-list { display: grid; gap: 8px; }
+    .alert-card { border: 1px solid var(--wv-border); border-radius: var(--wv-radius-sm); background: var(--wv-white); padding: 9px; }
+    .alert-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .alert-title { font-weight: 800; font-size: 12px; color: var(--wv-black); }
+    .alert-card p { margin: 6px 0 0; color: var(--wv-muted); font-size: 12px; }
+    .benchmark-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .benchmark-card { border: 1px solid var(--wv-border); border-radius: var(--wv-radius-sm); padding: 8px; background: var(--wv-white); }
+    .benchmark-card strong { display: block; font-size: 12px; color: var(--wv-black); }
+    .benchmark-card span { display: block; margin-top: 3px; color: var(--wv-muted); font-size: 11px; }
+    .simulation-controls { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
+    .sim-field label { display: block; font-size: 10px; font-weight: 800; color: var(--wv-muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+    .sim-field input, .snapshot-upload { width: 100%; border: 1px solid var(--wv-border-strong); border-radius: var(--wv-radius-sm); padding: 8px; background: #fbfaf4; font-size: 12px; }
+    .brief-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .brief-actions .secondary-btn { width: auto; min-width: 110px; margin-top: 0; padding: 8px 11px; font-size: 12px; }
+    .brief-output { white-space: pre-wrap; border: 1px solid var(--wv-border); border-radius: var(--wv-radius-sm); padding: 10px; background: #fbfaf4; color: var(--wv-black); font-size: 12px; max-height: 260px; overflow: auto; }
+
+    .table-wrap { background: var(--wv-white); border: 1px solid var(--wv-border); border-radius: var(--wv-radius-lg); overflow: auto; min-height: 340px; }
+    table { width: 100%; border-collapse: collapse; min-width: 760px; }
+    th, td { padding: 11px; border-bottom: 1px solid var(--wv-border); text-align: left; font-size: 13px; }
+    th { background: #f5f2e8; font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--wv-muted); }
+    tbody tr:hover { background: rgba(0, 46, 93, 0.04); }
+    tbody tr:last-child td { border-bottom: none; }
+    td:nth-child(3) { color: var(--wv-deepblue); font-weight: 700; }
+    .empty { text-align: center; color: var(--wv-muted); padding: 16px; }
+
+    .api-panel { background: #0f1117; border: 1px solid rgba(253, 218, 36, 0.25); border-radius: var(--wv-radius-lg); padding: 14px; color: #e7ecf5; margin-bottom: 12px; overflow: visible; height: fit-content; }
+    .api-panel h2 { margin: 0 0 8px; color: var(--wv-yellow); font: 700 18px/1.2 Lora, Georgia, serif; }
+    .api-intro { margin: 0 0 12px; font-size: 12px; color: rgba(231,236,245,0.75); }
+    .api-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-items: start; }
+    .api-item { border: 1px solid rgba(183, 172, 232, 0.22); border-radius: var(--wv-radius-sm); background: rgba(0, 46, 93, 0.35); margin-bottom: 0; overflow: hidden; min-width: 0; }
+    details.api-item > summary { list-style: none; cursor: pointer; padding: 9px 10px; color: var(--wv-yellow-soft); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; background: rgba(0, 46, 93, 0.45); }
+    details.api-item > summary::-webkit-details-marker { display: none; }
+    details.api-item > summary::after { content: "＋"; color: #7ce1eb; font-size: 13px; line-height: 1; font-weight: 800; }
+    details.api-item[open] > summary::after { content: "−"; }
+    .api-item-body { padding: 8px; border-top: 1px solid rgba(183, 172, 232, 0.22); }
+    .api-item code, .api-item pre { margin: 0; font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; color: #7ce1eb; white-space: pre-wrap; word-break: break-word; }
+    .api-item ul { margin: 0; padding-left: 16px; color: #d3dcf0; font-size: 12px; }
+
+    @media (max-width: 1320px) {
+      .layout { grid-template-columns: 330px minmax(0, 1fr); }
+      .use-case-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .api-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 1000px) {
+      body { padding: 12px; }
+      .layout { grid-template-columns: 1fr; }
+      .left-col { order: 1; }
+      .mid-col { order: 2; }
+      .cards { grid-template-columns: 1fr; }
+      .signals-grid { grid-template-columns: 1fr; }
+      .use-case-grid { grid-template-columns: 1fr; }
+      .api-grid { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
-<div class="container">
-<header class="header">
-<div class="header-top">
-<h1 class="title">WealthView</h1>
-<span class="badge">Built for Stellar treasury visibility</span>
-</div>
-<p class="subtitle">Agent-Ready Treasury Infrastructure for Stellar</p>
-<p class="positioning">Aggregate wallets, monitor treasury health, expose treasury data through APIs, and build AI-native treasury workflows on Stellar.</p>
-<div class="hero-badges" aria-label="WealthView infrastructure capabilities">
-<span class="infra-badge">REST API</span>
-<span class="infra-badge">OpenAPI</span>
-<span class="infra-badge">Agent Ready</span>
-<span class="infra-badge">MCP Compatible</span>
-</div>
-</header>
-<section class="use-cases" aria-labelledby="builtForTitle">
-<h2 class="section-title" id="builtForTitle">Built For</h2>
-<div class="use-case-grid">
-<article class="use-case-card">
-<h3>Treasury Reporting</h3>
-<p>Aggregate reserve, operations, and ecosystem wallets into a single reporting view.</p>
-</article>
-<article class="use-case-card">
-<h3>Stablecoin Treasuries</h3>
-<p>Monitor exposure across assets such as USDC, EURC, USDZ and other treasury reserves.</p>
-</article>
-<article class="use-case-card">
-<h3>RWA Treasuries</h3>
-<p>Track tokenized treasury and real-world asset allocations across Stellar wallets.</p>
-</article>
-<article class="use-case-card">
-<h3>AI Agents</h3>
-<p>Access treasury data through REST APIs, OpenAPI schemas, agent manifests, and MCP tools.</p>
-</article>
-</div>
-</section>
-<div class="layout">
-<div class="left-col">
-<section class="panel">
-<textarea id="addresses" placeholder="Enter wallet addresses (one per line)"></textarea>
-<div class="input-help">Paste comma-separated Stellar public wallet addresses. Example: GBXXX..., GDXXX...</div>
-<div class="input-label">Soroban / SEP-41 Token Contracts (optional)</div>
-<textarea id="contracts" class="contracts-input" placeholder="Paste comma-separated C... contract IDs"></textarea>
-<div class="input-help">Optional. Add SEP-41 token contract IDs to include Soroban token balances.</div>
-<div class="actions">
-<button id="aggregateBtn" class="primary-btn" onclick="fetchPortfolio()">Aggregate Portfolio</button>
-<button id="shareBtn" class="secondary-btn" onclick="copyShareLink()" aria-live="polite">
-<span class="share-btn-inner">
-<span class="share-check" aria-hidden="true">✓</span>
-<span id="shareBtnText">Generate Share Link</span>
-</span>
-</button>
-<button id="snapshotBtn" class="secondary-btn" onclick="downloadTreasurySnapshot()">Download Treasury Snapshot</button>
-</div>
-<div class="helper-text">Treasury states can be shared through URLs without accounts.</div>
-<div class="helper-text">No account required. The treasury state is stored in the URL.</div>
-<div class="button-help">Share Link reopens this treasury view. Snapshot downloads a timestamped report. Export JSON provides raw developer data.</div>
-<div id="status" class="status"></div>
-<div class="api-health"><span class="api-health-dot"></span><span>API Online</span></div>
-</section>
-</div>
-<div class="mid-col">
-<section class="cards" id="summaryCards">
-<article class="card"><div class="label">Wallet count</div><div class="value" id="walletCount">0</div></article>
-<article class="card"><div class="label">Total XLM</div><div class="value" id="totalXLM">0</div></article>
-<article class="card"><div class="label">Total USD value</div><div class="value" id="totalUSD">$0.00</div></article>
-</section>
-<section class="signals-panel" aria-labelledby="treasurySignalsTitle">
-<div class="signals-header">
-<h2 class="signals-title" id="treasurySignalsTitle">Treasury Signals</h2>
-</div>
-<div id="signalsBody">
-<p class="signals-empty">Aggregate wallets to generate treasury signals.</p>
-</div>
-</section>
-<section class="signals-panel history-panel" aria-labelledby="treasuryHistoryTitle">
-<div class="history-header">
-<div>
-<h2 class="history-title" id="treasuryHistoryTitle">Treasury History</h2>
-<p class="history-subtitle">Snapshot-based history starts when you save a snapshot. It does not reconstruct past ledger balances.</p>
-</div>
-<div class="history-actions">
-<button id="saveHistoryBtn" class="secondary-btn" onclick="saveHistorySnapshot()">Save Snapshot</button>
-<button id="loadHistoryBtn" class="secondary-btn" onclick="fetchHistory()">Refresh History</button>
-</div>
-</div>
-<div id="historyBody">
-<p class="history-empty">No history loaded yet. Save a snapshot or refresh history for the current wallets.</p>
-</div>
-</section>
-<section class="table-wrap">
-<table>
-<thead>
-<tr>
-<th>Asset symbol</th>
-<th>Total amount</th>
-<th>USD value</th>
-</tr>
-</thead>
-<tbody id="assetTableBody">
-<tr><td class="empty" colspan="3">No portfolio data yet.</td></tr>
-</tbody>
-</table>
-</section>
-<div style="margin-top:12px;">
-<button id="exportBtn" class="secondary-btn" onclick="exportTreasuryJson()">Export JSON</button>
-</div>
-</div>
-</div>
-<section class="api-panel">
-<h2>Developer API</h2>
-<p class="api-intro">APIs allow software and external tools to access WealthView treasury data programmatically.</p>
-<div class="api-grid">
-<details class="api-item">
-<summary>Agent-ready API</summary>
-<div class="api-item-body">
-<code>Treasury Signals API: /api/signals</code><br>
-<code>History API: /api/history</code><br>
-<code>Snapshot API: /api/snapshot</code><br>
-<code>OpenAPI spec: /openapi.json</code><br>
-<code>Agent manifest: /agent.json</code><br>
-<code>MCP manifest: /mcp.json</code>
-</div>
-</details>
-<details class="api-item">
-<summary>Endpoint example</summary>
-<div class="api-item-body">
-<code>GET /api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4</code>
-</div>
-</details>
-<details class="api-item">
-<summary>Query parameter</summary>
-<div class="api-item-body">
-<code>wallets: Comma-separated Stellar public wallet addresses used for treasury aggregation.</code><br>
-<code>contracts: Optional comma-separated SEP-41 / Soroban token contract IDs.</code><br>
-<code>saveSnapshot: Optional true value on /api/aggregate to store snapshot history.</code>
-</div>
-</details>
-<details class="api-item">
-<summary>Example API request</summary>
-<div class="api-item-body">
-<pre>curl "https://YOUR-DOMAIN/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4"</pre>
-</div>
-</details>
-<details class="api-item">
-<summary>Example JSON response</summary>
-<div class="api-item-body">
-<pre>{
-"success": true,
-"timestamp": "2026-05-19T12:00:00.000Z",
-"version": "1.0.0",
-"walletCount": 2,
-"totalXLM": 1234.56,
-"totalUSD": 145.67,
-"pricedAssets": ["XLM", "USDZ"],
-"unpricedAssets": [],
-"assets": [
-{
-"symbol": "XLM",
-"amount": 1234.56,
-"usdValue": 145.67,
-"allocationPercent": 100
-}
-],
-"errors": []
+  <div class="container">
+    <header class="header">
+      <div class="header-top">
+        <h1 class="title">WealthView</h1>
+        <span class="badge">Built for Stellar treasury visibility</span>
+      </div>
+      <p class="subtitle">Agent-Ready Treasury Infrastructure for Stellar</p>
+      <p class="positioning">Aggregate wallets, monitor treasury health, expose treasury data through APIs, and build AI-native treasury workflows on Stellar.</p>
+      <div class="hero-badges" aria-label="WealthView infrastructure capabilities">
+        <span class="infra-badge">REST API</span>
+        <span class="infra-badge">OpenAPI</span>
+        <span class="infra-badge">Agent Ready</span>
+        <span class="infra-badge">MCP Compatible</span>
+      </div>
+    </header>
+
+    <section class="use-cases" aria-labelledby="builtForTitle">
+      <h2 class="section-title" id="builtForTitle">Built For</h2>
+      <div class="use-case-grid">
+        <article class="use-case-card">
+          <h3>Treasury Reporting</h3>
+          <p>Aggregate reserve, operations, and ecosystem wallets into a single reporting view.</p>
+        </article>
+        <article class="use-case-card">
+          <h3>Stablecoin Treasuries</h3>
+          <p>Monitor exposure across assets such as USDC, EURC, USDZ and other treasury reserves.</p>
+        </article>
+        <article class="use-case-card">
+          <h3>RWA Treasuries</h3>
+          <p>Track tokenized treasury and real-world asset allocations across Stellar wallets.</p>
+        </article>
+        <article class="use-case-card">
+          <h3>AI Agents</h3>
+          <p>Access treasury data through REST APIs, OpenAPI schemas, agent manifests, and MCP tools.</p>
+        </article>
+      </div>
+    </section>
+
+    <div class="layout">
+      <div class="left-col">
+        <section class="panel">
+          <textarea id="addresses" placeholder="Enter wallet addresses (one per line)"></textarea>
+          <div class="input-help">Paste comma-separated Stellar public wallet addresses. Example: GBXXX..., GDXXX...</div>
+
+          <div class="input-label">Soroban / SEP-41 Token Contracts (optional)</div>
+          <textarea id="contracts" class="contracts-input" placeholder="Paste comma-separated C... contract IDs"></textarea>
+          <div class="input-help">Optional. Add SEP-41 token contract IDs to include Soroban token balances.</div>
+
+          <div class="actions">
+            <button id="aggregateBtn" class="primary-btn" onclick="fetchPortfolio()">Aggregate Portfolio</button>
+            <button id="shareBtn" class="secondary-btn" onclick="copyShareLink()" aria-live="polite">
+              <span class="share-btn-inner">
+                <span class="share-check" aria-hidden="true">✓</span>
+                <span id="shareBtnText">Generate Share Link</span>
+              </span>
+            </button>
+            <button id="snapshotBtn" class="secondary-btn" onclick="downloadTreasurySnapshot()">Download Treasury Snapshot</button>
+          </div>
+
+          <div class="helper-text">Treasury states can be shared through URLs without accounts.</div>
+          <div class="helper-text">No account required. The treasury state is stored in the URL.</div>
+          <div class="button-help">Share Link reopens this treasury view. Snapshot downloads a timestamped report. Export JSON provides raw developer data.</div>
+
+          <div id="status" class="status"></div>
+          <div class="api-health"><span class="api-health-dot"></span><span>API Online</span></div>
+        </section>
+      </div>
+
+      <div class="mid-col">
+        <section class="cards" id="summaryCards">
+          <article class="card"><div class="label">Wallet count</div><div class="value" id="walletCount">0</div></article>
+          <article class="card"><div class="label">Total XLM</div><div class="value" id="totalXLM">0</div></article>
+          <article class="card"><div class="label">Total USD value</div><div class="value" id="totalUSD">$0.00</div></article>
+        </section>
+
+        <section class="signals-panel" aria-labelledby="treasurySignalsTitle">
+          <div class="signals-header">
+            <h2 class="signals-title" id="treasurySignalsTitle">Treasury Signals</h2>
+          </div>
+          <div id="signalsBody">
+            <p class="signals-empty">Aggregate wallets to generate treasury signals.</p>
+          </div>
+        </section>
+
+
+
+        <section class="signals-panel history-panel" aria-labelledby="treasuryHistoryTitle">
+          <div class="history-header">
+            <div>
+              <h2 class="history-title" id="treasuryHistoryTitle">Treasury History</h2>
+              <p class="history-subtitle">Snapshot-based history starts when you save a snapshot. It does not reconstruct past ledger balances.</p>
+            </div>
+            <div class="history-actions">
+              <button id="saveHistoryBtn" class="secondary-btn" onclick="saveHistorySnapshot()">Save Snapshot</button>
+              <button id="loadHistoryBtn" class="secondary-btn" onclick="fetchHistory()">Refresh History</button>
+            </div>
+          </div>
+          <div id="historyBody">
+            <p class="history-empty">No history loaded yet. Save a snapshot or refresh history for the current wallets.</p>
+          </div>
+        </section>
+
+
+        <section class="signals-panel intelligence-panel" aria-labelledby="treasuryIntelligenceTitle">
+          <div class="history-header">
+            <div>
+              <h2 class="history-title" id="treasuryIntelligenceTitle">Treasury Intelligence</h2>
+              <p class="history-subtitle">Health, idle capital, alerts, benchmarks, changes, simulations, and executive summaries for the current treasury view.</p>
+            </div>
+          </div>
+          <div id="intelligenceBody">
+            <p class="history-empty">Aggregate wallets to generate treasury intelligence.</p>
+          </div>
+        </section>
+
+        <section class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Asset symbol</th>
+                <th>Total amount</th>
+                <th>USD value</th>
+              </tr>
+            </thead>
+            <tbody id="assetTableBody">
+              <tr><td class="empty" colspan="3">No portfolio data yet.</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <div style="margin-top:12px;">
+          <button id="exportBtn" class="secondary-btn" onclick="exportTreasuryJson()">Export JSON</button>
+        </div>
+      </div>
+
+    </div>
+
+    <section class="api-panel">
+            <h2>Developer API</h2>
+            <p class="api-intro">APIs allow software and external tools to access WealthView treasury data programmatically.</p>
+
+            <div class="api-grid">
+              <details class="api-item">
+              <summary>Agent-ready API</summary>
+              <div class="api-item-body">
+                <code>Treasury Signals API: /api/signals</code><br>
+                <code>History API: /api/history</code><br>
+                <code>Snapshot API: /api/snapshot</code><br>
+                <code>Treasury Intelligence API: /api/intelligence</code><br>
+                <code>OpenAPI spec: /openapi.json</code><br>
+                <code>Agent manifest: /agent.json</code><br>
+                <code>MCP manifest: /mcp.json</code>
+              </div>
+            </details>
+
+            <details class="api-item">
+              <summary>Endpoint example</summary>
+              <div class="api-item-body">
+                <code>GET /api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4</code>
+              </div>
+            </details>
+
+            <details class="api-item">
+              <summary>Query parameter</summary>
+              <div class="api-item-body">
+                <code>wallets: Comma-separated Stellar public wallet addresses used for treasury aggregation.</code><br>
+                <code>contracts: Optional comma-separated SEP-41 / Soroban token contract IDs.</code><br>
+                <code>saveSnapshot: Optional true value on /api/aggregate to store snapshot history.</code>
+              </div>
+            </details>
+
+            <details class="api-item">
+              <summary>Example API request</summary>
+              <div class="api-item-body">
+                <pre>curl "https://YOUR-DOMAIN/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4"</pre>
+              </div>
+            </details>
+
+            <details class="api-item">
+              <summary>Example JSON response</summary>
+              <div class="api-item-body">
+                <pre>{
+  "success": true,
+  "timestamp": "2026-05-19T12:00:00.000Z",
+  "version": "1.0.0",
+  "walletCount": 2,
+  "totalXLM": 1234.56,
+  "totalUSD": 145.67,
+  "pricedAssets": ["XLM", "USDZ"],
+  "unpricedAssets": [],
+  "assets": [
+    {
+      "symbol": "XLM",
+      "amount": 1234.56,
+      "usdValue": 145.67,
+      "allocationPercent": 100
+    }
+  ],
+  "errors": []
 }</pre>
-</div>
-</details>
-<details class="api-item">
-<summary>Quick Start</summary>
-<div class="api-item-body">
-<pre>curl "https://YOUR-DOMAIN/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4"</pre>
-<pre>const r = await fetch("/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4");
+              </div>
+            </details>
+
+            <details class="api-item">
+              <summary>Quick Start</summary>
+              <div class="api-item-body">
+                <pre>curl "https://YOUR-DOMAIN/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4"</pre>
+                <pre>const r = await fetch("/api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4");
 const data = await r.json();
 console.log(data);</pre>
-</div>
-</details>
-<details class="api-item">
-<summary>How Treasury States Work</summary>
-<div class="api-item-body">
-<code>Wallets are encoded into the URL query string, so treasury views are shareable and reproducible. No accounts or server-side storage are required. URLs act as treasury state snapshots.</code>
-</div>
-</details>
-</div>
-</section>
-</div>
+              </div>
+            </details>
+
+<body style="font-family: Arial; padding: 40px; max-width: 800px; margin: auto;">
+              <details class="api-item">
+                <summary>How Treasury States Work</summary>
+                <div class="api-item-body">
+                  <code>Wallets are encoded into the URL query string, so treasury views are shareable and reproducible. No accounts or server-side storage are required. URLs act as treasury state snapshots.</code>
+                </div>
+              </details>
+            </div>
+    </section>
+  </div>
+
+  <h1>Stellar Portfolio Infra</h1>
+  <p>Multi-wallet portfolio aggregation for Stellar builders</p>
+  <script>
+    const statusEl = document.getElementById("status");
+    const buttonEl = document.getElementById("aggregateBtn");
+    const addressesEl = document.getElementById("addresses");
+    const contractsEl = document.getElementById("contracts");
+    const shareBtn = document.getElementById("shareBtn");
+    const shareBtnText = document.getElementById("shareBtnText");
+    const historyBodyEl = document.getElementById("historyBody");
+    const saveHistoryBtn = document.getElementById("saveHistoryBtn");
+    const loadHistoryBtn = document.getElementById("loadHistoryBtn");
+    const signalsBodyEl = document.getElementById("signalsBody");
+    const intelligenceBodyEl = document.getElementById("intelligenceBody");
+
+  <textarea id="addresses" placeholder="Enter wallet addresses (one per line)"
+    style="width:100%; height:120px; padding:10px;"></textarea>
+    const STABLE_ASSET_SYMBOLS = ["USDC", "USDZ", "EURC", "GBPX", "EURX", "USDT"];
+
+  <button onclick="fetchPortfolio()" 
+    style="padding:12px; width:100%; margin-top:10px; cursor:pointer;">
+    Aggregate Portfolio
+  </button>
+    let latestAggregated = null;
+    let latestSignals = null;
+    let latestHistory = [];
+    let latestIntelligence = null;
+    let latestChangeDetection = null;
+    let latestExecutiveBrief = "";
+    let shareSuccessTimeout = null;
+
+  <p id="status" style="margin-top:20px;"></p>
+    function setStatus(message, type = "info") {
+      statusEl.textContent = message;
+      statusEl.classList.toggle("error", type === "error");
+      statusEl.style.display = message ? "block" : "none";
+    }
+
+  <pre id="jsonOutput" style="background:#111; color:#0f0; padding:15px; margin-top:20px; overflow:auto;"></pre>
+    function formatNumber(value, digits = 2) {
+      return Number(value).toLocaleString(undefined, { maximumFractionDigits: digits });
+    }
+
 <script>
-const statusEl = document.getElementById("status");
-const buttonEl = document.getElementById("aggregateBtn");
-const addressesEl = document.getElementById("addresses");
-const contractsEl = document.getElementById("contracts");
-const shareBtn = document.getElementById("shareBtn");
-const shareBtnText = document.getElementById("shareBtnText");
-const historyBodyEl = document.getElementById("historyBody");
-const saveHistoryBtn = document.getElementById("saveHistoryBtn");
-const loadHistoryBtn = document.getElementById("loadHistoryBtn");
-const signalsBodyEl = document.getElementById("signalsBody");
-const STABLE_ASSET_SYMBOLS = ["USDC", "USDZ", "EURC", "USDT"];
-let latestAggregated = null;
-let latestSignals = null;
-let latestHistory = [];
-let shareSuccessTimeout = null;
-function setStatus(message, type = "info") {
-statusEl.textContent = message;
-statusEl.classList.toggle("error", type === "error");
-statusEl.style.display = message ? "block" : "none";
-}
-function formatNumber(value, digits = 2) {
-return Number(value).toLocaleString(undefined, { maximumFractionDigits: digits });
-}
-function formatCurrency(value) {
-return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(value);
-}
-function formatCompactNumber(value) {
-const num = Number(value) || 0;
-if (Math.abs(num) >= 1_000_000_000) return `${(num / 1_000_000_000).toFixed(2).replace(/\.?0+$/, "")}B`;
-if (Math.abs(num) >= 1_000_000) return `${(num / 1_000_000).toFixed(2).replace(/\.?0+$/, "")}M`;
-if (Math.abs(num) >= 1_000) return `${(num / 1_000).toFixed(2).replace(/\.?0+$/, "")}K`;
-return formatNumber(num, 2);
-}
-function formatCompactCurrency(value) {
-const num = Number(value) || 0;
-const abs = Math.abs(num);
-if (abs >= 1_000_000_000) return `US$${(num / 1_000_000_000).toFixed(2).replace(/\.?0+$/, "")}B`;
-if (abs >= 1_000_000) return `US$${(num / 1_000_000).toFixed(2).replace(/\.?0+$/, "")}M`;
-if (abs >= 1_000) return `US$${(num / 1_000).toFixed(2).replace(/\.?0+$/, "")}K`;
-return formatCurrency(num).replace("$", "US$");
-}
-function getAddressesFromInput() {
-return addressesEl.value
-.split(/[\n,]/)
-.map(a => a.trim())
-.filter(Boolean);
-}
-function getContractsFromInput() {
-return contractsEl.value
-.split(/[\n,]/)
-.map(contract => contract.trim())
-.filter(Boolean);
-}
-function updateUrlWithWallets(addresses, contracts = getContractsFromInput()) {
-const url = new URL(window.location.href);
-if (addresses.length) {
-url.searchParams.set("wallets", addresses.join(","));
-} else {
-url.searchParams.delete("wallets");
-}
-if (contracts.length) {
-url.searchParams.set("contracts", contracts.join(","));
-} else {
-url.searchParams.delete("contracts");
-}
-window.history.replaceState({}, "", url);
-return url.toString();
-}
-function loadWalletsFromUrl() {
-const params = new URLSearchParams(window.location.search);
-const walletsParam = params.get("wallets");
-const contractsParam = params.get("contracts");
-const addresses = walletsParam
-? walletsParam.split(",").map(a => a.trim()).filter(Boolean)
-: [];
-const contracts = contractsParam
-? contractsParam.split(",").map(contract => contract.trim()).filter(Boolean)
-: [];
-if (addresses.length) {
-addressesEl.value = addresses.join("\n");
-}
-if (contracts.length) {
-contractsEl.value = contracts.join("\n");
-}
-return addresses;
-}
-function showShareButtonSuccess() {
-if (shareSuccessTimeout) clearTimeout(shareSuccessTimeout);
-shareBtn.classList.add("share-success");
-shareBtnText.textContent = "Share Link Copied";
-shareBtn.setAttribute("aria-label", "Share Link Copied");
-shareSuccessTimeout = setTimeout(() => {
-shareBtn.classList.remove("share-success");
-shareBtnText.textContent = "Generate Share Link";
-shareBtn.setAttribute("aria-label", "Generate Share Link");
-}, 2500);
-}
-async function copyShareLink() {
-const addresses = getAddressesFromInput();
-const contracts = getContractsFromInput();
-if (addresses.length === 0) {
-setStatus("Enter wallet addresses first, then copy the link.", "error");
-return;
-}
-const shareUrl = updateUrlWithWallets(addresses, contracts);
-try {
-await navigator.clipboard.writeText(shareUrl);
-showShareButtonSuccess();
-} catch (error) {
-setStatus(`Copy failed. Use this URL manually: ${shareUrl}`, "error");
-}
-}
-function buildApiUrl(addresses, contracts = []) {
-const url = new URL(`${window.location.origin}/api/aggregate`);
-url.searchParams.set("wallets", addresses.join(","));
-if (contracts.length) url.searchParams.set("contracts", contracts.join(","));
-return url.toString();
-}
-function buildHistoryUrl(addresses, contracts = []) {
-const url = new URL(`${window.location.origin}/api/history`);
-url.searchParams.set("wallets", addresses.join(","));
-if (contracts.length) url.searchParams.set("contracts", contracts.join(","));
-return url;
-}
-function generateTreasurySignals(aggregatedData) {
-const assets = Array.isArray(aggregatedData?.assets) ? aggregatedData.assets : [];
-const pricedAssets = assets.filter(asset => typeof asset.usdValue === "number" && asset.usdValue > 0);
-const totalPricedValue = pricedAssets.reduce((sum, asset) => sum + asset.usdValue, 0);
-const largestAsset = pricedAssets.slice().sort((a, b) => b.usdValue - a.usdValue)[0] || null;
-const largestAssetShare = largestAsset && totalPricedValue > 0 ? (largestAsset.usdValue / totalPricedValue) * 100 : 0;
-const unpricedCount = Array.isArray(aggregatedData?.unpricedAssets)
-? aggregatedData.unpricedAssets.length
-: assets.filter(asset => asset.usdValue === null || asset.usdValue === undefined).length;
-const stableValue = pricedAssets
-.filter(asset => STABLE_ASSET_SYMBOLS.includes(String(asset.symbol || "").toUpperCase()))
-.reduce((sum, asset) => sum + asset.usdValue, 0);
-const stableShare = totalPricedValue > 0 ? (stableValue / totalPricedValue) * 100 : 0;
-const walletCount = Number(aggregatedData?.walletCount || 0);
-const walletConcentrationValue = walletCount === 1 && totalPricedValue > 0 ? 100 : null;
-return {
-assetConcentration: {
-severity: largestAssetShare > 80 ? "watch" : "good",
-label: "Asset Concentration",
-message: largestAssetShare > 80
-? `High asset concentration: ${largestAsset.symbol} represents ${Math.round(largestAssetShare)}% of priced treasury value.`
-: "Asset concentration looks balanced.",
-value: Math.round(largestAssetShare)
-},
-walletConcentration: {
-severity: walletConcentrationValue && walletConcentrationValue > 80 ? "watch" : "good",
-label: "Wallet Concentration",
-message: walletConcentrationValue && walletConcentrationValue > 80
-? `High wallet concentration: one wallet holds ${walletConcentrationValue}% of priced treasury value.`
-: "Wallet distribution looks balanced.",
-value: walletConcentrationValue
-},
-unpricedAssets: {
-severity: unpricedCount > 0 ? "info" : "good",
-label: "Unpriced Assets",
-message: unpricedCount > 0
-? `${unpricedCount} ${unpricedCount === 1 ? "asset does" : "assets do"} not have pricing data.`
-: "All detected assets are priced.",
-value: unpricedCount
-},
-stableExposure: {
-severity: stableShare > 0 ? "info" : "info",
-label: "Stable Exposure",
-message: stableShare > 0
-? `Stable asset exposure: ${Math.round(stableShare)}% of priced treasury value.`
-: "No stable asset exposure detected.",
-value: Math.round(stableShare)
-},
-idleTreasury: {
-severity: largestAssetShare > 90 ? "watch" : "good",
-label: "Idle Treasury Signal",
-message: largestAssetShare > 90
-? "Potential idle treasury: most value is concentrated in one asset."
-: "No simple idle treasury signal detected.",
-value: largestAssetShare > 90
-}
-};
-}
-function renderTreasurySignals(signals) {
-if (!signals) {
-signalsBodyEl.innerHTML = '<p class="signals-empty">Aggregate wallets to generate treasury signals.</p>';
-return;
-}
-const orderedSignals = [
-signals.assetConcentration,
-signals.walletConcentration,
-signals.unpricedAssets,
-signals.stableExposure,
-signals.idleTreasury
-];
-signalsBodyEl.innerHTML = `
-<div class="signals-grid">
-${orderedSignals.map(signal => `
-<article class="signal-card">
-<div class="signal-top">
-<span class="signal-label">${signal.label}</span>
-<span class="signal-badge ${signal.severity}">${signal.severity}</span>
-</div>
-<p class="signal-message">${signal.message}</p>
-</article>
-`).join("")}
-</div>
-`;
-}
-function renderHistory(snapshots = []) {
-latestHistory = Array.isArray(snapshots) ? snapshots : [];
-if (!latestHistory.length) {
-historyBodyEl.innerHTML = '<p class="history-empty">No saved snapshots yet for this wallet and contract set.</p>';
-return;
-}
-const rows = latestHistory
-.slice()
-.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-.map(snapshot => {
-const unpricedCount = Array.isArray(snapshot.unpricedAssets) ? snapshot.unpricedAssets.length : 0;
-const timestamp = snapshot.timestamp ? new Date(snapshot.timestamp).toLocaleString() : "Unknown";
-return `
-<tr>
-<td>${timestamp}</td>
-<td>${formatCompactCurrency(snapshot.totalUSD || 0)}</td>
-<td>${formatCompactNumber(snapshot.totalXLM || 0)}</td>
-<td>${unpricedCount}</td>
-</tr>
-`;
-})
-.join("");
-historyBodyEl.innerHTML = `
-<div class="history-table-wrap">
-<table class="history-table">
-<thead>
-<tr>
-<th>Snapshot time</th>
-<th>Total USD</th>
-<th>Total XLM</th>
-<th>Unpriced assets</th>
-</tr>
-</thead>
-<tbody>${rows}</tbody>
-</table>
-</div>
-`;
-}
-async function fetchHistory({ silent = false } = {}) {
-const addresses = getAddressesFromInput();
-const contracts = getContractsFromInput();
-if (addresses.length === 0) {
-if (!silent) setStatus("Enter wallet addresses before loading history.", "error");
-return;
-}
-loadHistoryBtn.disabled = true;
-try {
-const historyUrl = buildHistoryUrl(addresses, contracts);
-const response = await fetch(`${historyUrl.pathname}${historyUrl.search}`);
-if (!response.ok) {
-let message = "History lookup failed";
-try {
-const err = await response.json();
-message = err?.message || err?.error || message;
-} catch (_) {}
-throw new Error(message);
-}
-const history = await response.json();
-renderHistory(history.snapshots || []);
-if (!silent) setStatus(`History loaded. ${history.count || 0} snapshot${history.count === 1 ? "" : "s"}.`);
-} catch (error) {
-console.error(error);
-if (!silent) setStatus(`History error: ${error.message}`, "error");
-} finally {
-loadHistoryBtn.disabled = false;
-}
-}
-async function saveHistorySnapshot() {
-const addresses = getAddressesFromInput();
-const contracts = getContractsFromInput();
-if (addresses.length === 0) {
-setStatus("Enter wallet addresses before saving history.", "error");
-return;
-}
-saveHistoryBtn.disabled = true;
-setStatus("Saving treasury snapshot...");
-try {
-const response = await fetch("/api/snapshot", {
-method: "POST",
-headers: { "Content-Type": "application/json" },
-body: JSON.stringify({ wallets: addresses, contracts })
-});
-let data;
-try {
-data = await response.json();
-} catch (_) {
-throw new Error("Snapshot API returned invalid JSON");
-}
-if (!response.ok || data?.success === false) {
-throw new Error(data?.message || data?.error || "Snapshot save failed");
-}
-if (data.saved === false) {
-setStatus(data.warning || "Snapshot storage unavailable", "error");
-} else {
-setStatus("Historical snapshot saved.");
-}
-await fetchHistory({ silent: true });
-} catch (error) {
-console.error(error);
-setStatus(`Snapshot error: ${error.message}`, "error");
-} finally {
-saveHistoryBtn.disabled = false;
-}
-}
-async function downloadTreasurySnapshot() {
-if (!latestAggregated) {
-setStatus("Aggregate wallets before downloading snapshot.", "error");
-return;
-}
-const wallets = getAddressesFromInput();
-const contracts = getContractsFromInput();
-const shareUrl = updateUrlWithWallets(wallets, contracts);
-const apiUrl = buildApiUrl(wallets, contracts);
-const signals = latestSignals || generateTreasurySignals(latestAggregated);
-const snapshot = {
-app: "WealthView",
-snapshotType: "stellar_treasury_snapshot",
-timestamp: new Date().toISOString(),
-wallets,
-contracts,
-shareUrl,
-apiUrl,
-summary: {
-walletCount: latestAggregated.walletCount || 0,
-totalXLM: latestAggregated.totalXLM || 0,
-totalUSD: latestAggregated.totalUSD || 0
-},
-assets: Array.isArray(latestAggregated.assets) ? latestAggregated.assets : [],
-signals
-};
-const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: "application/json" });
-const url = URL.createObjectURL(blob);
-const link = document.createElement("a");
-link.href = url;
-link.download = "wealthview-treasury-snapshot.json";
-document.body.appendChild(link);
-link.click();
-link.remove();
-URL.revokeObjectURL(url);
-setStatus("Treasury snapshot downloaded.");
-}
-function exportTreasuryJson() {
-if (!latestAggregated) {
-setStatus("Aggregate portfolio first, then export JSON.", "error");
-return;
-}
-const exportData = {
-walletCount: latestAggregated.walletCount || 0,
-totalXLM: latestAggregated.totalXLM || 0,
-totalUSD: latestAggregated.totalUSD || 0,
-assets: Array.isArray(latestAggregated.assets) ? latestAggregated.assets : []
-};
-const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
-const url = URL.createObjectURL(blob);
-const link = document.createElement("a");
-link.href = url;
-link.download = "wealthview-treasury.json";
-document.body.appendChild(link);
-link.click();
-link.remove();
-URL.revokeObjectURL(url);
-setStatus("Treasury JSON exported");
-}
-function renderDashboard(data) {
-const walletCount = data.walletCount ?? 0;
-const totalXLM = Number(data.totalXLM || 0);
-const totalUSD = Number(data.totalUSD || 0);
-const walletCountEl = document.getElementById("walletCount");
-const totalXLMEl = document.getElementById("totalXLM");
-const totalUSDEl = document.getElementById("totalUSD");
-walletCountEl.textContent = formatNumber(walletCount, 0);
-walletCountEl.title = formatNumber(walletCount, 0);
-totalXLMEl.textContent = formatCompactNumber(totalXLM);
-totalXLMEl.title = formatNumber(totalXLM, 6);
-totalUSDEl.textContent = formatCompactCurrency(totalUSD);
-totalUSDEl.title = formatCurrency(totalUSD).replace("$", "US$");
-const assetsNormalized = Array.isArray(data.assets)
-? data.assets.map(asset => ({
-symbol: asset.symbol,
-totalAmount: asset.amount,
-totalValueUSD: asset.usdValue,
-priced: asset.usdValue !== null && asset.usdValue !== undefined
-}))
-: [];
-const body = document.getElementById("assetTableBody");
-const rows = assetsNormalized
-.sort((a, b) => (b.totalValueUSD ?? -1) - (a.totalValueUSD ?? -1))
-.map(asset => `
-<tr>
-<td>${asset.symbol}</td>
-<td>${formatNumber(asset.totalAmount || 0, 6)}</td>
-<td>${asset.priced ? formatCurrency(asset.totalValueUSD || 0) : "Price unavailable"}</td>
-</tr>
-`)
-.join("");
-body.innerHTML = rows || '<tr><td class="empty" colspan="3">No asset balances found.</td></tr>';
-}
 async function fetchPortfolio() {
-const addresses = getAddressesFromInput();
-const contracts = getContractsFromInput();
-if (addresses.length === 0) {
-setStatus("Enter at least one wallet address.", "error");
-return;
+  const raw = document.getElementById("addresses").value;
+  const status = document.getElementById("status");
+  const output = document.getElementById("jsonOutput");
+    function formatCurrency(value) {
+      return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(value);
+    }
+
+  output.innerText = "";
+    function formatCompactNumber(value) {
+      const num = Number(value) || 0;
+      if (Math.abs(num) >= 1_000_000_000) return `${(num / 1_000_000_000).toFixed(2).replace(/\.?0+$/, "")}B`;
+      if (Math.abs(num) >= 1_000_000) return `${(num / 1_000_000).toFixed(2).replace(/\.?0+$/, "")}M`;
+      if (Math.abs(num) >= 1_000) return `${(num / 1_000).toFixed(2).replace(/\.?0+$/, "")}K`;
+      return formatNumber(num, 2);
+    }
+
+  const addresses = raw
+    .split("\n")
+    .map(a => a.trim())
+    .filter(a => a.length > 0);
+    function formatCompactCurrency(value) {
+      const num = Number(value) || 0;
+      const abs = Math.abs(num);
+      if (abs >= 1_000_000_000) return `US$${(num / 1_000_000_000).toFixed(2).replace(/\.?0+$/, "")}B`;
+      if (abs >= 1_000_000) return `US$${(num / 1_000_000).toFixed(2).replace(/\.?0+$/, "")}M`;
+      if (abs >= 1_000) return `US$${(num / 1_000).toFixed(2).replace(/\.?0+$/, "")}K`;
+      return formatCurrency(num).replace("$", "US$");
+    }
+
+  if (addresses.length === 0) {
+    status.innerText = "Enter at least one wallet address";
+    return;
+  }
+    function getAddressesFromInput() {
+      return addressesEl.value
+        .split(/[\n,]/)
+        .map(a => a.trim())
+        .filter(Boolean);
+    }
+
+  status.innerText = "Loading portfolios...";
+    function getContractsFromInput() {
+      return contractsEl.value
+        .split(/[\n,]/)
+        .map(contract => contract.trim())
+        .filter(Boolean);
+    }
+
+  try {
+    // XLM price
+    const priceRes = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=stellar&vs_currencies=usd");
+    const priceData = await priceRes.json();
+    const xlmPrice = priceData.stellar.usd;
+    function updateUrlWithWallets(addresses, contracts = getContractsFromInput()) {
+      const url = new URL(window.location.href);
+      if (addresses.length) {
+        url.searchParams.set("wallets", addresses.join(","));
+      } else {
+        url.searchParams.delete("wallets");
+      }
+
+    let aggregated = {
+      wallets: addresses.length,
+      totalXLM: 0,
+      totalUSD: 0,
+      assets: {}
+    };
+      if (contracts.length) {
+        url.searchParams.set("contracts", contracts.join(","));
+      } else {
+        url.searchParams.delete("contracts");
+      }
+
+    // Process each wallet
+    for (let addr of addresses) {
+      window.history.replaceState({}, "", url);
+      return url.toString();
+    }
+
+      const res = await fetch(`https://horizon.stellar.org/accounts/${addr}`);
+    function loadWalletsFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const walletsParam = params.get("wallets");
+      const contractsParam = params.get("contracts");
+      const addresses = walletsParam
+        ? walletsParam.split(",").map(a => a.trim()).filter(Boolean)
+        : [];
+      const contracts = contractsParam
+        ? contractsParam.split(",").map(contract => contract.trim()).filter(Boolean)
+        : [];
+
+      if (!res.ok) {
+        console.log("Skipping invalid wallet:", addr);
+        continue;
+      if (addresses.length) {
+        addressesEl.value = addresses.join("\n");
+      }
+
+      const data = await res.json();
+      if (contracts.length) {
+        contractsEl.value = contracts.join("\n");
+      }
+
+      data.balances.forEach(b => {
+      return addresses;
+    }
+
+        let isNative = b.asset_type === "native";
+    function showShareButtonSuccess() {
+      if (shareSuccessTimeout) clearTimeout(shareSuccessTimeout);
+
+        let symbol = isNative ? "XLM" : b.asset_code;
+        let amount = parseFloat(b.balance);
+      shareBtn.classList.add("share-success");
+      shareBtnText.textContent = "Share Link Copied";
+      shareBtn.setAttribute("aria-label", "Share Link Copied");
+
+        let priceUSD = isNative ? xlmPrice : 0;
+        let valueUSD = isNative ? amount * xlmPrice : 0;
+      shareSuccessTimeout = setTimeout(() => {
+        shareBtn.classList.remove("share-success");
+        shareBtnText.textContent = "Generate Share Link";
+        shareBtn.setAttribute("aria-label", "Generate Share Link");
+      }, 2500);
+    }
+
+        // INIT asset bucket if not exists
+        if (!aggregated.assets[symbol]) {
+          aggregated.assets[symbol] = {
+            symbol: symbol,
+            totalAmount: 0,
+            totalValueUSD: 0,
+            type: isNative ? "native" : "token"
+          };
+        }
+    async function copyShareLink() {
+      const addresses = getAddressesFromInput();
+      const contracts = getContractsFromInput();
+      if (addresses.length === 0) {
+        setStatus("Enter wallet addresses first, then copy the link.", "error");
+        return;
+      }
+
+      const shareUrl = updateUrlWithWallets(addresses, contracts);
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        showShareButtonSuccess();
+      } catch (error) {
+        setStatus(`Copy failed. Use this URL manually: ${shareUrl}`, "error");
+      }
+    }
+
+    function buildApiUrl(addresses, contracts = []) {
+      const url = new URL(`${window.location.origin}/api/aggregate`);
+      url.searchParams.set("wallets", addresses.join(","));
+      if (contracts.length) url.searchParams.set("contracts", contracts.join(","));
+      return url.toString();
+    }
+
+    function buildHistoryUrl(addresses, contracts = []) {
+      const url = new URL(`${window.location.origin}/api/history`);
+      url.searchParams.set("wallets", addresses.join(","));
+      if (contracts.length) url.searchParams.set("contracts", contracts.join(","));
+      return url;
+    }
+
+        aggregated.assets[symbol].totalAmount += amount;
+        aggregated.assets[symbol].totalValueUSD += valueUSD;
+    function generateTreasurySignals(aggregatedData) {
+      const assets = Array.isArray(aggregatedData?.assets) ? aggregatedData.assets : [];
+      const pricedAssets = assets.filter(asset => typeof asset.usdValue === "number" && asset.usdValue > 0);
+      const totalPricedValue = pricedAssets.reduce((sum, asset) => sum + asset.usdValue, 0);
+      const largestAsset = pricedAssets.slice().sort((a, b) => b.usdValue - a.usdValue)[0] || null;
+      const largestAssetShare = largestAsset && totalPricedValue > 0 ? (largestAsset.usdValue / totalPricedValue) * 100 : 0;
+      const unpricedCount = Array.isArray(aggregatedData?.unpricedAssets)
+        ? aggregatedData.unpricedAssets.length
+        : assets.filter(asset => asset.usdValue === null || asset.usdValue === undefined).length;
+      const stableValue = pricedAssets
+        .filter(asset => STABLE_ASSET_SYMBOLS.includes(String(asset.symbol || "").toUpperCase()))
+        .reduce((sum, asset) => sum + asset.usdValue, 0);
+      const stableShare = totalPricedValue > 0 ? (stableValue / totalPricedValue) * 100 : 0;
+      const walletCount = Number(aggregatedData?.walletCount || 0);
+      const walletConcentrationValue = walletCount === 1 && totalPricedValue > 0 ? 100 : null;
+
+        if (isNative) {
+          aggregated.totalXLM += amount;
+          aggregated.totalUSD += valueUSD;
+      return {
+        assetConcentration: {
+          severity: largestAssetShare > 80 ? "watch" : "good",
+          label: "Asset Concentration",
+          message: largestAssetShare > 80
+            ? `High asset concentration: ${largestAsset.symbol} represents ${Math.round(largestAssetShare)}% of priced treasury value.`
+            : "Asset concentration looks balanced.",
+          value: Math.round(largestAssetShare)
+        },
+        walletConcentration: {
+          severity: walletConcentrationValue && walletConcentrationValue > 80 ? "watch" : "good",
+          label: "Wallet Concentration",
+          message: walletConcentrationValue && walletConcentrationValue > 80
+            ? `High wallet concentration: one wallet holds ${walletConcentrationValue}% of priced treasury value.`
+            : "Wallet distribution looks balanced.",
+          value: walletConcentrationValue
+        },
+        unpricedAssets: {
+          severity: unpricedCount > 0 ? "info" : "good",
+          label: "Unpriced Assets",
+          message: unpricedCount > 0
+            ? `${unpricedCount} ${unpricedCount === 1 ? "asset does" : "assets do"} not have pricing data.`
+            : "All detected assets are priced.",
+          value: unpricedCount
+        },
+        stableExposure: {
+          severity: stableShare > 0 ? "info" : "info",
+          label: "Stable Exposure",
+          message: stableShare > 0
+            ? `Stable asset exposure: ${Math.round(stableShare)}% of priced treasury value.`
+            : "No stable asset exposure detected.",
+          value: Math.round(stableShare)
+        },
+        idleTreasury: {
+          severity: largestAssetShare > 90 ? "watch" : "good",
+          label: "Idle Treasury Signal",
+          message: largestAssetShare > 90
+            ? "Potential idle treasury: most value is concentrated in one asset."
+            : "No simple idle treasury signal detected.",
+          value: largestAssetShare > 90
+        }
+      };
+    }
+
+    function renderTreasurySignals(signals) {
+      if (!signals) {
+        signalsBodyEl.innerHTML = '<p class="signals-empty">Aggregate wallets to generate treasury signals.</p>';
+        return;
+      }
+
+      const orderedSignals = [
+        signals.assetConcentration,
+        signals.walletConcentration,
+        signals.unpricedAssets,
+        signals.stableExposure,
+        signals.idleTreasury
+      ];
+
+      signalsBodyEl.innerHTML = `
+        <div class="signals-grid">
+          ${orderedSignals.map(signal => `
+            <article class="signal-card">
+              <div class="signal-top">
+                <span class="signal-label">${signal.label}</span>
+                <span class="signal-badge ${signal.severity}">${signal.severity}</span>
+              </div>
+              <p class="signal-message">${signal.message}</p>
+            </article>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function assetIdentity(asset) {
+      return asset?.contractId ? `contract:${asset.contractId}` : String(asset?.symbol || "UNKNOWN").toUpperCase();
+    }
+
+    function compareSnapshotForChanges(currentData, previousSnapshot) {
+      if (!previousSnapshot) {
+        return { available: false, message: "Upload or compare with a previous snapshot to detect treasury changes.", newAssets: [], removedAssets: [] };
+      }
+      const currentAssets = Array.isArray(currentData?.assets) ? currentData.assets : [];
+      const previousAssets = Array.isArray(previousSnapshot?.assets) ? previousSnapshot.assets : [];
+      const previousMap = new Map(previousAssets.map(asset => [assetIdentity(asset), asset]));
+      const currentMap = new Map(currentAssets.map(asset => [assetIdentity(asset), asset]));
+      const newAssets = currentAssets.filter(asset => !previousMap.has(assetIdentity(asset))).map(asset => asset.symbol || asset.contractId || "UNKNOWN");
+      const removedAssets = previousAssets.filter(asset => !currentMap.has(assetIdentity(asset))).map(asset => asset.symbol || asset.contractId || "UNKNOWN");
+      const totalUSDChange = Number(currentData?.totalUSD || 0) - Number(previousSnapshot?.totalUSD || previousSnapshot?.summary?.totalUSD || 0);
+      const totalXLMChange = Number(currentData?.totalXLM || 0) - Number(previousSnapshot?.totalXLM || previousSnapshot?.summary?.totalXLM || 0);
+      const baseUsd = Number(previousSnapshot?.totalUSD || previousSnapshot?.summary?.totalUSD || 0);
+      return {
+        available: true,
+        previousTimestamp: previousSnapshot.timestamp || null,
+        totalUSDChange,
+        totalUSDChangePercent: baseUsd > 0 ? (totalUSDChange / baseUsd) * 100 : null,
+        totalXLMChange,
+        newAssets,
+        removedAssets,
+        message: `Treasury value changed by ${formatCurrency(totalUSDChange)}${baseUsd > 0 ? ` (${formatNumber((totalUSDChange / baseUsd) * 100, 2)}%)` : ""}.`
+      };
+    }
+
+    function generateClientIntelligence(data, changeDetection = null) {
+      const assets = Array.isArray(data?.assets) ? data.assets : [];
+      const pricedAssets = assets.filter(asset => typeof asset.usdValue === "number" && asset.usdValue > 0);
+      const totalPricedValue = pricedAssets.reduce((sum, asset) => sum + Number(asset.usdValue || 0), 0);
+      const largestAsset = pricedAssets.slice().sort((a, b) => b.usdValue - a.usdValue)[0] || null;
+      const largestShare = largestAsset && totalPricedValue > 0 ? (largestAsset.usdValue / totalPricedValue) * 100 : 0;
+      const stableAssets = pricedAssets.filter(asset => STABLE_ASSET_SYMBOLS.includes(String(asset.symbol || "").toUpperCase()));
+      const stableValue = stableAssets.reduce((sum, asset) => sum + Number(asset.usdValue || 0), 0);
+      const stableShare = totalPricedValue > 0 ? (stableValue / totalPricedValue) * 100 : 0;
+      const volatileValue = pricedAssets.filter(asset => !STABLE_ASSET_SYMBOLS.includes(String(asset.symbol || "").toUpperCase())).reduce((sum, asset) => sum + Number(asset.usdValue || 0), 0);
+      const volatileShare = totalPricedValue > 0 ? (volatileValue / totalPricedValue) * 100 : 0;
+      const unpricedCount = assets.filter(asset => asset.usdValue === null || asset.usdValue === undefined).length;
+      const pricingCoverage = assets.length ? (pricedAssets.length / assets.length) * 100 : 100;
+      let score = 100;
+      const strengths = [];
+      const risks = [];
+      if ((data.walletCount || 0) > 1) strengths.push("Multi-wallet visibility enabled"); else { score -= 10; risks.push("Only one wallet is included"); }
+      if (largestShare > 80) { score -= 20; risks.push(`High ${largestAsset?.symbol || "asset"} concentration`); }
+      else if (largestShare > 60) { score -= 10; risks.push(`Moderate ${largestAsset?.symbol || "asset"} concentration`); }
+      else if (pricedAssets.length > 1) strengths.push("Diversification is visible across priced assets");
+      if (stableShare >= 15 && stableShare <= 70) strengths.push("Strong liquidity visibility");
+      if (stableShare < 5 && totalPricedValue > 0) { score -= 8; risks.push("Low stablecoin liquidity detected"); }
+      if (volatileShare > 80) { score -= 12; risks.push("High volatile asset exposure"); }
+      if (unpricedCount > 0) { score -= Math.min(20, unpricedCount * 6); risks.push("Some assets missing reliable pricing"); }
+      else if (assets.length) strengths.push("All detected assets are priced");
+
+      const idleAssets = [];
+      stableAssets.forEach(asset => {
+        const share = totalPricedValue > 0 ? (asset.usdValue / totalPricedValue) * 100 : 0;
+        if (share >= 10) idleAssets.push({ symbol: asset.symbol, usdValue: asset.usdValue, share, reason: "Meaningful stablecoin balance" });
+      });
+      pricedAssets.filter(asset => String(asset.symbol || "").toUpperCase() === "XLM").forEach(asset => {
+        const share = totalPricedValue > 0 ? (asset.usdValue / totalPricedValue) * 100 : 0;
+        if (share >= 70) idleAssets.push({ symbol: asset.symbol, usdValue: asset.usdValue, share, reason: "Large XLM concentration" });
+      });
+      const idleUSD = idleAssets.reduce((sum, asset) => sum + Number(asset.usdValue || 0), 0);
+      const idlePercent = totalPricedValue > 0 ? (idleUSD / totalPricedValue) * 100 : 0;
+      if (idlePercent > 50) { score -= 10; risks.push("A large share of priced treasury value may be idle"); }
+      score = Math.max(0, Math.min(100, Math.round(score)));
+      const label = score >= 85 ? "Excellent" : score >= 70 ? "Good" : score >= 50 ? "Watch" : "High Risk";
+
+      const alerts = [
+        { severity: largestShare > 80 ? "risk" : largestShare > 60 ? "watch" : "good", title: "Concentration Alert", explanation: largestAsset ? `${largestAsset.symbol} represents ${Math.round(largestShare)}% of priced value.` : "No priced asset concentration is available.", suggestedAction: "Review concentration limits and diversification policy." },
+        { severity: stableShare > 85 || stableShare < 5 ? "watch" : "info", title: "Stablecoin Exposure Alert", explanation: `Stable assets represent ${Math.round(stableShare)}% of priced value.`, suggestedAction: "Confirm balances match liquidity and reserve requirements." },
+        { severity: volatileShare > 80 ? "watch" : "info", title: "Volatility Exposure Alert", explanation: `Non-stable priced assets represent ${Math.round(volatileShare)}% of priced value.`, suggestedAction: "Stress test treasury value against market moves." },
+        { severity: unpricedCount > 0 ? "info" : "good", title: "Pricing Coverage Alert", explanation: unpricedCount ? `${unpricedCount} asset${unpricedCount === 1 ? " is" : "s are"} missing pricing.` : "All detected assets are priced.", suggestedAction: "Add explicit pricing mappings only when reliable sources exist." },
+        { severity: (data.walletCount || 0) <= 1 ? "watch" : "good", title: "Wallet Aggregation Alert", explanation: `${data.walletCount || 0} wallet${(data.walletCount || 0) === 1 ? " is" : "s are"} aggregated.`, suggestedAction: "Include all reserve and operations wallets for fuller visibility." },
+        { severity: idlePercent > 50 ? "watch" : idlePercent > 10 ? "info" : "good", title: "Idle Capital Alert", explanation: `${formatNumber(idlePercent, 2)}% of priced treasury value may be idle.`, suggestedAction: "Review what should remain liquid versus productive treasury strategies." }
+      ];
+      if (changeDetection?.available) {
+        alerts.push({ severity: Math.abs(changeDetection.totalUSDChangePercent || 0) >= 20 ? "watch" : "info", title: "Treasury Value Movement Alert", explanation: changeDetection.message, suggestedAction: "Review asset flows and price movement." });
+        alerts.push({ severity: changeDetection.newAssets.length ? "info" : "good", title: "New Asset Detected Alert", explanation: changeDetection.newAssets.length ? `New assets: ${changeDetection.newAssets.join(", ")}.` : "No new assets detected.", suggestedAction: "Validate new asset purpose, issuer, and pricing coverage." });
+      }
+
+      const benchmark = (scoreValue, explanation) => ({ score: Math.round(Math.max(0, Math.min(100, scoreValue))), label: scoreValue >= 80 ? "Strong" : scoreValue >= 60 ? "Ready" : scoreValue >= 40 ? "Watch" : "Needs Attention", explanation });
+      const intelligence = {
+        treasuryHealth: { score, label, strengths, risks, explanation: "Score reflects diversification, concentration risk, liquidity, stable exposure, volatile exposure, idle capital, valuation completeness, wallet coverage, and detected risk signals." },
+        idleCapital: { estimatedUSD: idleUSD, percentage: idlePercent, assets: idleAssets, explanation: idleUSD ? `${formatCurrency(idleUSD)} may be sitting idle. This represents ${formatNumber(idlePercent, 2)}% of the priced treasury.` : "No meaningful priced idle capital pattern was detected.", opportunityNote: "Potential action: review whether part of this balance should remain liquid or be allocated to productive treasury strategies. This is conservative and does not claim real yield." },
+        alerts,
+        benchmarks: {
+          Diversification: benchmark(100 - largestShare, "Compared against WealthView treasury-readiness rules."),
+          Liquidity: benchmark(stableShare + ((data.walletCount || 0) > 1 ? 15 : 0), "Scores visible stable assets and multi-wallet liquidity visibility."),
+          "Concentration Risk": benchmark(100 - largestShare, "Lower single-asset dominance produces a stronger benchmark."),
+          "Stablecoin Balance": benchmark(totalPricedValue > 0 ? 100 - Math.abs(35 - stableShare) : 50, "Rewards visible but not excessive stable asset exposure."),
+          "Pricing Coverage": benchmark(pricingCoverage, "Measures how much of the detected asset list has reliable pricing."),
+          "Treasury Readiness": benchmark(score, "Overall WealthView rule-based treasury-readiness score.")
+        },
+        changeDetection: changeDetection || { available: false, message: "Upload or compare with a previous snapshot to detect treasury changes." },
+        simulationDefaults: { xlmPriceChangePercent: -20, stablecoinDepegPercent: -2, topAssetDeclinePercent: -25, reallocationPercent: 10 },
+        executiveBrief: ""
+      };
+      intelligence.executiveBrief = buildExecutiveBrief(intelligence, data);
+      return intelligence;
+    }
+
+    function buildExecutiveBrief(intelligence, data) {
+      const health = intelligence.treasuryHealth;
+      const idle = intelligence.idleCapital;
+      const riskAlerts = intelligence.alerts.filter(alert => ["risk", "watch"].includes(alert.severity)).slice(0, 3);
+      return [
+        `Executive Treasury Brief — ${new Date().toISOString()}`,
+        `Current visible treasury value: ${formatCurrency(data.totalUSD || 0)}.`,
+        `Treasury Health: ${health.score}/100 (${health.label}).`,
+        `Biggest strength: ${health.strengths[0] || "Treasury data is visible through an API-driven workflow."}`,
+        `Biggest risk: ${health.risks[0] || "No major rule-based risk detected from visible balances."}`,
+        `Estimated idle capital: ${formatCurrency(idle.estimatedUSD || 0)} (${formatNumber(idle.percentage || 0, 2)}% of priced treasury value).`,
+        riskAlerts.length ? `Key alerts: ${riskAlerts.map(alert => alert.title).join(", ")}.` : "Key alerts: no high-priority alerts from current visible balances.",
+        intelligence.changeDetection?.available ? `Change summary: ${intelligence.changeDetection.message}` : "Change summary: no previous snapshot available.",
+        "Recommended next actions: review treasury concentration and liquidity policy; improve pricing coverage where reliable sources exist; save snapshots regularly for change detection."
+      ].join("\n");
+    }
+
+    function runSimulation() {
+      if (!latestAggregated || !latestIntelligence) return;
+      const xlmPct = Number(document.getElementById("simXlm")?.value || 0) / 100;
+      const stablePct = Number(document.getElementById("simStable")?.value || 0) / 100;
+      const topPct = Number(document.getElementById("simTop")?.value || 0) / 100;
+      const reallocPct = Number(document.getElementById("simRealloc")?.value || 0) / 100;
+      const assets = Array.isArray(latestAggregated.assets) ? latestAggregated.assets : [];
+      const priced = assets.filter(asset => typeof asset.usdValue === "number" && asset.usdValue > 0);
+      const topAsset = priced.slice().sort((a, b) => b.usdValue - a.usdValue)[0];
+      let simulatedValue = Number(latestAggregated.totalUSD || 0);
+      const affected = [];
+      priced.forEach(asset => {
+        const symbol = String(asset.symbol || "").toUpperCase();
+        let delta = 0;
+        if (symbol === "XLM") delta += asset.usdValue * xlmPct;
+        if (STABLE_ASSET_SYMBOLS.includes(symbol)) delta += asset.usdValue * stablePct;
+        if (topAsset && assetIdentity(asset) === assetIdentity(topAsset)) delta += asset.usdValue * topPct;
+        if (delta) affected.push(`${asset.symbol}: ${formatCurrency(delta)}`);
+        simulatedValue += delta;
+      });
+      const volatileValue = priced.filter(asset => !STABLE_ASSET_SYMBOLS.includes(String(asset.symbol || "").toUpperCase())).reduce((sum, asset) => sum + Number(asset.usdValue || 0), 0);
+      const reallocatedValue = volatileValue * reallocPct;
+      if (reallocatedValue > 0) affected.push(`Reallocated ${formatCurrency(reallocatedValue)} from volatile assets to stable assets for scenario context`);
+      const gainLoss = simulatedValue - Number(latestAggregated.totalUSD || 0);
+      const output = document.getElementById("simulationOutput");
+      if (output) {
+        output.innerHTML = `\n          <div class="metric-row"><span>Estimated new value</span><strong>${formatCurrency(simulatedValue)}</strong></div>\n          <div class="metric-row"><span>Estimated gain/loss</span><strong>${formatCurrency(gainLoss)}</strong></div>\n          <p class="signal-message">Affected assets: ${affected.length ? affected.join("; ") : "No priced assets affected by current assumptions."}</p>\n          <p class="signal-message">Simulation is an estimate based on current visible balances and prices. It is not financial advice.</p>\n        `;
+      }
+    }
+
+    function renderIntelligence(intelligence) {
+      latestIntelligence = intelligence;
+      latestExecutiveBrief = intelligence?.executiveBrief || "";
+      if (!intelligence) {
+        intelligenceBodyEl.innerHTML = '<p class="history-empty">Aggregate wallets to generate treasury intelligence.</p>';
+        return;
+      }
+      const health = intelligence.treasuryHealth;
+      const idle = intelligence.idleCapital;
+      const change = intelligence.changeDetection || { available: false, message: "Upload or compare with a previous snapshot to detect treasury changes." };
+      intelligenceBodyEl.innerHTML = `
+        <div class="intelligence-grid">
+          <article class="intelligence-card">
+            <h3>Treasury Health Score</h3>
+            <div class="health-score"><strong>${health.score}/100</strong><span class="signal-badge ${health.label === "High Risk" ? "watch" : health.label === "Watch" ? "watch" : "good"}">${health.label}</span></div>
+            <p class="signal-message">${health.explanation}</p>
+            <ul class="intelligence-list">${(health.strengths || []).slice(0, 3).map(item => `<li>${item}</li>`).join("") || "<li>Treasury data is visible.</li>"}</ul>
+            <ul class="intelligence-list">${(health.risks || []).slice(0, 3).map(item => `<li>${item}</li>`).join("") || "<li>No major rule-based risk detected.</li>"}</ul>
+          </article>
+          <article class="intelligence-card">
+            <h3>Idle Capital Detection</h3>
+            <div class="metric-row"><span>Estimated idle capital</span><strong>${formatCurrency(idle.estimatedUSD || 0)}</strong></div>
+            <div class="metric-row"><span>Idle capital share</span><strong>${formatNumber(idle.percentage || 0, 2)}%</strong></div>
+            <p class="signal-message">${idle.explanation}</p>
+            <p class="signal-message">${idle.opportunityNote}</p>
+          </article>
+          <article class="intelligence-card full">
+            <h3>Treasury Alerts</h3>
+            <div class="alert-list">${(intelligence.alerts || []).map(alert => `
+              <div class="alert-card">
+                <div class="alert-top"><span class="alert-title">${alert.title}</span><span class="signal-badge ${alert.severity === "risk" ? "watch" : alert.severity}">${alert.severity}</span></div>
+                <p>${alert.explanation}</p><p><strong>Suggested action:</strong> ${alert.suggestedAction}</p>
+              </div>`).join("")}</div>
+          </article>
+          <article class="intelligence-card full">
+            <h3>Treasury Benchmarking</h3>
+            <div class="benchmark-grid">${Object.entries(intelligence.benchmarks || {}).map(([name, item]) => `
+              <div class="benchmark-card"><strong>${name}: ${item.score}/100</strong><span>${item.label}</span><span>${item.explanation}</span></div>
+            `).join("")}</div>
+          </article>
+          <article class="intelligence-card full">
+            <h3>Changes Since Previous Snapshot</h3>
+            <input class="snapshot-upload" type="file" accept="application/json" onchange="handlePreviousSnapshotUpload(event)">
+            <div id="changeOutput">
+              <p class="signal-message">${change.available ? change.message : "Upload or compare with a previous snapshot to detect treasury changes."}</p>
+              ${change.available ? `<div class="metric-row"><span>Total USD change</span><strong>${formatCurrency(change.totalUSDChange || 0)}</strong></div><div class="metric-row"><span>New assets</span><strong>${(change.newAssets || []).join(", ") || "None"}</strong></div><div class="metric-row"><span>Removed assets</span><strong>${(change.removedAssets || []).join(", ") || "None"}</strong></div>` : ""}
+            </div>
+          </article>
+          <article class="intelligence-card full">
+            <h3>Treasury Simulation</h3>
+            <div class="simulation-controls">
+              <div class="sim-field"><label>XLM price change %</label><input id="simXlm" type="number" value="-20" oninput="runSimulation()"></div>
+              <div class="sim-field"><label>Stablecoin depeg %</label><input id="simStable" type="number" value="-2" oninput="runSimulation()"></div>
+              <div class="sim-field"><label>Top asset decline %</label><input id="simTop" type="number" value="-25" oninput="runSimulation()"></div>
+              <div class="sim-field"><label>Reallocation %</label><input id="simRealloc" type="number" value="10" oninput="runSimulation()"></div>
+            </div>
+            <div id="simulationOutput"><p class="signal-message">Simulation is an estimate based on current visible balances and prices. It is not financial advice.</p></div>
+          </article>
+          <article class="intelligence-card full">
+            <h3>Executive Treasury Brief</h3>
+            <div class="brief-actions">
+              <button class="secondary-btn" onclick="generateExecutiveBrief()">Generate Executive Brief</button>
+              <button class="secondary-btn" onclick="copyExecutiveBrief()">Copy Brief</button>
+              <button class="secondary-btn" onclick="downloadExecutiveBrief()">Download .txt</button>
+            </div>
+            <div id="briefOutput" class="brief-output">${latestExecutiveBrief || "Click Generate Executive Brief after aggregation."}</div>
+          </article>
+        </div>
+      `;
+      runSimulation();
+    }
+
+    async function fetchIntelligence({ silent = true } = {}) {
+      const addresses = getAddressesFromInput();
+      const contracts = getContractsFromInput();
+      if (!addresses.length || !latestAggregated) return;
+      try {
+        const url = new URL("/api/intelligence", window.location.origin);
+        url.searchParams.set("wallets", addresses.join(","));
+        if (contracts.length) url.searchParams.set("contracts", contracts.join(","));
+        const response = await fetch(`${url.pathname}${url.search}`);
+        if (!response.ok) throw new Error("Treasury Intelligence API unavailable");
+        const data = await response.json();
+        latestIntelligence = data;
+        latestChangeDetection = data.changeDetection || null;
+        renderIntelligence(data);
+      } catch (error) {
+        console.warn(error);
+        const intelligence = generateClientIntelligence(latestAggregated, latestChangeDetection);
+        renderIntelligence(intelligence);
+        if (!silent) setStatus(`Intelligence fallback generated locally: ${error.message}`);
+      }
+    }
+
+    async function handlePreviousSnapshotUpload(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file || !latestAggregated) return;
+      try {
+        const text = await file.text();
+        const parsed = JSON.parse(text);
+        const rawSnapshot = parsed.snapshot || parsed;
+        const previousSnapshot = {
+          ...rawSnapshot,
+          totalUSD: rawSnapshot.totalUSD ?? rawSnapshot.summary?.totalUSD ?? 0,
+          totalXLM: rawSnapshot.totalXLM ?? rawSnapshot.summary?.totalXLM ?? 0,
+          walletCount: rawSnapshot.walletCount ?? rawSnapshot.summary?.walletCount ?? 0,
+          assets: Array.isArray(rawSnapshot.assets) ? rawSnapshot.assets : []
+        };
+        latestChangeDetection = compareSnapshotForChanges(latestAggregated, previousSnapshot);
+        const intelligence = generateClientIntelligence(latestAggregated, latestChangeDetection);
+        renderIntelligence(intelligence);
+        setStatus("Previous snapshot compared.");
+      } catch (error) {
+        setStatus(`Snapshot comparison failed: ${error.message}`, "error");
+      }
+    }
+
+    function generateExecutiveBrief() {
+      if (!latestAggregated) {
+        setStatus("Aggregate wallets before generating an executive brief.", "error");
+        return;
+      }
+      const intelligence = latestIntelligence || generateClientIntelligence(latestAggregated, latestChangeDetection);
+      latestExecutiveBrief = buildExecutiveBrief(intelligence, latestAggregated);
+      const output = document.getElementById("briefOutput");
+      if (output) output.textContent = latestExecutiveBrief;
+      setStatus("Executive brief generated.");
+    }
+
+    async function copyExecutiveBrief() {
+      if (!latestExecutiveBrief) generateExecutiveBrief();
+      try {
+        await navigator.clipboard.writeText(latestExecutiveBrief);
+        setStatus("Executive brief copied.");
+      } catch (error) {
+        setStatus(`Copy failed: ${error.message}`, "error");
+      }
+    }
+
+    function downloadExecutiveBrief() {
+      if (!latestExecutiveBrief) generateExecutiveBrief();
+      const blob = new Blob([latestExecutiveBrief], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "wealthview-executive-brief.txt";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      setStatus("Executive brief downloaded.");
+    }
+
+
+    function renderHistory(snapshots = []) {
+      latestHistory = Array.isArray(snapshots) ? snapshots : [];
+      if (!latestHistory.length) {
+        historyBodyEl.innerHTML = '<p class="history-empty">No saved snapshots yet for this wallet and contract set.</p>';
+        return;
+      }
+
+      const rows = latestHistory
+        .slice()
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+        .map(snapshot => {
+          const unpricedCount = Array.isArray(snapshot.unpricedAssets) ? snapshot.unpricedAssets.length : 0;
+          const timestamp = snapshot.timestamp ? new Date(snapshot.timestamp).toLocaleString() : "Unknown";
+          return `
+            <tr>
+              <td>${timestamp}</td>
+              <td>${formatCompactCurrency(snapshot.totalUSD || 0)}</td>
+              <td>${formatCompactNumber(snapshot.totalXLM || 0)}</td>
+              <td>${unpricedCount}</td>
+            </tr>
+          `;
+        })
+        .join("");
+
+      historyBodyEl.innerHTML = `
+        <div class="history-table-wrap">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>Snapshot time</th>
+                <th>Total USD</th>
+                <th>Total XLM</th>
+                <th>Unpriced assets</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    async function fetchHistory({ silent = false } = {}) {
+      const addresses = getAddressesFromInput();
+      const contracts = getContractsFromInput();
+
+      if (addresses.length === 0) {
+        if (!silent) setStatus("Enter wallet addresses before loading history.", "error");
+        return;
+      }
+
+      loadHistoryBtn.disabled = true;
+      try {
+        const historyUrl = buildHistoryUrl(addresses, contracts);
+        const response = await fetch(`${historyUrl.pathname}${historyUrl.search}`);
+        if (!response.ok) {
+          let message = "History lookup failed";
+          try {
+            const err = await response.json();
+            message = err?.message || err?.error || message;
+          } catch (_) {}
+          throw new Error(message);
+        }
+
+        const history = await response.json();
+        renderHistory(history.snapshots || []);
+        if (!silent) setStatus(`History loaded. ${history.count || 0} snapshot${history.count === 1 ? "" : "s"}.`);
+      } catch (error) {
+        console.error(error);
+        if (!silent) setStatus(`History error: ${error.message}`, "error");
+      } finally {
+        loadHistoryBtn.disabled = false;
+      }
+    }
+
+    async function saveHistorySnapshot() {
+      const addresses = getAddressesFromInput();
+      const contracts = getContractsFromInput();
+
+      if (addresses.length === 0) {
+        setStatus("Enter wallet addresses before saving history.", "error");
+        return;
+      }
+
+      saveHistoryBtn.disabled = true;
+      setStatus("Saving treasury snapshot...");
+
+      try {
+        const response = await fetch("/api/snapshot", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ wallets: addresses, contracts })
+        });
+
+        let data;
+        try {
+          data = await response.json();
+        } catch (_) {
+          throw new Error("Snapshot API returned invalid JSON");
+        }
+
+        if (!response.ok || data?.success === false) {
+          throw new Error(data?.message || data?.error || "Snapshot save failed");
+        }
+
+        if (data.saved === false) {
+          setStatus(data.warning || "Snapshot storage unavailable", "error");
+        } else {
+          setStatus("Historical snapshot saved.");
+        }
+
+        await fetchHistory({ silent: true });
+      } catch (error) {
+        console.error(error);
+        setStatus(`Snapshot error: ${error.message}`, "error");
+      } finally {
+        saveHistoryBtn.disabled = false;
+      }
+    }
+
+
+    async function downloadTreasurySnapshot() {
+      if (!latestAggregated) {
+        setStatus("Aggregate wallets before downloading snapshot.", "error");
+        return;
+      }
+
+      const wallets = getAddressesFromInput();
+      const contracts = getContractsFromInput();
+      const shareUrl = updateUrlWithWallets(wallets, contracts);
+      const apiUrl = buildApiUrl(wallets, contracts);
+      const signals = latestSignals || generateTreasurySignals(latestAggregated);
+
+      const snapshot = {
+        app: "WealthView",
+        snapshotType: "stellar_treasury_snapshot",
+        timestamp: new Date().toISOString(),
+        wallets,
+        contracts,
+        shareUrl,
+        apiUrl,
+        summary: {
+          walletCount: latestAggregated.walletCount || 0,
+          totalXLM: latestAggregated.totalXLM || 0,
+          totalUSD: latestAggregated.totalUSD || 0
+        },
+        assets: Array.isArray(latestAggregated.assets) ? latestAggregated.assets : [],
+        signals,
+        intelligence: latestIntelligence || null,
+        executiveBrief: latestExecutiveBrief || null
+      };
+
+      const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "wealthview-treasury-snapshot.json";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      URL.revokeObjectURL(url);
+      setStatus("Treasury snapshot downloaded.");
+    }
+
+    function exportTreasuryJson() {
+      if (!latestAggregated) {
+        setStatus("Aggregate portfolio first, then export JSON.", "error");
+        return;
+      }
+
+      const exportData = {
+        walletCount: latestAggregated.walletCount || 0,
+        totalXLM: latestAggregated.totalXLM || 0,
+        totalUSD: latestAggregated.totalUSD || 0,
+        assets: Array.isArray(latestAggregated.assets) ? latestAggregated.assets : [],
+        intelligence: latestIntelligence || null,
+        executiveBrief: latestExecutiveBrief || null
+      };
+
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "wealthview-treasury.json";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      URL.revokeObjectURL(url);
+      setStatus("Treasury JSON exported");
+    }
+
+    status.innerText = "Aggregation complete";
+    function renderDashboard(data) {
+      const walletCount = data.walletCount ?? 0;
+      const totalXLM = Number(data.totalXLM || 0);
+      const totalUSD = Number(data.totalUSD || 0);
+
+      const walletCountEl = document.getElementById("walletCount");
+      const totalXLMEl = document.getElementById("totalXLM");
+      const totalUSDEl = document.getElementById("totalUSD");
+
+    output.innerText = JSON.stringify(aggregated, null, 2);
+      walletCountEl.textContent = formatNumber(walletCount, 0);
+      walletCountEl.title = formatNumber(walletCount, 0);
+
+      totalXLMEl.textContent = formatCompactNumber(totalXLM);
+      totalXLMEl.title = formatNumber(totalXLM, 6);
+
+      totalUSDEl.textContent = formatCompactCurrency(totalUSD);
+      totalUSDEl.title = formatCurrency(totalUSD).replace("$", "US$");
+
+      const assetsNormalized = Array.isArray(data.assets)
+        ? data.assets.map(asset => ({
+            symbol: asset.symbol,
+            totalAmount: asset.amount,
+            totalValueUSD: asset.usdValue,
+            priced: asset.usdValue !== null && asset.usdValue !== undefined
+          }))
+        : [];
+
+      const body = document.getElementById("assetTableBody");
+      const rows = assetsNormalized
+        .sort((a, b) => (b.totalValueUSD ?? -1) - (a.totalValueUSD ?? -1))
+        .map(asset => `
+          <tr>
+            <td>${asset.symbol}</td>
+            <td>${formatNumber(asset.totalAmount || 0, 6)}</td>
+            <td>${asset.priced ? formatCurrency(asset.totalValueUSD || 0) : "Price unavailable"}</td>
+          </tr>
+        `)
+        .join("");
+
+      body.innerHTML = rows || '<tr><td class="empty" colspan="3">No asset balances found.</td></tr>';
+    }
+
+  } catch (e) {
+    status.innerText = "Error: " + e.message;
+    console.log(e);
+  }
 }
-buttonEl.disabled = true;
-updateUrlWithWallets(addresses, contracts);
-setStatus("Loading portfolios...");
-try {
-const apiUrl = new URL("/api/aggregate", window.location.origin);
-apiUrl.searchParams.set("wallets", addresses.join(","));
-if (contracts.length) apiUrl.searchParams.set("contracts", contracts.join(","));
-const apiRes = await fetch(`${apiUrl.pathname}${apiUrl.search}`);
-if (!apiRes.ok) {
-let message = "API aggregation failed";
-try {
-const err = await apiRes.json();
-message = err?.message || err?.error || message;
-} catch (_) {}
-throw new Error(message);
-}
-const apiData = await apiRes.json();
-latestAggregated = apiData;
-latestSignals = generateTreasurySignals(apiData);
-renderDashboard(apiData);
-renderTreasurySignals(latestSignals);
-const priced = Array.isArray(apiData.pricedAssets) ? apiData.pricedAssets.join(", ") : "";
-const unpriced = Array.isArray(apiData.unpricedAssets) ? apiData.unpricedAssets.join(", ") : "";
-const detail = [priced ? `Priced: ${priced}` : "", unpriced ? `Unpriced: ${unpriced}` : ""]
-.filter(Boolean)
-.join(" | ");
-setStatus(detail ? `Aggregation complete. ${detail}` : "Aggregation complete.");
-fetchHistory({ silent: true });
-} catch (error) {
-console.error(error);
-setStatus(`Error: ${error.message}`, "error");
-} finally {
-buttonEl.disabled = false;
-}
-}
-window.addEventListener("DOMContentLoaded", () => {
-const addresses = loadWalletsFromUrl();
-if (addresses.length) {
-fetchPortfolio();
-}
-});
 </script>
+    async function fetchPortfolio() {
+      const addresses = getAddressesFromInput();
+      const contracts = getContractsFromInput();
+
+      if (addresses.length === 0) {
+        setStatus("Enter at least one wallet address.", "error");
+        return;
+      }
+
+      buttonEl.disabled = true;
+      updateUrlWithWallets(addresses, contracts);
+      setStatus("Loading portfolios...");
+
+      try {
+        const apiUrl = new URL("/api/aggregate", window.location.origin);
+        apiUrl.searchParams.set("wallets", addresses.join(","));
+        if (contracts.length) apiUrl.searchParams.set("contracts", contracts.join(","));
+        const apiRes = await fetch(`${apiUrl.pathname}${apiUrl.search}`);
+
+        if (!apiRes.ok) {
+          let message = "API aggregation failed";
+          try {
+            const err = await apiRes.json();
+            message = err?.message || err?.error || message;
+          } catch (_) {}
+          throw new Error(message);
+        }
+
+        const apiData = await apiRes.json();
+        latestAggregated = apiData;
+        latestSignals = generateTreasurySignals(apiData);
+        renderDashboard(apiData);
+        renderTreasurySignals(latestSignals);
+        renderIntelligence(generateClientIntelligence(apiData, latestChangeDetection));
+        fetchIntelligence({ silent: true });
+
+        const priced = Array.isArray(apiData.pricedAssets) ? apiData.pricedAssets.join(", ") : "";
+        const unpriced = Array.isArray(apiData.unpricedAssets) ? apiData.unpricedAssets.join(", ") : "";
+        const detail = [priced ? `Priced: ${priced}` : "", unpriced ? `Unpriced: ${unpriced}` : ""]
+          .filter(Boolean)
+          .join(" | ");
+
+        setStatus(detail ? `Aggregation complete. ${detail}` : "Aggregation complete.");
+        fetchHistory({ silent: true });
+      } catch (error) {
+        console.error(error);
+        setStatus(`Error: ${error.message}`, "error");
+      } finally {
+        buttonEl.disabled = false;
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const addresses = loadWalletsFromUrl();
+      if (addresses.length) {
+        fetchPortfolio();
+      }
+    });
+  </script>
 </body>
 </html>
