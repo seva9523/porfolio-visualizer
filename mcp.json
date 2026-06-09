@@ -61,6 +61,26 @@
           "wallets"
         ]
       }
+    },
+    {
+      "name": "get_treasury_intelligence",
+      "description": "Retrieve WealthView Treasury Intelligence including health score, idle capital, alerts, benchmarks, changes, simulations, and an executive brief",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "wallets": {
+            "type": "string",
+            "description": "Comma-separated Stellar public wallet addresses"
+          },
+          "contracts": {
+            "type": "string",
+            "description": "Optional comma-separated SEP-41 / Soroban token contract IDs"
+          }
+        },
+        "required": [
+          "wallets"
+        ]
+      }
     }
   ]
 }
