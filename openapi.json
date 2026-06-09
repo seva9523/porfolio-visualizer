@@ -295,6 +295,106 @@
           }
         }
       }
+    },
+    "/api/intelligence": {
+      "get": {
+        "summary": "Generate Treasury Intelligence",
+        "description": "Returns rule-based treasury intelligence from WealthView aggregate data, including health score, idle capital detection, alerts, benchmarking, change detection from saved snapshots when available, executive brief, and simulation defaults. Benchmarks are internal WealthView treasury-readiness rules, not live comparisons against external treasuries.",
+        "parameters": [
+          {
+            "name": "wallets",
+            "in": "query",
+            "required": true,
+            "description": "Comma-separated Stellar public wallet addresses.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52"
+          },
+          {
+            "name": "contracts",
+            "in": "query",
+            "required": false,
+            "description": "Optional comma-separated SEP-41 / Soroban token contract IDs.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "CA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUWDA"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Treasury Intelligence response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntelligenceResponse"
+                },
+                "example": {
+                  "success": true,
+                  "timestamp": "2026-06-09T12:00:00.000Z",
+                  "walletCount": 1,
+                  "treasuryHealth": {
+                    "score": 78,
+                    "label": "Watch",
+                    "strengths": [
+                      "Strong liquidity"
+                    ],
+                    "risks": [
+                      "High XLM concentration"
+                    ],
+                    "explanation": "Score reflects diversification, concentration risk, liquidity, stablecoin exposure, volatile exposure, idle capital, valuation completeness, wallet coverage, and detected risk signals."
+                  },
+                  "idleCapital": {
+                    "estimatedUSD": 245000,
+                    "percentage": 42,
+                    "assets": [
+                      {
+                        "symbol": "USDC",
+                        "usdValue": 245000,
+                        "share": 42,
+                        "reason": "Meaningful stablecoin balance"
+                      }
+                    ],
+                    "explanation": "$245,000 may be sitting idle based on visible priced balances.",
+                    "opportunityNote": "Potential action: review whether part of this balance should remain liquid or be allocated to productive treasury strategies. This does not claim real yield."
+                  },
+                  "alerts": [
+                    {
+                      "severity": "watch",
+                      "title": "Concentration Risk",
+                      "explanation": "XLM represents 82% of priced treasury value.",
+                      "suggestedAction": "Review concentration limits and diversification policy."
+                    }
+                  ],
+                  "benchmarks": {
+                    "treasuryReadiness": {
+                      "score": 78,
+                      "label": "Watch",
+                      "explanation": "Overall WealthView treasury-readiness score using visible balances, pricing, and risk signals."
+                    }
+                  },
+                  "changeDetectionAvailable": false,
+                  "executiveBrief": "Executive Treasury Brief ...",
+                  "simulationDefaults": {
+                    "xlmPriceChangePercent": -20,
+                    "stablecoinDepegPercent": -2,
+                    "topAssetDeclinePercent": -25,
+                    "reallocationPercent": 10,
+                    "disclaimer": "Simulation is an estimate based on current visible balances and prices. It is not financial advice."
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (missing or invalid wallets parameter)"
+          },
+          "500": {
+            "description": "Server-side intelligence error"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -731,6 +831,294 @@
           "success",
           "saved",
           "snapshot"
+        ]
+      },
+      "IntelligenceResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "walletCount": {
+            "type": "integer"
+          },
+          "wallets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "contracts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "treasuryHealth": {
+            "$ref": "#/components/schemas/TreasuryHealth"
+          },
+          "idleCapital": {
+            "$ref": "#/components/schemas/IdleCapital"
+          },
+          "alerts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TreasuryAlert"
+            }
+          },
+          "benchmarks": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/TreasuryBenchmark"
+            }
+          },
+          "changeDetectionAvailable": {
+            "type": "boolean"
+          },
+          "changeDetection": {
+            "$ref": "#/components/schemas/TreasuryChangeDetection"
+          },
+          "executiveBrief": {
+            "type": "string"
+          },
+          "simulationDefaults": {
+            "$ref": "#/components/schemas/SimulationDefaults"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp",
+          "walletCount",
+          "treasuryHealth",
+          "idleCapital",
+          "alerts",
+          "benchmarks",
+          "changeDetectionAvailable",
+          "executiveBrief",
+          "simulationDefaults"
+        ]
+      },
+      "TreasuryHealth": {
+        "type": "object",
+        "properties": {
+          "score": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "label": {
+            "type": "string",
+            "enum": [
+              "Excellent",
+              "Good",
+              "Watch",
+              "High Risk"
+            ]
+          },
+          "strengths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "risks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "explanation": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "score",
+          "label",
+          "strengths",
+          "risks",
+          "explanation"
+        ]
+      },
+      "IdleCapital": {
+        "type": "object",
+        "properties": {
+          "estimatedUSD": {
+            "type": "number"
+          },
+          "percentage": {
+            "type": "number"
+          },
+          "assets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "symbol": {
+                  "type": "string"
+                },
+                "usdValue": {
+                  "type": "number"
+                },
+                "share": {
+                  "type": "number"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "explanation": {
+            "type": "string"
+          },
+          "opportunityNote": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "estimatedUSD",
+          "percentage",
+          "assets",
+          "explanation",
+          "opportunityNote"
+        ]
+      },
+      "TreasuryAlert": {
+        "type": "object",
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": [
+              "good",
+              "info",
+              "watch",
+              "risk"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "explanation": {
+            "type": "string"
+          },
+          "suggestedAction": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "severity",
+          "title",
+          "explanation",
+          "suggestedAction"
+        ]
+      },
+      "TreasuryBenchmark": {
+        "type": "object",
+        "properties": {
+          "score": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "label": {
+            "type": "string"
+          },
+          "explanation": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "score",
+          "label",
+          "explanation"
+        ]
+      },
+      "TreasuryChangeDetection": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "previousTimestamp": {
+            "type": "string",
+            "nullable": true
+          },
+          "totalUSDChange": {
+            "type": "number"
+          },
+          "totalUSDChangePercent": {
+            "type": "number",
+            "nullable": true
+          },
+          "totalXLMChange": {
+            "type": "number"
+          },
+          "walletCountChange": {
+            "type": "integer"
+          },
+          "pricingCoverageChange": {
+            "type": "number",
+            "nullable": true
+          },
+          "concentrationChange": {
+            "type": "number"
+          },
+          "newAssets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "removedAssets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "available",
+          "message"
+        ]
+      },
+      "SimulationDefaults": {
+        "type": "object",
+        "properties": {
+          "xlmPriceChangePercent": {
+            "type": "number"
+          },
+          "stablecoinDepegPercent": {
+            "type": "number"
+          },
+          "topAssetDeclinePercent": {
+            "type": "number"
+          },
+          "reallocationPercent": {
+            "type": "number"
+          },
+          "disclaimer": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "xlmPriceChangePercent",
+          "stablecoinDepegPercent",
+          "topAssetDeclinePercent",
+          "reallocationPercent",
+          "disclaimer"
         ]
       }
     }
