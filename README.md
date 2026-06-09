@@ -32,6 +32,7 @@ Instead of acting as a personal portfolio tracker, WealthView focuses on:
 - Exportable treasury JSON
 - Public aggregation API
 - Public Treasury Signals API
+- Treasury Intelligence API with health score, idle capital, alerts, benchmarks, simulations, and executive briefs
 - Snapshot-based Treasury History API
 - OpenAPI specification
 - Agent manifest
