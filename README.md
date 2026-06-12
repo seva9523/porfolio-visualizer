@@ -8,7 +8,7 @@ WealthView aggregates multiple Stellar wallets into a unified treasury operation
 
 ## Deploy Now
 
-For a one-shot deployment checklist and complete file manifest, see [`DEPLOY_NOW.md`](DEPLOY_NOW.md).
+For a one-shot deployment checklist and complete file manifest for `https://github.com/seva9523/wealthview`, see [`DEPLOY_NOW.md`](DEPLOY_NOW.md).
 
 ---
 

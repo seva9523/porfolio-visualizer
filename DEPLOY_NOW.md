@@ -2,6 +2,16 @@
 
 This branch is intended to be merged as a single complete deployment PR. It includes the static site, optional serverless APIs, SEP-41 support, MCP tooling, OpenAPI/agent manifests, and GitHub Pages deployment configuration.
 
+## Target repository
+
+Use this bundle for the new repository:
+
+```text
+https://github.com/seva9523/wealthview
+```
+
+If you are moving this bundle into that newly created repository, push this branch there and open the PR against the repository default branch. Keep all files in this bundle; do not copy only `index.html`, because the Pages workflow, `CNAME`, public manifests, and API/runtime files are part of the deployable project.
+
 ## Files that must exist after merge
 
 ### Static website
