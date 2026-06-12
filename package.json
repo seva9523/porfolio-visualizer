@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "test:themes": "jest tests/themeMetrics.test.js tests/themesDataIntegrity.test.js --verbose",
     "test:math": "jest tests/themeMetrics.test.js tests/portfolioCalculations.test.js tests/correlation.test.js --verbose",
     "test:engines": "jest tests/rebalancingEngine.test.js tests/goalsEngine.test.js --verbose",

@@ -1,0 +1,1126 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "WealthView API",
+    "description": "Stellar treasury aggregation API for aggregating multiple Stellar wallet balances into a unified treasury view.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/",
+      "description": "Current deployment"
+    }
+  ],
+  "paths": {
+    "/api/aggregate": {
+      "get": {
+        "summary": "Aggregate Stellar treasury wallets",
+        "description": "Aggregates Stellar Horizon balances for one or more wallets. Optional SEP-41 / Soroban contract IDs can be supplied for read-only contract-token balance requests without changing classic Horizon aggregation behavior.",
+        "parameters": [
+          {
+            "name": "wallets",
+            "in": "query",
+            "required": true,
+            "description": "Comma-separated Stellar public wallet addresses.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4"
+          },
+          {
+            "name": "contracts",
+            "in": "query",
+            "required": false,
+            "description": "Optional comma-separated SEP-41 / Soroban token contract IDs. WealthView queries token metadata and balances using read-only Stellar RPC transaction simulation.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "C..."
+          },
+          {
+            "name": "saveSnapshot",
+            "in": "query",
+            "required": false,
+            "description": "Optional. Set to true to save the aggregate result as a snapshot in the snapshot-based history store.",
+            "schema": {
+              "type": "boolean"
+            },
+            "example": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful aggregation response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AggregateResponse"
+                },
+                "example": {
+                  "success": true,
+                  "timestamp": "2026-05-23T12:00:00.000Z",
+                  "version": "1.0.0",
+                  "walletCount": 2,
+                  "totalXLM": 1234.56,
+                  "totalUSD": 145.67,
+                  "pricedAssets": [
+                    "XLM",
+                    "USDZ"
+                  ],
+                  "unpricedAssets": [],
+                  "assets": [
+                    {
+                      "symbol": "XLM",
+                      "amount": 1234.56,
+                      "usdValue": 145.67,
+                      "allocationPercent": 96.12
+                    },
+                    {
+                      "symbol": "USDZ",
+                      "amount": 5000,
+                      "usdValue": 5.89,
+                      "allocationPercent": 3.88
+                    }
+                  ],
+                  "errors": []
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (missing or invalid wallets parameter)"
+          },
+          "500": {
+            "description": "Server-side aggregation error"
+          }
+        }
+      }
+    },
+    "/api/signals": {
+      "get": {
+        "summary": "Generate Treasury Signals",
+        "description": "Returns Treasury Signals generated from the same aggregate data. Optional SEP-41 / Soroban contract IDs are forwarded to the aggregate endpoint.",
+        "parameters": [
+          {
+            "name": "wallets",
+            "in": "query",
+            "required": true,
+            "description": "Comma-separated Stellar public wallet addresses.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4"
+          },
+          {
+            "name": "contracts",
+            "in": "query",
+            "required": false,
+            "description": "Optional comma-separated SEP-41 / Soroban token contract IDs. WealthView queries token metadata and balances using read-only Stellar RPC transaction simulation.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "C..."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Treasury Signals response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignalsResponse"
+                },
+                "example": {
+                  "success": true,
+                  "timestamp": "2026-05-23T12:00:00.000Z",
+                  "walletCount": 2,
+                  "signals": {
+                    "assetConcentration": {
+                      "severity": "watch",
+                      "value": 92,
+                      "message": "High asset concentration: XLM represents 92% of priced treasury value."
+                    },
+                    "walletConcentration": {
+                      "severity": "good",
+                      "value": null,
+                      "message": "Wallet distribution looks balanced."
+                    },
+                    "unpricedAssets": {
+                      "severity": "info",
+                      "value": 0,
+                      "message": "All detected assets are priced."
+                    },
+                    "stableExposure": {
+                      "severity": "info",
+                      "value": 12,
+                      "message": "Stable asset exposure: 12% of priced treasury value."
+                    },
+                    "idleTreasury": {
+                      "severity": "watch",
+                      "value": true,
+                      "message": "Potential idle treasury: most value is concentrated in one asset."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (missing or invalid wallets parameter)"
+          },
+          "500": {
+            "description": "Server-side signals error"
+          }
+        }
+      }
+    },
+    "/api/history": {
+      "get": {
+        "summary": "Retrieve snapshot-based treasury history",
+        "description": "Returns saved historical snapshots for the normalized wallet and optional SEP-41 contract set. This is snapshot-based history, not full blockchain historical indexing. Uses optional Vercel KV / Upstash REST storage when configured, otherwise an in-memory fallback.",
+        "parameters": [
+          {
+            "name": "wallets",
+            "in": "query",
+            "required": true,
+            "description": "Comma-separated Stellar public wallet addresses.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52"
+          },
+          {
+            "name": "contracts",
+            "in": "query",
+            "required": false,
+            "description": "Optional comma-separated SEP-41 / Soroban token contract IDs included in the history identity.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "C..."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful history response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryResponse"
+                },
+                "example": {
+                  "success": true,
+                  "wallets": [
+                    "GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52"
+                  ],
+                  "contracts": [],
+                  "historyKey": "wallets:GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52|contracts:",
+                  "snapshots": [],
+                  "count": 0,
+                  "storage": "vercel-kv-rest"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (missing or invalid wallets/contracts parameter)"
+          },
+          "500": {
+            "description": "Server-side history error"
+          }
+        }
+      }
+    },
+    "/api/snapshot": {
+      "post": {
+        "summary": "Save a treasury snapshot",
+        "description": "Runs the existing aggregation flow and saves a timestamped snapshot for the normalized wallet and optional contract set. Uses optional Vercel KV / Upstash REST storage when configured, otherwise an in-memory fallback; storage failure is non-fatal when a fallback snapshot can be returned.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SnapshotRequest"
+              },
+              "example": {
+                "wallets": [
+                  "GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52"
+                ],
+                "contracts": [
+                  "C..."
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Snapshot save response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotSaveResponse"
+                },
+                "example": {
+                  "success": true,
+                  "saved": true,
+                  "historyKey": "wallets:GBGI...|contracts:C...",
+                  "storage": "vercel-kv-rest",
+                  "snapshot": {
+                    "timestamp": "2026-06-05T12:00:00.000Z",
+                    "wallets": [
+                      "GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52"
+                    ],
+                    "contracts": [
+                      "C..."
+                    ],
+                    "totalUSD": 12345.67,
+                    "totalXLM": 1000,
+                    "assets": [],
+                    "pricedAssets": [
+                      "XLM"
+                    ],
+                    "unpricedAssets": [],
+                    "errors": []
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (missing or invalid body)"
+          },
+          "500": {
+            "description": "Server-side snapshot error"
+          }
+        }
+      }
+    },
+    "/api/intelligence": {
+      "get": {
+        "summary": "Generate Treasury Intelligence",
+        "description": "Returns rule-based treasury intelligence from WealthView aggregate data, including health score, idle capital detection, alerts, benchmarking, change detection from saved snapshots when available, executive brief, and simulation defaults. Benchmarks are internal WealthView treasury-readiness rules, not live comparisons against external treasuries.",
+        "parameters": [
+          {
+            "name": "wallets",
+            "in": "query",
+            "required": true,
+            "description": "Comma-separated Stellar public wallet addresses.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52"
+          },
+          {
+            "name": "contracts",
+            "in": "query",
+            "required": false,
+            "description": "Optional comma-separated SEP-41 / Soroban token contract IDs.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "CA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUWDA"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Treasury Intelligence response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntelligenceResponse"
+                },
+                "example": {
+                  "success": true,
+                  "timestamp": "2026-06-09T12:00:00.000Z",
+                  "walletCount": 1,
+                  "treasuryHealth": {
+                    "score": 78,
+                    "label": "Watch",
+                    "strengths": [
+                      "Strong liquidity"
+                    ],
+                    "risks": [
+                      "High XLM concentration"
+                    ],
+                    "explanation": "Score reflects diversification, concentration risk, liquidity, stablecoin exposure, volatile exposure, idle capital, valuation completeness, wallet coverage, and detected risk signals."
+                  },
+                  "idleCapital": {
+                    "estimatedUSD": 245000,
+                    "percentage": 42,
+                    "assets": [
+                      {
+                        "symbol": "USDC",
+                        "usdValue": 245000,
+                        "share": 42,
+                        "reason": "Meaningful stablecoin balance"
+                      }
+                    ],
+                    "explanation": "$245,000 may be sitting idle based on visible priced balances.",
+                    "opportunityNote": "Potential action: review whether part of this balance should remain liquid or be allocated to productive treasury strategies. This does not claim real yield."
+                  },
+                  "alerts": [
+                    {
+                      "severity": "watch",
+                      "title": "Concentration Risk",
+                      "explanation": "XLM represents 82% of priced treasury value.",
+                      "suggestedAction": "Review concentration limits and diversification policy."
+                    }
+                  ],
+                  "benchmarks": {
+                    "treasuryReadiness": {
+                      "score": 78,
+                      "label": "Watch",
+                      "explanation": "Overall WealthView treasury-readiness score using visible balances, pricing, and risk signals."
+                    }
+                  },
+                  "changeDetectionAvailable": false,
+                  "executiveBrief": "Executive Treasury Brief ...",
+                  "simulationDefaults": {
+                    "xlmPriceChangePercent": -20,
+                    "stablecoinDepegPercent": -2,
+                    "topAssetDeclinePercent": -25,
+                    "reallocationPercent": 10,
+                    "disclaimer": "Simulation is an estimate based on current visible balances and prices. It is not financial advice."
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (missing or invalid wallets parameter)"
+          },
+          "500": {
+            "description": "Server-side intelligence error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AggregateResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "string"
+          },
+          "walletCount": {
+            "type": "integer"
+          },
+          "totalXLM": {
+            "type": "number"
+          },
+          "totalUSD": {
+            "type": "number"
+          },
+          "pricedAssets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "unpricedAssets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "assets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AggregatedAsset"
+            }
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WalletError"
+            }
+          },
+          "contracts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Optional requested SEP-41 / Soroban contract IDs."
+          },
+          "sep41": {
+            "type": "object",
+            "description": "Optional SEP-41 support metadata when contracts are supplied.",
+            "properties": {
+              "supported": {
+                "type": "boolean"
+              },
+              "requestedContracts": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "queriedContracts": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "failedContracts": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "snapshot": {
+            "type": "object",
+            "description": "Optional snapshot metadata when saveSnapshot=true is used.",
+            "properties": {
+              "saved": {
+                "type": "boolean"
+              },
+              "timestamp": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "historyKey": {
+                "type": "string"
+              },
+              "storage": {
+                "type": "string"
+              },
+              "warning": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "required": [
+          "success",
+          "timestamp",
+          "version",
+          "walletCount",
+          "totalXLM",
+          "totalUSD",
+          "pricedAssets",
+          "unpricedAssets",
+          "assets",
+          "errors"
+        ]
+      },
+      "AggregatedAsset": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "usdValue": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "allocationPercent": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "assetType": {
+            "type": "string",
+            "description": "Optional asset type such as classic or sep41."
+          },
+          "contractId": {
+            "type": "string",
+            "description": "SEP-41 / Soroban contract ID when assetType is sep41."
+          },
+          "name": {
+            "type": "string",
+            "description": "Optional token display name."
+          },
+          "decimals": {
+            "type": "integer",
+            "description": "Optional token decimals."
+          },
+          "rawAmount": {
+            "type": "string",
+            "description": "Raw SEP-41 contract balance before decimal conversion."
+          },
+          "source": {
+            "type": "string",
+            "description": "Balance source such as horizon or soroban."
+          }
+        }
+      },
+      "WalletError": {
+        "type": "object",
+        "properties": {
+          "wallet": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "contractId": {
+            "type": "string",
+            "description": "Soroban contract ID when the error is associated with a requested SEP-41 contract."
+          }
+        }
+      },
+      "SignalsResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "walletCount": {
+            "type": "integer"
+          },
+          "signals": {
+            "$ref": "#/components/schemas/TreasurySignals"
+          },
+          "contracts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Optional requested SEP-41 / Soroban contract IDs."
+          }
+        },
+        "required": [
+          "success",
+          "timestamp",
+          "walletCount",
+          "signals"
+        ]
+      },
+      "TreasurySignals": {
+        "type": "object",
+        "properties": {
+          "assetConcentration": {
+            "$ref": "#/components/schemas/TreasurySignal"
+          },
+          "walletConcentration": {
+            "$ref": "#/components/schemas/TreasurySignal"
+          },
+          "unpricedAssets": {
+            "$ref": "#/components/schemas/TreasurySignal"
+          },
+          "stableExposure": {
+            "$ref": "#/components/schemas/TreasurySignal"
+          },
+          "idleTreasury": {
+            "$ref": "#/components/schemas/TreasurySignal"
+          }
+        }
+      },
+      "TreasurySignal": {
+        "type": "object",
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": [
+              "good",
+              "watch",
+              "info"
+            ]
+          },
+          "value": {
+            "oneOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "severity",
+          "value",
+          "message"
+        ]
+      },
+      "TreasurySnapshot": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "wallets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "contracts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "totalUSD": {
+            "type": "number"
+          },
+          "totalXLM": {
+            "type": "number"
+          },
+          "assets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AggregatedAsset"
+            }
+          },
+          "pricedAssets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "unpricedAssets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WalletError"
+            }
+          },
+          "source": {
+            "type": "object"
+          },
+          "sep41": {
+            "type": "object"
+          }
+        }
+      },
+      "HistoryResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "wallets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "contracts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "historyKey": {
+            "type": "string"
+          },
+          "snapshots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TreasurySnapshot"
+            }
+          },
+          "count": {
+            "type": "integer"
+          },
+          "storage": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "wallets",
+          "contracts",
+          "historyKey",
+          "snapshots",
+          "count"
+        ]
+      },
+      "SnapshotRequest": {
+        "type": "object",
+        "properties": {
+          "wallets": {
+            "oneOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "contracts": {
+            "oneOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "required": [
+          "wallets"
+        ]
+      },
+      "SnapshotSaveResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "saved": {
+            "type": "boolean"
+          },
+          "historyKey": {
+            "type": "string"
+          },
+          "storage": {
+            "type": "string"
+          },
+          "warning": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "snapshot": {
+            "$ref": "#/components/schemas/TreasurySnapshot"
+          }
+        },
+        "required": [
+          "success",
+          "saved",
+          "snapshot"
+        ]
+      },
+      "IntelligenceResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "walletCount": {
+            "type": "integer"
+          },
+          "wallets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "contracts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "treasuryHealth": {
+            "$ref": "#/components/schemas/TreasuryHealth"
+          },
+          "idleCapital": {
+            "$ref": "#/components/schemas/IdleCapital"
+          },
+          "alerts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TreasuryAlert"
+            }
+          },
+          "benchmarks": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/TreasuryBenchmark"
+            }
+          },
+          "changeDetectionAvailable": {
+            "type": "boolean"
+          },
+          "changeDetection": {
+            "$ref": "#/components/schemas/TreasuryChangeDetection"
+          },
+          "executiveBrief": {
+            "type": "string"
+          },
+          "simulationDefaults": {
+            "$ref": "#/components/schemas/SimulationDefaults"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp",
+          "walletCount",
+          "treasuryHealth",
+          "idleCapital",
+          "alerts",
+          "benchmarks",
+          "changeDetectionAvailable",
+          "executiveBrief",
+          "simulationDefaults"
+        ]
+      },
+      "TreasuryHealth": {
+        "type": "object",
+        "properties": {
+          "score": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "label": {
+            "type": "string",
+            "enum": [
+              "Excellent",
+              "Good",
+              "Watch",
+              "High Risk"
+            ]
+          },
+          "strengths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "risks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "explanation": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "score",
+          "label",
+          "strengths",
+          "risks",
+          "explanation"
+        ]
+      },
+      "IdleCapital": {
+        "type": "object",
+        "properties": {
+          "estimatedUSD": {
+            "type": "number"
+          },
+          "percentage": {
+            "type": "number"
+          },
+          "assets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "symbol": {
+                  "type": "string"
+                },
+                "usdValue": {
+                  "type": "number"
+                },
+                "share": {
+                  "type": "number"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "explanation": {
+            "type": "string"
+          },
+          "opportunityNote": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "estimatedUSD",
+          "percentage",
+          "assets",
+          "explanation",
+          "opportunityNote"
+        ]
+      },
+      "TreasuryAlert": {
+        "type": "object",
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": [
+              "good",
+              "info",
+              "watch",
+              "risk"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "explanation": {
+            "type": "string"
+          },
+          "suggestedAction": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "severity",
+          "title",
+          "explanation",
+          "suggestedAction"
+        ]
+      },
+      "TreasuryBenchmark": {
+        "type": "object",
+        "properties": {
+          "score": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "label": {
+            "type": "string"
+          },
+          "explanation": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "score",
+          "label",
+          "explanation"
+        ]
+      },
+      "TreasuryChangeDetection": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "previousTimestamp": {
+            "type": "string",
+            "nullable": true
+          },
+          "totalUSDChange": {
+            "type": "number"
+          },
+          "totalUSDChangePercent": {
+            "type": "number",
+            "nullable": true
+          },
+          "totalXLMChange": {
+            "type": "number"
+          },
+          "walletCountChange": {
+            "type": "integer"
+          },
+          "pricingCoverageChange": {
+            "type": "number",
+            "nullable": true
+          },
+          "concentrationChange": {
+            "type": "number"
+          },
+          "newAssets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "removedAssets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "available",
+          "message"
+        ]
+      },
+      "SimulationDefaults": {
+        "type": "object",
+        "properties": {
+          "xlmPriceChangePercent": {
+            "type": "number"
+          },
+          "stablecoinDepegPercent": {
+            "type": "number"
+          },
+          "topAssetDeclinePercent": {
+            "type": "number"
+          },
+          "reallocationPercent": {
+            "type": "number"
+          },
+          "disclaimer": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "xlmPriceChangePercent",
+          "stablecoinDepegPercent",
+          "topAssetDeclinePercent",
+          "reallocationPercent",
+          "disclaimer"
+        ]
+      }
+    }
+  }
+}
