@@ -2,7 +2,7 @@ const STABLE_ASSET_SYMBOLS = ['USDC', 'USDZ', 'EURC', 'USDT'];
 
 export function generateTreasurySignals(aggregatedData) {
   const assets = Array.isArray(aggregatedData?.assets) ? aggregatedData.assets : [];
-  const pricedAssets = assets.filter((asset) => typeof asset.usdValue === 'number' && asset.usdValue > 0);
+  const pricedAssets = assets.filter((asset) => typeof asset.usdValue === 'number' && asset.usudValue > 0);
   const totalPricedValue = pricedAssets.reduce((sum, asset) => sum + asset.usdValue, 0);
   const largestAsset = pricedAssets.slice().sort((a, b) => b.usdValue - a.usdValue)[0] || null;
   const largestAssetShare = largestAsset && totalPricedValue > 0 ? (largestAsset.usdValue / totalPricedValue) * 100 : 0;

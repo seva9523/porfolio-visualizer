@@ -1,6 +1,8 @@
 <!DOCTYPE html>
+<html>
 <html lang="en">
 <head>
+  <title>Stellar Portfolio Infra</title>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>WealthView | Stellar Treasury Aggregation</title>
@@ -542,6 +544,7 @@ console.log(data);</pre>
               </div>
             </details>
 
+<body style="font-family: Arial; padding: 40px; max-width: 800px; margin: auto;">
               <details class="api-item">
                 <summary>How Treasury States Work</summary>
                 <div class="api-item-body">
@@ -552,6 +555,8 @@ console.log(data);</pre>
     </section>
   </div>
 
+  <h1>Stellar Portfolio Infra</h1>
+  <p>Multi-wallet portfolio aggregation for Stellar builders</p>
   <script>
     const statusEl = document.getElementById("status");
     const buttonEl = document.getElementById("aggregateBtn");
@@ -565,8 +570,14 @@ console.log(data);</pre>
     const signalsBodyEl = document.getElementById("signalsBody");
     const intelligenceBodyEl = document.getElementById("intelligenceBody");
 
+  <textarea id="addresses" placeholder="Enter wallet addresses (one per line)"
+    style="width:100%; height:120px; padding:10px;"></textarea>
     const STABLE_ASSET_SYMBOLS = ["USDC", "USDZ", "EURC", "GBPX", "EURX", "USDT"];
 
+  <button onclick="fetchPortfolio()" 
+    style="padding:12px; width:100%; margin-top:10px; cursor:pointer;">
+    Aggregate Portfolio
+  </button>
     let latestAggregated = null;
     let latestSignals = null;
     let latestHistory = [];
@@ -575,20 +586,28 @@ console.log(data);</pre>
     let latestExecutiveBrief = "";
     let shareSuccessTimeout = null;
 
+  <p id="status" style="margin-top:20px;"></p>
     function setStatus(message, type = "info") {
       statusEl.textContent = message;
       statusEl.classList.toggle("error", type === "error");
       statusEl.style.display = message ? "block" : "none";
     }
 
+  <pre id="jsonOutput" style="background:#111; color:#0f0; padding:15px; margin-top:20px; overflow:auto;"></pre>
     function formatNumber(value, digits = 2) {
       return Number(value).toLocaleString(undefined, { maximumFractionDigits: digits });
     }
 
+<script>
+async function fetchPortfolio() {
+  const raw = document.getElementById("addresses").value;
+  const status = document.getElementById("status");
+  const output = document.getElementById("jsonOutput");
     function formatCurrency(value) {
       return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(value);
     }
 
+  output.innerText = "";
     function formatCompactNumber(value) {
       const num = Number(value) || 0;
       if (Math.abs(num) >= 1_000_000_000) return `${(num / 1_000_000_000).toFixed(2).replace(/\.?0+$/, "")}B`;
@@ -597,6 +616,10 @@ console.log(data);</pre>
       return formatNumber(num, 2);
     }
 
+  const addresses = raw
+    .split("\n")
+    .map(a => a.trim())
+    .filter(a => a.length > 0);
     function formatCompactCurrency(value) {
       const num = Number(value) || 0;
       const abs = Math.abs(num);
@@ -606,6 +629,10 @@ console.log(data);</pre>
       return formatCurrency(num).replace("$", "US$");
     }
 
+  if (addresses.length === 0) {
+    status.innerText = "Enter at least one wallet address";
+    return;
+  }
     function getAddressesFromInput() {
       return addressesEl.value
         .split(/[\n,]/)
@@ -613,6 +640,7 @@ console.log(data);</pre>
         .filter(Boolean);
     }
 
+  status.innerText = "Loading portfolios...";
     function getContractsFromInput() {
       return contractsEl.value
         .split(/[\n,]/)
@@ -620,6 +648,11 @@ console.log(data);</pre>
         .filter(Boolean);
     }
 
+  try {
+    // XLM price
+    const priceRes = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=stellar&vs_currencies=usd");
+    const priceData = await priceRes.json();
+    const xlmPrice = priceData.stellar.usd;
     function updateUrlWithWallets(addresses, contracts = getContractsFromInput()) {
       const url = new URL(window.location.href);
       if (addresses.length) {
@@ -628,16 +661,25 @@ console.log(data);</pre>
         url.searchParams.delete("wallets");
       }
 
+    let aggregated = {
+      wallets: addresses.length,
+      totalXLM: 0,
+      totalUSD: 0,
+      assets: {}
+    };
       if (contracts.length) {
         url.searchParams.set("contracts", contracts.join(","));
       } else {
         url.searchParams.delete("contracts");
       }
 
+    // Process each wallet
+    for (let addr of addresses) {
       window.history.replaceState({}, "", url);
       return url.toString();
     }
 
+      const res = await fetch(`https://horizon.stellar.org/accounts/${addr}`);
     function loadWalletsFromUrl() {
       const params = new URLSearchParams(window.location.search);
       const walletsParam = params.get("wallets");
@@ -649,74 +691,40 @@ console.log(data);</pre>
         ? contractsParam.split(",").map(contract => contract.trim()).filter(Boolean)
         : [];
 
+      if (!res.ok) {
+        console.log("Skipping invalid wallet:", addr);
+        continue;
       if (addresses.length) {
         addressesEl.value = addresses.join("\n");
       }
 
+      const data = await res.json();
       if (contracts.length) {
         contractsEl.value = contracts.join("\n");
       }
 
+      data.balances.forEach(b => {
       return addresses;
     }
 
+        let isNative = b.asset_type === "native";
     function showShareButtonSuccess() {
       if (shareSuccessTimeout) clearTimeout(shareSuccessTimeout);
 
+        let symbol = isNative ? "XLM" : b.asset_code;
+        let amount = parseFloat(b.balance);
       shareBtn.classList.add("share-success");
       shareBtnText.textContent = "Share Link Copied";
       shareBtn.setAttribute("aria-label", "Share Link Copied");
 
+        let priceUSD = isNative ? xlmPrice : 0;
+        let valueUSD = isNative ? amount * xlmPrice : 0;
       shareSuccessTimeout = setTimeout(() => {
         shareBtn.classList.remove("share-success");
         shareBtnText.textContent = "Generate Share Link";
         shareBtn.setAttribute("aria-label", "Generate Share Link");
       }, 2500);
     }
-
-    async function copyShareLink() {
-      const addresses = getAddressesFromInput();
-      const contracts = getContractsFromInput();
-      if (addresses.length === 0) {
-        setStatus("Enter wallet addresses first, then copy the link.", "error");
-        return;
-      }
-
-      const shareUrl = updateUrlWithWallets(addresses, contracts);
-      try {
-        await navigator.clipboard.writeText(shareUrl);
-        showShareButtonSuccess();
-      } catch (error) {
-        setStatus(`Copy failed. Use this URL manually: ${shareUrl}`, "error");
-      }
-    }
-
-    function buildApiUrl(addresses, contracts = []) {
-      const url = new URL(`${window.location.origin}/api/aggregate`);
-      url.searchParams.set("wallets", addresses.join(","));
-      if (contracts.length) url.searchParams.set("contracts", contracts.join(","));
-      return url.toString();
-    }
-
-    function buildHistoryUrl(addresses, contracts = []) {
-      const url = new URL(`${window.location.origin}/api/history`);
-      url.searchParams.set("wallets", addresses.join(","));
-      if (contracts.length) url.searchParams.set("contracts", contracts.join(","));
-      return url;
-    }
-
-    const STATIC_PRICE_IDS = { XLM: "stellar", USDZ: "usdz" };
-    const LOCAL_HISTORY_PREFIX = "wealthview:history:";
-
-    function normalizeHistoryIdentity(addresses, contracts = []) {
-      const walletsPart = addresses.map(item => item.trim()).filter(Boolean).sort().join(",");
-      const contractsPart = contracts.map(item => item.trim()).filter(Boolean).sort().join(",");
-      return `wallets:${walletsPart}|contracts:${contractsPart}`;
-    }
-
-    async function fetchStaticPrices(symbols) {
-      const ids = [...new Set(symbols.map(symbol => STATIC_PRICE_IDS[String(symbol || "").toUpperCase()]).filter(Boolean))];
-      if (!ids.length) return {};
 
       try {
         const url = new URL("https://api.coingecko.com/api/v3/simple/price");
@@ -760,88 +768,39 @@ console.log(data);</pre>
         } catch (error) {
           errors.push({ wallet, message: `Horizon request failed: ${error.message}` });
         }
+    async function copyShareLink() {
+      const addresses = getAddressesFromInput();
+      const contracts = getContractsFromInput();
+      if (addresses.length === 0) {
+        setStatus("Enter wallet addresses first, then copy the link.", "error");
+        return;
       }
 
-      contracts.forEach(contractId => {
-        errors.push({
-          contractId,
-          message: "SEP-41 contract balances require the server API. Static fallback continues with Horizon balances only."
-        });
-      });
-
-      const grouped = new Map();
-      balances.forEach(balance => {
-        const existing = grouped.get(balance.identity) || { ...balance, amount: 0 };
-        existing.amount += balance.amount;
-        grouped.set(balance.identity, existing);
-      });
-
-      const symbols = [...new Set([...grouped.values()].map(asset => asset.symbol))];
-      const priceMap = await fetchStaticPrices(symbols);
-      const assets = [...grouped.values()].map(asset => {
-        const price = priceMap[String(asset.symbol || "").toUpperCase()];
-        const usdValue = typeof price === "number" ? asset.amount * price : null;
-        return { symbol: asset.symbol, amount: asset.amount, usdValue, source: asset.source || "horizon" };
-      });
-      const totalUSD = assets.reduce((sum, asset) => sum + (typeof asset.usdValue === "number" ? asset.usdValue : 0), 0);
-      assets.forEach(asset => {
-        asset.allocationPercent = typeof asset.usdValue === "number" && totalUSD > 0 ? (asset.usdValue / totalUSD) * 100 : null;
-      });
-
-      return {
-        success: true,
-        timestamp: new Date().toISOString(),
-        version: "1.0.0-static-fallback",
-        walletCount: addresses.length,
-        contracts,
-        totalXLM: assets.filter(asset => String(asset.symbol).toUpperCase() === "XLM").reduce((sum, asset) => sum + asset.amount, 0),
-        totalUSD,
-        pricedAssets: assets.filter(asset => typeof asset.usdValue === "number").map(asset => asset.symbol),
-        unpricedAssets: assets.filter(asset => asset.usdValue === null || asset.usdValue === undefined).map(asset => asset.symbol),
-        assets,
-        errors,
-        source: {
-          mode: "static-fallback",
-          note: "Server API was unavailable, so WealthView used browser-side Horizon aggregation. SEP-41 balances require the API."
-        }
-      };
-    }
-
-    function createSnapshotFromAggregate(data, addresses = getAddressesFromInput(), contracts = getContractsFromInput()) {
-      return {
-        timestamp: new Date().toISOString(),
-        wallets: addresses,
-        contracts,
-        totalUSD: Number(data?.totalUSD || 0),
-        totalXLM: Number(data?.totalXLM || 0),
-        walletCount: Number(data?.walletCount || addresses.length),
-        assets: Array.isArray(data?.assets) ? data.assets : [],
-        pricedAssets: Array.isArray(data?.pricedAssets) ? data.pricedAssets : [],
-        unpricedAssets: Array.isArray(data?.unpricedAssets) ? data.unpricedAssets : [],
-        errors: Array.isArray(data?.errors) ? data.errors : [],
-        source: data?.source || { mode: "api" },
-        sep41: data?.sep41 || null
-      };
-    }
-
-    function getLocalHistory(addresses, contracts = []) {
-      const key = LOCAL_HISTORY_PREFIX + normalizeHistoryIdentity(addresses, contracts);
+      const shareUrl = updateUrlWithWallets(addresses, contracts);
       try {
-        const snapshots = JSON.parse(localStorage.getItem(key) || "[]");
-        return Array.isArray(snapshots) ? snapshots : [];
-      } catch (_) {
-        return [];
+        await navigator.clipboard.writeText(shareUrl);
+        showShareButtonSuccess();
+      } catch (error) {
+        setStatus(`Copy failed. Use this URL manually: ${shareUrl}`, "error");
       }
     }
 
-    function saveLocalHistorySnapshot(snapshot, addresses, contracts = []) {
-      const key = LOCAL_HISTORY_PREFIX + normalizeHistoryIdentity(addresses, contracts);
-      const snapshots = getLocalHistory(addresses, contracts);
-      snapshots.push(snapshot);
-      localStorage.setItem(key, JSON.stringify(snapshots.slice(-100)));
-      return snapshots.slice(-100);
+    function buildApiUrl(addresses, contracts = []) {
+      const url = new URL(`${window.location.origin}/api/aggregate`);
+      url.searchParams.set("wallets", addresses.join(","));
+      if (contracts.length) url.searchParams.set("contracts", contracts.join(","));
+      return url.toString();
     }
 
+    function buildHistoryUrl(addresses, contracts = []) {
+      const url = new URL(`${window.location.origin}/api/history`);
+      url.searchParams.set("wallets", addresses.join(","));
+      if (contracts.length) url.searchParams.set("contracts", contracts.join(","));
+      return url;
+    }
+
+        aggregated.assets[symbol].totalAmount += amount;
+        aggregated.assets[symbol].totalValueUSD += valueUSD;
     function generateTreasurySignals(aggregatedData) {
       const assets = Array.isArray(aggregatedData?.assets) ? aggregatedData.assets : [];
       const pricedAssets = assets.filter(asset => typeof asset.usdValue === "number" && asset.usdValue > 0);
@@ -858,6 +817,9 @@ console.log(data);</pre>
       const walletCount = Number(aggregatedData?.walletCount || 0);
       const walletConcentrationValue = walletCount === 1 && totalPricedValue > 0 ? 100 : null;
 
+        if (isNative) {
+          aggregated.totalXLM += amount;
+          aggregated.totalUSD += valueUSD;
       return {
         assetConcentration: {
           severity: largestAssetShare > 80 ? "watch" : "good",
@@ -1303,12 +1265,8 @@ console.log(data);</pre>
         renderHistory(history.snapshots || []);
         if (!silent) setStatus(`History loaded. ${history.count || 0} snapshot${history.count === 1 ? "" : "s"}.`);
       } catch (error) {
-        console.warn("History API unavailable; using browser-local history fallback", error);
-        const localSnapshots = getLocalHistory(addresses, contracts);
-        renderHistory(localSnapshots);
-        if (!silent) {
-          setStatus(`History API unavailable. Loaded ${localSnapshots.length} browser-local snapshot${localSnapshots.length === 1 ? "" : "s"}.`);
-        }
+        console.error(error);
+        if (!silent) setStatus(`History error: ${error.message}`, "error");
       } finally {
         loadHistoryBtn.disabled = false;
       }
@@ -1352,17 +1310,8 @@ console.log(data);</pre>
 
         await fetchHistory({ silent: true });
       } catch (error) {
-        console.warn("Snapshot API unavailable; saving browser-local snapshot fallback", error);
-        try {
-          const aggregate = latestAggregated || await aggregateWithStaticFallback(addresses, contracts);
-          latestAggregated = aggregate;
-          const snapshot = createSnapshotFromAggregate(aggregate, addresses, contracts);
-          const snapshots = saveLocalHistorySnapshot(snapshot, addresses, contracts);
-          renderHistory(snapshots);
-          setStatus("Snapshot API unavailable. Snapshot saved in this browser only.");
-        } catch (fallbackError) {
-          setStatus(`Snapshot error: ${fallbackError.message}`, "error");
-        }
+        console.error(error);
+        setStatus(`Snapshot error: ${error.message}`, "error");
       } finally {
         saveHistoryBtn.disabled = false;
       }
@@ -1443,6 +1392,7 @@ console.log(data);</pre>
       setStatus("Treasury JSON exported");
     }
 
+    status.innerText = "Aggregation complete";
     function renderDashboard(data) {
       const walletCount = data.walletCount ?? 0;
       const totalXLM = Number(data.totalXLM || 0);
@@ -1452,6 +1402,7 @@ console.log(data);</pre>
       const totalXLMEl = document.getElementById("totalXLM");
       const totalUSDEl = document.getElementById("totalUSD");
 
+    output.innerText = JSON.stringify(aggregated, null, 2);
       walletCountEl.textContent = formatNumber(walletCount, 0);
       walletCountEl.title = formatNumber(walletCount, 0);
 
@@ -1485,6 +1436,12 @@ console.log(data);</pre>
       body.innerHTML = rows || '<tr><td class="empty" colspan="3">No asset balances found.</td></tr>';
     }
 
+  } catch (e) {
+    status.innerText = "Error: " + e.message;
+    console.log(e);
+  }
+}
+</script>
     async function fetchPortfolio() {
       const addresses = getAddressesFromInput();
       const contracts = getContractsFromInput();
@@ -1530,21 +1487,8 @@ console.log(data);</pre>
         setStatus(detail ? `Aggregation complete. ${detail}` : "Aggregation complete.");
         fetchHistory({ silent: true });
       } catch (error) {
-        console.warn("Aggregate API unavailable; using browser-side static fallback", error);
-        try {
-          const fallbackData = await aggregateWithStaticFallback(addresses, contracts);
-          latestAggregated = fallbackData;
-          latestSignals = generateTreasurySignals(fallbackData);
-          renderDashboard(fallbackData);
-          renderTreasurySignals(latestSignals);
-          renderIntelligence(generateClientIntelligence(fallbackData, latestChangeDetection));
-          fetchHistory({ silent: true });
-          const suffix = contracts.length ? " SEP-41 contracts need the server API and were not queried." : "";
-          setStatus(`API unavailable. Showing browser-side Horizon fallback.${suffix}`);
-        } catch (fallbackError) {
-          console.error(fallbackError);
-          setStatus(`Error: ${fallbackError.message}`, "error");
-        }
+        console.error(error);
+        setStatus(`Error: ${error.message}`, "error");
       } finally {
         buttonEl.disabled = false;
       }
