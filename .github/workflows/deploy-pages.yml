@@ -2,7 +2,7 @@ name: Deploy static site to GitHub Pages
 
 on:
   push:
-    branches: ["main", "master"]
+    branches: ["main"]
   workflow_dispatch:
 
 permissions:
@@ -28,24 +28,10 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      - name: Prepare static artifact
-        run: |
-          rm -rf dist
-          mkdir -p dist
-          cp index.html dist/index.html
-          cp demo.html dist/demo.html
-          cp favicon.ico dist/favicon.ico
-          cp README.md dist/README.md
-          cp mcp.json dist/mcp.json
-          cp CNAME dist/CNAME
-          cp -R public/. dist/
-          touch dist/.nojekyll
-          cp dist/index.html dist/404.html
-
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: .
 
       - name: Deploy to GitHub Pages
         id: deployment
