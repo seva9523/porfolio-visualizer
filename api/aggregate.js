@@ -1,0 +1,242 @@
+import { saveTreasurySnapshot } from '../lib/history.js';
+import { fetchSep41TokenBalances } from '../lib/sep41.js';
+
+const ASSET_TO_COINGECKO = {
+  XLM: 'stellar',
+  USDZ: 'usdz'
+};
+
+const CONTRACT_TO_COINGECKO = {};
+
+const VERSION = '1.0.0';
+const CACHE_TTL_MS = 60 * 1000;
+const cache = globalThis.__wealthviewCache || new Map();
+globalThis.__wealthviewCache = cache;
+
+const normalizeAssetCode = (code) => (code || '').trim().toUpperCase();
+const normalizeQueryParam = (value) => (Array.isArray(value) ? value.join(',') : value);
+const parseCsvParam = (value) => (value || '').split(',').map((item) => item.trim()).filter(Boolean);
+const isStellarPublicKey = (value) => /^G[A-Z2-7]{55}$/.test(value);
+const isSorobanContractId = (value) => /^C[A-Z2-7]{55}$/.test(value);
+const nowIso = () => new Date().toISOString();
+
+function setCommonHeaders(res, cacheStatus) {
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('X-WealthView-Version', VERSION);
+  res.setHeader('X-Cache-Status', cacheStatus);
+}
+
+function errorResponse(res, status, cacheStatus, error, message) {
+  setCommonHeaders(res, cacheStatus);
+  return res.status(status).json({ success: false, error, message });
+}
+
+export default async function handler(req, res) {
+  if (req.method && req.method !== 'GET') {
+    return errorResponse(res, 405, 'MISS', 'Method not allowed', 'Use GET');
+  }
+
+  const walletsParam = normalizeQueryParam(req.query.wallets);
+  if (!walletsParam || typeof walletsParam !== 'string') {
+    return errorResponse(
+      res,
+      400,
+      'MISS',
+      'Missing wallets query param',
+      'Use /api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4'
+    );
+  }
+
+  const wallets = parseCsvParam(walletsParam);
+  if (wallets.length === 0) {
+    return errorResponse(res, 400, 'MISS', 'At least one wallet is required', 'wallets query param is empty');
+  }
+
+  const malformedWallets = wallets.filter((wallet) => !isStellarPublicKey(wallet));
+  if (malformedWallets.length > 0) {
+    return errorResponse(
+      res,
+      400,
+      'MISS',
+      'Invalid wallets query param',
+      `Malformed Stellar public wallet address${malformedWallets.length === 1 ? '' : 'es'}: ${malformedWallets.join(', ')}`
+    );
+  }
+
+  const contractsParam = normalizeQueryParam(req.query.contracts);
+  const contracts = parseCsvParam(contractsParam);
+  const malformedContracts = contracts.filter((contractId) => !isSorobanContractId(contractId));
+  if (malformedContracts.length > 0) {
+    return errorResponse(
+      res,
+      400,
+      'MISS',
+      'Invalid contracts query param',
+      `Malformed Soroban contract ID${malformedContracts.length === 1 ? '' : 's'}: ${malformedContracts.join(', ')}`
+    );
+  }
+
+  const shouldSaveSnapshot = String(req.query.saveSnapshot || '').toLowerCase() === 'true';
+  const cacheKey = `${wallets.join(',')}|contracts:${contracts.join(',')}`;
+  const hit = cache.get(cacheKey);
+  if (hit && Date.now() - hit.at < CACHE_TTL_MS) {
+    const payload = { ...hit.payload };
+    if (shouldSaveSnapshot) {
+      try {
+        const savedSnapshot = await saveTreasurySnapshot({ wallets, contracts, aggregateResult: payload });
+        payload.snapshot = {
+          saved: savedSnapshot.saved,
+          timestamp: savedSnapshot.snapshot.timestamp,
+          historyKey: savedSnapshot.historyKey,
+          storage: savedSnapshot.storage,
+          ...(savedSnapshot.warning ? { warning: savedSnapshot.warning } : {})
+        };
+      } catch (error) {
+        payload.snapshot = {
+          saved: false,
+          warning: 'Snapshot storage unavailable',
+          message: error.message
+        };
+      }
+    }
+    setCommonHeaders(res, 'HIT');
+    return res.status(200).json(payload);
+  }
+
+  try {
+    const allBalances = [];
+    const errors = [];
+    let sourceAccountId = wallets[0];
+    let sourceAccountSequence = '0';
+
+    for (const addr of wallets) {
+      const accountRes = await fetch(`https://horizon.stellar.org/accounts/${addr}`);
+      if (!accountRes.ok) {
+        errors.push({ wallet: addr, message: `Horizon returned ${accountRes.status}` });
+        continue;
+      }
+      const data = await accountRes.json();
+      if (data.sequence && sourceAccountSequence === '0') {
+        sourceAccountId = addr;
+        sourceAccountSequence = data.sequence;
+      }
+      (data.balances || []).forEach((b) => {
+        const isNative = b.asset_type === 'native';
+        const symbol = isNative ? 'XLM' : normalizeAssetCode(b.asset_code || 'UNKNOWN');
+        const amount = parseFloat(b.balance) || 0;
+        allBalances.push({ identity: symbol, symbol, amount });
+      });
+    }
+
+    const sep41Result = await fetchSep41TokenBalances({
+      wallets,
+      contracts,
+      sourceAccountId,
+      sourceAccountSequence
+    });
+    allBalances.push(...sep41Result.assets);
+    errors.push(...sep41Result.errors);
+
+    const symbols = [...new Set(allBalances.map((b) => b.symbol))];
+    const geckoIds = [
+      ...new Set([
+        ...symbols.map((s) => ASSET_TO_COINGECKO[s]),
+        ...contracts.map((contractId) => CONTRACT_TO_COINGECKO[contractId])
+      ].filter(Boolean))
+    ];
+
+    let priceMap = {};
+    if (geckoIds.length > 0) {
+      const ids = geckoIds.join(',');
+      const priceRes = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(ids)}&vs_currencies=usd`);
+      if (!priceRes.ok) {
+        return errorResponse(res, 502, 'MISS', 'Pricing API failed', 'Unable to fetch CoinGecko prices');
+      }
+      priceMap = await priceRes.json();
+    }
+
+    const assetsByIdentity = {};
+    let totalXLM = 0;
+    let totalUSD = 0;
+    const pricedAssets = [];
+    const unpricedAssets = [];
+
+    allBalances.forEach((balance) => {
+      const { identity = balance.symbol, symbol, amount } = balance;
+      if (!assetsByIdentity[identity]) {
+        const { identity: _identity, amount: _amount, usdValue: _usdValue, ...metadata } = balance;
+        assetsByIdentity[identity] = { ...metadata, symbol, amount: 0, usdValue: null };
+      }
+      assetsByIdentity[identity].amount += amount;
+      if (symbol === 'XLM' && !balance.contractId) totalXLM += amount;
+    });
+
+    Object.values(assetsByIdentity).forEach((asset) => {
+      const geckoId = asset.contractId ? CONTRACT_TO_COINGECKO[asset.contractId] : ASSET_TO_COINGECKO[asset.symbol];
+      const usdPrice = geckoId ? priceMap?.[geckoId]?.usd : undefined;
+      if (typeof usdPrice === 'number') {
+        asset.usdValue = asset.amount * usdPrice;
+        totalUSD += asset.usdValue;
+        pricedAssets.push(asset.contractId ? `${asset.symbol} (${asset.contractId})` : asset.symbol);
+      } else {
+        asset.usdValue = null;
+        unpricedAssets.push(asset.contractId ? `${asset.symbol} (${asset.contractId})` : asset.symbol);
+      }
+    });
+
+    const assets = Object.values(assetsByIdentity)
+      .map((asset) => ({
+        ...asset,
+        allocationPercent: asset.usdValue !== null && totalUSD > 0 ? (asset.usdValue / totalUSD) * 100 : null
+      }))
+      .sort((a, b) => (b.usdValue ?? -1) - (a.usdValue ?? -1));
+
+    const payload = {
+      success: true,
+      timestamp: nowIso(),
+      version: VERSION,
+      walletCount: wallets.length,
+      totalXLM,
+      totalUSD,
+      pricedAssets,
+      unpricedAssets,
+      assets,
+      errors
+    };
+
+    if (contracts.length > 0) {
+      payload.contracts = contracts;
+      payload.sep41 = {
+        supported: true,
+        requestedContracts: contracts,
+        queriedContracts: sep41Result.queriedContracts,
+        failedContracts: sep41Result.failedContracts
+      };
+    }
+
+    if (shouldSaveSnapshot) {
+      try {
+        const savedSnapshot = await saveTreasurySnapshot({ wallets, contracts, aggregateResult: payload });
+        payload.snapshot = {
+          saved: savedSnapshot.saved,
+          timestamp: savedSnapshot.snapshot.timestamp,
+          historyKey: savedSnapshot.historyKey,
+          storage: savedSnapshot.storage,
+          ...(savedSnapshot.warning ? { warning: savedSnapshot.warning } : {})
+        };
+      } catch (error) {
+        payload.snapshot = {
+          saved: false,
+          warning: 'Snapshot storage unavailable',
+          message: error.message
+        };
+      }
+    }
+
+    cache.set(cacheKey, { at: Date.now(), payload: { ...payload, snapshot: undefined } });
+    setCommonHeaders(res, 'MISS');
+    return res.status(200).json(payload);
+  } catch (error) {
+    return errorResponse(res, 500, 'MISS', 'Aggregation failed', error.message);
+  }
+}
