@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -387,6 +388,7 @@ body { padding: 12px; }
 <summary>Agent-ready API</summary>
 <div class="api-item-body">
 <code>Treasury Signals API: /api/signals</code><br>
+<code>Treasury Intelligence API: /api/intelligence</code><br>
 <code>History API: /api/history</code><br>
 <code>Snapshot API: /api/snapshot</code><br>
 <code>OpenAPI spec: /openapi.json</code><br>
@@ -398,6 +400,13 @@ body { padding: 12px; }
 <summary>Endpoint example</summary>
 <div class="api-item-body">
 <code>GET /api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4</code>
+</div>
+</details>
+<details class="api-item">
+<summary>Treasury Intelligence API</summary>
+<div class="api-item-body">
+<code>GET /api/intelligence?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52</code><br>
+<code>Returns treasury health score, idle capital detection, rule-based alerts, benchmarks, executive brief, and next-action suggestions.</code>
 </div>
 </details>
 <details class="api-item">
