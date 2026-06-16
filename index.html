@@ -640,8 +640,8 @@ intelligenceBodyEl.innerHTML = `
 </article>
 <article class="intelligence-card">
 <span class="label">Top Alert</span>
-<div class="value">${topAlert.severity || "—"}</div>
-<p class="signal-message">${topAlert.title || "No alert yet"}</p>
+<div class="value">${topAlert.title || "No alert yet"}</div>
+<p class="signal-message">${topAlert.severity ? topAlert.severity.charAt(0).toUpperCase() + topAlert.severity.slice(1) : "No severity"}</p>
 </article>
 <article class="intelligence-card">
 <span class="label">Readiness</span>
