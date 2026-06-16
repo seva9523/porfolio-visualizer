@@ -896,7 +896,7 @@ const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: "application/
 const url = URL.createObjectURL(blob);
 const link = document.createElement("a");
 link.href = url;
-link.download = "wealthview-treasury-snapshot.json";
+link.download = "wealthview-treasury-intelligence-snapshot.json";
 document.body.appendChild(link);
 link.click();
 link.remove();
