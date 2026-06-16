@@ -50,6 +50,13 @@ async function callWealthViewApi(path, wallets, contracts = []) {
   return data;
 }
 
+const TOOL_NAMES = [
+  'aggregate_stellar_treasury',
+  'get_treasury_signals',
+  'get_treasury_intelligence',
+  'get_treasury_history'
+];
+
 async function handleRequest(req) {
   const { id, method, params } = req;
 
@@ -108,6 +115,24 @@ async function handleRequest(req) {
             }
           },
           {
+            name: 'get_treasury_intelligence',
+            description: 'Generate WealthView treasury intelligence including health score, idle capital detection, rule-based alerts, benchmarks, change detection, executive brief, and next-action suggestions.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                wallets: {
+                  type: 'string',
+                  description: 'Comma-separated Stellar public wallet addresses'
+                },
+                contracts: {
+                  type: 'string',
+                  description: 'Optional comma-separated SEP-41 / Soroban token contract IDs'
+                }
+              },
+              required: ['wallets']
+            }
+          },
+          {
             name: 'get_treasury_history',
             description: 'Retrieve snapshot-based WealthView treasury history for one or more Stellar wallets.',
             inputSchema: {
@@ -132,7 +157,7 @@ async function handleRequest(req) {
 
   if (method === 'tools/call') {
     const toolName = params?.name;
-    if (!['aggregate_stellar_treasury', 'get_treasury_signals', 'get_treasury_history'].includes(toolName)) {
+    if (!TOOL_NAMES.includes(toolName)) {
       return makeError(id, `Unknown tool: ${toolName}`);
     }
 
@@ -152,10 +177,12 @@ async function handleRequest(req) {
     try {
       const apiPath = toolName === 'get_treasury_signals'
         ? '/api/signals'
-        : toolName === 'get_treasury_history'
-          ? '/api/history'
-          : '/api/aggregate';
-      const aggregated = await callWealthViewApi(apiPath, wallets, contracts);
+        : toolName === 'get_treasury_intelligence'
+          ? '/api/intelligence'
+          : toolName === 'get_treasury_history'
+            ? '/api/history'
+            : '/api/aggregate';
+      const result = await callWealthViewApi(apiPath, wallets, contracts);
       return {
         jsonrpc: '2.0',
         id,
@@ -163,7 +190,7 @@ async function handleRequest(req) {
           content: [
             {
               type: 'json',
-              json: aggregated
+              json: result
             }
           ]
         }
