@@ -1,11 +1,12 @@
 {
   "name": "WealthView",
-  "description": "Stellar treasury aggregation API for agents and developer tools, with optional user-provided SEP-41 / Soroban contract token support and snapshot-based history.",
-  "primary_use_case": "Aggregate multiple Stellar wallets into a unified treasury view.",
+  "description": "Stellar treasury aggregation and intelligence API for agents and developer tools, with optional user-provided SEP-41 / Soroban contract token support and snapshot-based history.",
+  "primary_use_case": "Aggregate multiple Stellar wallets into a unified treasury view and generate treasury intelligence including health score, idle capital, alerts, benchmarks, change detection, and executive briefs.",
   "api": {
     "openapi_url": "/openapi.json",
     "endpoint": "/api/aggregate",
     "signals_endpoint": "/api/signals",
+    "intelligence_endpoint": "/api/intelligence",
     "history_endpoint": "/api/history",
     "snapshot_endpoint": "/api/snapshot",
     "method": "GET",
@@ -23,6 +24,12 @@
     "Generate treasury risk summary",
     "Analyze optional SEP-41 contract token exposure",
     "Retrieve snapshot-based treasury history",
-    "Compare saved treasury snapshots over time"
+    "Compare saved treasury snapshots over time",
+    "Generate a treasury health score",
+    "Detect idle treasury capital",
+    "Review treasury concentration risk",
+    "Benchmark treasury readiness",
+    "Generate an executive treasury brief",
+    "Suggest next treasury actions"
   ]
 }
