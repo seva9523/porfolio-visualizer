@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -223,6 +224,13 @@ display: none;
 .signal-badge.watch { background: var(--wv-yellow-soft); color: var(--wv-black); border-color: rgba(15, 15, 15, 0.25); }
 .signal-badge.info { background: rgba(0, 46, 93, 0.08); color: var(--wv-deepblue); border-color: rgba(0, 46, 93, 0.24); }
 .signals-empty { margin: 0; color: var(--wv-muted); font-size: 13px; }
+.intelligence-panel { padding-bottom: 12px; }
+.intelligence-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 10px; }
+.intelligence-card { border: 1px solid var(--wv-border); border-radius: var(--wv-radius-sm); background: #fffef9; padding: 10px; min-width: 0; }
+.intelligence-card .label { display: block; margin-bottom: 4px; }
+.intelligence-card .value { font-size: clamp(1rem, 1.4vw, 1.45rem); }
+.intelligence-brief { margin: 0; padding: 12px; border: 1px dashed var(--wv-border-strong); border-radius: var(--wv-radius-sm); background: #fffef9; color: var(--wv-black); font-size: 13px; line-height: 1.5; }
+.intelligence-empty { margin: 0; color: var(--wv-muted); font-size: 13px; }
 .history-panel { padding-bottom: 12px; }
 .history-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
 .history-title { margin: 0; color: var(--wv-black); font: 700 16px/1.2 Lora, Georgia, serif; }
@@ -265,6 +273,7 @@ body { padding: 12px; }
 .mid-col { order: 2; }
 .cards { grid-template-columns: 1fr; }
 .signals-grid { grid-template-columns: 1fr; }
+.intelligence-grid { grid-template-columns: 1fr; }
 .use-case-grid { grid-template-columns: 1fr; }
 .api-grid { grid-template-columns: 1fr; }
 }
@@ -344,6 +353,14 @@ body { padding: 12px; }
 </div>
 <div id="signalsBody">
 <p class="signals-empty">Aggregate wallets to generate treasury signals.</p>
+</div>
+</section>
+<section class="signals-panel intelligence-panel" aria-labelledby="treasuryIntelligenceTitle">
+<div class="signals-header">
+<h2 class="signals-title" id="treasuryIntelligenceTitle">Treasury Intelligence</h2>
+</div>
+<div id="intelligenceBody">
+<p class="intelligence-empty">Aggregate wallets to generate treasury intelligence.</p>
 </div>
 </section>
 <section class="signals-panel history-panel" aria-labelledby="treasuryHistoryTitle">
@@ -476,10 +493,12 @@ const historyBodyEl = document.getElementById("historyBody");
 const saveHistoryBtn = document.getElementById("saveHistoryBtn");
 const loadHistoryBtn = document.getElementById("loadHistoryBtn");
 const signalsBodyEl = document.getElementById("signalsBody");
+const intelligenceBodyEl = document.getElementById("intelligenceBody");
 const STABLE_ASSET_SYMBOLS = ["USDC", "USDZ", "EURC", "USDT"];
 let latestAggregated = null;
 let latestSignals = null;
 let latestHistory = [];
+let latestIntelligence = null;
 let shareSuccessTimeout = null;
 function setStatus(message, type = "info") {
 statusEl.textContent = message;
@@ -589,6 +608,74 @@ const url = new URL(`${window.location.origin}/api/history`);
 url.searchParams.set("wallets", addresses.join(","));
 if (contracts.length) url.searchParams.set("contracts", contracts.join(","));
 return url;
+}
+
+function buildIntelligenceUrl(addresses, contracts = []) {
+const url = new URL(`${window.location.origin}/api/intelligence`);
+url.searchParams.set("wallets", addresses.join(","));
+if (contracts.length) url.searchParams.set("contracts", contracts.join(","));
+return url;
+}
+function renderTreasuryIntelligence(intelligence) {
+if (!intelligence) {
+intelligenceBodyEl.innerHTML = '<p class="intelligence-empty">Aggregate wallets to generate treasury intelligence.</p>';
+return;
+}
+const health = intelligence.treasuryHealth || {};
+const idle = intelligence.idleCapital || {};
+const alerts = Array.isArray(intelligence.alerts) ? intelligence.alerts : [];
+const topAlert = alerts.find(alert => alert.severity === "risk" || alert.severity === "watch") || alerts[0] || {};
+const brief = Array.isArray(intelligence.executiveBrief) ? intelligence.executiveBrief : [];
+intelligenceBodyEl.innerHTML = `
+<div class="intelligence-grid">
+<article class="intelligence-card">
+<span class="label">Health Score</span>
+<div class="value">${health.score ?? "—"}/100</div>
+<p class="signal-message">${health.label || "No score yet"}</p>
+</article>
+<article class="intelligence-card">
+<span class="label">Idle Capital</span>
+<div class="value">${formatCompactCurrency(idle.estimatedUSD || 0)}</div>
+<p class="signal-message">${idle.estimatedPercent ?? 0}% of priced value</p>
+</article>
+<article class="intelligence-card">
+<span class="label">Top Alert</span>
+<div class="value">${topAlert.severity || "—"}</div>
+<p class="signal-message">${topAlert.title || "No alert yet"}</p>
+</article>
+<article class="intelligence-card">
+<span class="label">Readiness</span>
+<div class="value">${intelligence.benchmarks?.operationalReadiness?.label || "—"}</div>
+<p class="signal-message">${intelligence.benchmarks?.operationalReadiness?.score ?? "—"}/100 operational score</p>
+</article>
+</div>
+<p class="intelligence-brief">${brief.length ? brief.join(" ") : "No executive brief generated yet."}</p>
+`;
+}
+async function fetchTreasuryIntelligence({ silent = true } = {}) {
+const addresses = getAddressesFromInput();
+const contracts = getContractsFromInput();
+if (addresses.length === 0) return;
+try {
+const intelligenceUrl = buildIntelligenceUrl(addresses, contracts);
+const response = await fetch(`${intelligenceUrl.pathname}${intelligenceUrl.search}`);
+let data;
+try {
+data = await response.json();
+} catch (_) {
+throw new Error("Intelligence API returned invalid JSON");
+}
+if (!response.ok || data?.success === false) {
+throw new Error(data?.message || data?.error || "Intelligence API failed");
+}
+latestIntelligence = data;
+renderTreasuryIntelligence(data);
+} catch (error) {
+console.error(error);
+latestIntelligence = null;
+renderTreasuryIntelligence(null);
+if (!silent) setStatus(`Intelligence error: ${error.message}`, "error");
+}
 }
 function generateTreasurySignals(aggregatedData) {
 const assets = Array.isArray(aggregatedData?.assets) ? aggregatedData.assets : [];
@@ -802,7 +889,8 @@ totalXLM: latestAggregated.totalXLM || 0,
 totalUSD: latestAggregated.totalUSD || 0
 },
 assets: Array.isArray(latestAggregated.assets) ? latestAggregated.assets : [],
-signals
+signals,
+intelligence: latestIntelligence
 };
 const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: "application/json" });
 const url = URL.createObjectURL(blob);
@@ -899,6 +987,7 @@ latestAggregated = apiData;
 latestSignals = generateTreasurySignals(apiData);
 renderDashboard(apiData);
 renderTreasurySignals(latestSignals);
+fetchTreasuryIntelligence({ silent: true });
 const priced = Array.isArray(apiData.pricedAssets) ? apiData.pricedAssets.join(", ") : "";
 const unpriced = Array.isArray(apiData.unpricedAssets) ? apiData.unpricedAssets.join(", ") : "";
 const detail = [priced ? `Priced: ${priced}` : "", unpriced ? `Unpriced: ${unpriced}` : ""]
