@@ -52,3 +52,4 @@ Use the aggregation API to combine balances across one or more Stellar wallets.
 
 ```bash
 GET /api/aggregate?wallets=GBGI5DB6EYA7W6BKVM7I6L5F3EIVUP4LSQC6AOE6DU7VWXAURFVLHO52,GDUY7J7A33TQWOSOQGDO776GGLM3UQERL4J3SPT56F6YS4ID7MLDERI4
+
